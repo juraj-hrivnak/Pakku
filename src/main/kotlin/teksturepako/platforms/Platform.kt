@@ -1,15 +1,22 @@
 package teksturepako.platforms
 
 import teksturepako.http.Http
-import teksturepako.platforms.projects.Project
+import teksturepako.platforms.Multiplatform.platforms
+import teksturepako.projects.Project
+import teksturepako.projects.ProjectFile
 
 /**
- * Platform is a site containing projects and can request them (mods).
+ * Platform is a site containing projects.
  */
 abstract class Platform : Http()
 {
     /**
-     * The api URL address of this platform.
+     * Platform name.
+     */
+    abstract val name: String
+
+    /**
+     * The API URL address of this platform.
      */
     abstract val apiUrl: String
 
@@ -18,7 +25,7 @@ abstract class Platform : Http()
      */
     abstract val apiVersion: Int
 
-    suspend fun requestProjectString(input: String): String?
+    suspend fun requestProjectBody(input: String): String?
     {
         return this.requestBody("$apiUrl/v$apiVersion/$input")
     }
@@ -28,7 +35,16 @@ abstract class Platform : Http()
         return requestProjectFromId(input) ?: requestProjectFromSlug(input)
     }
 
-    abstract suspend fun requestProjectFromSlug(slug: String): Project?
     abstract suspend fun requestProjectFromId(id: String): Project?
+    abstract suspend fun requestProjectFromSlug(slug: String): Project?
 
+    abstract suspend fun requestProjectFilesFromId(mcVersion: String, loader: String, input: String): Pair<String, List<ProjectFile>>?
+
+
+    private fun init() = platforms.add(this)
+
+    init
+    {
+        init()
+    }
 }

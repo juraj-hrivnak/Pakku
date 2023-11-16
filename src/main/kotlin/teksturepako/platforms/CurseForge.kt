@@ -1,15 +1,18 @@
 package teksturepako.platforms
 
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import teksturepako.debug
-import teksturepako.json.json
-import teksturepako.platforms.projects.Project
-import teksturepako.platforms.projects.ProjectType
+import teksturepako.data.finalize
+import teksturepako.data.json
+import teksturepako.projects.Project
+import teksturepako.projects.ProjectFile
+import teksturepako.projects.ProjectType
 
 object CurseForge : Platform()
 {
+    override val name = "CurseForge"
     override val apiUrl = "https://cfproxy.bmpm.workers.dev"
     override val apiVersion = 1
 
@@ -34,43 +37,68 @@ object CurseForge : Platform()
         return getApiKey()?.let { super.requestBody(url, Pair(API_KEY_HEADER, it)) } ?: super.requestBody(url)
     }
 
-    override suspend fun requestProjectFromSlug(slug: String): Project?
-    {
-        val json: JsonObject = json.decodeFromString(
-            this.requestProjectString("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug") ?: return null
-        )
-        if (json["data"]!!.jsonArray.isEmpty()) return null
-        debug { println(json["data"]!!.jsonArray.first().jsonObject["classId"]!!.toString() + " ") }
-        return Project(
-            name = json["data"]!!.jsonArray.first().jsonObject["name"].toString(),
-            slug = json["data"]!!.jsonArray.first().jsonObject["slug"].toString(),
-            type = when (json["data"]!!.jsonArray.first().jsonObject["classId"]!!.toString().toInt())
-            {
-                6    -> ProjectType.MOD
-                12   -> ProjectType.RESOURCE_PACK
-                6552 -> ProjectType.SHADER_PACK
-
-                else -> throw Exception("Project type not found!")
-            }
-        )
-    }
-
     override suspend fun requestProjectFromId(id: String): Project?
     {
-        val json: JsonObject = json.decodeFromString(this.requestProjectString("mods/$id") ?: return null)
-        debug { println(json["data"]!!.jsonObject["classId"]!!.toString() + " ") }
+        val json: JsonObject = json.decodeFromString(this.requestProjectBody("mods/$id") ?: return null)
+
         return Project(
-            name = json["data"]!!.jsonObject["name"].toString(),
-            slug = json["data"]!!.jsonObject["slug"].toString(),
+            name = mutableMapOf(name to json["data"]!!.jsonObject["name"].finalize()),
+            slug = json["data"]!!.jsonObject["slug"].finalize(),
             type = when (json["data"]!!.jsonObject["classId"]!!.toString().toInt())
             {
                 6    -> ProjectType.MOD
                 12   -> ProjectType.RESOURCE_PACK
-                6552 -> ProjectType.SHADER_PACK
+                6552 -> ProjectType.SHADER
 
                 else -> throw Exception("Project type not found!")
-            }
+            },
+            id = mutableMapOf(name to json["data"]!!.jsonObject["id"].finalize()),
+            files = mutableMapOf(),
         )
+    }
+
+    override suspend fun requestProjectFromSlug(slug: String): Project?
+    {
+        val json: JsonObject = json.decodeFromString(
+            this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug") ?: return null
+        )
+        if (json["data"]!!.jsonArray.isEmpty()) return null
+
+        return Project(
+            name = mutableMapOf(name to json["data"]!!.jsonArray.first().jsonObject["name"].finalize()),
+            slug = json["data"]!!.jsonArray.first().jsonObject["slug"].finalize(),
+            type = when (json["data"]!!.jsonArray.first().jsonObject["classId"]!!.toString().toInt())
+            {
+                6    -> ProjectType.MOD
+                12   -> ProjectType.RESOURCE_PACK
+                6552 -> ProjectType.SHADER
+
+                else -> throw Exception("Project type not found!")
+            },
+            id = mutableMapOf(name to json["data"]!!.jsonArray.first().jsonObject["id"].finalize()),
+            files = mutableMapOf(),
+        )
+    }
+
+    override suspend fun requestProjectFilesFromId(
+        mcVersion: String,
+        loader: String,
+        input: String
+    ): Pair<String, List<ProjectFile>>?
+    {
+        val data: JsonObject = json.decodeFromString(
+            this.requestProjectBody("mods/$input/files?modLoaderType=$loader") ?: return null
+        )
+        if (data["data"]!!.jsonArray.isEmpty()) return null
+
+        return Pair(name, data["data"]!!.jsonArray.asSequence().filter {
+            mcVersion in json.decodeFromJsonElement<List<String>>(it.jsonObject["gameVersions"]!!)
+        }.map { file ->
+            ProjectFile(
+                fileName = file.jsonObject["fileName"].finalize(),
+                mcVersion = mcVersion,
+            )
+        }.toList())
     }
 }
 
