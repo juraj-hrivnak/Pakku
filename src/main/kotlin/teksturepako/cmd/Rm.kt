@@ -11,7 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import teksturepako.data.PakkuLock
 import teksturepako.platforms.Multiplatform
-import teksturepako.typoSuggestor
+import teksturepako.typoSuggester
 
 class Rm : CliktCommand("Remove mods")
 {
@@ -47,7 +47,7 @@ class Rm : CliktCommand("Remove mods")
                     PakkuLock.get { data ->
                         data.projects.map { project -> project.slug }
                     }.also { args ->
-                        typoSuggestor(arg, args).first().let { arg ->
+                        typoSuggester(arg, args).first().let { arg ->
                             if (arg.isNotEmpty()) terminal.warning("Did you mean $arg?")
                         }
 
