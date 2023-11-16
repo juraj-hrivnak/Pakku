@@ -4,9 +4,8 @@ import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.terminal.Terminal
-import teksturepako.cmd.Comp
-import teksturepako.cmd.Get
-import teksturepako.cmd.Pakku
+import teksturepako.cmd.*
+import teksturepako.cmd.Set
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>)
@@ -19,8 +18,10 @@ fun main(args: Array<String>)
             interactive = true
         )
     }.subcommands(
-        Comp(),
-        Get()
+        Set(),
+        Add(),
+        Rm(),
+        Ls()
     ).main(args)
 
     println("Program arguments: ${args.joinToString()}")
