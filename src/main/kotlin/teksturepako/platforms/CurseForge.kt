@@ -6,13 +6,17 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import teksturepako.data.finalize
 import teksturepako.data.json
+import teksturepako.debug
+import teksturepako.projects.CfFile
 import teksturepako.projects.Project
 import teksturepako.projects.ProjectFile
 import teksturepako.projects.ProjectType
 
+@Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform()
 {
     override val name = "CurseForge"
+    override val serialName = "curseforge"
     override val apiUrl = "https://cfproxy.bmpm.workers.dev"
     override val apiVersion = 1
 
@@ -42,17 +46,18 @@ object CurseForge : Platform()
         val json: JsonObject = json.decodeFromString(this.requestProjectBody("mods/$id") ?: return null)
 
         return Project(
-            name = mutableMapOf(name to json["data"]!!.jsonObject["name"].finalize()),
+            name = mutableMapOf(this.serialName to json["data"]!!.jsonObject["name"].finalize()),
             slug = json["data"]!!.jsonObject["slug"].finalize(),
             type = when (json["data"]!!.jsonObject["classId"]!!.toString().toInt())
             {
                 6    -> ProjectType.MOD
                 12   -> ProjectType.RESOURCE_PACK
+                17   -> ProjectType.WORLD
                 6552 -> ProjectType.SHADER
 
                 else -> throw Exception("Project type not found!")
             },
-            id = mutableMapOf(name to json["data"]!!.jsonObject["id"].finalize()),
+            id = mutableMapOf(this.serialName to json["data"]!!.jsonObject["id"].finalize()),
             files = mutableMapOf(),
         )
     }
@@ -65,7 +70,7 @@ object CurseForge : Platform()
         if (json["data"]!!.jsonArray.isEmpty()) return null
 
         return Project(
-            name = mutableMapOf(name to json["data"]!!.jsonArray.first().jsonObject["name"].finalize()),
+            name = mutableMapOf(this.serialName to json["data"]!!.jsonArray.first().jsonObject["name"].finalize()),
             slug = json["data"]!!.jsonArray.first().jsonObject["slug"].finalize(),
             type = when (json["data"]!!.jsonArray.first().jsonObject["classId"]!!.toString().toInt())
             {
@@ -73,9 +78,10 @@ object CurseForge : Platform()
                 12   -> ProjectType.RESOURCE_PACK
                 6552 -> ProjectType.SHADER
 
-                else -> throw Exception("Project type not found!")
+                else -> return null.debug { println("Project type not found for $slug: ${(json["data"]!!.jsonArray
+                    .first().jsonObject["classId"]!!.toString().toInt())}") }
             },
-            id = mutableMapOf(name to json["data"]!!.jsonArray.first().jsonObject["id"].finalize()),
+            id = mutableMapOf(this.serialName to json["data"]!!.jsonArray.first().jsonObject["id"].finalize()),
             files = mutableMapOf(),
         )
     }
@@ -97,8 +103,17 @@ object CurseForge : Platform()
             ProjectFile(
                 fileName = file.jsonObject["fileName"].finalize(),
                 mcVersion = mcVersion,
+                url = null,
+                data = CfFile(file.jsonObject["id"].toString().toInt())
             )
         }.toList())
+    }
+
+    suspend fun requestUrl(modId: Int, fileId: Int): String?
+    {
+        return json.decodeFromString<JsonObject>(
+            this.requestProjectBody("mods/$modId/files/$fileId/download-url") ?: return null
+        )["data"].finalize()
     }
 }
 

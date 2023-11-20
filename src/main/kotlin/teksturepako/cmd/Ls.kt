@@ -17,11 +17,11 @@ class Ls : CliktCommand("List mods")
                 }
             }
         }.forEach {
-            it.await().also { project ->
-                if (project != null)
-                {
-                    terminal.success(project.slug)
-                }
+            val project = it.await()
+
+            if (project != null)
+            {
+                terminal.success(project.slug)
             }
         }
         echo()

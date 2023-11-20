@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import teksturepako.data.finalize
 import teksturepako.data.json
+import teksturepako.projects.MrFile
 import teksturepako.projects.Project
 import teksturepako.projects.ProjectFile
 import teksturepako.projects.ProjectType
@@ -13,6 +14,7 @@ import teksturepako.projects.ProjectType
 object Modrinth : Platform()
 {
     override val name = "Modrinth"
+    override val serialName = "modrinth"
     override val apiUrl = "https://api.modrinth.com"
     override val apiVersion = 2
 
@@ -21,7 +23,7 @@ object Modrinth : Platform()
         val json: JsonObject = json.decodeFromString(this.requestProjectBody("project/$id") ?: return null)
 
         return Project(
-            name = mutableMapOf(name to json["title"].finalize()),
+            name = mutableMapOf(this.serialName to json["title"].finalize()),
             slug = json["slug"].finalize(),
             type = when (json["project_type"].finalize())
             {
@@ -31,7 +33,7 @@ object Modrinth : Platform()
 
                 else           -> throw Exception("Project type not found!")
             },
-            id = mutableMapOf(name to json["id"].finalize()),
+            id = mutableMapOf(this.serialName to json["id"].finalize()),
             files = mutableMapOf(),
         )
     }
@@ -41,7 +43,7 @@ object Modrinth : Platform()
         val json: JsonObject = json.decodeFromString(this.requestProjectBody("project/$slug") ?: return null)
 
         return Project(
-            name = mutableMapOf(name to json["title"].finalize()),
+            name = mutableMapOf(this.serialName to json["title"].finalize()),
             slug = json["slug"].finalize(),
             type = when (json["project_type"].finalize())
             {
@@ -51,7 +53,7 @@ object Modrinth : Platform()
 
                 else           -> throw Exception("Project type not found!")
             },
-            id = mutableMapOf(name to json["id"].finalize()),
+            id = mutableMapOf(this.serialName to json["id"].finalize()),
             files = mutableMapOf(),
         )
     }
@@ -70,6 +72,15 @@ object Modrinth : Platform()
                 ProjectFile(
                     fileName = file.jsonObject["filename"].finalize(),
                     mcVersion = mcVersion,
+                    url = file.jsonObject["url"].finalize(),
+                    data = file.jsonObject["hashes"]?.let {
+                        MrFile(
+                            mutableMapOf(
+                                "sha512" to it.jsonObject["sha512"].finalize(),
+                                "sha1" to it.jsonObject["sha1"].finalize()
+                            )
+                        )
+                    }
                 )
             }
         }.toList())

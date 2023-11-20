@@ -1,8 +1,8 @@
 package teksturepako.platforms
 
 import teksturepako.data.finalize
+import teksturepako.projects.CfFile
 import teksturepako.projects.Project
-import teksturepako.projects.ProjectFile
 
 object Multiplatform
 {
@@ -19,10 +19,6 @@ object Multiplatform
             {
                 cf = CurseForge.requestProjectFromSlug(mr.slug.replace("\"", ""))
             }
-        }
-
-        when
-        {
             mr == null && cf != null ->
             {
                 mr = Modrinth.requestProjectFromSlug(cf.slug.replace("\"", ""))
@@ -51,21 +47,26 @@ object Multiplatform
     {
         val project = requestProject(input) ?: return null
 
-        if (project.id[CurseForge.name] != null)
+        // Cf
+        if (project.id[CurseForge.serialName] != null)
         {
-            project.files[CurseForge.name] =
-                CurseForge.requestProjectFilesFromId(
-                    mcVersion,
-                    loader,
-                    project.id[CurseForge.name].finalize())!!.second.take(3)
+            val id = project.id[CurseForge.serialName].finalize()
+            val rqsts = CurseForge.requestProjectFilesFromId(mcVersion, loader, id)!!.second.take(1)
+
+            rqsts.map { rqst ->
+                if (rqst.data is CfFile) rqst.url = CurseForge.requestUrl(id.toInt(), rqst.data.id)
+            }
+
+            project.files[CurseForge.serialName] = rqsts
         }
-        if (project.id[Modrinth.name] != null)
+
+        // Mr
+        if (project.id[Modrinth.serialName] != null)
         {
-            project.files[Modrinth.name] =
-                Modrinth.requestProjectFilesFromId(
-                    mcVersion,
-                    loader,
-                    project.id[Modrinth.name].finalize())!!.second.take(3)
+            val id = project.id[Modrinth.serialName].finalize()
+            val rqsts = Modrinth.requestProjectFilesFromId(mcVersion, loader, id)!!.second.take(1)
+
+            project.files[Modrinth.serialName] = rqsts
         }
         return project
     }

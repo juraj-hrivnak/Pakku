@@ -16,6 +16,11 @@ abstract class Platform : Http()
     abstract val name: String
 
     /**
+     * Snake case version of the name.
+     */
+    abstract val serialName: String
+
+    /**
      * The API URL address of this platform.
      */
     abstract val apiUrl: String

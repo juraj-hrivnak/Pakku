@@ -1,8 +1,9 @@
 package teksturepako.projects
 
-enum class ProjectType(name: String, folderName: String)
+enum class ProjectType(name: String, val folderName: String)
 {
     MOD("mod","mods"),
     RESOURCE_PACK("resource pack","resourcepacks"),
-    SHADER("shader pack","shaderpacks");
+    WORLD("world","saves"),
+    SHADER("shader pack","shaderpacks"),
 }

@@ -9,6 +9,14 @@ import teksturepako.debug
 open class Http
 {
     /**
+     * Returns body [ByteArray] of a https request or null if status code is not OK.
+     */
+    open suspend fun requestByteArray(url: String): ByteArray?
+    {
+        return client.get(url).bodyIfOK()
+    }
+
+    /**
      * Returns body [String] of a https request or null if status code is not OK.
      */
     open suspend fun requestBody(url: String): String?
@@ -25,7 +33,7 @@ open class Http
         }.bodyIfOK()
     }
 
-    private suspend fun HttpResponse.bodyIfOK(): String?
+    private suspend inline fun <reified T> HttpResponse.bodyIfOK(): T?
     {
         return if (this.status == HttpStatusCode.OK) this.body() else null.debug {
             println("Bad request for $this")

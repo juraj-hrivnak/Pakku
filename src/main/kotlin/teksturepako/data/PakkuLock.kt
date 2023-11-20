@@ -3,6 +3,7 @@ package teksturepako.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.encodeToStream
 import teksturepako.debug
@@ -14,22 +15,24 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 
 @Serializable
-@Suppress("PropertyName")
 data class PakkuLock(
     /**
      * The pack name.
      */
-    var pack_name: String,
+    @SerialName("pack_name")
+    var packName: String,
 
     /**
      * This pack's Minecraft version
      */
-    var mc_version: String,
+    @SerialName("mc_version")
+    var mcVersion: String,
 
     /**
      * The mod loader
      */
-    var mod_loader: String,
+    @SerialName("mod_loader")
+    var modLoader: String,
 
     /**
      * List of projects.
@@ -50,7 +53,7 @@ data class PakkuLock(
                 catch (e: Exception)
                 {
                     debug { e.printStackTrace() }
-                    PakkuLock("", "", "", mutableListOf())
+                    return
                 }
 
                 // Handle data manipulation
@@ -80,7 +83,7 @@ data class PakkuLock(
                     PakkuLock("", "", "", mutableListOf())
                 }
 
-                // Get data manipulation
+                // Get data
                 return block(data)
             }
         }
@@ -89,6 +92,7 @@ data class PakkuLock(
             projects.forEach { project ->
                 // Override old project
                 data.projects.removeIf { it.slug == project.slug }.also {
+                    // Print error, if it could not remove
                     if (!it) debug { println("Could not remove ${project.name}") }
                 }
                 // Add project
@@ -108,21 +112,21 @@ data class PakkuLock(
             }
         }
 
-        suspend fun setPackName(packName: String) = handle { data -> data.pack_name = packName }
-        suspend fun setMcVersion(mcVersion: String) = handle { data -> data.mc_version = mcVersion }
-        suspend fun setModLoader(modLoader: String) = handle { data -> data.mod_loader = modLoader }
+        suspend fun setPackName(packName: String) = handle { data -> data.packName = packName }
+        suspend fun setMcVersion(mcVersion: String) = handle { data -> data.mcVersion = mcVersion }
+        suspend fun setModLoader(modLoader: String) = handle { data -> data.modLoader = modLoader }
 
-        suspend fun getPackName() = get { data -> data.pack_name }
-        suspend fun getMcVersion() = get { data -> data.mc_version }
-        suspend fun getModLoader() = get { data -> data.mod_loader }
+        suspend fun getPackName() = get { data -> data.packName }
+        suspend fun getMcVersion() = get { data -> data.mcVersion }
+        suspend fun getModLoader() = get { data -> data.modLoader }
 
         @Throws(IOException::class)
-        suspend fun readFile(file: File, encoding: Charset?): String
+        suspend fun readFile(file: File, encoding: Charset): String
         {
             val encoded = withContext(Dispatchers.IO) {
                 Files.readAllBytes(file.toPath())
             }
-            return String(encoded, encoding!!)
+            return String(encoded, encoding)
         }
     }
 }
