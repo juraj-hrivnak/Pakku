@@ -16,7 +16,7 @@ fun main(args: Array<String>)
     Pakku().context {
         terminal = Terminal(
             theme = Theme.Default,
-            ansiLevel = AnsiLevel.TRUECOLOR,
+            ansiLevel = AnsiLevel.ANSI256,
             interactive = true
         )
     }.subcommands(
