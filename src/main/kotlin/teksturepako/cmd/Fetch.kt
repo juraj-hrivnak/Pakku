@@ -2,12 +2,8 @@ package teksturepako.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import teksturepako.data.PakkuLock
-import teksturepako.debug
 import teksturepako.http.Http
 import teksturepako.platforms.CurseForge
 import teksturepako.platforms.Multiplatform
@@ -31,7 +27,9 @@ class Fetch : CliktCommand()
 
             if (project != null)
             {
-                val projectFile = project.files[CurseForge.serialName]?.first().debug(::println)
+                val projectFile = project.files[CurseForge.serialName]?.run {
+                    if (this.isNotEmpty()) first() else null
+                }
 
                 if (projectFile != null)
                 {
@@ -44,7 +42,7 @@ class Fetch : CliktCommand()
                     // Create parent folders
                     if (!folder.exists()) folder.mkdirs()
 
-                    launch(Dispatchers.IO) {
+                    withContext(Dispatchers.IO) {
                         // Download
                         val bytes = projectFile.url?.run { Http().requestByteArray(this) }
                         if (bytes != null) try

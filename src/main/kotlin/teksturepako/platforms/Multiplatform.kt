@@ -54,7 +54,17 @@ object Multiplatform
             val rqsts = CurseForge.requestProjectFilesFromId(mcVersion, loader, id)!!.second.take(1)
 
             rqsts.map { rqst ->
-                if (rqst.data is CfFile) rqst.url = CurseForge.requestUrl(id.toInt(), rqst.data.id)
+                if (rqst.data is CfFile)
+                {
+                    val url = CurseForge.requestUrl(id.toInt(), rqst.data.id)
+
+                    if (url != null)
+                    {
+                        // Replace empty character
+                        rqst.url = if (url.contains(" ")) url.replace(" ", "%20") else url
+                    }
+                }
+
             }
 
             project.files[CurseForge.serialName] = rqsts
