@@ -1,7 +1,4 @@
 # Pakku
-Multiplatform modpack manager for Minecraft: Java Edition
 
-## Future plans
+A multiplatform modpack manager for Minecraft: Java Edition.
 
-- CLI version
-- GUI version
