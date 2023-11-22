@@ -1,5 +1,6 @@
 package teksturepako.platforms
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
@@ -11,6 +12,7 @@ import teksturepako.projects.CfFile
 import teksturepako.projects.Project
 import teksturepako.projects.ProjectFile
 import teksturepako.projects.ProjectType
+import teksturepako.toPrettyString
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform()
@@ -47,7 +49,7 @@ object CurseForge : Platform()
 
         return Project(
             name = mutableMapOf(this.serialName to json["data"]!!.jsonObject["name"].finalize()),
-            slug = json["data"]!!.jsonObject["slug"].finalize(),
+            slug = mutableMapOf(this.serialName to json["data"]!!.jsonObject["slug"].finalize()),
             type = when (json["data"]!!.jsonObject["classId"]!!.toString().toInt())
             {
                 6    -> ProjectType.MOD
@@ -58,7 +60,7 @@ object CurseForge : Platform()
                 else -> throw Exception("Project type not found!")
             },
             id = mutableMapOf(this.serialName to json["data"]!!.jsonObject["id"].finalize()),
-            files = mutableMapOf(),
+            files = mutableListOf(),
         )
     }
 
@@ -71,42 +73,80 @@ object CurseForge : Platform()
 
         return Project(
             name = mutableMapOf(this.serialName to json["data"]!!.jsonArray.first().jsonObject["name"].finalize()),
-            slug = json["data"]!!.jsonArray.first().jsonObject["slug"].finalize(),
+            slug = mutableMapOf(this.serialName to json["data"]!!.jsonArray.first().jsonObject["slug"].finalize()),
             type = when (json["data"]!!.jsonArray.first().jsonObject["classId"]!!.toString().toInt())
             {
                 6    -> ProjectType.MOD
                 12   -> ProjectType.RESOURCE_PACK
+                17   -> ProjectType.WORLD
                 6552 -> ProjectType.SHADER
 
                 else -> return null.debug { println("Project type not found for $slug: ${(json["data"]!!.jsonArray
                     .first().jsonObject["classId"]!!.toString().toInt())}") }
             },
             id = mutableMapOf(this.serialName to json["data"]!!.jsonArray.first().jsonObject["id"].finalize()),
-            files = mutableMapOf(),
+            files = mutableListOf(),
         )
     }
 
     override suspend fun requestProjectFilesFromId(
-        mcVersion: String,
-        loader: String,
-        input: String
-    ): Pair<String, List<ProjectFile>>?
+        mcVersion: String, loader: String, input: String
+    ): MutableList<ProjectFile>?
     {
+        // https://cfproxy.bmpm.workers.dev/v1/mods/429235/files?modLoaderType=forge?modLoaderType=neoforge
+
+        val gameVersionTypeId = requestGameVersionTypeId(mcVersion)
+        val requestUrl = "mods/$input/files?gameVersionTypeId=$gameVersionTypeId&modLoaderType=$loader"
+
         val data: JsonObject = json.decodeFromString(
-            this.requestProjectBody("mods/$input/files?modLoaderType=$loader") ?: return null
+            this.requestProjectBody(requestUrl) ?: return null
+                    .debug { println("Error ${this.toPrettyString()}#val data = null") }
         )
         if (data["data"]!!.jsonArray.isEmpty()) return null
+                .debug { println("Error ${this.toPrettyString()}#data is empty") }
 
-        return Pair(name, data["data"]!!.jsonArray.asSequence().filter {
-            mcVersion in json.decodeFromJsonElement<List<String>>(it.jsonObject["gameVersions"]!!)
+        return data["data"]!!.jsonArray.filter { file ->
+            mcVersion in json.decodeFromJsonElement<List<String>>(file.jsonObject["gameVersions"]!!)
+                    && json.decodeFromJsonElement<List<SortableVersion>>(file.jsonObject["sortableGameVersions"]!!)
+                    .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
+                    .takeIf { it.isNotEmpty() }
+                            ?.any { loader == it.gameVersionName.lowercase() } ?: true
         }.map { file ->
-            ProjectFile(
+            CfFile(
                 fileName = file.jsonObject["fileName"].finalize(),
-                mcVersion = mcVersion,
-                url = null,
-                data = CfFile(file.jsonObject["id"].toString().toInt())
+                mcVersions = json.decodeFromJsonElement<List<SortableVersion>>(
+                    file.jsonObject["sortableGameVersions"]!!
+                ).filter { it.gameVersionTypeId == gameVersionTypeId }.map { it.gameVersionName }.toMutableList(),
+                loaders = json.decodeFromJsonElement<List<SortableVersion>>(
+                    file.jsonObject["sortableGameVersions"]!!
+                ).filter { it.gameVersionTypeId == 68441 }.map { it.gameVersionName.lowercase() }.toMutableList(),
+                releaseType = when (file.jsonObject["releaseType"].toString().toInt())
+                {
+                    1    -> "release"
+                    2    -> "beta"
+                    3    -> "alpha"
+
+                    else -> "release"
+                },
+                url = file.jsonObject["downloadUrl"].finalize().replace(" ", "%20"),
+                id = file.jsonObject["id"].toString().toInt()
             )
-        }.toList())
+        }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableList()
+    }
+
+    @Serializable
+    data class SortableVersion(
+        val gameVersionName: String,
+        val gameVersionTypeId: Int
+    )
+
+    suspend fun requestGameVersionTypeId(mcVersion: String): Int
+    {
+        return json.decodeFromString<JsonObject>(
+                this.requestProjectBody("minecraft/version/$mcVersion")
+                        ?: return 0.debug { println("Error $this#requestGameVersionTypeId") }
+        )["data"]!!.jsonObject["gameVersionTypeId"].toString().toInt()
+                .debug { println("$this#requestGameVersionTypeId: $it") }
     }
 
     suspend fun requestUrl(modId: Int, fileId: Int): String?
@@ -114,6 +154,11 @@ object CurseForge : Platform()
         return json.decodeFromString<JsonObject>(
             this.requestProjectBody("mods/$modId/files/$fileId/download-url") ?: return null
         )["data"].finalize()
+    }
+
+    fun fetchAlternativeDownloadUrl(fileId: Int, fileName: String): String {
+        return "https://edge.forgecdn.net/files/" +
+                "${fileId.toString().substring(0, 4)}/${fileId.toString().substring(4)}/$fileName"
     }
 }
 

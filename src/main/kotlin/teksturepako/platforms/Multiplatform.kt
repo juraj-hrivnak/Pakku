@@ -1,83 +1,75 @@
 package teksturepako.platforms
 
 import teksturepako.data.finalize
+import teksturepako.data.pakkuId
 import teksturepako.projects.CfFile
 import teksturepako.projects.Project
+import teksturepako.projects.ProjectFile
 
-object Multiplatform
-{
+object Multiplatform {
     val platforms = ArrayList<Platform>()
 
-    suspend fun requestProject(input: String): Project?
-    {
-        var cf = CurseForge.requestProject(input)
-        var mr = Modrinth.requestProject(input)
+    /**
+     * @return a [project][Project] with empty files.
+     */
+    suspend fun requestProject(input: String): Project? {
+        val pakkuId = pakkuId(input)
 
-        when
-        {
-            cf == null && mr != null ->
-            {
-                cf = CurseForge.requestProjectFromSlug(mr.slug.replace("\"", ""))
-            }
-            mr == null && cf != null ->
-            {
-                mr = Modrinth.requestProjectFromSlug(cf.slug.replace("\"", ""))
-            }
+        var cf = CurseForge.requestProject(input)?.apply { this.pakkuId = pakkuId }
+        var mr = Modrinth.requestProject(input)?.apply { this.pakkuId = pakkuId }
+
+        // Retrieve project from another platform if it's missing
+        if (cf == null && mr != null) {
+            cf = CurseForge.requestProjectFromSlug(mr.slug[Modrinth.serialName]!!.replace("\"", ""))
+        } else if (mr == null && cf != null) {
+            mr = Modrinth.requestProjectFromSlug(cf.slug[CurseForge.serialName]!!.replace("\"", ""))
         }
 
-        return when
-        {
-            cf != null && mr != null ->
-            {
-                Project(
-                    name = (cf.name + mr.name).toMutableMap(),
-                    slug = mr.slug,
-                    type = mr.type,
-                    id = (cf.id + mr.id).toMutableMap(),
-                    files = mutableMapOf(),
-                )
-            }
-            cf != null -> cf
-            mr != null -> mr
-            else -> null
-        }
+        // Combine projects or return one just of them
+        return cf?.let { c ->
+            mr?.let { m ->
+                c + m
+            } ?: c
+        } ?: mr
     }
 
-    suspend fun requestProjectFile(mcVersion: String, loader: String, input: String): Project?
-    {
+    /**
+     * @param numberOfFiles The number of requested files for each platform.
+     * @return a [project][Project] with [files][ProjectFile] provided.
+     */
+    suspend fun requestProjectFile(
+        mcVersions: List<String>,
+        loaders: List<String>,
+        input: String,
+        numberOfFiles: Int = 1
+    ): Project? {
         val project = requestProject(input) ?: return null
 
-        // Cf
-        if (project.id[CurseForge.serialName] != null)
-        {
-            val id = project.id[CurseForge.serialName].finalize()
-            val rqsts = CurseForge.requestProjectFilesFromId(mcVersion, loader, id)!!.second.take(1)
-
-            rqsts.map { rqst ->
-                if (rqst.data is CfFile)
-                {
-                    val url = CurseForge.requestUrl(id.toInt(), rqst.data.id)
-
-                    if (url != null)
+        // CurseForge
+        project.id[CurseForge.serialName].finalize().let { projectId ->
+            CurseForge.requestProjectFilesFromId(mcVersions, loaders, projectId)
+                .take(numberOfFiles)
+                .filterIsInstance<CfFile>()
+                .forEach { file ->
+                    // Request URL and add to project files
+                    if (file.url != "null") project.files.add(file) else
                     {
-                        // Replace empty character
-                        rqst.url = if (url.contains(" ")) url.replace(" ", "%20") else url
+                        val url = CurseForge.fetchAlternativeDownloadUrl(file.id, file.fileName)
+                        project.files.add(file.apply {
+                            // Replace empty character
+                            this.url = url.replace(" ", "%20")
+                        })
                     }
                 }
-
-            }
-
-            project.files[CurseForge.serialName] = rqsts
         }
 
-        // Mr
-        if (project.id[Modrinth.serialName] != null)
-        {
-            val id = project.id[Modrinth.serialName].finalize()
-            val rqsts = Modrinth.requestProjectFilesFromId(mcVersion, loader, id)!!.second.take(1)
-
-            project.files[Modrinth.serialName] = rqsts
+        // Modrinth
+        project.id[Modrinth.serialName].finalize().let { projectId ->
+            Modrinth.requestProjectFilesFromId(mcVersions, loaders, projectId)
+                .take(numberOfFiles)
+                .also { project.files.addAll(it) }
         }
+
         return project
     }
 }

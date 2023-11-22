@@ -43,7 +43,24 @@ abstract class Platform : Http()
     abstract suspend fun requestProjectFromId(id: String): Project?
     abstract suspend fun requestProjectFromSlug(slug: String): Project?
 
-    abstract suspend fun requestProjectFilesFromId(mcVersion: String, loader: String, input: String): Pair<String, List<ProjectFile>>?
+
+    suspend fun requestProjectFilesFromId(
+        mcVersions: List<String>, loaders: List<String>, input: String
+    ): MutableList<ProjectFile>
+    {
+        val result = mutableListOf<ProjectFile>()
+        for (mcVersion in mcVersions)
+        {
+            for (loader in loaders) requestProjectFilesFromId(mcVersion, loader, input)?.let {
+                result.addAll(it)
+            }
+        }
+        return result
+    }
+
+    abstract suspend fun requestProjectFilesFromId(
+        mcVersion: String, loader: String, input: String
+    ): MutableList<ProjectFile>?
 
 
     private fun init() = platforms.add(this)

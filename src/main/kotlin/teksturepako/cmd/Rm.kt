@@ -32,21 +32,21 @@ class Rm : CliktCommand("Remove mods")
                 Multiplatform.requestProject(arg) to arg
             }
         }.forEach {
-            val (result, arg) = it.await()
+            val (project, arg) = it.await()
 
-            if (result != null)
+            if (project != null)
             {
-                if (YesNoPrompt("Do you want to remove ${result.slug}?", terminal, true).ask() == true) {
+                if (YesNoPrompt("Do you want to remove ${project.slug}?", terminal, true).ask() == true) {
                     echo()
-                    terminal.danger("${result.slug} removed")
-                    PakkuLock.removeProject(result)
+                    terminal.danger("${project.slug} removed")
+                    PakkuLock.removeProject(project)
                 }
             }
             else
             {
                 terminal.warning("$arg not found")
                 PakkuLock.get { data ->
-                    data.projects.map { project -> project.slug }
+                    data.projects.map { project -> project.slug.values }.flatten()
                 }.also { args ->
                     typoSuggester(arg, args).first().let { arg ->
                         if (arg.isNotEmpty()) terminal.warning("Did you mean $arg?")
@@ -56,7 +56,6 @@ class Rm : CliktCommand("Remove mods")
             }
             echo()
         }
-        echo(Multiplatform.platforms.map { it.name })
     }
 
 }

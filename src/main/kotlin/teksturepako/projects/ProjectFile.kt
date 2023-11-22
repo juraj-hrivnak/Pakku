@@ -2,34 +2,46 @@ package teksturepako.projects
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
+import teksturepako.platforms.CurseForge
+import teksturepako.platforms.Modrinth
+
+abstract class IProjectFile {
+    open val fileName: String = ""
+    open val mcVersions: MutableList<String> = mutableListOf()
+    open val loaders: MutableList<String> = mutableListOf()
+    open val releaseType: String = ""
+    open var url: String? = null
+}
 
 @Serializable
-data class ProjectFile(
+sealed class ProjectFile(
+    val type: String
+) : IProjectFile()
+
+@Serializable
+data class MrFile(
     @SerialName("file_name")
-    val fileName: String,
+    override val fileName: String,
+    @SerialName("mc_versions")
+    override val mcVersions: MutableList<String>,
+    override val loaders: MutableList<String>,
+    @SerialName("release_type")
+    override val releaseType: String,
+    override var url: String?,
 
-    @SerialName("mc_version")
-    val mcVersion: String,
-
-    var url: String? = null,
-
-    @Transient
-    val data: PlatformFileData? = null,
-)
-
-abstract class PlatformFileData {
-    abstract val data: Any
-}
+    val hashes: MutableMap<String, String>? = null
+) : ProjectFile(Modrinth.serialName)
 
 @Serializable
-data class MrFile(val hashes: MutableMap<String, String> = mutableMapOf()) : PlatformFileData()
-{
-    override val data = hashes
-}
+data class CfFile(
+    @SerialName("file_name")
+    override val fileName: String,
+    @SerialName("mc_versions")
+    override val mcVersions: MutableList<String>,
+    override val loaders: MutableList<String>,
+    @SerialName("release_type")
+    override val releaseType: String,
+    override var url: String?,
 
-@Serializable
-data class CfFile(val id: Int) : PlatformFileData()
-{
-    override val data = id
-}
+    val id: Int
+) : ProjectFile(CurseForge.serialName)

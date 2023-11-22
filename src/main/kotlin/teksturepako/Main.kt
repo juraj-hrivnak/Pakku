@@ -2,7 +2,6 @@ package teksturepako
 
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.rendering.Theme
 import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.cmd.*
@@ -16,7 +15,7 @@ fun main(args: Array<String>)
     Pakku().context {
         terminal = Terminal(
             theme = Theme.Default,
-            ansiLevel = AnsiLevel.ANSI256,
+            ansiLevel = null,
             interactive = true
         )
     }.subcommands(

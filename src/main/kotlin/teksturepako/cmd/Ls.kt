@@ -5,25 +5,25 @@ import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import teksturepako.data.PakkuLock
-import teksturepako.platforms.Multiplatform
 
 class Ls : CliktCommand("List mods")
 {
     override fun run() = runBlocking {
-        PakkuLock.get { data ->
+        var listed = false
+
+        for (it in PakkuLock.get { data ->
+            if (data.projects.isNotEmpty()) listed = true
             data.projects.map { project ->
                 async {
-                    Multiplatform.requestProject(project.slug)
+                    project.name
                 }
             }
-        }.forEach {
-            val project = it.await()
+        }) {
+            val name = it.await()
 
-            if (project != null)
-            {
-                terminal.success(project.slug)
-            }
+            terminal.success(name.values.first())
         }
-        echo()
+
+        if (listed) echo()
     }
 }

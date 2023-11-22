@@ -1,9 +1,6 @@
 package teksturepako.platforms
 
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.*
 import teksturepako.data.finalize
 import teksturepako.data.json
 import teksturepako.projects.MrFile
@@ -24,7 +21,7 @@ object Modrinth : Platform()
 
         return Project(
             name = mutableMapOf(this.serialName to json["title"].finalize()),
-            slug = json["slug"].finalize(),
+            slug = mutableMapOf(this.serialName to json["slug"].finalize()),
             type = when (json["project_type"].finalize())
             {
                 "mod"          -> ProjectType.MOD
@@ -34,7 +31,7 @@ object Modrinth : Platform()
                 else           -> throw Exception("Project type not found!")
             },
             id = mutableMapOf(this.serialName to json["id"].finalize()),
-            files = mutableMapOf(),
+            files = mutableListOf(),
         )
     }
 
@@ -44,7 +41,7 @@ object Modrinth : Platform()
 
         return Project(
             name = mutableMapOf(this.serialName to json["title"].finalize()),
-            slug = json["slug"].finalize(),
+            slug = mutableMapOf(this.serialName to json["slug"].finalize()),
             type = when (json["project_type"].finalize())
             {
                 "mod"          -> ProjectType.MOD
@@ -54,35 +51,37 @@ object Modrinth : Platform()
                 else           -> throw Exception("Project type not found!")
             },
             id = mutableMapOf(this.serialName to json["id"].finalize()),
-            files = mutableMapOf(),
+            files = mutableListOf(),
         )
     }
 
     override suspend fun requestProjectFilesFromId(
         mcVersion: String, loader: String, input: String
-    ): Pair<String, List<ProjectFile>>?
+    ): MutableList<ProjectFile>?
     {
         val data: JsonArray = json.decodeFromString(this.requestProjectBody("project/$input/version") ?: return null)
 
-        return Pair(name, data.filter { version ->
-            mcVersion in version.jsonObject["game_versions"]!!.jsonArray.map { it.finalize() }
-                    && loader in version.jsonObject["loaders"]!!.jsonArray.map { it.finalize() }
+        return data.filter { file ->
+            mcVersion in file.jsonObject["game_versions"]!!.jsonArray.map { it.finalize() }
+                    && loader in file.jsonObject["loaders"]!!.jsonArray.map { it.finalize() }
         }.flatMap { version ->
             version.jsonObject["files"]!!.jsonArray.map { file ->
-                ProjectFile(
+                MrFile(
                     fileName = file.jsonObject["filename"].finalize(),
-                    mcVersion = mcVersion,
+                    mcVersions = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["game_versions"]!!),
+                    loaders = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["loaders"]!!),
+                    releaseType = file.jsonObject["version_type"].finalize().run {
+                        if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
+                    },
                     url = file.jsonObject["url"].finalize(),
-                    data = file.jsonObject["hashes"]?.let {
-                        MrFile(
-                            mutableMapOf(
-                                "sha512" to it.jsonObject["sha512"].finalize(),
-                                "sha1" to it.jsonObject["sha1"].finalize()
-                            )
+                    hashes = file.jsonObject["hashes"]?.let {
+                        mutableMapOf(
+                            "sha512" to it.jsonObject["sha512"].finalize(),
+                            "sha1" to it.jsonObject["sha1"].finalize()
                         )
                     }
                 )
             }
-        }.toList())
+        }.toMutableList()
     }
 }

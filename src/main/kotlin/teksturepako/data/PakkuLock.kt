@@ -25,20 +25,21 @@ data class PakkuLock(
     /**
      * This pack's Minecraft version
      */
-    @SerialName("mc_version")
-    var mcVersion: String,
+    @SerialName("mc_versions")
+    var mcVersions: MutableList<String>,
 
     /**
      * The mod loader
      */
-    @SerialName("mod_loader")
-    var modLoader: String,
+    @SerialName("loaders")
+    var loaders: MutableList<String>,
 
     /**
      * List of projects.
      */
     val projects: MutableList<Project> = mutableListOf()
 ) {
+    @Suppress("unused")
     companion object
     {
         @OptIn(ExperimentalSerializationApi::class)
@@ -46,7 +47,8 @@ data class PakkuLock(
         {
             File("pakku-lock.json").also { pakkuLock ->
                 // Try to get read json data first
-                val data: PakkuLock = try
+                // If pakkuLock does not exist, create a new one
+                val data: PakkuLock = if (pakkuLock.exists()) try
                 {
                     json.decodeFromString<PakkuLock>(readFile(pakkuLock, Charsets.UTF_8))
                 }
@@ -54,6 +56,10 @@ data class PakkuLock(
                 {
                     debug { e.printStackTrace() }
                     return
+                }
+                else
+                {
+                    PakkuLock("", mutableListOf(), mutableListOf(), mutableListOf())
                 }
 
                 // Handle data manipulation
@@ -80,7 +86,7 @@ data class PakkuLock(
                 catch (e: Exception)
                 {
                     debug { e.printStackTrace() }
-                    PakkuLock("", "", "", mutableListOf())
+                    PakkuLock("", mutableListOf(), mutableListOf(), mutableListOf())
                 }
 
                 // Get data
@@ -100,7 +106,7 @@ data class PakkuLock(
             }
 
             // Sort alphabetically
-            data.projects.sortBy { it.slug }
+            data.projects.sortBy { it.slug.values.first() }
         }
 
         suspend fun removeProject(vararg projects: Project) = handle { data ->
@@ -113,12 +119,26 @@ data class PakkuLock(
         }
 
         suspend fun setPackName(packName: String) = handle { data -> data.packName = packName }
-        suspend fun setMcVersion(mcVersion: String) = handle { data -> data.mcVersion = mcVersion }
-        suspend fun setModLoader(modLoader: String) = handle { data -> data.modLoader = modLoader }
+
+        suspend fun setMcVersion(vararg mcVersion: String) = handle {
+            data -> data.mcVersions.clear(); data.mcVersions.addAll(mcVersion)
+        }
+        suspend fun setMcVersion(mcVersions: List<String>) = handle {
+            data -> data.mcVersions.clear(); data.mcVersions.addAll(mcVersions)
+        }
+
+        suspend fun setModLoader(vararg loader: String) = handle {
+            data -> data.loaders.clear(); data.loaders.addAll(loader)
+        }
+        suspend fun setModLoader(loaders: List<String>) = handle {
+            data -> data.loaders.clear(); data.loaders.addAll(loaders)
+        }
+
 
         suspend fun getPackName() = get { data -> data.packName }
-        suspend fun getMcVersion() = get { data -> data.mcVersion }
-        suspend fun getModLoader() = get { data -> data.modLoader }
+        suspend fun getMcVersions() = get { data -> data.mcVersions }
+        suspend fun getLoaders() = get { data -> data.loaders }
+
 
         @Throws(IOException::class)
         suspend fun readFile(file: File, encoding: Charset): String

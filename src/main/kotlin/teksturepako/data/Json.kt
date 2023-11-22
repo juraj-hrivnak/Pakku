@@ -6,6 +6,7 @@ val json = Json {
     prettyPrint = true
     isLenient = true
     ignoreUnknownKeys = true
+    classDiscriminator = "_internal"
 }
 
 fun Any?.finalize(): String

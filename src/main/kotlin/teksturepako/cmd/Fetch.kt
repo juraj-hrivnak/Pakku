@@ -2,7 +2,10 @@ package teksturepako.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import teksturepako.data.PakkuLock
 import teksturepako.http.Http
 import teksturepako.platforms.CurseForge
@@ -18,7 +21,7 @@ class Fetch : CliktCommand()
         for (it in PakkuLock.get { data ->
             data.projects.map { project ->
                 async {
-                    Multiplatform.requestProjectFile(data.mcVersion, data.modLoader, project.slug)
+                    Multiplatform.requestProjectFile(data.mcVersions, data.loaders, project.slug[CurseForge.serialName]!!)
                 }
             }
         })
@@ -27,7 +30,7 @@ class Fetch : CliktCommand()
 
             if (project != null)
             {
-                val projectFile = project.files[CurseForge.serialName]?.run {
+                val projectFile = project.files.run {
                     if (this.isNotEmpty()) first() else null
                 }
 
