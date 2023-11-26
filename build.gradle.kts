@@ -5,7 +5,7 @@ plugins {
     application
 }
 
-group = "teksturepako"
+group = "teksturepako.pakku"
 version = "0.0.2"
 
 repositories {
@@ -39,13 +39,13 @@ kotlin {
 }
 
 application {
-    mainClass.set("teksturepako.MainKt")
+    mainClass.set("teksturepako.pakku.MainKt")
 }
 
 tasks.withType<Jar> {
     // Otherwise you'll get a "No main manifest attribute" error
     manifest {
-        attributes["Main-Class"] = "teksturepako.MainKt"
+        attributes["Main-Class"] = "teksturepako.pakku.MainKt"
     }
 
     // To avoid the duplicate handling strategy error

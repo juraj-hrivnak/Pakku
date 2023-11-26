@@ -1,4 +1,4 @@
-package teksturepako.cmd
+package teksturepako.pakku.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
@@ -6,10 +6,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import teksturepako.data.PakkuLock
-import teksturepako.http.Http
-import teksturepako.platforms.CurseForge
-import teksturepako.platforms.Multiplatform
+import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.http.Http
+import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.api.platforms.Multiplatform
 import kotlin.io.path.Path
 import kotlin.io.path.writeBytes
 
@@ -21,7 +21,11 @@ class Fetch : CliktCommand()
         for (it in PakkuLock.get { data ->
             data.projects.map { project ->
                 async {
-                    Multiplatform.requestProjectFile(data.mcVersions, data.loaders, project.slug[CurseForge.serialName]!!)
+                    Multiplatform.requestProjectFiles(
+                        data.mcVersions,
+                        data.loaders,
+                        project.slug[CurseForge.serialName]!!
+                    )
                 }
             }
         })
@@ -54,8 +58,7 @@ class Fetch : CliktCommand()
                             outputFile.writeBytes(bytes)
                             terminal.success(outputFile)
                             fetched = true
-                        }
-                        catch (e: Exception)
+                        } catch (e: Exception)
                         {
                             e.printStackTrace()
                         }

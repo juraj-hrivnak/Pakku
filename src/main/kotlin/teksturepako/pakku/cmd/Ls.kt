@@ -1,10 +1,10 @@
-package teksturepako.cmd
+package teksturepako.pakku.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import teksturepako.data.PakkuLock
+import teksturepako.pakku.api.data.PakkuLock
 
 class Ls : CliktCommand("List mods")
 {
@@ -18,7 +18,8 @@ class Ls : CliktCommand("List mods")
                     project.name
                 }
             }
-        }) {
+        })
+        {
             val name = it.await()
 
             terminal.success(name.values.first())

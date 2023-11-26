@@ -1,4 +1,4 @@
-package teksturepako
+package teksturepako.pakku
 
 /*
  * Jaro Winkler Similarity
@@ -23,13 +23,12 @@ import kotlin.math.min
 
 fun typoSuggester(enteredValue: String, possibleValues: List<String>): List<String>
 {
-    return possibleValues.map { it to jaroWinklerSimilarity(enteredValue, it) }
-        .filter { it.second > 0.8 }
-        .sortedByDescending { it.second }
-        .map { it.first }
+    return possibleValues.map { it to jaroWinklerSimilarity(enteredValue, it) }.filter { it.second > 0.8 }
+        .sortedByDescending { it.second }.map { it.first }
 }
 
-private fun jaroSimilarity(s1: String, s2: String): Double {
+private fun jaroSimilarity(s1: String, s2: String): Double
+{
     if (s1.isEmpty() && s2.isEmpty()) return 1.0
     else if (s1.isEmpty() || s2.isEmpty()) return 0.0
     else if (s1.length == 1 && s2.length == 1) return if (s1[0] == s2[0]) 1.0 else 0.0
@@ -40,10 +39,12 @@ private fun jaroSimilarity(s1: String, s2: String): Double {
     var transpositions = 0
     var s2MatchIndex = 0
 
-    for ((i, c1) in s1.withIndex()) {
+    for ((i, c1) in s1.withIndex())
+    {
         val start = max(0, i - searchRange)
         val end = min(s2.lastIndex, i + searchRange)
-        for (j in start..end) {
+        for (j in start..end)
+        {
             val c2 = s2[j]
             if (c1 != c2 || s2Consumed[j]) continue
             s2Consumed[j] = true
@@ -54,15 +55,15 @@ private fun jaroSimilarity(s1: String, s2: String): Double {
         }
     }
 
-    return when (matches) {
-        0.0 -> 0.0
-        else -> (matches / s1.length +
-                matches / s2.length +
-                (matches - transpositions) / matches) / 3.0
+    return when (matches)
+    {
+        0.0  -> 0.0
+        else -> (matches / s1.length + matches / s2.length + (matches - transpositions) / matches) / 3.0
     }
 }
 
-internal fun jaroWinklerSimilarity(s1: String, s2: String): Double {
+internal fun jaroWinklerSimilarity(s1: String, s2: String): Double
+{
     val prefixLength = s1.commonPrefixWith(s2).length
     val jaro = jaroSimilarity(s1, s2)
     val winkler = jaro + (0.1 * prefixLength * (1 - jaro))

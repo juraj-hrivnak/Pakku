@@ -1,4 +1,4 @@
-package teksturepako
+package teksturepako.pakku
 
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -13,7 +13,8 @@ var debugMode = false
  * Debug scope function; Use anywhere to add code called only in debug mode.
  */
 @OptIn(ExperimentalContracts::class)
-inline fun <T> T.debug(block: (T) -> Unit): T {
+inline fun <T> T.debug(block: (T) -> Unit): T
+{
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
@@ -41,11 +42,13 @@ fun Any.toPrettyString(): String
                 indentLevel++
                 stringBuilder.appendLine(char).append(padding())
             }
+
             ')', ']', '}' ->
             {
                 indentLevel--
                 stringBuilder.appendLine().append(padding()).append(char)
             }
+
             ','           ->
             {
                 stringBuilder.appendLine(char).append(padding())
@@ -53,6 +56,7 @@ fun Any.toPrettyString(): String
                 val nextChar = toString.getOrElse(i + 1) { char }
                 if (nextChar == ' ') i++
             }
+
             else          -> stringBuilder.append(char)
         }
         i++

@@ -1,4 +1,4 @@
-package teksturepako.http
+package teksturepako.pakku.api.http
 
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*

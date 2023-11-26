@@ -1,4 +1,4 @@
-package teksturepako.data
+package teksturepako.pakku.api.data
 
 import kotlinx.serialization.json.Json
 
