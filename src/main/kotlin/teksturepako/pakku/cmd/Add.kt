@@ -62,7 +62,7 @@ class Add : CliktCommand("Add mods")
                 if (project.hasNoFilesForPlatform(platform))
                 {
                     defaultPrompt = false
-                    terminal.danger("No files for $arg found on ${CurseForge.name}")
+                    terminal.danger("No files for $arg found on ${platform.name}")
                     echo()
                 }
             }
