@@ -7,6 +7,8 @@ import teksturepako.pakku.api.projects.MrFile
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.debug
+import teksturepako.pakku.toPrettyString
 
 object Modrinth : Platform()
 {
@@ -67,13 +69,22 @@ object Modrinth : Platform()
         mcVersion: String, loader: String, input: String
     ): MutableList<ProjectFile>?
     {
-        val data: JsonArray = json.decodeFromString(this.requestProjectBody("project/$input/version") ?: return null)
+        val data: JsonArray = json.decodeFromString(this.requestProjectBody("project/$input/version") ?: return null
+            .debug {println("Error ${this.toPrettyString()}#val data = null") }
+        )
 
         return data.filter { file ->
-            mcVersion in file.jsonObject["game_versions"]!!.jsonArray.map { it.finalize() } && loader in file.jsonObject["loaders"]!!.jsonArray.map { it.finalize() }
+            mcVersion in file.jsonObject["game_versions"]!!.jsonArray.map { it.finalize() }
+                    && json.decodeFromJsonElement<MutableList<String>>(file.jsonObject["loaders"]!!)
+                        .takeIf { it.isNotEmpty() }
+                        ?.map { it.lowercase() }
+                        ?.any {
+                            loader == it || it in listOf("minecraft", "iris", "optifine", "datapack")
+                        } ?: true
         }.flatMap { version ->
             version.jsonObject["files"]!!.jsonArray.map { file ->
-                MrFile(fileName = file.jsonObject["filename"].finalize(),
+                MrFile(
+                    fileName = file.jsonObject["filename"].finalize(),
                     mcVersions = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["game_versions"]!!),
                     loaders = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["loaders"]!!),
                     releaseType = file.jsonObject["version_type"].finalize().run {
@@ -84,8 +95,9 @@ object Modrinth : Platform()
                         mutableMapOf(
                             "sha512" to it.jsonObject["sha512"].finalize(), "sha1" to it.jsonObject["sha1"].finalize()
                         )
-                    })
+                    }
+                )
             }
-        }.toMutableList()
+        }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableList()
     }
 }

@@ -140,6 +140,12 @@ data class Project(
     fun fileNamesNotMatchAcrossPlatforms(platforms: List<Platform>): Boolean = !fileNamesMatchAcrossPlatforms(platforms)
 
 
+    fun getFilesForPlatform(platform: Platform): List<ProjectFile>
+    {
+        return this.files.filter { platform.serialName == it.type }
+    }
+
+
     init
     {
         // Init Pakku ID

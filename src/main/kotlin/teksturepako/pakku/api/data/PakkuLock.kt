@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package teksturepako.pakku.api.data
 
 import kotlinx.coroutines.Dispatchers
@@ -19,17 +21,17 @@ data class PakkuLock(
     /**
      * The pack name.
      */
-    @SerialName("pack_name") var packName: String,
+    @SerialName("pack_name") var packName: String = "",
 
     /**
      * This pack's Minecraft version
      */
-    @SerialName("mc_versions") var mcVersions: MutableList<String>,
+    @SerialName("mc_versions") var mcVersions: MutableList<String> = mutableListOf(),
 
     /**
      * The mod loader
      */
-    var loaders: MutableList<String>,
+    var loaders: MutableList<String> = mutableListOf(),
 
     /**
      * List of projects.
@@ -55,7 +57,7 @@ data class PakkuLock(
                 }
                 else
                 {
-                    PakkuLock("", mutableListOf(), mutableListOf(), mutableListOf())
+                    PakkuLock()
                 }
 
                 // Handle data manipulation
@@ -81,7 +83,7 @@ data class PakkuLock(
                 } catch (e: Exception)
                 {
                     debug { e.printStackTrace() }
-                    PakkuLock("", mutableListOf(), mutableListOf(), mutableListOf())
+                    PakkuLock()
                 }
 
                 // Get data
@@ -172,6 +174,11 @@ data class PakkuLock(
             return (project.slug.values.any { slug -> slug in projects.flatMap { it.slug.values } }
                 || project.id.values.any { id -> id in projects.flatMap { it.id.values }})
         }
+
+        suspend fun getAllProjects(): List<Project> = get { data ->
+            data.projects
+        }
+
         suspend fun getPackName() = get { data -> data.packName }
         suspend fun getMcVersions() = get { data -> data.mcVersions }
         suspend fun getLoaders() = get { data -> data.loaders }

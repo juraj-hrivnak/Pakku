@@ -11,7 +11,6 @@ import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.ProjectActions
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.debug
 import teksturepako.pakku.toPrettyString

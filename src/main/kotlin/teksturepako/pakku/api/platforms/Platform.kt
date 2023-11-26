@@ -1,7 +1,6 @@
 package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.http.Http
-import teksturepako.pakku.api.platforms.Multiplatform.platforms
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
@@ -78,12 +77,4 @@ abstract class Platform : Http()
     abstract suspend fun requestProjectFilesFromId(
         mcVersion: String, loader: String, input: String
     ): MutableList<ProjectFile>?
-
-
-    private fun init() = platforms.add(this)
-
-    init
-    {
-        init()
-    }
 }

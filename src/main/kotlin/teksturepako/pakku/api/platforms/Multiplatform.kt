@@ -7,7 +7,10 @@ import teksturepako.pakku.api.projects.Project
 object Multiplatform
 {
     /** List of registered platforms. */
-    val platforms = ArrayList<Platform>()
+    val platforms = listOf(
+        CurseForge,
+        Modrinth
+    )
 
     /**
      * Requests a project from all platforms based on the provided input.
@@ -60,10 +63,8 @@ object Multiplatform
 
         // CurseForge
         project.id[CurseForge.serialName].finalize().let { projectId ->
-            CurseForge.requestProjectFilesFromId(mcVersions, loaders, projectId)
-                .take(numberOfFiles)
-                .filterIsInstance<CfFile>()
-                .forEach { file ->
+            CurseForge.requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
+                .filterIsInstance<CfFile>().forEach { file ->
                     // Request URL if is null and add to project files.
                     if (file.url != "null") project.files.add(file) else
                     {
@@ -78,8 +79,7 @@ object Multiplatform
 
         // Modrinth
         project.id[Modrinth.serialName].finalize().let { projectId ->
-            Modrinth.requestProjectFilesFromId(mcVersions, loaders, projectId)
-                .take(numberOfFiles)
+            Modrinth.requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
                 .also { project.files.addAll(it) }
         }
 

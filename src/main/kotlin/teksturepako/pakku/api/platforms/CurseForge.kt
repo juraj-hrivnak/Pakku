@@ -110,6 +110,7 @@ object CurseForge : Platform()
     ): MutableList<ProjectFile>?
     {
         val gameVersionTypeId = requestGameVersionTypeId(mcVersion)
+        // TODO: versions
         val requestUrl = "mods/$input/files?gameVersionTypeId=$gameVersionTypeId&modLoaderType=$loader"
 
         val data: JsonObject = json.decodeFromString(this.requestProjectBody(requestUrl) ?: return null
@@ -124,7 +125,10 @@ object CurseForge : Platform()
                     && json.decodeFromJsonElement<List<SortableVersion>>(file.jsonObject["sortableGameVersions"]!!)
                         .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
                         .takeIf { it.isNotEmpty() }
-                        ?.any { loader == it.gameVersionName.lowercase() } ?: true
+                        ?.map { it.gameVersionName.lowercase() }
+                        ?.any {
+                            loader == it || it in listOf("minecraft", "iris", "optifine", "datapack")
+                        } ?: true
         }.map { file ->
             CfFile(fileName = file.jsonObject["fileName"].finalize(),
                 mcVersions = json.decodeFromJsonElement<List<SortableVersion>>(file.jsonObject["sortableGameVersions"]!!)

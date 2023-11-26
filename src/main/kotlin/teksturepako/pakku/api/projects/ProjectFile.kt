@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.projects
 
+import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.platforms.CurseForge
@@ -16,7 +17,7 @@ abstract class IProjectFile
 
 @Serializable
 sealed class ProjectFile(
-    val type: String
+    @Required val type: String
 ) : IProjectFile()
 
 @Serializable
