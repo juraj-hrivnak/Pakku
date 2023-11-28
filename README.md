@@ -12,7 +12,7 @@ A multiplatform modpack manager for Minecraft: Java Edition.
 ## Usage
 
 ```
-pakku [<options>] <command> [<args>]...
+java -jar Pakku-<version>.jar [<options>] <command> [<args>]...
 ```
 
 <table>
