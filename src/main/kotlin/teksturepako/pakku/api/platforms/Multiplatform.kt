@@ -1,7 +1,5 @@
 package teksturepako.pakku.api.platforms
 
-import teksturepako.pakku.api.data.finalize
-import teksturepako.pakku.api.projects.CfFile
 import teksturepako.pakku.api.projects.Project
 
 object Multiplatform
@@ -55,32 +53,15 @@ object Multiplatform
      * @return A [Project] object with requested project files from all platforms.
      *         Returns null if the initial project request is unsuccessful.
      */
-    suspend fun requestProjectFiles(
+    suspend fun requestProjectWithFiles(
         mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int = 1
     ): Project?
     {
         val project = requestProject(input) ?: return null
 
-        // CurseForge
-        project.id[CurseForge.serialName].finalize().let { projectId ->
-            CurseForge.requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
-                .filterIsInstance<CfFile>().forEach { file ->
-                    // Request URL if is null and add to project files.
-                    if (file.url != "null") project.files.add(file) else
-                    {
-                        val url = CurseForge.fetchAlternativeDownloadUrl(file.id, file.fileName)
-                        project.files.add(file.apply {
-                            // Replace empty characters in the URL.
-                            this.url = url.replace(" ", "%20")
-                        })
-                    }
-                }
-        }
-
-        // Modrinth
-        project.id[Modrinth.serialName].finalize().let { projectId ->
-            Modrinth.requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
-                .also { project.files.addAll(it) }
+        for (platform in platforms)
+        {
+            project.files.addAll(platform.requestFilesForProject(mcVersions, loaders, project, numberOfFiles))
         }
 
         return project

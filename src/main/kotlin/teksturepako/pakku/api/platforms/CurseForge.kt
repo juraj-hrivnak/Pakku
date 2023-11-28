@@ -62,7 +62,7 @@ object CurseForge : Platform()
                 else -> throw Exception("Project type not found!")
             },
             id = mutableMapOf(serialName to json["data"]!!.jsonObject["id"].finalize()),
-            files = mutableListOf(),
+            files = mutableSetOf(),
         )
     }
 
@@ -93,7 +93,7 @@ object CurseForge : Platform()
                 }
             },
             id = mutableMapOf(serialName to json["data"]!!.jsonArray.first().jsonObject["id"].finalize()),
-            files = mutableListOf(),
+            files = mutableSetOf(),
         )
     }
 
@@ -107,7 +107,7 @@ object CurseForge : Platform()
      */
     override suspend fun requestProjectFilesFromId(
         mcVersion: String, loader: String, input: String
-    ): MutableList<ProjectFile>?
+    ): MutableSet<ProjectFile>?
     {
         val gameVersionTypeId = requestGameVersionTypeId(mcVersion)
         // TODO: versions
@@ -149,7 +149,7 @@ object CurseForge : Platform()
                 },
                 url = file.jsonObject["downloadUrl"].finalize().replace(" ", "%20"),
                 id = file.jsonObject["id"].toString().toInt())
-        }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableList()
+        }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableSet()
     }
 
     @Serializable
@@ -176,5 +176,28 @@ object CurseForge : Platform()
         return "https://edge.forgecdn.net/files/" + "${fileId.toString().substring(0, 4)}/${
             fileId.toString().substring(4)
         }/$fileName"
+    }
+
+    override suspend fun requestFilesForProject(
+        mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int
+    ): MutableSet<ProjectFile>
+    {
+        val result = mutableSetOf<ProjectFile>()
+        project.id[this.serialName]?.let { projectId ->
+            requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
+                .filterIsInstance<CfFile>()
+                .forEach { file ->
+                    // Request URL if is null and add to project files.
+                    if (file.url != "null") result.add(file) else
+                    {
+                        val url = fetchAlternativeDownloadUrl(file.id, file.fileName)
+                        result.add(file.apply {
+                            // Replace empty characters in the URL.
+                            this.url = url.replace(" ", "%20")
+                        })
+                    }
+                }
+        }
+        return result
     }
 }

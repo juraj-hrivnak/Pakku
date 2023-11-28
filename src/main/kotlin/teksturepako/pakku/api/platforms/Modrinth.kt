@@ -33,7 +33,7 @@ object Modrinth : Platform()
                 else           -> throw Exception("Project type not found!")
             },
             id = mutableMapOf(serialName to json["id"].finalize()),
-            files = mutableListOf(),
+            files = mutableSetOf(),
         )
     }
 
@@ -53,7 +53,7 @@ object Modrinth : Platform()
                 else           -> throw Exception("Project type not found!")
             },
             id = mutableMapOf(serialName to json["id"].finalize()),
-            files = mutableListOf(),
+            files = mutableSetOf(),
         )
     }
 
@@ -67,7 +67,7 @@ object Modrinth : Platform()
      */
     override suspend fun requestProjectFilesFromId(
         mcVersion: String, loader: String, input: String
-    ): MutableList<ProjectFile>?
+    ): MutableSet<ProjectFile>?
     {
         val data: JsonArray = json.decodeFromString(this.requestProjectBody("project/$input/version") ?: return null
             .debug {println("Error ${this.toPrettyString()}#val data = null") }
@@ -98,6 +98,19 @@ object Modrinth : Platform()
                     }
                 )
             }
-        }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableList()
+        }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableSet()
+    }
+
+    override suspend fun requestFilesForProject(
+        mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int
+    ): MutableSet<ProjectFile>
+    {
+        val result = mutableSetOf<ProjectFile>()
+        project.id[this.serialName]?.let { projectId ->
+            requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
+                .filterIsInstance<MrFile>()
+                .also { result.addAll(it) }
+        }
+        return result
     }
 }

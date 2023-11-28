@@ -54,13 +54,16 @@ abstract class Platform : Http()
      */
     suspend fun requestProjectFilesFromId(
         mcVersions: List<String>, loaders: List<String>, input: String
-    ): MutableList<ProjectFile>
+    ): MutableSet<ProjectFile>
     {
-        val result = mutableListOf<ProjectFile>()
+        val result = mutableSetOf<ProjectFile>()
         for (mcVersion in mcVersions)
         {
             for (loader in loaders) requestProjectFilesFromId(mcVersion, loader, input)?.let {
-                result.addAll(it)
+                for (projectFile in it)
+                {
+                    if (projectFile !in result) result.add(projectFile)
+                }
             }
         }
         return result
@@ -76,5 +79,20 @@ abstract class Platform : Http()
      */
     abstract suspend fun requestProjectFilesFromId(
         mcVersion: String, loader: String, input: String
-    ): MutableList<ProjectFile>?
+    ): MutableSet<ProjectFile>?
+
+    abstract suspend fun requestFilesForProject(
+        mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int = 1
+    ): MutableSet<ProjectFile>
+
+    suspend fun requestProjectWithFiles(
+        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int = 1
+    ): Project?
+    {
+        val project = requestProject(input) ?: return null
+
+        project.files.addAll(requestFilesForProject(mcVersions, loaders, project, numberOfFiles))
+
+        return project
+    }
 }

@@ -15,7 +15,7 @@ object ProjectActions
 
         if (prompt.isNullOrBlank()) return null
 
-        return Multiplatform.requestProjectFiles(
+        return Multiplatform.requestProjectWithFiles(
             PakkuLock.getMcVersions(), PakkuLock.getLoaders(), prompt
         )
     }

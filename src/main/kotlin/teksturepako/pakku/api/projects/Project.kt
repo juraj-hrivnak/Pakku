@@ -43,7 +43,7 @@ data class Project(
     /**
      * Map of *platform name* to associated files.
      */
-    val files: MutableList<ProjectFile>
+    val files: MutableSet<ProjectFile>
 )
 {
     /**
@@ -64,8 +64,34 @@ data class Project(
             name = (this.name + other.name).toMutableMap(),
             slug = (this.slug + other.slug).toMutableMap(),
             id = (this.id + other.id).toMutableMap(),
-            files = (this.files + other.files).toMutableList(),
+            files = (this.files + other.files).toMutableSet(),
         )
+    }
+
+
+    fun plus(other: Project, replaceFiles: Boolean): Project
+    {
+        if (this.type != other.type) throw Exception("Can not combine two projects of different type!")
+
+        return Project(
+            pakkuId = this.pakkuId,
+            type = this.type,
+
+            name = (this.name + other.name).toMutableMap(),
+            slug = (this.slug + other.slug).toMutableMap(),
+            id = (this.id + other.id).toMutableMap(),
+            files = if (replaceFiles) other.files else (this.files + other.files).toMutableSet(),
+        )
+    }
+
+    operator fun contains(other: Project): Boolean
+    {
+        return this.slug.values.any { it in other.slug.values } || this.id.values.any { it in other.id.values }
+    }
+
+    operator fun contains(input: String): Boolean
+    {
+        return input in this.slug.values || input in this.id.values
     }
 
     /**

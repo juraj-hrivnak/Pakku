@@ -110,11 +110,10 @@ data class PakkuLock(
                 {
                     // Add project
                     data.projects.add(project)
-
-                    // Sort alphabetically
-                    data.projects.sortBy { it.slug.values.first() }
                 }
             }
+            // Sort alphabetically
+            data.projects.sortBy { it.slug.values.first() }
         }
 
         suspend fun updateProject(vararg projects: Project) = handle { data ->
@@ -131,7 +130,6 @@ data class PakkuLock(
                 // Add project
                 data.projects.add(project)
             }
-
             // Sort alphabetically
             data.projects.sortBy { it.slug.values.first() }
         }
@@ -165,14 +163,14 @@ data class PakkuLock(
         }
 
 
-        suspend fun isProjectAdded(project: Project): Boolean
-        {
-            val projects = get { data ->
-                data.projects
-            }
+        suspend fun isProjectAdded(project: Project): Boolean = get { data ->
+            data.projects.any { project in it }
+        }
 
-            return (project.slug.values.any { slug -> slug in projects.flatMap { it.slug.values } }
-                || project.id.values.any { id -> id in projects.flatMap { it.id.values }})
+        suspend fun getProject(input: String): Project? = get { data ->
+            data.projects.find { project ->
+                input in project
+            }
         }
 
         suspend fun getAllProjects(): List<Project> = get { data ->
