@@ -1,3 +1,5 @@
+<p align="center"><img src="https://github.com/juraj-hrivnak/Pakku/assets/71150936/654fa8b3-9e20-4717-ae6d-a0b244128bea" alt="Logo" width="300"></p>
+
 # Pakku
 
 A multiplatform modpack manager for Minecraft: Java Edition.
