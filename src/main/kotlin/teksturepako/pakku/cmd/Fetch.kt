@@ -2,11 +2,16 @@ package teksturepako.pakku.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import com.github.ajalt.mordant.animation.ProgressAnimation
+import com.github.ajalt.mordant.animation.progressAnimation
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import teksturepako.pakku.api.data.PakkuLock
-import teksturepako.pakku.api.http.Http
+import teksturepako.pakku.api.http.client
+import teksturepako.pakku.api.platforms.CurseForge.bodyIfOK
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -19,7 +24,10 @@ class Fetch : CliktCommand()
 {
     override fun run() = runBlocking {
         var fetched = false
-        val ignore = mutableListOf<Path>()
+        val ignored = mutableListOf<Path>()
+        val jobs = mutableListOf<Job>()
+        val progressBars = mutableListOf<ProgressAnimation>()
+        val mutex = Mutex()
 
         for (project in PakkuLock.getAllProjects())
         {
@@ -33,45 +41,85 @@ class Fetch : CliktCommand()
                 break@platforms
             }
 
-            if (projectFile == null)
+            if (projectFile?.url == null)
             {
                 terminal.danger("No files found for ${project.files.map { it.type }}")
                 echo()
                 continue
             }
 
-            val outputFile = Path(project.type.folderName, projectFile.fileName).also { ignore.add(it) }
+            val outputFile = Path(project.type.folderName, projectFile.fileName).also { ignored.add(it) }
             val parentFolder = Path(project.type.folderName).toFile()
 
             // Skip to next if output file exists
             if (outputFile.toFile().exists()) continue
 
-            // Create parent folders
-            if (!parentFolder.exists()) parentFolder.mkdirs()
+            // Progress bar
+            val progress = terminal.progressAnimation {
+                text("Fetching ${projectFile.fileName}..")
+                percentage()
+                progressBar()
+                padding = 0
+            }.also { progressBars.add(it) }
 
-            withContext(Dispatchers.IO) {
+            mutex.withLock {
                 // Download
-                val bytes = projectFile.url?.run { Http().requestByteArray(this) }
-                if (bytes != null) try
-                {
-                    // Write to file
-                    outputFile.writeBytes(bytes)
-                    terminal.success(outputFile)
-                    fetched = true
-                } catch (e: Exception)
-                {
-                    e.printStackTrace()
+                val deferred = async {
+                    client.get(projectFile.url!!) {
+                        onDownload { bytesSentTotal, contentLength ->
+                            if (bytesSentTotal > 1)
+                            {
+                                if (bytesSentTotal + 64 > contentLength)
+                                {
+                                    progress.update(contentLength)
+                                } else
+                                {
+                                    progress.start()
+                                    progress.updateTotal(contentLength)
+                                    progress.update(bytesSentTotal)
+                                }
+                            }
+                        }
+                    }.bodyIfOK() as ByteArray?
+                }
+
+                jobs += launch(Dispatchers.IO) {
+                    // Create parent folders
+                    if (!parentFolder.exists()) parentFolder.mkdirs()
+
+                    val bytes = deferred.await()
+
+                    if (bytes != null) try
+                    {
+                        // Write to file
+                        outputFile.writeBytes(bytes)
+                        fetched = true
+                    } catch (e: Exception)
+                    {
+                        e.printStackTrace()
+                    }
                 }
             }
         }
-        ignore.forEach { path ->
-            if (path.parent.name in ProjectType.entries.map { it.folderName })
-            {
-                path.parent.toFile().listFiles()
-                    .filter { it.name !in ignore.map { ignore -> ignore.name } }
-                    .forEach { it.delete() }
+
+        jobs.joinAll()
+        progressBars.forEach { it.clear() }
+
+        if (fetched)
+        {
+            terminal.success("Projects successfully fetched")
+            echo()
+        }
+
+        for (path in ignored)
+        {
+            launch(Dispatchers.IO) {
+                if (path.parent.name in ProjectType.entries.map { it.folderName })
+                {
+                    path.parent.toFile().listFiles()
+                        .filter { it.name !in ignored.map { ignore -> ignore.name } }.forEach { it.delete() }
+                }
             }
         }
-        if (fetched) echo()
     }
 }

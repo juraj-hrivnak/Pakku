@@ -34,7 +34,7 @@ open class Http
         }.bodyIfOK()
     }
 
-    private suspend inline fun <reified T> HttpResponse.bodyIfOK(): T?
+    suspend inline fun <reified T> HttpResponse.bodyIfOK(): T?
     {
         return if (this.status == HttpStatusCode.OK) this.body() else null.debug {
             println("Bad request for $this")
