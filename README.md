@@ -6,8 +6,8 @@ A multiplatform modpack manager for Minecraft: Java Edition.
 
 - 🧬 Seamless CurseForge/Modrinth cooperation.
 - 🤝 Supports usage of multiple loaders and Minecraft versions.
-- ⚙️ Designed for good working with git.
-- 📥 Synchronize projects with your pack folder.
+- ⚙️ Designed to work well with git.
+- 📥 Sync projects with your pack folder.
 
 ## Usage
 
