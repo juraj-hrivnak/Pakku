@@ -1,4 +1,3 @@
-<p align="center"><img src="https://github.com/juraj-hrivnak/Pakku/assets/71150936/654fa8b3-9e20-4717-ae6d-a0b244128bea" alt="Logo" width="200"></p>
 
 # Pakku
 
@@ -9,7 +8,7 @@ A multiplatform modpack manager for Minecraft: Java Edition.
 - 🧬 Seamless CurseForge/Modrinth cooperation.
 - 🤝 Supports usage of multiple loaders and Minecraft versions.
 - ⚙️ Designed to work well with git.
-- 📥 Sync projects with your pack folder.
+- 📥 Syncs projects with your pack folder.
 
 ## Usage
 
