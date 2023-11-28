@@ -22,7 +22,7 @@ class Add : CliktCommand("Add mods")
     override fun run() = runBlocking {
         for (deferred in mods.map { arg ->
             async {
-                Multiplatform.requestProjectFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), arg) to arg
+                Multiplatform.requestProjectWithFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), arg) to arg
             }
         })
         {
