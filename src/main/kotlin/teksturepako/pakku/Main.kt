@@ -18,7 +18,7 @@ fun main(args: Array<String>)
             theme = Theme.Default, ansiLevel = AnsiLevel.TRUECOLOR, interactive = true
         )
     }.subcommands(
-        Set(), Add(), Rm(), Update(), Ls(), Fetch()
+        Set(), Add(), Rm(), Update(), Ls(), Fetch(), Link()
     ).main(args)
 
     println("Program arguments: ${args.joinToString()}")
