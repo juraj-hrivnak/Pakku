@@ -7,7 +7,7 @@ import com.github.ajalt.clikt.parameters.options.varargValues
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.PakkuLock
 
-class Set : CliktCommand("Set packname, mcversion and loader")
+class Set : CliktCommand("Set pack name, Minecraft versions and loaders")
 {
     private val packName: String? by option("-n", "--packname", help = "Change the name of the pack")
     private val mcVersions: List<String>? by option("-v", "--mcversion", help = "Change the minecraft version").varargValues()

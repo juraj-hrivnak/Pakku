@@ -15,12 +15,12 @@ import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.debug
 import teksturepako.pakku.toPrettyString
 
-class Add : CliktCommand("Add mods")
+class Add : CliktCommand("Add projects")
 {
-    private val mods: List<String> by argument().multiple(required = true)
+    private val projects: List<String> by argument().multiple(required = true)
 
     override fun run() = runBlocking {
-        for (deferred in mods.map { arg ->
+        for (deferred in projects.map { arg ->
             async {
                 Multiplatform.requestProjectWithFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), arg) to arg
             }
@@ -84,6 +84,7 @@ class Add : CliktCommand("Add mods")
             if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, defaultPrompt).ask() == true)
             {
                 echo()
+                ProjectActions.resolveDependencies(terminal, project)
                 PakkuLock.addProject(project)
                 terminal.success("${project.slug} added")
             }

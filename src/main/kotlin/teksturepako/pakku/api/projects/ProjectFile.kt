@@ -13,6 +13,7 @@ abstract class IProjectFile
     open val loaders: MutableList<String> = mutableListOf()
     open val releaseType: String = ""
     open var url: String? = null
+    open val requiredDependencies: MutableSet<String>? = null
 }
 
 @Serializable
@@ -29,7 +30,8 @@ data class MrFile(
     @SerialName("release_type") override val releaseType: String,
     override var url: String?,
 
-    val hashes: MutableMap<String, String>? = null
+    val hashes: MutableMap<String, String>? = null,
+    @SerialName("required_dependencies") override val requiredDependencies: MutableSet<String>?,
 ) : ProjectFile(Modrinth.serialName)
 
 @Serializable
@@ -41,5 +43,6 @@ data class CfFile(
     @SerialName("release_type") override val releaseType: String,
     override var url: String?,
 
-    val id: Int
+    val id: Int,
+    @SerialName("required_dependencies") override val requiredDependencies: MutableSet<String>?,
 ) : ProjectFile(CurseForge.serialName)

@@ -20,7 +20,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.name
 import kotlin.io.path.writeBytes
 
-class Fetch : CliktCommand()
+class Fetch : CliktCommand("Fetch projects to your pack folder")
 {
     override fun run() = runBlocking {
         var fetched = false

@@ -11,38 +11,26 @@ import teksturepako.pakku.api.data.generatePakkuId
 import teksturepako.pakku.api.platforms.Platform
 
 /**
- * Project.
+ * Represents a project. (E.g. a mod, resource pack, shader, etc.)
+ *
+ * @property pakkuId Pakku ID. Randomly generated and assigned when adding this project.
+ * @property type The type of the project. (E.g. a mod, resource pack, shader, etc.)
+ * @property side The side required by this project. Defaults to [ProjectSide.BOTH].
+ * @property slug Mutable map of *platform name* to *project slug*, a short and lowercase version of the name.
+ * @property name Mutable map of *platform name* to *project name*.
+ * @property id Mutable map of *platform name* to *id*.
+ * @property files Mutable set of associated files.
  */
 @Serializable
 data class Project(
-    /**
-     * Pakku ID. Randomly generated. Assigned when adding this project.
-     */
     @SerialName("pakku_id") var pakkuId: String? = null,
-
-    /**
-     * The type of the project. Can be a mod, resource rack, etc.
-     */
+    @SerialName("pakku_links") val pakkuLinks: MutableSet<String> = mutableSetOf(),
     val type: ProjectType,
+    var side: ProjectSide? = null,
 
-    /**
-     * Project slug. A short and lowercase version of the name.
-     */
     val slug: MutableMap<String, String>,
-
-    /**
-     * Map of *platform name* to *project name*.
-     */
     val name: MutableMap<String, String>,
-
-    /**
-     * Map of *platform name* to *id*.
-     */
     val id: MutableMap<String, String>,
-
-    /**
-     * Map of *platform name* to associated files.
-     */
     val files: MutableSet<ProjectFile>
 )
 {
@@ -56,10 +44,14 @@ data class Project(
     operator fun plus(other: Project): Project
     {
         if (this.type != other.type) throw Exception("Can not combine two projects of different type!")
+        if (other.pakkuLinks.isNotEmpty() && this.pakkuLinks != other.pakkuLinks)
+            throw Exception("Can not combine two projects with different pakku links!")
 
         return Project(
             pakkuId = this.pakkuId,
+            pakkuLinks = this.pakkuLinks,
             type = this.type,
+            side = this.side,
 
             name = (this.name + other.name).toMutableMap(),
             slug = (this.slug + other.slug).toMutableMap(),
@@ -68,14 +60,25 @@ data class Project(
         )
     }
 
-
+    /**
+     * Combines two projects of the same type and returns a new project.
+     *
+     * @param other The project to combine with the current project.
+     * @param replaceFiles If `true`, replaces files from the current project with files from the other project.
+     * @return A new [Project] object created by combining the data from the current and the provided project.
+     * @throws Exception if the projects have different types.
+     */
     fun plus(other: Project, replaceFiles: Boolean): Project
     {
         if (this.type != other.type) throw Exception("Can not combine two projects of different type!")
+        if (other.pakkuLinks.isNotEmpty() && this.pakkuLinks != other.pakkuLinks)
+            throw Exception("Can not combine two projects with different pakku links!")
 
         return Project(
             pakkuId = this.pakkuId,
+            pakkuLinks = this.pakkuLinks,
             type = this.type,
+            side = this.side,
 
             name = (this.name + other.name).toMutableMap(),
             slug = (this.slug + other.slug).toMutableMap(),
@@ -84,11 +87,23 @@ data class Project(
         )
     }
 
+    /**
+     * Checks if the current project contains at least one slug or ID from the specified project.
+     *
+     * @param other The project to check.
+     * @return `true` if the current project contains at least one slug or ID from the specified project, otherwise `false`.
+     */
     operator fun contains(other: Project): Boolean
     {
         return this.slug.values.any { it in other.slug.values } || this.id.values.any { it in other.id.values }
     }
 
+    /**
+     * Checks if the current project contains the specified string in its slugs or IDs.
+     *
+     * @param input The string to check.
+     * @return `true` if the current project contains the specified string, otherwise `false`.
+     */
     operator fun contains(input: String): Boolean
     {
         return input in this.slug.values || input in this.id.values
@@ -165,7 +180,12 @@ data class Project(
      */
     fun fileNamesNotMatchAcrossPlatforms(platforms: List<Platform>): Boolean = !fileNamesMatchAcrossPlatforms(platforms)
 
-
+    /**
+     * Retrieves a list of project files associated with a specific platform.
+     *
+     * @param platform The platform for which to retrieve project files.
+     * @return A list of [ProjectFile] instances associated with the specified platform.
+     */
     fun getFilesForPlatform(platform: Platform): List<ProjectFile>
     {
         return this.files.filter { platform.serialName == it.type }
@@ -176,5 +196,7 @@ data class Project(
     {
         // Init Pakku ID
         if (pakkuId == null) pakkuId = generatePakkuId()
+        // Init ProjectSide
+        if (side == null) side = ProjectSide.BOTH
     }
 }

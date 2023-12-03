@@ -2,29 +2,22 @@ package teksturepako.pakku.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.platforms.Multiplatform
 
-class Ls : CliktCommand("List mods")
+class Ls : CliktCommand("List projects")
 {
     override fun run() = runBlocking {
-        var listed = false
-
-        for (it in PakkuLock.get { data ->
-            if (data.projects.isNotEmpty()) listed = true
-            data.projects.map { project ->
-                async {
-                    project.name
-                }
-            }
-        })
+        for (project in PakkuLock.getAllProjects())
         {
-            val name = it.await()
+            val name: String = project.name.values.first()
+            val links: String = project.pakkuLinks.size.toString() + "\uD83D\uDD17"
+            val platforms: String = Multiplatform.platforms.joinToString(" ") {
+                if (project.isOnPlatform(it)) "${it.name}✔\uFE0F" else "${it.name}❌"
+            }
 
-            terminal.success(name.values.first())
+            terminal.success("($links $platforms) $name")
         }
-
-        if (listed) echo()
     }
 }

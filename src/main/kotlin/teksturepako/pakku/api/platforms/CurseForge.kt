@@ -102,16 +102,16 @@ object CurseForge : Platform()
      *
      * @param mcVersion The Minecraft version.
      * @param loader The mod loader type.
-     * @param input The file ID.
+     * @param fileId The file ID.
      * @return A mutable list of [CfFile] objects, or null if an error occurs or no files are found.
      */
-    override suspend fun requestProjectFilesFromId(
-        mcVersion: String, loader: String, input: String
+    override suspend fun requestProjectFilesFromFileId(
+        mcVersion: String, loader: String, fileId: String
     ): MutableSet<ProjectFile>?
     {
         val gameVersionTypeId = requestGameVersionTypeId(mcVersion)
-        // TODO: versions
-        val requestUrl = "mods/$input/files?gameVersionTypeId=$gameVersionTypeId&modLoaderType=$loader"
+        // TODO: better version handling?
+        val requestUrl = "mods/$fileId/files?gameVersionTypeId=$gameVersionTypeId&modLoaderType=$loader"
 
         val data: JsonObject = json.decodeFromString(this.requestProjectBody(requestUrl) ?: return null
             .debug {println("Error ${this.toPrettyString()}#val data = null") }
@@ -130,7 +130,8 @@ object CurseForge : Platform()
                             loader == it || it in listOf("minecraft", "iris", "optifine", "datapack")
                         } ?: true
         }.map { file ->
-            CfFile(fileName = file.jsonObject["fileName"].finalize(),
+            CfFile(
+                fileName = file.jsonObject["fileName"].finalize(),
                 mcVersions = json.decodeFromJsonElement<List<SortableVersion>>(file.jsonObject["sortableGameVersions"]!!)
                     .filter { it.gameVersionTypeId == gameVersionTypeId }
                     .map { it.gameVersionName }
@@ -148,7 +149,12 @@ object CurseForge : Platform()
                     else -> "release"
                 },
                 url = file.jsonObject["downloadUrl"].finalize().replace(" ", "%20"),
-                id = file.jsonObject["id"].toString().toInt())
+                id = file.jsonObject["id"].toString().toInt(),
+                requiredDependencies = file.jsonObject["dependencies"]?.jsonArray
+                    ?.filter { it.jsonObject["relationType"].toString().toInt() == 3 }
+                    ?.map { it.jsonObject["modId"].finalize() }
+                    ?.toMutableSet()
+            )
         }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableSet()
     }
 
@@ -184,7 +190,7 @@ object CurseForge : Platform()
     {
         val result = mutableSetOf<ProjectFile>()
         project.id[this.serialName]?.let { projectId ->
-            requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
+            requestProjectFilesFromFileId(mcVersions, loaders, projectId).take(numberOfFiles)
                 .filterIsInstance<CfFile>()
                 .forEach { file ->
                     // Request URL if is null and add to project files.

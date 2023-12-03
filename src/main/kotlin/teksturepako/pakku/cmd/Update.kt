@@ -12,10 +12,10 @@ import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.Project
 
-class Update : CliktCommand("Update mod/s")
+class Update : CliktCommand("Update projects")
 {
-    private val mods: List<String> by argument().multiple()
-    private val all: Boolean by option("-a", "--all", help = "Update all mods").flag()
+    private val projects: List<String> by argument().multiple()
+    private val all: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
     override fun run() = runBlocking {
         val projects = mutableListOf<Project>()
@@ -27,7 +27,7 @@ class Update : CliktCommand("Update mod/s")
             }
         } else
         {
-            mods.forEach { project ->
+            this@Update.projects.forEach { project ->
                 PakkuLock.getProject(project)?.let {
                     projects.add(it)
                 }
@@ -42,10 +42,11 @@ class Update : CliktCommand("Update mod/s")
                 launch {
                     var updatedProject = project.copy(files = mutableSetOf())
 
-                    Multiplatform.platforms.forEach { platform ->
-                        platform.requestProjectWithFiles(
-                            PakkuLock.getMcVersions(), PakkuLock.getLoaders(), project.id[platform.serialName]!!
-                        )?.let { updatedProject += it } ?: terminal.danger("${updatedProject.slug} not found")
+                    platforms@ for (platform in Multiplatform.platforms)
+                    {
+                        project.id[platform.serialName]?.let { id ->
+                            platform.requestProjectWithFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), id)?.let { updatedProject += it }
+                        } ?: continue@platforms
                     }
 
                     if (project != updatedProject)
@@ -68,8 +69,8 @@ class Update : CliktCommand("Update mod/s")
                 }
             } else
             {
-                if (all) terminal.success("All mods up to date")
-                else terminal.success("$mods up to date")
+                if (all) terminal.success("All projects up to date")
+                else terminal.success("${this@Update.projects} up to date")
             }
         }
 

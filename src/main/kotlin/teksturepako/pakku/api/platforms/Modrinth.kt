@@ -62,18 +62,20 @@ object Modrinth : Platform()
      *
      * @param mcVersion The Minecraft version.
      * @param loader The mod loader type.
-     * @param input The file ID.
+     * @param fileId The file ID.
      * @return A mutable list of [MrFile] objects, or null if an error occurs or no files are found.
      */
-    override suspend fun requestProjectFilesFromId(
-        mcVersion: String, loader: String, input: String
+    override suspend fun requestProjectFilesFromFileId(
+        mcVersion: String, loader: String, fileId: String
     ): MutableSet<ProjectFile>?
     {
-        val data: JsonArray = json.decodeFromString(this.requestProjectBody("project/$input/version") ?: return null
+        val data: JsonArray = json.decodeFromString(this.requestProjectBody("project/$fileId/version") ?: return null
             .debug {println("Error ${this.toPrettyString()}#val data = null") }
         )
 
         return data.filter { file ->
+
+
             mcVersion in file.jsonObject["game_versions"]!!.jsonArray.map { it.finalize() }
                     && json.decodeFromJsonElement<MutableList<String>>(file.jsonObject["loaders"]!!)
                         .takeIf { it.isNotEmpty() }
@@ -95,7 +97,11 @@ object Modrinth : Platform()
                         mutableMapOf(
                             "sha512" to it.jsonObject["sha512"].finalize(), "sha1" to it.jsonObject["sha1"].finalize()
                         )
-                    }
+                    },
+                    requiredDependencies = json.decodeFromJsonElement<MutableList<JsonObject>>(version.jsonObject["dependencies"]!!)
+                        .filter { "required" in it["dependency_type"].finalize() }
+                        .map { it["project_id"].finalize() }
+                        .toMutableSet()
                 )
             }
         }.debug { if (it.isEmpty()) println("Error ${this.toPrettyString()}#project file is null") }.toMutableSet()
@@ -107,7 +113,7 @@ object Modrinth : Platform()
     {
         val result = mutableSetOf<ProjectFile>()
         project.id[this.serialName]?.let { projectId ->
-            requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles)
+            requestProjectFilesFromFileId(mcVersions, loaders, projectId).take(numberOfFiles)
                 .filterIsInstance<MrFile>()
                 .also { result.addAll(it) }
         }

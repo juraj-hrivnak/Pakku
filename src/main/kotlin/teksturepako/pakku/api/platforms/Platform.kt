@@ -34,12 +34,31 @@ abstract class Platform : Http()
         return this.requestBody("$apiUrl/v$apiVersion/$input")
     }
 
+    /**
+     * Requests a project based on either its ID or slug.
+     *
+     * @param input The project ID or slug.
+     * @return A [Project] instance if found, or null if the project with the specified ID or slug is not found.
+     */
     suspend fun requestProject(input: String): Project?
     {
         return requestProjectFromId(input) ?: requestProjectFromSlug(input)
     }
 
+    /**
+     * Requests a project using its unique identifier (ID).
+     *
+     * @param id The unique identifier (ID) of the project to request.
+     * @return A [Project] instance if the project with the specified ID is found, otherwise null.
+     */
     abstract suspend fun requestProjectFromId(id: String): Project?
+
+    /**
+     * Requests a project using its slug.
+     *
+     * @param slug The slug of the project to request.
+     * @return A [Project] instance if the project with the specified slug is found, otherwise null.
+     */
     abstract suspend fun requestProjectFromSlug(slug: String): Project?
 
 
@@ -48,18 +67,18 @@ abstract class Platform : Http()
      *
      * @param mcVersions The list of Minecraft versions.
      * @param loaders The list of mod loader types.
-     * @param input The file ID.
+     * @param fileId The file ID.
      * @return A mutable list of [ProjectFile] objects obtained by combining project files from the specified
      *         Minecraft versions and loaders. The list may be empty if no files are found for any combination.
      */
-    suspend fun requestProjectFilesFromId(
-        mcVersions: List<String>, loaders: List<String>, input: String
+    suspend fun requestProjectFilesFromFileId(
+        mcVersions: List<String>, loaders: List<String>, fileId: String
     ): MutableSet<ProjectFile>
     {
         val result = mutableSetOf<ProjectFile>()
         for (mcVersion in mcVersions)
         {
-            for (loader in loaders) requestProjectFilesFromId(mcVersion, loader, input)?.let {
+            for (loader in loaders) requestProjectFilesFromFileId(mcVersion, loader, fileId)?.let {
                 for (projectFile in it)
                 {
                     if (projectFile !in result) result.add(projectFile)
@@ -74,17 +93,38 @@ abstract class Platform : Http()
      *
      * @param mcVersion The Minecraft version.
      * @param loader The mod loader type.
-     * @param input The file ID.
+     * @param fileId The file ID.
      * @return A mutable list of [ProjectFile] objects, or null if an error occurs or no files are found.
      */
-    abstract suspend fun requestProjectFilesFromId(
-        mcVersion: String, loader: String, input: String
+    abstract suspend fun requestProjectFilesFromFileId(
+        mcVersion: String, loader: String, fileId: String
     ): MutableSet<ProjectFile>?
 
+    /**
+     * Requests project files based on specified Minecraft versions, loaders, a project, and the desired number of
+     * files.
+     *
+     * @param mcVersions The list of Minecraft versions.
+     * @param loaders The list of mod loader types.
+     * @param project The [Project] for which to request files.
+     * @param numberOfFiles The number of requested files. Defaults to 1.
+     * @return A mutable set of [ProjectFile] instances associated with the specified project.
+     */
     abstract suspend fun requestFilesForProject(
         mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int = 1
     ): MutableSet<ProjectFile>
 
+    /**
+     * Requests a project along with project files based on specified Minecraft versions, loaders, its
+     * ID or slug, and the desired number of files.
+     *
+     * @param mcVersions The list of Minecraft versions.
+     * @param loaders The list of mod loader types.
+     * @param input The project ID or slug.
+     * @param numberOfFiles The number of requested files. Defaults to 1.
+     * @return A [Project] instance if found, or null if the project with the specified ID or slug is not found.
+     *         If the project is found, the project files are added to the project's file set.
+     */
     suspend fun requestProjectWithFiles(
         mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int = 1
     ): Project?
@@ -95,4 +135,6 @@ abstract class Platform : Http()
 
         return project
     }
+
+//    abstract suspend fun requestDependenciesForProject(project: Project): List<Project>
 }

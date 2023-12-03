@@ -101,46 +101,107 @@ data class PakkuLock(
         }
 
 
-        suspend fun addProject(vararg projects: Project) = handle { data ->
-            projects.forEach { project ->
-                if (project.slug.values.any { slug -> slug in data.projects.flatMap { it.slug.values } })
+        suspend fun addProject(project: Project): Boolean?
+        {
+            var added: Boolean? = false
+            handle { data ->
+                added = if (data.projects.any { project in it })
                 {
                     debug { println("Could not add ${project.name}") }
+                    null
                 } else
                 {
                     // Add project
                     data.projects.add(project)
+                    true
                 }
+                // Sort alphabetically
+                data.projects.sortBy { it.slug.values.first() }
             }
-            // Sort alphabetically
-            data.projects.sortBy { it.slug.values.first() }
+            return added
         }
 
-        suspend fun updateProject(vararg projects: Project) = handle { data ->
-            projects.forEach { project ->
+        suspend fun updateProject(project: Project): Boolean?
+        {
+            var updated: Boolean? = false
+            handle { data ->
                 // Override old project
-                data.projects.removeIf { it.slug == project.slug }.also {
+                data.projects.removeIf { it in project }.also {
                     // Print error, if it could not remove
-                    if (!it)
+                    updated = if (!it)
                     {
                         debug { println("Could not update ${project.name}") }
-                        return@handle
+                        null
+                    } else
+                    {
+                        // Add project
+                        data.projects.add(project)
+                        true
                     }
                 }
-                // Add project
-                data.projects.add(project)
+                // Sort alphabetically
+                data.projects.sortBy { it.slug.values.first() }
             }
-            // Sort alphabetically
-            data.projects.sortBy { it.slug.values.first() }
+            return updated
         }
 
-        suspend fun removeProject(vararg projects: Project) = handle { data ->
-            projects.forEach { project ->
+        suspend fun removeProject(project: Project): Boolean?
+        {
+            var removed: Boolean? = false
+            handle { data ->
                 // Remove project
-                data.projects.removeIf { it.slug == project.slug }.also {
-                    if (!it) debug { println("Could not remove ${project.name}") }
+                data.projects.removeIf { it in project }.also { success ->
+                    removed = if (!success)
+                    {
+                        debug { println("Could not remove ${project.name}") }
+                        null
+                    } else
+                    {
+                        true
+                    }
                 }
             }
+            return removed
+        }
+
+
+        suspend fun removeProjectByPakkuId(pakkuId: String): Boolean?
+        {
+            var removed: Boolean? = false
+            handle { data ->
+                // Remove project
+                data.projects.removeIf { pakkuId == it.pakkuId }.also { success ->
+                    removed = if (!success)
+                    {
+                        debug { println("Could not remove project from pakku id ($pakkuId)") }
+                        null
+                    } else
+                    {
+                        true
+                    }
+                }
+            }
+            return removed
+        }
+
+        suspend fun addPakkuLink(pakkuId: String, project: Project) = handle { data ->
+            data.projects.find { it in project }?.pakkuLinks?.add(pakkuId)
+        }
+
+        suspend fun removePakkuLink(pakkuId: String) = handle { data ->
+            data.projects.map { it.pakkuLinks.remove(pakkuId) }
+        }
+
+        suspend fun getProjectByPakkuId(pakkuId: String): Project? = get { data ->
+            data.projects.find { pakkuId == it.pakkuId }
+        }
+
+        suspend fun getLinkedProjects(pakkuId: String): List<Project> = get { data ->
+            data.projects.filter { pakkuId in it.pakkuLinks }
+        }
+
+        suspend fun getLinkedProjects(pakkuId: String, ignore: Project): List<Project> = get { data ->
+            data.projects.filter { pakkuId in it.pakkuLinks && it !in ignore }
         }
 
 
