@@ -89,7 +89,7 @@ object Modrinth : Platform()
                     fileName = file.jsonObject["filename"].finalize(),
                     mcVersions = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["game_versions"]!!),
                     loaders = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["loaders"]!!),
-                    releaseType = file.jsonObject["version_type"].finalize().run {
+                    releaseType = version.jsonObject["version_type"].finalize().run {
                         if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
                     },
                     url = file.jsonObject["url"].finalize(),
