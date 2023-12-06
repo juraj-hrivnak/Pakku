@@ -64,5 +64,9 @@ java -jar Pakku-<version>.jar [<options>] <command> [<args>]...
     <td>fetch</td>
     <td>Fetch projects to your pack folder</td>
   </tr>
+  <tr>
+    <td>link</td>
+    <td>Link project to another project</td>
+  </tr>
 </tbody>
 </table>
