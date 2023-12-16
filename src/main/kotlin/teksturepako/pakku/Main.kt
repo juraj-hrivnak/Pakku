@@ -5,8 +5,8 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.rendering.Theme
 import com.github.ajalt.mordant.terminal.Terminal
-import teksturepako.pakku.cmd.*
-import teksturepako.pakku.cmd.Set
+import teksturepako.pakku.cli.cmd.*
+import teksturepako.pakku.cli.cmd.Set
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>)

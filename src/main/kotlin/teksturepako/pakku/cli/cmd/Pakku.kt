@@ -1,4 +1,4 @@
-package teksturepako.pakku.cmd
+package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag

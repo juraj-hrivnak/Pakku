@@ -4,10 +4,7 @@ package teksturepako.pakku.api.projects
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.data.allEmpty
-import teksturepako.pakku.api.data.allEqual
-import teksturepako.pakku.api.data.allNotEmpty
-import teksturepako.pakku.api.data.generatePakkuId
+import teksturepako.pakku.api.data.*
 import teksturepako.pakku.api.platforms.Platform
 
 /**
@@ -39,11 +36,11 @@ data class Project(
      *
      * @param other The project to be combined with the current project.
      * @return A new [Project] object created by combining the data from the current and the provided project.
-     * @throws Exception if the projects have different types.
+     * @throws PakkuException if projects have different types or pakku links.
      */
     operator fun plus(other: Project): Project
     {
-        if (this.type != other.type) throw Exception("Can not combine two projects of different type!")
+        if (this.type != other.type) throw PakkuException("Can not combine two projects of different type!")
         if (other.pakkuLinks.isNotEmpty() && this.pakkuLinks != other.pakkuLinks)
             throw Exception("Can not combine two projects with different pakku links!")
 
@@ -66,7 +63,7 @@ data class Project(
      * @param other The project to combine with the current project.
      * @param replaceFiles If `true`, replaces files from the current project with files from the other project.
      * @return A new [Project] object created by combining the data from the current and the provided project.
-     * @throws Exception if the projects have different types.
+     * @throws PakkuException if projects have different types or pakku links.
      */
     fun plus(other: Project, replaceFiles: Boolean): Project
     {
@@ -93,7 +90,7 @@ data class Project(
      * @param other The project to check.
      * @return `true` if the current project contains at least one slug or ID from the specified project, otherwise `false`.
      */
-    operator fun contains(other: Project): Boolean
+    infix fun isAlmostTheSameAs(other: Project): Boolean
     {
         return this.slug.values.any { it in other.slug.values } || this.id.values.any { it in other.id.values }
     }
@@ -129,7 +126,8 @@ data class Project(
      * @param platform The platform to check.
      * @return `true` if the project is associated with the specified platform, otherwise `false`.
      */
-    fun isOnPlatform(platform: Platform): Boolean {
+    fun isOnPlatform(platform: Platform): Boolean
+    {
         return platform.serialName in this.slug.keys
     }
 
@@ -147,7 +145,8 @@ data class Project(
      * @param platform The platform to check for files.
      * @return `true` if the project has files for the specified platform, otherwise `false`.
      */
-    fun hasFilesForPlatform(platform: Platform): Boolean {
+    fun hasFilesForPlatform(platform: Platform): Boolean
+    {
         return platform.serialName in this.files.map { it.type }
     }
 
@@ -165,7 +164,8 @@ data class Project(
      * @param platforms The list of platforms to compare.
      * @return `true` if the file names match across all specified platforms, otherwise `false`.
      */
-    fun fileNamesMatchAcrossPlatforms(platforms: List<Platform>): Boolean {
+    fun fileNamesMatchAcrossPlatforms(platforms: List<Platform>): Boolean
+    {
         return this.files.asSequence()
             .map { it.fileName }
             .chunked(platforms.size)
@@ -189,6 +189,16 @@ data class Project(
     fun getFilesForPlatform(platform: Platform): List<ProjectFile>
     {
         return this.files.filter { platform.serialName == it.type }
+    }
+
+
+    suspend fun requestDependencies(projectProvider: IProjectProvider): List<Project>
+    {
+        return this.files
+            .flatMap { it.requiredDependencies ?: emptyList() }
+            .mapNotNull {
+                projectProvider.requestProjectWithFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), it)
+            }
     }
 
 

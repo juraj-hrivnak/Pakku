@@ -39,7 +39,7 @@ data class PakkuLock(
     val projects: MutableList<Project> = mutableListOf()
 )
 {
-    companion object
+    internal companion object
     {
         @OptIn(ExperimentalSerializationApi::class)
         internal suspend fun <T> handle(block: (data: PakkuLock) -> T)
@@ -105,7 +105,7 @@ data class PakkuLock(
         {
             var added: Boolean? = false
             handle { data ->
-                added = if (data.projects.any { project in it })
+                added = if (data.projects.any { project isAlmostTheSameAs it })
                 {
                     debug { println("Could not add ${project.name}") }
                     null
@@ -126,7 +126,7 @@ data class PakkuLock(
             var updated: Boolean? = false
             handle { data ->
                 // Override old project
-                data.projects.removeIf { it in project }.also {
+                data.projects.removeIf { it isAlmostTheSameAs project }.also {
                     // Print error, if it could not remove
                     updated = if (!it)
                     {
@@ -150,7 +150,7 @@ data class PakkuLock(
             var removed: Boolean? = false
             handle { data ->
                 // Remove project
-                data.projects.removeIf { it in project }.also { success ->
+                data.projects.removeIf { it isAlmostTheSameAs project }.also { success ->
                     removed = if (!success)
                     {
                         debug { println("Could not remove ${project.name}") }
@@ -185,7 +185,7 @@ data class PakkuLock(
         }
 
         suspend fun addPakkuLink(pakkuId: String, project: Project) = handle { data ->
-            data.projects.find { it in project }?.pakkuLinks?.add(pakkuId)
+            data.projects.find { it isAlmostTheSameAs project }?.pakkuLinks?.add(pakkuId)
         }
 
         suspend fun removePakkuLink(pakkuId: String) = handle { data ->
@@ -201,11 +201,13 @@ data class PakkuLock(
         }
 
         suspend fun getLinkedProjects(pakkuId: String, ignore: Project): List<Project> = get { data ->
-            data.projects.filter { pakkuId in it.pakkuLinks && it !in ignore }
+            data.projects.filter { pakkuId in it.pakkuLinks && !ignore.isAlmostTheSameAs(it) }
         }
 
 
-        suspend fun setPackName(packName: String) = handle { data -> data.packName = packName }
+        suspend fun setPackName(packName: String) = handle {
+            data -> data.packName = packName
+        }
 
         suspend fun setMcVersion(vararg mcVersion: String) = handle { data ->
             data.mcVersions.clear(); data.mcVersions.addAll(mcVersion)
@@ -225,12 +227,18 @@ data class PakkuLock(
 
 
         suspend fun isProjectAdded(project: Project): Boolean = get { data ->
-            data.projects.any { project in it }
+            data.projects.any { it isAlmostTheSameAs project }
         }
 
         suspend fun getProject(input: String): Project? = get { data ->
             data.projects.find { project ->
                 input in project
+            }
+        }
+
+        suspend fun getProject(project: Project): Project? = get { data ->
+            data.projects.find {
+                it isAlmostTheSameAs project
             }
         }
 

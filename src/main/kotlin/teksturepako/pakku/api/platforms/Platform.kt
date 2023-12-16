@@ -1,13 +1,14 @@
 package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.http.Http
+import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
 /**
  * Platform is a site containing projects.
  */
-abstract class Platform : Http()
+abstract class Platform : Http(), IProjectProvider
 {
     /**
      * Platform name.
@@ -40,7 +41,7 @@ abstract class Platform : Http()
      * @param input The project ID or slug.
      * @return A [Project] instance if found, or null if the project with the specified ID or slug is not found.
      */
-    suspend fun requestProject(input: String): Project?
+    override suspend fun requestProject(input: String): Project?
     {
         return requestProjectFromId(input) ?: requestProjectFromSlug(input)
     }
@@ -125,8 +126,8 @@ abstract class Platform : Http()
      * @return A [Project] instance if found, or null if the project with the specified ID or slug is not found.
      *         If the project is found, the project files are added to the project's file set.
      */
-    suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int = 1
+    override suspend fun requestProjectWithFiles(
+        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int
     ): Project?
     {
         val project = requestProject(input) ?: return null

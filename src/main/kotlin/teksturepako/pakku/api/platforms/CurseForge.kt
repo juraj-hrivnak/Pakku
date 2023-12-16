@@ -114,7 +114,7 @@ object CurseForge : Platform()
         val requestUrl = "mods/$fileId/files?gameVersionTypeId=$gameVersionTypeId&modLoaderType=$loader"
 
         val data: JsonObject = json.decodeFromString(this.requestProjectBody(requestUrl) ?: return null
-            .debug {println("Error ${this.toPrettyString()}#val data = null") }
+            .debug { println("Error ${this.toPrettyString()}#val data = null") }
         )
 
         if (data["data"]!!.jsonArray.isEmpty()) return null

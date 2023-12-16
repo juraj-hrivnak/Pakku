@@ -1,8 +1,9 @@
 package teksturepako.pakku.api.platforms
 
+import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 
-object Multiplatform
+object Multiplatform : IProjectProvider
 {
     /** List of registered platforms. */
     val platforms = listOf(
@@ -21,7 +22,7 @@ object Multiplatform
      * @param input The input string used to identify the project.
      * @return A [Project] object containing data retrieved from all platforms, or null if no data is found.
      */
-    suspend fun requestProject(input: String): Project?
+    override suspend fun requestProject(input: String): Project?
     {
         var cf = CurseForge.requestProject(input)
         var mr = Modrinth.requestProject(input)
@@ -44,7 +45,7 @@ object Multiplatform
     }
 
     /**
-     * Requests project files for specified combinations of Minecraft versions and mod loaders from all platforms.
+     * Requests project with files for specified combinations of Minecraft versions and mod loaders for all platforms.
      *
      * @param mcVersions The list of Minecraft versions.
      * @param loaders The list of mod loader types.
@@ -53,8 +54,8 @@ object Multiplatform
      * @return A [Project] object with requested project files from all platforms.
      *         Returns null if the initial project request is unsuccessful.
      */
-    suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int = 1
+    override suspend fun requestProjectWithFiles(
+        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int
     ): Project?
     {
         val project = requestProject(input) ?: return null
