@@ -41,10 +41,12 @@ data class PakkuLock(
 {
     internal companion object
     {
+        private const val PAKKU_FILE = "pakku-lock.json"
+
         @OptIn(ExperimentalSerializationApi::class)
         internal suspend fun <T> handle(block: (data: PakkuLock) -> T)
         {
-            File("pakku-lock.json").also { pakkuLock ->
+            File(PAKKU_FILE).also { pakkuLock ->
                 // Try to get read json data first
                 // If pakkuLock does not exist, create a new one
                 val data: PakkuLock = if (pakkuLock.exists()) try
@@ -75,7 +77,7 @@ data class PakkuLock(
 
         internal suspend fun <T> get(block: (data: PakkuLock) -> T): T
         {
-            File("pakku-lock.json").also { pakkuLock ->
+            File(PAKKU_FILE).also { pakkuLock ->
                 // Try to get read json data first
                 val data: PakkuLock = try
                 {

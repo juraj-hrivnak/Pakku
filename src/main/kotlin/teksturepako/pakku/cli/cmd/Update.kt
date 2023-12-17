@@ -69,7 +69,7 @@ class Update : CliktCommand("Update projects")
                 }
             } else
             {
-                if (all) terminal.success("All projects up to date")
+                if (all || this@Update.projects.isEmpty()) terminal.success("All projects up to date")
                 else terminal.success("${this@Update.projects} up to date")
             }
         }

@@ -23,9 +23,10 @@ class Rm : CliktCommand("Remove projects")
             if (YesNoPrompt("Do you really want to remove all projects?", terminal).ask() == true)
             {
                 echo()
-                PakkuLock.getAllProjects().forEach {
-                    PakkuLock.removeProject(it)
-                    terminal.danger("${it.slug} removed")
+                for (project in PakkuLock.getAllProjects())
+                {
+                    PakkuLock.removeProject(project)
+                    terminal.danger("${project.slug} removed")
                 }
                 echo()
             }
