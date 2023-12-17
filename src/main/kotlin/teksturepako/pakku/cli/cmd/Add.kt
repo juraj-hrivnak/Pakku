@@ -27,12 +27,12 @@ class Add : CliktCommand("Add projects")
             deferredProject.await().createRequest(
                 onError = { error -> terminal.danger(error) },
                 onRetry = { platform -> promptForProject(platform, terminal) },
-                onSuccess = { project, isRecommended ->
+                onSuccess = { project, isRecommended, ctx ->
                     runBlocking {
                         if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
                         {
                             PakkuLock.addProject(project)
-                            project.resolveDependencies(terminal)
+                            project.resolveDependencies(terminal, ctx)
                             terminal.success("${project.slug} added")
                         }
                     }

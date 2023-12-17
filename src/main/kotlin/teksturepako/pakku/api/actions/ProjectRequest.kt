@@ -59,8 +59,14 @@ suspend fun Project?.createRequest(
         isRecommended = false
     }
 
-    onSuccess.success(project, isRecommended)
+    onSuccess.success(project, isRecommended, RequestCtx(onError, onRetry, onSuccess))
 }
+
+data class RequestCtx(
+    val onError: ErrorBlock,
+    val onRetry: RetryBlock,
+    val onSuccess: SuccessBlock
+)
 
 fun interface RetryBlock
 {
@@ -74,5 +80,5 @@ fun interface ErrorBlock
 
 fun interface SuccessBlock
 {
-    fun success(project: Project, isRecommended: Boolean)
+    fun success(project: Project, isRecommended: Boolean, ctx: RequestCtx)
 }
