@@ -9,6 +9,8 @@ import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
 import kotlin.system.exitProcess
 
+var limit = 0
+
 fun main(args: Array<String>)
 {
     println()
@@ -18,10 +20,11 @@ fun main(args: Array<String>)
             theme = Theme.Default, ansiLevel = AnsiLevel.TRUECOLOR, interactive = true
         )
     }.subcommands(
-        Set(), Add(), Rm(), Update(), Ls(), Fetch(), Link()
+        Set(), Add(), Rm(), Update(), Ls(), Fetch(), Link(), Import()
     ).main(args)
 
     println("Program arguments: ${args.joinToString()}")
-    exitProcess(1)
+    if (limit > 0) println("Rate limit remaining: $limit")
+    exitProcess(0)
 }
 
