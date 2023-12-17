@@ -41,10 +41,7 @@ abstract class Platform : Http(), IProjectProvider
      * @param input The project ID or slug.
      * @return A [Project] instance if found, or null if the project with the specified ID or slug is not found.
      */
-    override suspend fun requestProject(input: String): Project?
-    {
-        return requestProjectFromId(input) ?: requestProjectFromSlug(input)
-    }
+    abstract override suspend fun requestProject(input: String): Project?
 
     /**
      * Requests a project using its unique identifier (ID).
@@ -68,38 +65,14 @@ abstract class Platform : Http(), IProjectProvider
      *
      * @param mcVersions The list of Minecraft versions.
      * @param loaders The list of mod loader types.
-     * @param fileId The file ID.
+     * @param projectId The project ID.
+     * @param fileId Optional file ID.
      * @return A mutable list of [ProjectFile] objects obtained by combining project files from the specified
      *         Minecraft versions and loaders. The list may be empty if no files are found for any combination.
      */
-    suspend fun requestProjectFilesFromFileId(
-        mcVersions: List<String>, loaders: List<String>, fileId: String
+    abstract suspend fun requestProjectFilesFromId(
+        mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String? = null
     ): MutableSet<ProjectFile>
-    {
-        val result = mutableSetOf<ProjectFile>()
-        for (mcVersion in mcVersions)
-        {
-            for (loader in loaders) requestProjectFilesFromFileId(mcVersion, loader, fileId)?.let {
-                for (projectFile in it)
-                {
-                    if (projectFile !in result) result.add(projectFile)
-                }
-            }
-        }
-        return result
-    }
-
-    /**
-     * Requests project files based on Minecraft version, loader, and a file ID.
-     *
-     * @param mcVersion The Minecraft version.
-     * @param loader The mod loader type.
-     * @param fileId The file ID.
-     * @return A mutable list of [ProjectFile] objects, or null if an error occurs or no files are found.
-     */
-    abstract suspend fun requestProjectFilesFromFileId(
-        mcVersion: String, loader: String, fileId: String
-    ): MutableSet<ProjectFile>?
 
     /**
      * Requests project files based on specified Minecraft versions, loaders, a project, and the desired number of
@@ -111,9 +84,14 @@ abstract class Platform : Http(), IProjectProvider
      * @param numberOfFiles The number of requested files. Defaults to 1.
      * @return A mutable set of [ProjectFile] instances associated with the specified project.
      */
-    abstract suspend fun requestFilesForProject(
+    suspend fun requestFilesForProject(
         mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int = 1
     ): MutableSet<ProjectFile>
+    {
+        return project.id[this.serialName]?.let { projectId ->
+            this.requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles).toMutableSet()
+        } ?: mutableSetOf()
+    }
 
     /**
      * Requests a project along with project files based on specified Minecraft versions, loaders, its
@@ -137,5 +115,14 @@ abstract class Platform : Http(), IProjectProvider
         return project
     }
 
-//    abstract suspend fun requestDependenciesForProject(project: Project): List<Project>
+    suspend fun requestProjectWithFilesFromIds(
+        mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String, numberOfFiles: Int = 1
+    ): Project?
+    {
+        val project = requestProjectFromId(projectId) ?: return null
+
+        project.files.addAll(requestProjectFilesFromId(mcVersions, loaders, projectId, fileId).take(numberOfFiles))
+
+        return project
+    }
 }

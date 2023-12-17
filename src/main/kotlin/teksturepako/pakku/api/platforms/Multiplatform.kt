@@ -19,7 +19,7 @@ object Multiplatform : IProjectProvider
      * The result is a combined [Project] object if details are available from all platforms, otherwise, it returns the
      * [Project] object from the available platform or null if no details are found on either platform.
      *
-     * @param input The input string used to identify the project.
+     * @param input The project ID or slug.
      * @return A [Project] object containing data retrieved from all platforms, or null if no data is found.
      */
     override suspend fun requestProject(input: String): Project?
@@ -49,7 +49,7 @@ object Multiplatform : IProjectProvider
      *
      * @param mcVersions The list of Minecraft versions.
      * @param loaders The list of mod loader types.
-     * @param input The common input for the project files request.
+     * @param input The project ID or slug.
      * @param numberOfFiles The number of requested files for each platform. Defaults to 1.
      * @return A [Project] object with requested project files from all platforms.
      *         Returns null if the initial project request is unsuccessful.
