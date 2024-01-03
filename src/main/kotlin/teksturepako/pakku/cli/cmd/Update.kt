@@ -18,17 +18,19 @@ class Update : CliktCommand("Update projects")
     private val all: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
     override fun run() = runBlocking {
+        val pakkuLock = PakkuLock.readOrNew()
+
         val projects = mutableListOf<Project>()
 
         if (all)
         {
-            PakkuLock.getAllProjects().forEach { project ->
+            pakkuLock.getAllProjects().forEach { project ->
                 projects.add(project)
             }
         } else
         {
             this@Update.projects.forEach { project ->
-                PakkuLock.getProject(project)?.let {
+                pakkuLock.getProject(project)?.let {
                     projects.add(it)
                 }
             }
@@ -45,7 +47,7 @@ class Update : CliktCommand("Update projects")
                     platforms@ for (platform in Multiplatform.platforms)
                     {
                         project.id[platform.serialName]?.let { id ->
-                            platform.requestProjectWithFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), id)?.let { updatedProject += it }
+                            platform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), id)?.let { updatedProject += it }
                         } ?: continue@platforms
                     }
 
@@ -63,7 +65,7 @@ class Update : CliktCommand("Update projects")
                 for (updatedProject in updatedProjects)
                 {
                     launch {
-                        PakkuLock.updateProject(updatedProject)
+                        pakkuLock.update(updatedProject)
                         terminal.success("${updatedProject.slug} updated")
                     }
                 }
@@ -74,6 +76,7 @@ class Update : CliktCommand("Update projects")
             }
         }
 
+        pakkuLock.write()
         echo()
     }
 }

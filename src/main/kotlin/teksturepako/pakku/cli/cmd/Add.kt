@@ -18,28 +18,31 @@ class Add : CliktCommand("Add projects")
     private val projects: List<String> by argument().multiple(required = true)
 
     override fun run() = runBlocking {
+        val pakkuLock = PakkuLock.readOrNew()
+
         for (deferredProject in projects.map { arg ->
             async {
-                Multiplatform.requestProjectWithFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), arg)
+                Multiplatform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), arg)
             }
         })
         {
             deferredProject.await().createRequest(
                 onError = { error -> terminal.danger(error) },
-                onRetry = { platform -> promptForProject(platform, terminal) },
-                onSuccess = { project, isRecommended, ctx ->
+                onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
+                onSuccess = { project, isRecommended, reqHandlers ->
                     runBlocking {
                         if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
                         {
-                            PakkuLock.addProject(project)
-                            project.resolveDependencies(terminal, ctx)
+                            pakkuLock.add(project)
+                            project.resolveDependencies(terminal, reqHandlers, pakkuLock)
                             terminal.success("${project.slug} added")
                         }
                     }
-                }
+                },
+                pakkuLock
             )
-
             terminal.println()
         }
+        pakkuLock.write()
     }
 }

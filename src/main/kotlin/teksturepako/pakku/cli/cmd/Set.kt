@@ -14,50 +14,46 @@ class Set : CliktCommand("Set pack name, Minecraft versions and loaders")
     private val loaders: List<String>? by option("-l", "--loader", help = "Change the mod loader").varargValues()
 
     override fun run() = runBlocking {
+        val pakkuLock = PakkuLock.readOrNew()
+
         packName?.let {
             terminal.success("\"pack_name\" set to $it")
-            PakkuLock.setPackName(it)
+            pakkuLock.setPackName(it)
         }
         mcVersions?.let { versions ->
             var failed = false
 
-            PakkuLock.get { data ->
-                for (project in data.projects)
+            pakkuLock.getAllProjects().forEach { project ->
+                for (file in project.files)
                 {
-                    for (file in project.files)
+                    if (file.mcVersions.none { it in versions })
                     {
-                        if (file.mcVersions.none { it in versions })
-                        {
-                            terminal.danger(
-                                "Can not set to $versions," + " because ${project.name.values.first()} (${file.type}) requires ${file.mcVersions}"
-                            )
-                            failed = true
-                        }
+                        terminal.danger(
+                            "Can not set to $versions," + " because ${project.name.values.first()} (${file.type}) requires ${file.mcVersions}"
+                        )
+                        failed = true
                     }
                 }
             }
 
             if (!failed)
             {
-                PakkuLock.setMcVersion(versions)
+                pakkuLock.setMcVersion(versions)
                 terminal.success("\"mc_version\" set to $versions")
             }
         }
         loaders?.let { loaders ->
             var failed = false
 
-            PakkuLock.get { data ->
-                for (project in data.projects)
+            pakkuLock.getAllProjects().forEach { project ->
+                for (file in project.files)
                 {
-                    for (file in project.files)
+                    if (file.loaders.none { it in loaders })
                     {
-                        if (file.loaders.none { it in loaders })
-                        {
-                            terminal.danger(
-                                "Can not set to $loaders," + " because ${project.name.values.first()} (${file.type}) requires ${file.loaders}"
-                            )
-                            failed = true
-                        }
+                        terminal.danger(
+                            "Can not set to $loaders," + " because ${project.name.values.first()} (${file.type}) requires ${file.loaders}"
+                        )
+                        failed = true
                     }
                 }
             }
@@ -65,9 +61,11 @@ class Set : CliktCommand("Set pack name, Minecraft versions and loaders")
             if (!failed)
             {
                 terminal.success("\"loaders\" set to $loaders")
-                PakkuLock.setModLoader(loaders)
+                pakkuLock.setModLoader(loaders)
             }
         }
+
+        pakkuLock.write()
         echo()
     }
 }

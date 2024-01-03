@@ -8,12 +8,12 @@ import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
-fun promptForProject(platform: Platform, terminal: Terminal): Project? = runBlocking {
+fun promptForProject(platform: Platform, terminal: Terminal, pakkuLock: PakkuLock): Project? = runBlocking {
     val prompt = StringPrompt("Specify ${platform.name}", terminal).ask()
 
     if (prompt.isNullOrBlank()) return@runBlocking null
 
     return@runBlocking Multiplatform.requestProjectWithFiles(
-        PakkuLock.getMcVersions(), PakkuLock.getLoaders(), prompt
+        pakkuLock.getMcVersions(), pakkuLock.getLoaders(), prompt
     )
 }

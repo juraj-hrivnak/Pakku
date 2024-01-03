@@ -18,22 +18,21 @@ class Rm : CliktCommand("Remove projects")
     private val all: Boolean by option("-a", "--all", help = "Remove all mods").flag()
 
     override fun run() = runBlocking {
+        val pakkuLock = PakkuLock.readOrNew()
+
         if (all)
         {
             if (YesNoPrompt("Do you really want to remove all projects?", terminal).ask() == true)
             {
                 echo()
-                for (project in PakkuLock.getAllProjects())
-                {
-                    PakkuLock.removeProject(project)
-                    terminal.danger("${project.slug} removed")
-                }
+                pakkuLock.removeAll()
+                terminal.danger("All projects removed")
                 echo()
             }
         }
         else for (deferred in projects.map { arg ->
             async {
-                PakkuLock.getProject(arg) to arg
+                pakkuLock.getProject(arg) to arg
             }
         })
         {
@@ -41,7 +40,7 @@ class Rm : CliktCommand("Remove projects")
 
             if (project != null)
             {
-                val linkedProjects = PakkuLock.getLinkedProjects(project.pakkuId!!, project)
+                val linkedProjects = pakkuLock.getLinkedProjects(project.pakkuId!!, project)
 
                 if (linkedProjects.isEmpty())
                 {
@@ -52,13 +51,13 @@ class Rm : CliktCommand("Remove projects")
                     if (YesNoPrompt("Do you want to remove it?", terminal, false).ask() == false) continue
                 }
 
-                PakkuLock.removeProject(project)
+                pakkuLock.remove(project)
                 terminal.danger("${project.slug} removed")
 
                 dependencies@ for (pakkuLink in project.pakkuLinks)
                 {
-                    val dep = PakkuLock.getProjectByPakkuId(pakkuLink) ?: continue@dependencies
-                    val linkedProjects2 = PakkuLock.getLinkedProjects(dep.pakkuId!!)
+                    val dep = pakkuLock.getProjectByPakkuId(pakkuLink) ?: continue@dependencies
+                    val linkedProjects2 = pakkuLock.getLinkedProjects(dep.pakkuId!!)
 
                     if (linkedProjects2.isNotEmpty())
                     {
@@ -67,18 +66,16 @@ class Rm : CliktCommand("Remove projects")
                             continue@dependencies
                     }
 
-                    PakkuLock.removeProject(dep)
-                    PakkuLock.removePakkuLink(dep.pakkuId!!)
+                    pakkuLock.remove(dep)
+                    pakkuLock.removePakkuLink(dep.pakkuId!!)
                     terminal.danger("${dep.slug} removed")
                 }
 
-                PakkuLock.removePakkuLink(project.pakkuId!!)
+                pakkuLock.removePakkuLink(project.pakkuId!!)
             } else
             {
                 terminal.warning("$arg not found")
-                PakkuLock.get { data ->
-                    data.projects.map { project -> project.slug.values }.flatten()
-                }.also { args ->
+                pakkuLock.getAllProjects().flatMap { it.slug.values }.also { args ->
                     typoSuggester(arg, args).firstOrNull()?.let { arg ->
                         terminal.warning("Did you mean $arg?")
                     }
@@ -86,6 +83,7 @@ class Rm : CliktCommand("Remove projects")
             }
             echo()
         }
-    }
 
+        pakkuLock.write()
+    }
 }

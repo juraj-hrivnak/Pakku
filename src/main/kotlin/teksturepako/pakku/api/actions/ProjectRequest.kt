@@ -7,10 +7,11 @@ import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
-suspend fun Project?.createRequest(
+fun Project?.createRequest(
     onError: ErrorBlock,
     onRetry: RetryBlock,
-    onSuccess: SuccessBlock
+    onSuccess: SuccessBlock,
+    pakkuLock: PakkuLock
 )
 {
     // Exist
@@ -18,7 +19,7 @@ suspend fun Project?.createRequest(
     var isRecommended = true
 
     // Already added
-    if (PakkuLock.isProjectAdded(project))
+    if (pakkuLock.isProjectAdded(project))
     {
         return onError.error("Could not add ${project.slug}. It is already added")
     }
@@ -47,7 +48,7 @@ suspend fun Project?.createRequest(
     // Check if project has any files at all
     if (project.hasNoFiles())
     {
-        onError.error("No files found for ${project.slug} ${PakkuLock.getMcVersions()}")
+        onError.error("No files found for ${project.slug} ${pakkuLock.getMcVersions()}")
         isRecommended = false
     }
 
@@ -59,26 +60,26 @@ suspend fun Project?.createRequest(
         isRecommended = false
     }
 
-    onSuccess.success(project, isRecommended, RequestCtx(onError, onRetry, onSuccess))
+    onSuccess.success(project, isRecommended, RequestHandlers(onError, onRetry, onSuccess))
 }
 
-data class RequestCtx(
+data class RequestHandlers(
     val onError: ErrorBlock,
     val onRetry: RetryBlock,
     val onSuccess: SuccessBlock
 )
-
-fun interface RetryBlock
-{
-    fun retryWith(platform: Platform): Project?
-}
 
 fun interface ErrorBlock
 {
     fun error(error: String)
 }
 
+fun interface RetryBlock
+{
+    fun retryWith(platform: Platform): Project?
+}
+
 fun interface SuccessBlock
 {
-    fun success(project: Project, isRecommended: Boolean, ctx: RequestCtx)
+    fun success(project: Project, isRecommended: Boolean, ctx: RequestHandlers)
 }

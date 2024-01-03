@@ -192,12 +192,12 @@ data class Project(
     }
 
 
-    suspend fun requestDependencies(projectProvider: IProjectProvider): List<Project>
+    suspend fun requestDependencies(projectProvider: IProjectProvider, pakkuLock: PakkuLock): List<Project>
     {
         return this.files
             .flatMap { it.requiredDependencies ?: emptyList() }
             .mapNotNull {
-                projectProvider.requestProjectWithFiles(PakkuLock.getMcVersions(), PakkuLock.getLoaders(), it)
+                projectProvider.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), it)
             }
     }
 
