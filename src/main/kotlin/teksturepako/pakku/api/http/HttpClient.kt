@@ -8,6 +8,9 @@ val client = HttpClient(OkHttp) {
     install(HttpTimeout) {
         socketTimeoutMillis = 600000
     }
+    install(UserAgent) {
+        agent = "juraj-hrivnak/Pakku (tekeksturepako@gmail.com)"
+    }
     engine {
         threadsCount = 30
         pipelining = true
