@@ -1,12 +1,9 @@
 package teksturepako.pakku.api.platforms
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import teksturepako.pakku.api.data.finalize
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.models.CurseForgeResponse
 import teksturepako.pakku.api.projects.CfFile
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
@@ -21,10 +18,11 @@ object CurseForge : Platform()
     override val apiUrl = "https://cfproxy.bmpm.workers.dev"
     override val apiVersion = 1
 
-    private const val API_KEY_HEADER = "x-api-key"
-    private const val TEST_URL = "https://api.curseforge.com/v1/games"
 
     // -- API KEY --
+
+    private const val API_KEY_HEADER = "x-api-key"
+    private const val TEST_URL = "https://api.curseforge.com/v1/games"
 
     suspend fun getApiKey(): String?
     {
@@ -40,7 +38,6 @@ object CurseForge : Platform()
     {
         return super.requestBody(TEST_URL, Pair(API_KEY_HEADER, apiKey)).toString().isNotBlank()
     }
-
 
     override suspend fun requestBody(url: String): String?
     {
@@ -58,55 +55,52 @@ object CurseForge : Platform()
 
     override suspend fun requestProjectFromId(id: String): Project?
     {
-        val json: JsonObject = json.decodeFromString(this.requestProjectBody("mods/$id") ?: return null)
+        val response = json.decodeFromString<CurseForgeResponse.GetProject>(
+            this.requestProjectBody("mods/$id")
+                ?: return null
+        ).data
 
         return Project(
-            name = mutableMapOf(serialName to json["data"]!!.jsonObject["name"].finalize()),
-            slug = mutableMapOf(serialName to json["data"]!!.jsonObject["slug"].finalize()),
-            type = when (json["data"]!!.jsonObject["classId"]!!.toString().toInt())
+            name = mutableMapOf(serialName to response.name),
+            slug = mutableMapOf(serialName to response.slug),
+            type = when (response.classId)
             {
                 6    -> ProjectType.MOD
                 12   -> ProjectType.RESOURCE_PACK
                 17   -> ProjectType.WORLD
                 6552 -> ProjectType.SHADER
 
-                else -> throw Exception("Project type not found!")
+                else -> return null.also { println("Project type ${response.classId} not found!") }
             },
-            id = mutableMapOf(serialName to json["data"]!!.jsonObject["id"].finalize()),
+            id = mutableMapOf(serialName to response.id.toString()),
             files = mutableSetOf(),
         )
     }
 
     override suspend fun requestProjectFromSlug(slug: String): Project?
     {
-        val json: JsonObject = json.decodeFromString(
+        val response = json.decodeFromString<CurseForgeResponse.SearchProject>(
             this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug")
                 ?: return null
-        )
-        if (json["data"]!!.jsonArray.isEmpty()) return null
+        ).data.firstOrNull() ?: return null
 
         return Project(
-            name = mutableMapOf(serialName to json["data"]!!.jsonArray.first().jsonObject["name"].finalize()),
-            slug = mutableMapOf(serialName to json["data"]!!.jsonArray.first().jsonObject["slug"].finalize()),
-            type = when (json["data"]!!.jsonArray.first().jsonObject["classId"]!!.toString().toInt())
+            name = mutableMapOf(serialName to response.name),
+            slug = mutableMapOf(serialName to response.slug),
+            type = when (response.classId)
             {
                 6    -> ProjectType.MOD
                 12   -> ProjectType.RESOURCE_PACK
                 17   -> ProjectType.WORLD
                 6552 -> ProjectType.SHADER
 
-                else -> return null.debug {
-                    println(
-                        "Project type not found for $slug: ${
-                            (json["data"]!!.jsonArray.first().jsonObject["classId"]!!.toString().toInt())
-                        }"
-                    )
-                }
+                else -> return null.also { println("Project type ${response.classId} not found!") }
             },
-            id = mutableMapOf(serialName to json["data"]!!.jsonArray.first().jsonObject["id"].finalize()),
+            id = mutableMapOf(serialName to response.id.toString()),
             files = mutableSetOf(),
         )
     }
+
 
     // -- FILES --
 
@@ -138,23 +132,15 @@ object CurseForge : Platform()
         // Handle loaders
         requestUrl += "&modLoaderTypes=${loaders.joinToString(",")}"
 
-        // Create HTTP request
-        val data: JsonObject = json.decodeFromString(this.requestProjectBody(requestUrl) ?: return mutableSetOf())
-
-        // Project ID
-        return if (fileId == null)
+        return if (fileId == null) // Multiple files
         {
-            // Check if it's not empty
-            if (data["data"]!!.jsonArray.isEmpty()) return mutableSetOf<ProjectFile>().debug {
-                println("${this.javaClass.simpleName}#requestProjectFilesFromId: data is empty")
-            }
+            val response = json.decodeFromString<CurseForgeResponse.GetMultipleFiles>(
+                this.requestProjectBody(requestUrl) ?: return mutableSetOf()
+            ).data
 
-            // Filter mcVersions and loaders
-            data["data"]!!.jsonArray.filter { file ->
-                // mcVersions
-                json.decodeFromJsonElement<List<String>>(file.jsonObject["gameVersions"]!!).any { it in mcVersions }
-                        // loaders
-                        && json.decodeFromJsonElement<List<SortableVersion>>(file.jsonObject["sortableGameVersions"]!!)
+            response.filter { file ->
+                file.gameVersions.any { it in mcVersions }
+                        && file.sortableGameVersions
                             .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
                             .takeIf { it.isNotEmpty() }
                             ?.map { it.gameVersionName.lowercase() }?.any {
@@ -163,18 +149,15 @@ object CurseForge : Platform()
                                         || it in listOf("minecraft", "iris", "optifine", "datapack")
                             } ?: true
             }.map { file ->
-                // Fill data
                 CfFile(
-                    fileName = file.jsonObject["fileName"].finalize(),
-                    mcVersions = file.jsonObject["sortableGameVersions"]?.let { sortableVersion ->
-                        json.decodeFromJsonElement<List<SortableVersion>>(sortableVersion)
-                            .filter { it.gameVersionTypeId in gameVersionTypeIds }
-                            .map { it.gameVersionName }.toMutableList()
-                    } ?: mutableListOf(),
-                    loaders = json.decodeFromJsonElement<List<SortableVersion>>(file.jsonObject["sortableGameVersions"]!!)
+                    fileName = file.fileName,
+                    mcVersions = file.sortableGameVersions
+                        .filter { it.gameVersionTypeId in gameVersionTypeIds }
+                        .map { it.gameVersionName }.toMutableList(),
+                    loaders = file.sortableGameVersions
                         .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
                         .map { it.gameVersionName.lowercase() }.toMutableList(),
-                    releaseType = when (file.jsonObject["releaseType"].toString().toInt())
+                    releaseType = when (file.releaseType)
                     {
                         1 -> "release"
                         2 -> "beta"
@@ -182,11 +165,11 @@ object CurseForge : Platform()
 
                         else -> "release"
                     },
-                    url = file.jsonObject["downloadUrl"].finalize().replace(" ", "%20"), // Replace empty characters in the URL
-                    id = file.jsonObject["id"].toString().toInt(),
-                    requiredDependencies = file.jsonObject["dependencies"]?.jsonArray
-                        ?.filter { it.jsonObject["relationType"].toString().toInt() == 3 }
-                        ?.map { it.jsonObject["modId"].finalize() }?.toMutableSet()
+                    url = file.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
+                    id = file.id,
+                    requiredDependencies = file.dependencies
+                        .filter { it.relationType == 3 }
+                        .map { it.modId.toString() }.toMutableSet()
                 )
             }.debug {
                 if (it.isEmpty()) println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
@@ -201,50 +184,47 @@ object CurseForge : Platform()
                     }
                 }
             }.toMutableSet()
-        } else
+        } else // One file
         {
-            mutableSetOf(CfFile(
-                fileName = data["data"]!!.jsonObject["fileName"].finalize(),
-                mcVersions = data["data"]!!.jsonObject["sortableGameVersions"]?.let { sortableVersion ->
-                    json.decodeFromJsonElement<List<SortableVersion>>(sortableVersion)
-                        .filter { it.gameVersionTypeId in gameVersionTypeIds }
-                        .map { it.gameVersionName }.toMutableList()
-                } ?: mutableListOf(),
-                loaders = data["data"]!!.jsonObject["sortableGameVersions"]?.let { sortableVersion ->
-                    json.decodeFromJsonElement<List<SortableVersion>>(sortableVersion)
-                        .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
-                        .map { it.gameVersionName.lowercase() }.toMutableList()
-                } ?: mutableListOf(),
-                releaseType = when (data["data"]!!.jsonObject["releaseType"].toString().toInt())
-                {
-                    1 -> "release"
-                    2 -> "beta"
-                    3 -> "alpha"
+            val response = json.decodeFromString<CurseForgeResponse.GetFile>(
+                this.requestProjectBody(requestUrl) ?: return mutableSetOf()
+            ).data
 
-                    else -> "release"
-                },
-                url = data["data"]!!.jsonObject["downloadUrl"].finalize().replace(" ", "%20"),
-                id = data["data"]!!.jsonObject["id"].toString().toInt(),
-                requiredDependencies = data["data"]!!.jsonObject["dependencies"]?.jsonArray
-                    ?.filter { it.jsonObject["relationType"].toString().toInt() == 3 }
-                    ?.map { it.jsonObject["modId"].finalize() }?.toMutableSet()
-            ).let { file ->
-                if (file.url != "null") file else
-                {
-                    val url = fetchAlternativeDownloadUrl(file.id, file.fileName)
-                    file.apply {
-                        // Replace empty characters in the URL.
-                        this.url = url.replace(" ", "%20")
+            mutableSetOf(
+                CfFile(
+                    fileName = response.fileName,
+                    mcVersions = response.sortableGameVersions
+                        .filter { it.gameVersionTypeId in gameVersionTypeIds }
+                        .map { it.gameVersionName }.toMutableList(),
+                    loaders = response.sortableGameVersions
+                        .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
+                        .map { it.gameVersionName.lowercase() }.toMutableList(),
+                    releaseType = when (response.releaseType)
+                    {
+                        1 -> "release"
+                        2 -> "beta"
+                        3 -> "alpha"
+
+                        else -> "release"
+                    },
+                    url = response.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
+                    id = response.id,
+                    requiredDependencies = response.dependencies
+                        .filter { it.relationType == 3 }
+                        .map { it.modId.toString() }.toMutableSet()
+                ).let { file ->
+                    if (file.url != "null") file else
+                    {
+                        val url = fetchAlternativeDownloadUrl(file.id, file.fileName)
+                        file.apply {
+                            // Replace empty characters in the URL.
+                            this.url = url.replace(" ", "%20")
+                        }
                     }
                 }
-            })
+            )
         }
     }
-
-    @Serializable
-    data class SortableVersion(
-        val gameVersionName: String, val gameVersionTypeId: Int?
-    )
 
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
     {

@@ -39,7 +39,7 @@ object Modrinth : Platform()
                 "resourcepack" -> ProjectType.RESOURCE_PACK
                 "shader"       -> ProjectType.SHADER
 
-                else           -> throw Exception("Project type not found!")
+                else           -> return null.also { println("Project type ${json["project_type"].finalize()} not found!") }
             },
             id = mutableMapOf(serialName to json["id"].finalize()),
             files = mutableSetOf(),
@@ -59,7 +59,7 @@ object Modrinth : Platform()
                 "resourcepack" -> ProjectType.RESOURCE_PACK
                 "shader"       -> ProjectType.SHADER
 
-                else           -> throw Exception("Project type not found!")
+                else           -> return null.also { println("Project type ${json["project_type"].finalize()} not found!") }
             },
             id = mutableMapOf(serialName to json["id"].finalize()),
             files = mutableSetOf(),
@@ -123,7 +123,8 @@ object Modrinth : Platform()
             }.toMutableSet()
         } else
         {
-            mutableSetOf(MrFile(
+            mutableSetOf(
+                MrFile(
                 fileName = data.jsonObject["filename"].finalize(),
                 mcVersions = json.decodeFromJsonElement<MutableList<String>>(data.jsonObject["game_versions"]!!),
                 loaders = json.decodeFromJsonElement<MutableList<String>>(data.jsonObject["loaders"]!!),
@@ -140,7 +141,8 @@ object Modrinth : Platform()
                 requiredDependencies = json.decodeFromJsonElement<MutableList<JsonObject>>(data.jsonObject["dependencies"]!!)
                     .filter { "required" in it["dependency_type"].finalize() }
                     .map { it["project_id"].finalize() }.toMutableSet()
-            ))
+            )
+            )
         }
     }
 }
