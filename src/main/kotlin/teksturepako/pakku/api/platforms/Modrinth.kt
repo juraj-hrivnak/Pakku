@@ -1,8 +1,8 @@
 package teksturepako.pakku.api.platforms
 
-import kotlinx.serialization.json.*
-import teksturepako.pakku.api.data.finalize
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.models.MrProjectModel
+import teksturepako.pakku.api.models.MrVersionModel
 import teksturepako.pakku.api.projects.MrFile
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
@@ -28,121 +28,118 @@ object Modrinth : Platform()
 
     override suspend fun requestProjectFromId(id: String): Project?
     {
-        val json: JsonObject = json.decodeFromString(this.requestProjectBody("project/$id") ?: return null)
+        val response = json.decodeFromString<MrProjectModel>(
+            this.requestProjectBody("project/$id") ?: return null
+        )
 
         return Project(
-            name = mutableMapOf(serialName to json["title"].finalize()),
-            slug = mutableMapOf(serialName to json["slug"].finalize()),
-            type = when (json["project_type"].finalize())
+            name = mutableMapOf(serialName to response.title),
+            slug = mutableMapOf(serialName to response.slug),
+            type = when (response.projectType)
             {
                 "mod"          -> ProjectType.MOD
                 "resourcepack" -> ProjectType.RESOURCE_PACK
                 "shader"       -> ProjectType.SHADER
 
-                else           -> return null.also { println("Project type ${json["project_type"].finalize()} not found!") }
+                else           -> return null.also { println("Project type ${response.projectType} not found!") }
             },
-            id = mutableMapOf(serialName to json["id"].finalize()),
+            id = mutableMapOf(serialName to response.id),
             files = mutableSetOf(),
         )
     }
 
     override suspend fun requestProjectFromSlug(slug: String): Project?
     {
-        val json: JsonObject = json.decodeFromString(this.requestProjectBody("project/$slug") ?: return null)
+        val response = json.decodeFromString<MrProjectModel>(
+            this.requestProjectBody("project/$slug") ?: return null
+        )
 
         return Project(
-            name = mutableMapOf(serialName to json["title"].finalize()),
-            slug = mutableMapOf(serialName to json["slug"].finalize()),
-            type = when (json["project_type"].finalize())
+            name = mutableMapOf(serialName to response.title),
+            slug = mutableMapOf(serialName to response.slug),
+            type = when (response.projectType)
             {
                 "mod"          -> ProjectType.MOD
                 "resourcepack" -> ProjectType.RESOURCE_PACK
                 "shader"       -> ProjectType.SHADER
 
-                else           -> return null.also { println("Project type ${json["project_type"].finalize()} not found!") }
+                else           -> return null.also { println("Project type ${response.projectType} not found!") }
             },
-            id = mutableMapOf(serialName to json["id"].finalize()),
+            id = mutableMapOf(serialName to response.id),
             files = mutableSetOf(),
         )
     }
 
     // -- FILES --
 
-    /**
-     * Requests project files based on Minecraft version, loader, and a file ID.
-     *
-     * @param mcVersion The Minecraft version.
-     * @param loader The mod loader type.
-     * @param projectId The project ID.
-     * @return A mutable list of [MrFile] objects, or null if an error occurs or no files are found.
-     */
-    override suspend fun requestProjectFilesFromId(
+    override suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?
     ): MutableSet<ProjectFile>
     {
-        val requestUrl = if (fileId == null) "project/$projectId/version" else "version/$fileId"
+        return if (fileId == null) // Multiple files
+        {
+            val response = json.decodeFromString<List<MrVersionModel>>(
+                this.requestProjectBody("project/$projectId/version") ?: return mutableSetOf()
+            )
 
-        val data: JsonArray = json.decodeFromString(this.requestProjectBody(requestUrl) ?: return mutableSetOf())
-
-        return if (fileId == null) {
-            data.filter { file ->
-                // mcVersions
-                file.jsonObject["game_versions"]!!.jsonArray.map { it.finalize() }.any { it in mcVersions }
-                        // Loaders
-                        && json.decodeFromJsonElement<MutableList<String>>(file.jsonObject["loaders"]!!)
-                            .takeIf { it.isNotEmpty() }
-                            ?.map { it.lowercase() }
-                            ?.any {
-                                loaders.any { loader -> loader == it }
-                                        // Loaders valid by default
-                                        || it in listOf("minecraft", "iris", "optifine", "datapack")
-                            } ?: true
+            response.filter { version ->
+                version.gameVersions.any { it in mcVersions } && version.loaders
+                    .takeIf { it.isNotEmpty() }
+                    ?.map { it.lowercase() }?.any {
+                        loaders.any { loader -> loader == it } || it in listOf(
+                            "minecraft", "iris", "optifine", "datapack"
+                        )
+                    } ?: true
             }.flatMap { version ->
-                version.jsonObject["files"]!!.jsonArray.map { file ->
+                version.files.map { versionFile ->
                     MrFile(
-                        fileName = file.jsonObject["filename"].finalize(),
-                        mcVersions = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["game_versions"]!!),
-                        loaders = json.decodeFromJsonElement<MutableList<String>>(version.jsonObject["loaders"]!!),
-                        releaseType = version.jsonObject["version_type"].finalize().run {
+                        fileName = versionFile.filename,
+                        mcVersions = version.gameVersions.toMutableList(),
+                        loaders = version.loaders.toMutableList(),
+                        releaseType = version.versionType.run {
                             if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
                         },
-                        url = file.jsonObject["url"].finalize(),
-                        hashes = file.jsonObject["hashes"]?.let {
+                        url = versionFile.url,
+                        hashes = versionFile.hashes.let {
                             mutableMapOf(
-                                "sha512" to it.jsonObject["sha512"].finalize(),
-                                "sha1" to it.jsonObject["sha1"].finalize()
+                                "sha512" to it.sha512,
+                                "sha1" to it.sha1
                             )
                         },
-                        requiredDependencies = json.decodeFromJsonElement<MutableList<JsonObject>>(version.jsonObject["dependencies"]!!)
-                            .filter { "required" in it["dependency_type"].finalize() }
-                            .map { it["project_id"].finalize() }.toMutableSet()
+                        requiredDependencies = version.dependencies
+                            .filter { "required" in it.dependencyType }
+                            .mapNotNull { it.projectId }.toMutableSet()
                     )
                 }
             }.debug {
                 if (it.isEmpty()) println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
             }.toMutableSet()
-        } else
+        } else // One file
         {
-            mutableSetOf(
+            val response = json.decodeFromString<MrVersionModel>(
+                this.requestProjectBody("version/$fileId") ?: return mutableSetOf()
+            )
+
+            response.files.map { versionFile ->
                 MrFile(
-                fileName = data.jsonObject["filename"].finalize(),
-                mcVersions = json.decodeFromJsonElement<MutableList<String>>(data.jsonObject["game_versions"]!!),
-                loaders = json.decodeFromJsonElement<MutableList<String>>(data.jsonObject["loaders"]!!),
-                releaseType = data.jsonObject["version_type"].finalize().run {
-                    if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
-                },
-                url = data.jsonObject["url"].finalize(),
-                hashes = data.jsonObject["hashes"]?.let {
-                    mutableMapOf(
-                        "sha512" to it.jsonObject["sha512"].finalize(),
-                        "sha1" to it.jsonObject["sha1"].finalize()
-                    )
-                },
-                requiredDependencies = json.decodeFromJsonElement<MutableList<JsonObject>>(data.jsonObject["dependencies"]!!)
-                    .filter { "required" in it["dependency_type"].finalize() }
-                    .map { it["project_id"].finalize() }.toMutableSet()
-            )
-            )
+                    fileName = versionFile.filename,
+                    mcVersions = response.gameVersions.toMutableList(),
+                    loaders = response.loaders.toMutableList(),
+                    releaseType = response.versionType.run {
+                        if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
+                    },
+                    url = versionFile.url,
+                    hashes = versionFile.hashes.let {
+                        mutableMapOf(
+                            "sha512" to it.sha512,
+                            "sha1" to it.sha1
+                        )
+                    },
+                    requiredDependencies = response.dependencies
+                        .filter { "required" in it.dependencyType }
+                        .mapNotNull { it.projectId }.toMutableSet()
+                )
+            }.toMutableSet()
         }
     }
 }

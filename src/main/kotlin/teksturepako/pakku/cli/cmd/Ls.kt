@@ -16,7 +16,7 @@ class Ls : CliktCommand("List projects")
             val name: String? = project.name.values.firstOrNull()
             val links: String = project.pakkuLinks.size.toString() + "\uD83D\uDD17"
             val platforms: String = Multiplatform.platforms.joinToString(" ") {
-                if (project.hasFilesForPlatform(it)) "${it.name}✔\uFE0F" else "${it.name}❌"
+                if (project.hasFilesOnPlatform(it)) "${it.name}✔\uFE0F" else "${it.name}❌"
             }
 
             terminal.success("($links $platforms) $name")
