@@ -125,8 +125,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
                 {
                     path.parent.toFile().listFiles()
                         .filter {
-                            it.name !in ignored.map { ignore -> ignore.name }
-                                    && it.extension in listOf("jar", "zip")
+                            it.name !in ignored.map { ignore -> ignore.name } && it.extension in listOf("jar", "zip")
                         }
                         .forEach(File::delete)
                 }

@@ -33,12 +33,12 @@ fun Project?.createRequest(
 
             // Retry
             val project2 =  onRetry.retryWith(platform)
-            if (project2 != null && project2.hasFilesForPlatform(platform)) project += project2
+            if (project2 != null && project2.hasFilesOnPlatform(platform)) project += project2
             continue
         }
 
-        // Check if project has files for each platform
-        if (project.hasNoFilesForPlatform(platform))
+        // Check if project has files on each platform
+        if (project.hasNoFilesOnPlatform(platform))
         {
             onError.error("No files for ${project.slug} found on ${platform.name}")
             isRecommended = false

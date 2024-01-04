@@ -84,86 +84,40 @@ data class Project(
         )
     }
 
-    /**
-     * Checks if the current project contains at least one slug or ID from the specified project.
-     *
-     * @param other The project to check.
-     * @return `true` if the current project contains at least one slug or ID from the specified project, otherwise `false`.
-     */
+    /** Checks if the current project contains at least one slug or ID from the other project. */
     infix fun isAlmostTheSameAs(other: Project): Boolean
     {
         return this.slug.values.any { it in other.slug.values } || this.id.values.any { it in other.id.values }
     }
 
-    /**
-     * Checks if the current project contains the specified string in its slugs or IDs.
-     *
-     * @param input The string to check.
-     * @return `true` if the current project contains the specified string, otherwise `false`.
-     */
+    /** Checks if the current project contains the specified string in its slugs or IDs. */
     operator fun contains(input: String): Boolean
     {
         return input in this.slug.values || input in this.id.values
     }
 
-    /**
-     * Checks if the project has any files.
-     *
-     * @return `true` if the project has files, and they are all not empty, otherwise `false`.
-     */
+    /** Checks if the project has any files. */
     fun hasFiles(): Boolean = this.files.allNotEmpty()
 
-    /**
-     * Checks if the project has no files.
-     *
-     * @return `true` if the project has no files, or they are all empty, otherwise `false`.
-     */
+    /** Checks if the project has no files. */
     fun hasNoFiles(): Boolean = this.files.allEmpty()
 
-    /**
-     * Checks if the project is associated with a specific platform.
-     *
-     * @param platform The platform to check.
-     * @return `true` if the project is associated with the specified platform, otherwise `false`.
-     */
-    fun isOnPlatform(platform: Platform): Boolean
-    {
-        return platform.serialName in this.slug.keys
-    }
+    /** Checks if the project is associated with the specified [platform][Platform]. */
+    fun isOnPlatform(platform: Platform): Boolean = platform.serialName in this.slug.keys
 
-    /**
-     * Checks if the project is not associated with a specific platform.
-     *
-     * @param platform The platform to check.
-     * @return `true` if the project is not associated with the specified platform, otherwise `false`.
-     */
+    /** Checks if the project is not associated with the specified [platform][Platform]. */
     fun isNotOnPlatform(platform: Platform): Boolean = !isOnPlatform(platform)
 
-    /**
-     * Checks if the project has files for a specific platform.
-     *
-     * @param platform The platform to check for files.
-     * @return `true` if the project has files for the specified platform, otherwise `false`.
-     */
-    fun hasFilesForPlatform(platform: Platform): Boolean
+    /** Checks if the project has files on the specified [platform][Platform]. */
+    fun hasFilesOnPlatform(platform: Platform): Boolean
     {
         return platform.serialName in this.files.map { it.type }
     }
 
-    /**
-     * Checks if the project has no files for a specific platform.
-     *
-     * @param platform The platform to check for files.
-     * @return `true` if the project has no files for the specified platform, otherwise `false`.
-     */
-    fun hasNoFilesForPlatform(platform: Platform): Boolean = !hasFilesForPlatform(platform)
+    /** Checks if the project has no files on the specified [platform][Platform]. */
+    fun hasNoFilesOnPlatform(platform: Platform): Boolean = !hasFilesOnPlatform(platform)
 
-    /**
-     * Checks if file names match across multiple platforms.
-     *
-     * @param platforms The list of platforms to compare.
-     * @return `true` if the file names match across all specified platforms, otherwise `false`.
-     */
+    /** Checks if file names match across specified [platforms][platforms]. */
     fun fileNamesMatchAcrossPlatforms(platforms: List<Platform>): Boolean
     {
         return this.files.asSequence()
@@ -172,26 +126,19 @@ data class Project(
             .all { it.allEqual() }
     }
 
-    /**
-     * Checks if file names do not match across multiple platforms.
-     *
-     * @param platforms The list of platforms to compare.
-     * @return `true` if the file names do not match across all specified platforms, otherwise `false`.
-     */
+    /** Checks if file names do not match across specified [platforms][platforms]. */
     fun fileNamesNotMatchAcrossPlatforms(platforms: List<Platform>): Boolean = !fileNamesMatchAcrossPlatforms(platforms)
 
-    /**
-     * Retrieves a list of project files associated with a specific platform.
-     *
-     * @param platform The platform for which to retrieve project files.
-     * @return A list of [ProjectFile] instances associated with the specified platform.
-     */
+    /** Retrieves a list of [project files][ProjectFile] associated with the specified [platform][Platform]. */
     fun getFilesForPlatform(platform: Platform): List<ProjectFile>
     {
         return this.files.filter { platform.serialName == it.type }
     }
 
-
+    /**
+     * Requests [projects with files][IProjectProvider.requestProjectWithFiles] for all dependencies of this project.
+     * @return List of [dependencies][Project].
+     */
     suspend fun requestDependencies(projectProvider: IProjectProvider, pakkuLock: PakkuLock): List<Project>
     {
         return this.files

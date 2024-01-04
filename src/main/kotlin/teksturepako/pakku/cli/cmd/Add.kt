@@ -20,13 +20,11 @@ class Add : CliktCommand("Add projects")
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readOrNew()
 
-        for (deferredProject in projects.map { arg ->
-            async {
-                Multiplatform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), arg)
-            }
+        for (projectIn in projects.map { arg ->
+            Multiplatform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), arg)
         })
         {
-            deferredProject.await().createRequest(
+            projectIn.createRequest(
                 onError = { error -> terminal.danger(error) },
                 onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
                 onSuccess = { project, isRecommended, reqHandlers ->

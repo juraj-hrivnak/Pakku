@@ -5,124 +5,67 @@ import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
-/**
- * Platform is a site containing projects.
- */
+/** Platform is a site containing projects. */
 abstract class Platform : Http(), IProjectProvider
 {
-    /**
-     * Platform name.
-     */
+    /** Platform name. */
     abstract val name: String
 
-    /**
-     * Snake case version of the name.
-     */
+    /** Snake case version of the name. */
     abstract val serialName: String
 
-    /**
-     * The API URL address of this platform.
-     */
+    /** The API URL address of this platform. */
     abstract val apiUrl: String
 
-    /**
-     * Version of the API.
-     */
+    /** Version of the API. */
     abstract val apiVersion: Int
 
-    suspend fun requestProjectBody(input: String): String?
-    {
-        return this.requestBody("$apiUrl/v$apiVersion/$input")
-    }
+    suspend fun requestProjectBody(input: String): String? = this.requestBody("$apiUrl/v$apiVersion/$input")
 
-    /**
-     * Requests a project based on either its ID or slug.
-     *
-     * @param input The project ID or slug.
-     * @return A [Project] instance if found, or null if the project with the specified ID or slug is not found.
-     */
+    /** Requests a [project][Project] based on either its ID or slug. */
     abstract override suspend fun requestProject(input: String): Project?
 
-    /**
-     * Requests a project using its unique identifier (ID).
-     *
-     * @param id The unique identifier (ID) of the project to request.
-     * @return A [Project] instance if the project with the specified ID is found, otherwise null.
-     */
+    /** Requests a [project][Project] using its [ID][id]. */
     abstract suspend fun requestProjectFromId(id: String): Project?
 
-    /**
-     * Requests a project using its slug.
-     *
-     * @param slug The slug of the project to request.
-     * @return A [Project] instance if the project with the specified slug is found, otherwise null.
-     */
+    /** Requests a [project][Project] using its [slug]. */
     abstract suspend fun requestProjectFromSlug(slug: String): Project?
 
-
     /**
-     * Requests project files based on lists of Minecraft versions and loaders, and a file ID.
-     *
-     * @param mcVersions The list of Minecraft versions.
-     * @param loaders The list of mod loader types.
-     * @param projectId The project ID.
-     * @param fileId Optional file ID.
-     * @return A mutable list of [ProjectFile] objects obtained by combining project files from the specified
-     *         Minecraft versions and loaders. The list may be empty if no files are found for any combination.
+     * Requests [project files][ProjectFile] based on [minecraft versions][mcVersions], [loaders], [projectId] or
+     * [projectId] & [fileId].
      */
-    abstract suspend fun requestProjectFilesFromId(
+    abstract suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String? = null
     ): MutableSet<ProjectFile>
 
     /**
-     * Requests project files based on specified Minecraft versions, loaders, a project, and the desired number of
-     * files.
-     *
-     * @param mcVersions The list of Minecraft versions.
-     * @param loaders The list of mod loader types.
-     * @param project The [Project] for which to request files.
-     * @param numberOfFiles The number of requested files. Defaults to 1.
-     * @return A mutable set of [ProjectFile] instances associated with the specified project.
+     * [Requests project files][requestProjectFiles] for provided [project][Project], with optional
+     * [number of files][numberOfFiles] to take.
      */
     suspend fun requestFilesForProject(
         mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int = 1
-    ): MutableSet<ProjectFile>
-    {
-        return project.id[this.serialName]?.let { projectId ->
-            this.requestProjectFilesFromId(mcVersions, loaders, projectId).take(numberOfFiles).toMutableSet()
-        } ?: mutableSetOf()
-    }
+    ): MutableSet<ProjectFile> = project.id[this.serialName]?.let { projectId ->
+        this.requestProjectFiles(mcVersions, loaders, projectId).take(numberOfFiles).toMutableSet()
+    } ?: mutableSetOf()
 
     /**
-     * Requests a project along with project files based on specified Minecraft versions, loaders, its
-     * ID or slug, and the desired number of files.
-     *
-     * @param mcVersions The list of Minecraft versions.
-     * @param loaders The list of mod loader types.
-     * @param input The project ID or slug.
-     * @param numberOfFiles The number of requested files. Defaults to 1.
-     * @return A [Project] instance if found, or null if the project with the specified ID or slug is not found.
-     *         If the project is found, the project files are added to the project's file set.
+     * [Requests a project][requestProject] and [files][requestFilesForProject], and returns a [project][Project],
+     * with optional [number of files][numberOfFiles] to take.
      */
     override suspend fun requestProjectWithFiles(
         mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int
-    ): Project?
-    {
-        val project = requestProject(input) ?: return null
-
-        project.files.addAll(requestFilesForProject(mcVersions, loaders, project, numberOfFiles))
-
-        return project
+    ): Project? = requestProject(input)?.apply {
+        files.addAll(requestFilesForProject(mcVersions, loaders, this, numberOfFiles))
     }
 
+    /**
+     * [Requests a project][requestProjectFromId] with [files][requestProjectFiles] using its [projectId] & [fileId],
+     * with optional [number of files][numberOfFiles] to take.
+     */
     suspend fun requestProjectWithFilesFromIds(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String, numberOfFiles: Int = 1
-    ): Project?
-    {
-        val project = requestProjectFromId(projectId) ?: return null
-
-        project.files.addAll(requestProjectFilesFromId(mcVersions, loaders, projectId, fileId).take(numberOfFiles))
-
-        return project
+    ): Project? = requestProjectFromId(projectId)?.apply {
+        files.addAll(requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles))
     }
 }
