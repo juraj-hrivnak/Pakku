@@ -3,7 +3,10 @@ package teksturepako.pakku.api.platforms
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.models.CurseForgeResponse
+import teksturepako.pakku.api.models.GetFileResponse
+import teksturepako.pakku.api.models.GetMultipleFilesResponse
+import teksturepako.pakku.api.models.GetProjectResponse
+import teksturepako.pakku.api.models.SearchProjectResponse
 import teksturepako.pakku.api.projects.CfFile
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
@@ -55,7 +58,7 @@ object CurseForge : Platform()
 
     override suspend fun requestProjectFromId(id: String): Project?
     {
-        val response = json.decodeFromString<CurseForgeResponse.GetProject>(
+        val response = json.decodeFromString<GetProjectResponse>(
             this.requestProjectBody("mods/$id")
                 ?: return null
         ).data
@@ -79,7 +82,7 @@ object CurseForge : Platform()
 
     override suspend fun requestProjectFromSlug(slug: String): Project?
     {
-        val response = json.decodeFromString<CurseForgeResponse.SearchProject>(
+        val response = json.decodeFromString<SearchProjectResponse>(
             this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug")
                 ?: return null
         ).data.firstOrNull() ?: return null
@@ -104,18 +107,12 @@ object CurseForge : Platform()
 
     // -- FILES --
 
-    /**
-     * Requests project files based on Minecraft version, loader, and a file ID.
-     *
-     * @param mcVersion The Minecraft version.
-     * @param loader The mod loader type.
-     * @param projectId The file ID.
-     * @return A mutable list of [CfFile] objects, or null if an error occurs or no files are found.
-     */
-    override suspend fun requestProjectFilesFromId(
+    override suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?
     ): MutableSet<ProjectFile>
     {
+        val loaderVersionTypeId = 68441
+
         // Handle optional fileId
         val fileIdSuffix = if (fileId == null) "" else "/$fileId"
 
@@ -134,20 +131,19 @@ object CurseForge : Platform()
 
         return if (fileId == null) // Multiple files
         {
-            val response = json.decodeFromString<CurseForgeResponse.GetMultipleFiles>(
+            val response = json.decodeFromString<GetMultipleFilesResponse>(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
 
             response.filter { file ->
-                file.gameVersions.any { it in mcVersions }
-                        && file.sortableGameVersions
-                            .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
-                            .takeIf { it.isNotEmpty() }
-                            ?.map { it.gameVersionName.lowercase() }?.any {
-                                loaders.any { loader -> loader == it }
-                                        // Loaders valid by default
-                                        || it in listOf("minecraft", "iris", "optifine", "datapack")
-                            } ?: true
+                file.gameVersions.any { it in mcVersions } && file.sortableGameVersions
+                    .filter { it.gameVersionTypeId == loaderVersionTypeId /* Filter to loader only */ }
+                    .takeIf { it.isNotEmpty() }
+                    ?.map { it.gameVersionName.lowercase() }?.any {
+                        loaders.any { loader -> loader == it } || it in listOf(
+                            "minecraft", "iris", "optifine", "datapack" // Loaders valid by default
+                        )
+                    } ?: true
             }.map { file ->
                 CfFile(
                     fileName = file.fileName,
@@ -186,7 +182,7 @@ object CurseForge : Platform()
             }.toMutableSet()
         } else // One file
         {
-            val response = json.decodeFromString<CurseForgeResponse.GetFile>(
+            val response = json.decodeFromString<GetFileResponse>(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
 

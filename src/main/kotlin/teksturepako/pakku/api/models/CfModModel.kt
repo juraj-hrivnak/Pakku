@@ -1,38 +1,38 @@
 package teksturepako.pakku.api.models
 
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.models.CfMod.ModAsset
-import teksturepako.pakku.api.models.CfMod.ModLinks
+import teksturepako.pakku.api.models.CfModModel.ModAsset
 
 /**
- * @property id [integer(int32)] The mod id
- * @property gameId [integer(int32)] The game id this mod is for
- * @property name [String] The name of the mod
- * @property slug [String] The mod slug that would appear in the URL
- * @property links [ModLinks] Relevant links for the mod such as Issue tracker and Wiki
- * @property summary [String] Mod summary
- * @property status [Int] Current mod status
- * @property downloadCount [integer(int64)] Number of downloads for the mod
- * @property isFeatured [Boolean] Whether the mod is included in the featured mods list
- * @property primaryCategoryId [integer(int32)] The main category of the mod as it was chosen by the mod author
- * @property categories [List<Category>] List of categories that this mod is related to
- * @property classId [integer(int32)¦null] The class id this mod belongs to
- * @property authors [List<ModAuthor>] List of the mod's authors
- * @property logo [ModAsset] The mod's logo asset
- * @property screenshots [List<ModAsset>] List of screenshots assets
- * @property mainFileId [integer(int32)] The id of the main file of the mod
- * @property latestFiles [List<File>] List of latest files of the mod
- * @property latestFilesIndexes [List<FileIndex>] List of file related details for the latest files of the mod
- * @property latestEarlyAccessFilesIndexes [List<FileIndex>] List of file related details for the latest early access files of the mod
- * @property dateCreated [String][(date-time)] The creation date of the mod
- * @property dateModified [String][(date-time)] The last time the mod was modified
- * @property dateReleased [String][(date-time)] The release date of the mod
- * @property allowModDistribution [boolean¦null] Is mod allowed to be distributed
- * @property gamePopularityRank [integer(int32)] The mod popularity rank for the game
- * @property isAvailable [Boolean] Is the mod available for search. This can be false when a mod is experimental, in a deleted state, or has only alpha files
+ * @property id The mod id
+ * @property gameId The game id this mod is for
+ * @property name The name of the mod
+ * @property slug The mod slug that would appear in the URL
+ * @property links Relevant links for the mod such as Issue tracker and Wiki
+ * @property summary Mod summary
+ * @property status Current mod status
+ * @property downloadCount Number of downloads for the mod
+ * @property isFeatured Whether the mod is included in the featured mods list
+ * @property primaryCategoryId The main category of the mod as it was chosen by the mod author
+ * @property categories List of [categories][Category] that this mod is related to
+ * @property classId The class id this mod belongs to
+ * @property authors List of [mod's authors][ModAuthor]
+ * @property logo The mod's logo asset
+ * @property screenshots List of [screenshots][ModAsset]
+ * @property mainFileId The id of the main file of the mod
+ * @property latestFiles List of latest [files][File] of the mod
+ * @property latestFilesIndexes List of [file related details][FileIndex] for the latest files of the mod
+ * @property latestEarlyAccessFilesIndexes List of [file related details][FileIndex] for the latest early access
+ * files of the mod
+ * @property dateCreated The creation date of the mod
+ * @property dateModified The last time the mod was modified
+ * @property dateReleased The release date of the mod
+ * @property allowModDistribution Is mod allowed to be distributed
+ * @property gamePopularityRank The mod popularity rank for the game
+ * @property isAvailable Is the mod available for search. This can be false when a mod is experimental, in a deleted state, or has only alpha files
  */
 @Serializable
-data class CfMod(
+data class CfModModel(
     val id: Int,
     val gameId: Int,
     val name: String,

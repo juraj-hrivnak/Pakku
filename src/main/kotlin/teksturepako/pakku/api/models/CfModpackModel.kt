@@ -3,7 +3,7 @@ package teksturepako.pakku.api.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CfModpack(
+data class CfModpackModel(
     val minecraft: CfMinecraftData,
     val manifestType: String,
     val manifestVersion: Double,
