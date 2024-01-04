@@ -46,6 +46,17 @@ open class Http
             .bodyIfOK()
     }
 
+    suspend inline fun <reified T> requestBody(url: String, bodyContent: T): String?
+    {
+        return client.post(url) {
+            contentType(ContentType.Application.Json)
+            setBody(bodyContent)
+        }
+            .debug { println("${this.javaClass.simpleName} $it") }
+            .checkLimit()
+            .bodyIfOK()
+    }
+
     suspend fun HttpResponse.checkLimit(): HttpResponse
     {
         this.headers["x-ratelimit-remaining"]?.toInt()?.let {
