@@ -1,26 +1,26 @@
 package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.http.Http
-import teksturepako.pakku.api.projects.IProjectProvider
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
+import teksturepako.pakku.api.projects.*
 
-/** Platform is a site containing projects. */
-abstract class Platform : Http(), IProjectProvider
+/**
+ * Platform is a site containing projects.
+ * @param name Platform name.
+ * @param serialName Snake case version of the name.
+ * @param apiUrl The API URL address of this platform.
+ * @param apiVersion Version of the API.
+ */
+abstract class Platform(
+    val name: String,
+    val serialName: String,
+    val apiUrl: String,
+    val apiVersion: Int
+) : Http(), IProjectProvider
 {
-    /** Platform name. */
-    abstract val name: String
-
-    /** Snake case version of the name. */
-    abstract val serialName: String
-
-    /** The API URL address of this platform. */
-    abstract val apiUrl: String
-
-    /** Version of the API. */
-    abstract val apiVersion: Int
-
     suspend fun requestProjectBody(input: String): String? = this.requestBody("$apiUrl/v$apiVersion/$input")
+
+    suspend inline fun <reified T> requestProjectBody(input: String, bodyContent: T): String? =
+        this.requestBody("$apiUrl/v$apiVersion/$input", bodyContent)
 
     /** Requests a [project][Project] based on either its ID or slug. */
     abstract override suspend fun requestProject(input: String): Project?
@@ -31,6 +31,10 @@ abstract class Platform : Http(), IProjectProvider
     /** Requests a [project][Project] using its [slug]. */
     abstract suspend fun requestProjectFromSlug(slug: String): Project?
 
+    abstract suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
+
+    // -- FILES --
+
     /**
      * Requests [project files][ProjectFile] based on [minecraft versions][mcVersions], [loaders], [projectId] or
      * [projectId] & [fileId].
@@ -38,6 +42,9 @@ abstract class Platform : Http(), IProjectProvider
     abstract suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String? = null
     ): MutableSet<ProjectFile>
+
+    abstract suspend fun requestMultipleProjectFiles(ids: List<String>): MutableSet<ProjectFile>
+
 
     /**
      * [Requests project files][requestProjectFiles] for provided [project][Project], with optional

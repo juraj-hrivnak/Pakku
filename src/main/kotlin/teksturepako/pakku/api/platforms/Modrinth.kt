@@ -9,14 +9,13 @@ import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.debug
 
-object Modrinth : Platform()
+object Modrinth : Platform(
+    name = "Modrinth",
+    serialName = "modrinth",
+    apiUrl = "https://api.modrinth.com",
+    apiVersion = 2
+)
 {
-    override val name = "Modrinth"
-    override val serialName = "modrinth"
-    override val apiUrl = "https://api.modrinth.com"
-    override val apiVersion = 2
-
-
     // -- PROJECT --
 
     override suspend fun requestProject(input: String): Project? = when
@@ -70,6 +69,34 @@ object Modrinth : Platform()
         )
     }
 
+    override suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
+    {
+        val response = json.decodeFromString<List<MrProjectModel>>(
+            this.requestProjectBody("projects?ids=${ids.map { "%22$it%22" }.toString()
+                .replace("[", "%5B").replace("]","%5D")}")
+                ?: return mutableSetOf()
+        )
+
+        return response.filter { it.projectType != "modpack" }.map { project ->
+            Project(
+                name = mutableMapOf(serialName to project.title),
+                slug = mutableMapOf(serialName to project.slug),
+                type = when (project.projectType)
+                {
+                    "mod"          -> ProjectType.MOD
+                    "resourcepack" -> ProjectType.RESOURCE_PACK
+                    "shader"       -> ProjectType.SHADER
+
+                    else           -> ProjectType.MOD.also {
+                        println("Project type ${project.projectType} not found!")
+                    }
+                },
+                id = mutableMapOf(serialName to project.id),
+                files = mutableSetOf(),
+            )
+        }.toMutableSet()
+    }
+
     // -- FILES --
 
     override suspend fun requestProjectFiles(
@@ -100,6 +127,8 @@ object Modrinth : Platform()
                             if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
                         },
                         url = versionFile.url,
+                        id = version.id,
+                        parentId = version.projectId,
                         hashes = versionFile.hashes.let {
                             mutableMapOf(
                                 "sha512" to it.sha512,
@@ -129,6 +158,8 @@ object Modrinth : Platform()
                         if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
                     },
                     url = versionFile.url,
+                    id = response.id,
+                    parentId = response.projectId,
                     hashes = versionFile.hashes.let {
                         mutableMapOf(
                             "sha512" to it.sha512,
@@ -141,5 +172,39 @@ object Modrinth : Platform()
                 )
             }.toMutableSet()
         }
+    }
+
+    override suspend fun requestMultipleProjectFiles(ids: List<String>): MutableSet<ProjectFile>
+    {
+        val response = json.decodeFromString<List<MrVersionModel>>(
+            this.requestProjectBody("versions?ids=${ids.map { "%22$it%22" }.toString()
+                .replace("[", "%5B").replace("]","%5D")}")
+                ?: return mutableSetOf()
+        )
+
+        return response.flatMap { version ->
+            version.files.map { versionFile ->
+                MrFile(
+                    fileName = versionFile.filename,
+                    mcVersions = version.gameVersions.toMutableList(),
+                    loaders = version.loaders.toMutableList(),
+                    releaseType = version.versionType.run {
+                        if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
+                    },
+                    url = versionFile.url,
+                    id = version.id,
+                    parentId = version.projectId,
+                    hashes = versionFile.hashes.let {
+                        mutableMapOf(
+                            "sha512" to it.sha512,
+                            "sha1" to it.sha1
+                        )
+                    },
+                    requiredDependencies = version.dependencies
+                        .filter { "required" in it.dependencyType }
+                        .mapNotNull { it.projectId }.toMutableSet()
+                )
+            }
+        }.toMutableSet()
     }
 }

@@ -3,10 +3,7 @@ package teksturepako.pakku.api.platforms
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.models.GetFileResponse
-import teksturepako.pakku.api.models.GetMultipleFilesResponse
-import teksturepako.pakku.api.models.GetProjectResponse
-import teksturepako.pakku.api.models.SearchProjectResponse
+import teksturepako.pakku.api.models.*
 import teksturepako.pakku.api.projects.CfFile
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
@@ -14,14 +11,12 @@ import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.debug
 
 @Suppress("MemberVisibilityCanBePrivate")
-object CurseForge : Platform()
-{
-    override val name = "CurseForge"
-    override val serialName = "curseforge"
-    override val apiUrl = "https://cfproxy.bmpm.workers.dev"
-    override val apiVersion = 1
-
-
+object CurseForge : Platform(
+    name = "CurseForge",
+    serialName = "curseforge",
+    apiUrl = "https://cfproxy.bmpm.workers.dev",
+    apiVersion = 1
+) {
     // -- API KEY --
 
     private const val API_KEY_HEADER = "x-api-key"
@@ -104,6 +99,31 @@ object CurseForge : Platform()
         )
     }
 
+    override suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
+    {
+        val response = json.decodeFromString<GetMultipleProjectsResponse>(
+            this.requestProjectBody("mods", MultipleProjectsRequest(ids.map(String::toInt)))
+                ?: return mutableSetOf()
+        ).data
+
+        return response.map { project ->
+            Project(
+                name = mutableMapOf(serialName to project.name),
+                slug = mutableMapOf(serialName to project.slug),
+                type = when (project.classId)
+                {
+                    6    -> ProjectType.MOD
+                    12   -> ProjectType.RESOURCE_PACK
+                    17   -> ProjectType.WORLD
+                    6552 -> ProjectType.SHADER
+
+                    else -> ProjectType.MOD.also { println("Project type ${project.classId} not found!") }
+                },
+                id = mutableMapOf(serialName to project.id.toString()),
+                files = mutableSetOf(),
+            )
+        }.toMutableSet()
+    }
 
     // -- FILES --
 
@@ -162,7 +182,8 @@ object CurseForge : Platform()
                         else -> "release"
                     },
                     url = file.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
-                    id = file.id,
+                    id = file.id.toString(),
+                    parentId = file.modId.toString(),
                     requiredDependencies = file.dependencies
                         .filter { it.relationType == 3 }
                         .map { it.modId.toString() }.toMutableSet()
@@ -204,7 +225,8 @@ object CurseForge : Platform()
                         else -> "release"
                     },
                     url = response.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
-                    id = response.id,
+                    id = response.id.toString(),
+                    parentId = response.modId.toString(),
                     requiredDependencies = response.dependencies
                         .filter { it.relationType == 3 }
                         .map { it.modId.toString() }.toMutableSet()
@@ -222,6 +244,51 @@ object CurseForge : Platform()
         }
     }
 
+    override suspend fun requestMultipleProjectFiles(ids: List<String>): MutableSet<ProjectFile>
+    {
+        val response = json.decodeFromString<GetMultipleFilesResponse>(
+            this.requestProjectBody("files", MultipleFilesRequest(ids.map(String::toInt)))
+                ?: return mutableSetOf()
+        ).data
+
+        return response.map { file ->
+            CfFile(
+                fileName = file.fileName,
+                mcVersions = file.sortableGameVersions
+                    .map { it.gameVersionName }.toMutableList(),
+                loaders = file.sortableGameVersions
+                    .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
+                    .map { it.gameVersionName.lowercase() }.toMutableList(),
+                releaseType = when (file.releaseType)
+                {
+                    1 -> "release"
+                    2 -> "beta"
+                    3 -> "alpha"
+
+                    else -> "release"
+                },
+                url = file.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
+                id = file.id.toString(),
+                parentId = file.modId.toString(),
+                requiredDependencies = file.dependencies
+                    .filter { it.relationType == 3 }
+                    .map { it.modId.toString() }.toMutableSet()
+            )
+        }.debug {
+            if (it.isEmpty()) println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
+        }.map { file ->
+            // Request alternative download URLs.
+            if (file.url != "null") file else
+            {
+                val url = fetchAlternativeDownloadUrl(file.id, file.fileName)
+                file.apply {
+                    // Replace empty characters in the URL.
+                    this.url = url.replace(" ", "%20")
+                }
+            }
+        }.toMutableSet()
+    }
+
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
     {
         return json.decodeFromString<JsonObject>(
@@ -230,9 +297,9 @@ object CurseForge : Platform()
             .debug { println("${this.javaClass.simpleName}#requestGameVersionTypeId: $it") }
     }
 
-    fun fetchAlternativeDownloadUrl(fileId: Int, fileName: String): String
+    fun fetchAlternativeDownloadUrl(fileId: String, fileName: String): String
     {
-        return "https://edge.forgecdn.net/files/${fileId.toString().substring(0, 4)}/${
+        return "https://edge.forgecdn.net/files/${fileId.substring(0, 4)}/${
             fileId.toString().substring(4)
         }/$fileName"
     }
