@@ -3,8 +3,13 @@ package teksturepako.pakku.api.http
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import teksturepako.pakku.api.data.json
 
 val client = HttpClient(OkHttp) {
+    install(ContentNegotiation) {
+        json
+    }
     install(HttpTimeout) {
         socketTimeoutMillis = 600000
     }
