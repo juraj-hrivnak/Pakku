@@ -5,9 +5,8 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.mordant.terminal.YesNoPrompt
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.createRequest
+import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.cli.promptForProject
@@ -24,7 +23,7 @@ class Add : CliktCommand("Add projects")
             Multiplatform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), arg)
         })
         {
-            projectIn.createRequest(
+            projectIn.createAdditionRequest(
                 onError = { error -> terminal.danger(error) },
                 onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
                 onSuccess = { project, isRecommended, reqHandlers ->
@@ -32,12 +31,19 @@ class Add : CliktCommand("Add projects")
                         if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
                         {
                             pakkuLock.add(project)
-                            project.resolveDependencies(terminal, reqHandlers, pakkuLock)
+                            project.resolveDependencies(
+                                terminal = terminal,
+                                reqHandlers = reqHandlers,
+                                pakkuLock = pakkuLock,
+                                projectProvider = Multiplatform,
+                                platforms = Multiplatform.platforms.toTypedArray()
+                            )
                             terminal.success("${project.slug} added")
                         }
                     }
                 },
-                pakkuLock
+                pakkuLock = pakkuLock,
+                platforms = Multiplatform.platforms.toTypedArray()
             )
             terminal.println()
         }

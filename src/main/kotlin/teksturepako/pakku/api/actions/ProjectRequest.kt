@@ -3,15 +3,15 @@ package teksturepako.pakku.api.actions
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
-fun Project?.createRequest(
+fun Project?.createAdditionRequest(
     onError: ErrorBlock,
     onRetry: RetryBlock,
     onSuccess: SuccessBlock,
-    pakkuLock: PakkuLock
+    pakkuLock: PakkuLock,
+    vararg platforms: Platform
 )
 {
     // Exist
@@ -24,7 +24,7 @@ fun Project?.createRequest(
         return onError.error("Could not add ${project.slug}. It is already added")
     }
 
-    for (platform in Multiplatform.platforms)
+    for (platform in platforms)
     {
         // Check if project is on each platform
         if (project.isNotOnPlatform(platform))
@@ -53,7 +53,7 @@ fun Project?.createRequest(
     }
 
     // Check if project files match across platforms
-    if (project.fileNamesNotMatchAcrossPlatforms(Multiplatform.platforms))
+    if (project.fileNamesNotMatchAcrossPlatforms(platforms.toList()))
     {
         onError.error("${project.slug} versions do not match across platforms")
         onError.error(json.encodeToString(project.files.map { it.fileName }))

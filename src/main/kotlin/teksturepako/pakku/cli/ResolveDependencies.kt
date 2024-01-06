@@ -3,9 +3,10 @@ package teksturepako.pakku.cli
 import com.github.ajalt.mordant.terminal.Terminal
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.RequestHandlers
-import teksturepako.pakku.api.actions.createRequest
+import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.PakkuLock
-import teksturepako.pakku.api.platforms.Multiplatform
+import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.debug
 import teksturepako.pakku.toPrettyString
@@ -13,10 +14,12 @@ import teksturepako.pakku.toPrettyString
 suspend fun Project.resolveDependencies(
     terminal: Terminal,
     reqHandlers: RequestHandlers,
-    pakkuLock: PakkuLock
+    pakkuLock: PakkuLock,
+    projectProvider: IProjectProvider,
+    vararg platforms: Platform
 )
 {
-    val dependencies = this.requestDependencies(Multiplatform, pakkuLock)
+    val dependencies = this.requestDependencies(projectProvider, pakkuLock)
     if (dependencies.isEmpty()) return
 
     terminal.info("Resolving dependencies...")
@@ -32,7 +35,7 @@ suspend fun Project.resolveDependencies(
         } else // Add dependency as a regular project and resolve dependencies for it too
         {
             debug { terminal.info(dependencyIn.toPrettyString()) }
-            dependencyIn.createRequest(
+            dependencyIn.createAdditionRequest(
                 onError = reqHandlers.onError,
                 onRetry = reqHandlers.onRetry,
                 onSuccess = { dependency, _, depReqHandlers ->
@@ -40,11 +43,12 @@ suspend fun Project.resolveDependencies(
                         pakkuLock.add(dependency)
                         pakkuLock.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
 
-                        dependency.resolveDependencies(terminal, depReqHandlers, pakkuLock)
+                        dependency.resolveDependencies(terminal, depReqHandlers, pakkuLock, projectProvider, *platforms)
                         terminal.info("${dependency.slug} added")
                     }
                 },
-                pakkuLock
+                pakkuLock,
+                *platforms
             )
         }
     }
