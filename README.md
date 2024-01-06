@@ -1,6 +1,8 @@
 
 # Pakku
 
+[![CodeQL](https://github.com/juraj-hrivnak/Pakku/actions/workflows/codeql.yml/badge.svg)](https://github.com/juraj-hrivnak/Pakku/actions/workflows/codeql.yml)
+
 A multiplatform modpack manager for Minecraft: Java Edition.
 
 ## Usage
