@@ -1,7 +1,9 @@
 package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.http.Http
-import teksturepako.pakku.api.projects.*
+import teksturepako.pakku.api.projects.IProjectProvider
+import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectFile
 
 /**
  * Platform is a site containing projects.

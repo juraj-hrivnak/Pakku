@@ -1,7 +1,7 @@
 package teksturepako.pakku.api.models
 
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.models.CfModModel.ModAsset
+import teksturepako.pakku.api.models.CfModModel.*
 
 /**
  * @property id The mod id

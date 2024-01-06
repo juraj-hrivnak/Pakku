@@ -16,7 +16,7 @@ suspend fun Project.resolveDependencies(
     reqHandlers: RequestHandlers,
     pakkuLock: PakkuLock,
     projectProvider: IProjectProvider,
-    vararg platforms: Platform
+    platforms: List<Platform>
 )
 {
     val dependencies = this.requestDependencies(projectProvider, pakkuLock)
@@ -26,14 +26,15 @@ suspend fun Project.resolveDependencies(
 
     for (dependencyIn in dependencies)
     {
-        // Link project to dependency if dependency is already added
         if (pakkuLock.isProjectAdded(dependencyIn))
         {
+            /** Link project to dependency if dependency is already added */
             pakkuLock.getProject(dependencyIn)?.pakkuId?.let { pakkuId ->
                 pakkuLock.addPakkuLink(pakkuId, this)
             }
-        } else // Add dependency as a regular project and resolve dependencies for it too
+        } else
         {
+            /** Add dependency as a regular project and resolve dependencies for it too */
             debug { terminal.info(dependencyIn.toPrettyString()) }
             dependencyIn.createAdditionRequest(
                 onError = reqHandlers.onError,
@@ -43,12 +44,12 @@ suspend fun Project.resolveDependencies(
                         pakkuLock.add(dependency)
                         pakkuLock.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
 
-                        dependency.resolveDependencies(terminal, depReqHandlers, pakkuLock, projectProvider, *platforms)
+                        dependency.resolveDependencies(terminal, depReqHandlers, pakkuLock, projectProvider, platforms)
                         terminal.info("${dependency.slug} added")
                     }
                 },
                 pakkuLock,
-                *platforms
+                platforms
             )
         }
     }

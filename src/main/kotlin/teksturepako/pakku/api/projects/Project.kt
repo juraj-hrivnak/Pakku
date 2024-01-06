@@ -127,7 +127,7 @@ data class Project(
     }
 
     /** Checks if file names do not match across specified [platforms][platforms]. */
-    fun fileNamesNotMatchAcrossPlatforms(platforms: List<Platform>): Boolean = !fileNamesMatchAcrossPlatforms(platforms)
+    fun fileNamesDoNotMatchAcrossPlatforms(platforms: List<Platform>): Boolean = !fileNamesMatchAcrossPlatforms(platforms)
 
     /** Retrieves a list of [project files][ProjectFile] associated with the specified [platform][Platform]. */
     fun getFilesForPlatform(platform: Platform): List<ProjectFile>

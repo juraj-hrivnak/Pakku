@@ -4,7 +4,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.*
-import teksturepako.pakku.api.projects.*
+import teksturepako.pakku.api.projects.CfFile
+import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectFile
+import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 
@@ -40,7 +43,6 @@ object CurseForge : Platform(
     {
         return getApiKey()?.let { super.requestBody(url, Pair(API_KEY_HEADER, it)) } ?: super.requestBody(url)
     }
-
 
     // -- PROJECT --
 
@@ -105,10 +107,10 @@ object CurseForge : Platform(
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.gameVersionName.lowercase() }?.any {
                     loaders.any { loader -> loader == it } || it in validLoaders // Check default valid loaders
-                } ?: true // If no loaders found, accept project
+                } ?: true // If no loaders found, accept model
         }
 
-    private fun CfModModel.File.toProjectFile(mcVersions: List<String>, gameVersionTypeIds: List<Int>): ProjectFile
+    private fun CfModModel.File.toProjectFile(gameVersionTypeIds: List<Int>): ProjectFile
     {
         return CfFile(
             fileName = this.fileName,
@@ -162,7 +164,7 @@ object CurseForge : Platform(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
                 .filterFileModels(mcVersions, loaders)
-                .map { it.toProjectFile(loaders, gameVersionTypeIds).fetchAlternativeDownloadUrl() }
+                .map { it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl() }
                 .debugIfEmpty {
                     println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
                 }
@@ -174,7 +176,7 @@ object CurseForge : Platform(
                 json.decodeFromString<GetFileResponse>(
                     this.requestProjectBody(requestUrl) ?: return mutableSetOf()
                 ).data
-                    .toProjectFile(loaders, gameVersionTypeIds)
+                    .toProjectFile(gameVersionTypeIds)
                     .fetchAlternativeDownloadUrl()
             )
         }
@@ -194,7 +196,7 @@ object CurseForge : Platform(
         ).data
             .filterFileModels(mcVersions, loaders)
             .map {
-                it.toProjectFile(loaders, gameVersionTypeIds).fetchAlternativeDownloadUrl()
+                it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl()
             }
             .debugIfEmpty {
                 println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
