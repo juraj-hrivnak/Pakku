@@ -6,77 +6,98 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.produce
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.Project
 
 class Update : CliktCommand("Update projects")
 {
-    private val projects: List<String> by argument().multiple()
+    private val projectArgs: List<String> by argument().multiple()
     private val all: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
+    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
-
-        val projects = mutableListOf<Project>()
-
-        if (all)
-        {
-            pakkuLock.getAllProjects().forEach { project ->
-                projects.add(project)
+        val pakkuLock = PakkuLock.readToResult().fold(
+            onSuccess = { it },
+            onFailure = {
+                terminal.danger(it.message)
+                echo()
+                return@runBlocking
             }
+        )
+
+        val projects = if (all)
+        {
+            pakkuLock.getAllProjects()
         } else
         {
-            this@Update.projects.forEach { project ->
-                pakkuLock.getProject(project)?.let {
-                    projects.add(it)
+            projectArgs.mapNotNull { projectArg ->
+                pakkuLock.getProject(projectArg).also {
+                    if (it == null)
+                    {
+                        terminal.danger("$projectArg not found")
+                    }
                 }
             }
         }
 
-        val updatedProjects = mutableListOf<Project>()
-
-        runBlocking {
-            for (project in projects)
-            {
+        val updatedProjects: ReceiveChannel<Project> = produce {
+            projects.map { oldProject ->
                 launch {
-                    var updatedProject = project.copy(files = mutableSetOf())
+                    /** Create copy of each project with empty files */
+                    var updatedProject = oldProject.copy(files = mutableSetOf())
 
-                    platforms@ for (platform in Multiplatform.platforms)
+                    val mcVersions = oldProject.files.flatMap { it.mcVersions }
+                    val loaders = oldProject.files.flatMap { it.loaders }
+
+                    /** For each platform request a new project with files and combine it with [updated project] */
+                    x@for (platform in Multiplatform.platforms)
                     {
-                        project.id[platform.serialName]?.let { id ->
-                            platform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), id)?.let { updatedProject += it }
-                        } ?: continue@platforms
+                        val projectId = oldProject.id[platform.serialName] ?: continue@x
+
+                        platform.requestProjectWithFiles(mcVersions, loaders, projectId)
+                            ?.let { updatedProject += it } // Combine projects
                     }
 
-                    if (project != updatedProject)
+                    /** If updated project is different from old project return updated project */
+                    if (updatedProject != oldProject && mcVersions.isNotEmpty() && loaders.isNotEmpty())
                     {
-                        updatedProjects.add(updatedProject)
+                        send(updatedProject) // Send updated project to channel
                     }
                 }
+            }.joinAll() // Wait for all jobs to finish
+            close() // Close channel
+        }
+
+        var updated = false
+
+        for (updatedProject in updatedProjects)
+        {
+            launch {
+                pakkuLock.update(updatedProject)
+                terminal.success("${updatedProject.slug} updated")
+
+                updated = true
             }
         }
 
-        runBlocking {
-            if (updatedProjects.isNotEmpty())
+        if (!updated && updatedProjects.isClosedForReceive && projects.isNotEmpty())
+        {
+            when
             {
-                for (updatedProject in updatedProjects)
+                all || projectArgs.isEmpty() -> terminal.success("All projects are up to date")
+                projects.size == 1           -> terminal.success("${projects.first().slug} is up to date")
+                else                         ->
                 {
-                    launch {
-                        pakkuLock.update(updatedProject)
-                        terminal.success("${updatedProject.slug} updated")
-                    }
+                    terminal.success("${projects.map { it.slug }} are up to date")
                 }
-            } else
-            {
-                if (all || this@Update.projects.isEmpty()) terminal.success("All projects are up to date")
-                else terminal.success("${this@Update.projects} up to date")
             }
         }
 
-        pakkuLock.write()
         echo()
+        pakkuLock.write()
     }
 }

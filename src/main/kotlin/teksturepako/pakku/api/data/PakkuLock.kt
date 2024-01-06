@@ -11,7 +11,7 @@ import teksturepako.pakku.io.writeToFile
 import java.io.File
 
 /**
- * A PakkuLock is used to define the properties of a Minecraft modpack.
+ * A PakkuLock is used to define all properties of a Pakku modpack.
  *
  * @property packName The name of the mod pack.
  * @property mcVersions The Minecraft versions supported by the mod pack.
@@ -190,9 +190,23 @@ data class PakkuLock(
     {
         private const val PAKKU_FILE = "pakku-lock.json"
 
+        /**
+         * Reads [PakkuLock's][PakkuLock] [file][PAKKU_FILE] and parses it,
+         * or returns a new [PakkuLock].
+         */
         suspend fun readOrNew(): PakkuLock = readFileOrNull(File(PAKKU_FILE))?.let {
             runCatching { json.decodeFromString<PakkuLock>(it) }.getOrElse { PakkuLock() }
         } ?: PakkuLock()
+
+        /**
+         * Reads [PakkuLock's][PakkuLock] [file][PAKKU_FILE] and parses it, or returns an exception.
+         * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
+         */
+        suspend fun readToResult(): Result<PakkuLock> = readFileOrNull(File(PAKKU_FILE))?.let {
+            runCatching { Result.success(json.decodeFromString<PakkuLock>(it)) }.getOrElse { exception ->
+                Result.failure(PakkuException("Error occurred while reading '$PAKKU_FILE': ${exception.message}"))
+            }
+        } ?: Result.failure(PakkuException("Could not read '$PAKKU_FILE'"))
     }
 
     fun write() = writeToFile(this, File(PAKKU_FILE), overrideText = true)
