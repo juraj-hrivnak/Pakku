@@ -11,17 +11,17 @@ fun Project?.createAdditionRequest(
     onRetry: RetryBlock,
     onSuccess: SuccessBlock,
     pakkuLock: PakkuLock,
-    vararg platforms: Platform
+    platforms: List<Platform>
 )
 {
     // Exist
-    var project = this ?: return onError.error("Project not found")
+    var project = this ?: return onError.error(Error.ProjectNotFound("Project not found"))
     var isRecommended = true
 
     // Already added
     if (pakkuLock.isProjectAdded(project))
     {
-        return onError.error("Could not add ${project.slug}. It is already added")
+        return onError.error(Error.CouldNotAdd("Could not add ${project.slug}. It is already added"))
     }
 
     for (platform in platforms)
@@ -29,7 +29,7 @@ fun Project?.createAdditionRequest(
         // Check if project is on each platform
         if (project.isNotOnPlatform(platform))
         {
-            onError.error("${project.slug} was not found on ${platform.name}")
+            onError.error(Error.NotFoundOnPlatform("${project.slug} was not found on ${platform.name}"))
 
             // Retry
             val project2 =  onRetry.retryWith(platform)
@@ -40,7 +40,7 @@ fun Project?.createAdditionRequest(
         // Check if project has files on each platform
         if (project.hasNoFilesOnPlatform(platform))
         {
-            onError.error("No files for ${project.slug} found on ${platform.name}")
+            onError.error(Error.NoFilesOnPlatform("No files for ${project.slug} found on ${platform.name}"))
             isRecommended = false
         }
     }
@@ -48,15 +48,15 @@ fun Project?.createAdditionRequest(
     // Check if project has any files at all
     if (project.hasNoFiles())
     {
-        onError.error("No files found for ${project.slug} ${pakkuLock.getMcVersions()}")
+        onError.error(Error.NoFiles("No files found for ${project.slug} ${pakkuLock.getMcVersions()}"))
         isRecommended = false
     }
 
     // Check if project files match across platforms
-    if (project.fileNamesNotMatchAcrossPlatforms(platforms.toList()))
+    if (project.fileNamesDoNotMatchAcrossPlatforms(platforms))
     {
-        onError.error("${project.slug} versions do not match across platforms")
-        onError.error(json.encodeToString(project.files.map { it.fileName }))
+        onError.error(Error.FileNamesDoNotMatch("${project.slug} versions do not match across platforms"))
+        onError.error(Error.FileNamesDoNotMatch((json.encodeToString(project.files.map { it.fileName }))))
         isRecommended = false
     }
 
@@ -69,9 +69,19 @@ data class RequestHandlers(
     val onSuccess: SuccessBlock
 )
 
+sealed class Error(val message: String)
+{
+    class ProjectNotFound(message: String) : Error(message)
+    class CouldNotAdd(message: String) : Error(message)
+    class NotFoundOnPlatform(message: String) : Error(message)
+    class NoFilesOnPlatform(message: String) : Error(message)
+    class NoFiles(message: String) : Error(message)
+    class FileNamesDoNotMatch(message: String) : Error(message)
+}
+
 fun interface ErrorBlock
 {
-    fun error(error: String)
+    fun error(error: Error)
 }
 
 fun interface RetryBlock

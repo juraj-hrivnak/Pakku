@@ -24,7 +24,7 @@ class Add : CliktCommand("Add projects")
         })
         {
             projectIn.createAdditionRequest(
-                onError = { error -> terminal.danger(error) },
+                onError = { error -> terminal.danger(error.message) },
                 onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
                 onSuccess = { project, isRecommended, reqHandlers ->
                     runBlocking {
@@ -36,14 +36,14 @@ class Add : CliktCommand("Add projects")
                                 reqHandlers = reqHandlers,
                                 pakkuLock = pakkuLock,
                                 projectProvider = Multiplatform,
-                                platforms = Multiplatform.platforms.toTypedArray()
+                                platforms = Multiplatform.platforms
                             )
                             terminal.success("${project.slug} added")
                         }
                     }
                 },
                 pakkuLock = pakkuLock,
-                platforms = Multiplatform.platforms.toTypedArray()
+                platforms = Multiplatform.platforms
             )
             terminal.println()
         }
