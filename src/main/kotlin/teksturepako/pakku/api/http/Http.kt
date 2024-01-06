@@ -6,12 +6,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import teksturepako.pakku.api.data.finalize
-import teksturepako.pakku.api.data.json
 import teksturepako.pakku.debug
-import teksturepako.pakku.limit
-import kotlin.system.exitProcess
 
 open class Http
 {
@@ -59,19 +54,7 @@ open class Http
             .bodyIfOK()
     }
 
-    suspend fun HttpResponse.checkLimit(): HttpResponse
-    {
-        this.headers["x-ratelimit-remaining"]?.toInt()?.let {
-            limit = it
-            if (it == 0)
-            {
-                print("Error: ")
-                println(json.decodeFromString<JsonObject>(this.body())["description"].finalize())
-                exitProcess(1)
-            }
-        }
-        return this
-    }
+    open suspend fun HttpResponse.checkLimit(): HttpResponse = this
 
     suspend inline fun <reified T> HttpResponse.bodyIfOK(): T?
     {

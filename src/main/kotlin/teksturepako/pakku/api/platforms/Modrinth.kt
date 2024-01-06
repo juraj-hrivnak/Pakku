@@ -1,5 +1,10 @@
 package teksturepako.pakku.api.platforms
 
+import io.ktor.client.call.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.delay
+import kotlinx.serialization.json.JsonObject
+import teksturepako.pakku.api.data.finalize
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.MrProjectModel
 import teksturepako.pakku.api.models.MrVersionModel
@@ -8,6 +13,8 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.debugIfEmpty
+import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
 object Modrinth : Platform(
     name = "Modrinth",
@@ -16,6 +23,37 @@ object Modrinth : Platform(
     apiVersion = 2
 )
 {
+    // -- API RATE LIMIT --
+
+    private var requestsRemaining = 0
+
+    override suspend fun HttpResponse.checkLimit(): HttpResponse
+    {
+        this.headers["x-ratelimit-remaining"]?.toInt()?.let { rateLimit ->
+            requestsRemaining = rateLimit
+            when
+            {
+                rateLimit == 0  ->
+                {
+                    print("Error: ")
+                    println(json.decodeFromString<JsonObject>(this.body())["description"].finalize())
+                    exitProcess(1)
+                }
+                rateLimit < 100 ->
+                {
+                    print("Warning: Waiting because of height Modrinth API usage")
+                    delay(30.seconds)
+                }
+            }
+        }
+        return this
+    }
+
+    fun checkRateLimit()
+    {
+        if (requestsRemaining > 0) println("Rate limit remaining: $requestsRemaining")
+    }
+
     // -- PROJECT --
 
     override suspend fun requestProject(input: String): Project? = when
@@ -78,7 +116,7 @@ object Modrinth : Platform(
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.lowercase() }?.any {
                     loaders.any { loader -> loader == it } || it in validLoaders // Check default valid loaders
-                } ?: true
+                } ?: true // If no loaders found, accept model
         }
 
     private fun MrVersionModel.toProjectFiles(): List<ProjectFile>

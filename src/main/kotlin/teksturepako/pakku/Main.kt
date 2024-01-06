@@ -5,11 +5,10 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.rendering.Theme
 import com.github.ajalt.mordant.terminal.Terminal
+import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
 import kotlin.system.exitProcess
-
-var limit = 0
 
 fun main(args: Array<String>)
 {
@@ -23,8 +22,10 @@ fun main(args: Array<String>)
         Set(), Add(), Rm(), Update(), Ls(), Fetch(), Link(), Import()
     ).main(args)
 
+    // Check Modrinth's rate limit
+    Modrinth.checkRateLimit()
+
     println("Program arguments: ${args.joinToString()}")
-    if (limit > 0) println("Rate limit remaining: $limit")
     exitProcess(0)
 }
 
