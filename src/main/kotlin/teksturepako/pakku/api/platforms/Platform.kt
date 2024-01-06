@@ -35,6 +35,8 @@ abstract class Platform(
 
     // -- FILES --
 
+    val validLoaders = listOf("minecraft", "iris", "optifine", "datapack")
+
     /**
      * Requests [project files][ProjectFile] based on [minecraft versions][mcVersions], [loaders], [projectId] or
      * [projectId] & [fileId].
@@ -43,7 +45,9 @@ abstract class Platform(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String? = null
     ): MutableSet<ProjectFile>
 
-    abstract suspend fun requestMultipleProjectFiles(ids: List<String>): MutableSet<ProjectFile>
+    abstract suspend fun requestMultipleProjectFiles(
+        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+    ): MutableSet<ProjectFile>
 
 
     /**
@@ -52,9 +56,12 @@ abstract class Platform(
      */
     suspend fun requestFilesForProject(
         mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int = 1
-    ): MutableSet<ProjectFile> = project.id[this.serialName]?.let { projectId ->
-        this.requestProjectFiles(mcVersions, loaders, projectId).take(numberOfFiles).toMutableSet()
-    } ?: mutableSetOf()
+    ): MutableSet<ProjectFile>
+    {
+        return project.id[this.serialName]?.let { projectId ->
+            this.requestProjectFiles(mcVersions, loaders, projectId).take(numberOfFiles).toMutableSet()
+        } ?: mutableSetOf()
+    }
 
     /**
      * [Requests a project][requestProject] and [files][requestFilesForProject], and returns a [project][Project],
@@ -62,8 +69,11 @@ abstract class Platform(
      */
     override suspend fun requestProjectWithFiles(
         mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int
-    ): Project? = requestProject(input)?.apply {
-        files.addAll(requestFilesForProject(mcVersions, loaders, this, numberOfFiles))
+    ): Project?
+    {
+        return requestProject(input)?.apply {
+            files.addAll(requestFilesForProject(mcVersions, loaders, this, numberOfFiles))
+        }
     }
 
     /**
@@ -72,7 +82,10 @@ abstract class Platform(
      */
     suspend fun requestProjectWithFilesFromIds(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String, numberOfFiles: Int = 1
-    ): Project? = requestProjectFromId(projectId)?.apply {
-        files.addAll(requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles))
+    ): Project?
+    {
+        return requestProjectFromId(projectId)?.apply {
+            files.addAll(requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles))
+        }
     }
 }

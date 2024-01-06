@@ -4,11 +4,11 @@ import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import teksturepako.pakku.api.data.json
+import kotlinx.serialization.json.Json
 
 val client = HttpClient(OkHttp) {
     install(ContentNegotiation) {
-        json
+        Json
     }
     install(HttpTimeout) {
         socketTimeoutMillis = 600000

@@ -5,6 +5,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import teksturepako.pakku.api.data.finalize
 import teksturepako.pakku.api.data.json
@@ -51,9 +52,9 @@ open class Http
     {
         return client.post(url) {
             contentType(ContentType.Application.Json)
-            setBody(json.encodeToString(bodyContent))
+            setBody(Json.encodeToString(bodyContent)) // Don't use pretty print
         }
-            .debug { println("${this.javaClass.simpleName} ${it.call}") }
+            .debug { println("${this.javaClass.simpleName} ${it.call} ${it.request.content}") }
             .checkLimit()
             .bodyIfOK()
     }

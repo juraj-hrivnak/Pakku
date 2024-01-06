@@ -22,6 +22,28 @@ inline fun <T> T.debug(block: (T) -> Unit): T
     return this
 }
 
+@OptIn(ExperimentalContracts::class)
+inline fun <T> Collection<T>.debugIf(
+    predicate: (Collection<T>) -> Boolean, block: (Collection<T>) -> Unit
+): Collection<T>
+{
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    if (debugMode && predicate(this)) block(this)
+    return this
+}
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T> Collection<T>.debugIfEmpty(block: (Collection<T>) -> Unit): Collection<T>
+{
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    if (debugMode && this.isEmpty()) block(this)
+    return this
+}
+
 fun Any.toPrettyString(): String
 {
     var indentLevel = 0

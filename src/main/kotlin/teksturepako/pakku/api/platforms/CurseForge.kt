@@ -4,11 +4,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.*
-import teksturepako.pakku.api.projects.CfFile
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
-import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debug
+import teksturepako.pakku.debugIfEmpty
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform(
@@ -16,7 +14,8 @@ object CurseForge : Platform(
     serialName = "curseforge",
     apiUrl = "https://cfproxy.bmpm.workers.dev",
     apiVersion = 1
-) {
+)
+{
     // -- API KEY --
 
     private const val API_KEY_HEADER = "x-api-key"
@@ -47,92 +46,99 @@ object CurseForge : Platform(
 
     override suspend fun requestProject(input: String): Project? = when
     {
-        input.matches("[0-9]{6}".toRegex()) -> requestProjectFromId(input)
-        else -> requestProjectFromSlug(input)
+        input.matches("[0-9]{5,6}".toRegex()) -> requestProjectFromId(input)
+        else                                  -> requestProjectFromSlug(input)
+    }
+
+    private fun CfModModel.toProject(): Project?
+    {
+        return Project(
+            name = mutableMapOf(serialName to name),
+            slug = mutableMapOf(serialName to slug),
+            type = when (classId)
+            {
+                6    -> ProjectType.MOD
+                12   -> ProjectType.RESOURCE_PACK
+                17   -> ProjectType.WORLD
+                6552 -> ProjectType.SHADER
+
+                else -> return null.also { println("Project type $classId not found!") }
+            },
+            id = mutableMapOf(serialName to id.toString()),
+            files = mutableSetOf(),
+        )
     }
 
     override suspend fun requestProjectFromId(id: String): Project?
     {
-        val response = json.decodeFromString<GetProjectResponse>(
-            this.requestProjectBody("mods/$id")
-                ?: return null
-        ).data
-
-        return Project(
-            name = mutableMapOf(serialName to response.name),
-            slug = mutableMapOf(serialName to response.slug),
-            type = when (response.classId)
-            {
-                6    -> ProjectType.MOD
-                12   -> ProjectType.RESOURCE_PACK
-                17   -> ProjectType.WORLD
-                6552 -> ProjectType.SHADER
-
-                else -> return null.also { println("Project type ${response.classId} not found!") }
-            },
-            id = mutableMapOf(serialName to response.id.toString()),
-            files = mutableSetOf(),
-        )
+        return json.decodeFromString<GetProjectResponse>(
+            this.requestProjectBody("mods/$id") ?: return null
+        ).data.toProject()
     }
 
     override suspend fun requestProjectFromSlug(slug: String): Project?
     {
-        val response = json.decodeFromString<SearchProjectResponse>(
+        return json.decodeFromString<SearchProjectResponse>(
             this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug")
                 ?: return null
-        ).data.firstOrNull() ?: return null
-
-        return Project(
-            name = mutableMapOf(serialName to response.name),
-            slug = mutableMapOf(serialName to response.slug),
-            type = when (response.classId)
-            {
-                6    -> ProjectType.MOD
-                12   -> ProjectType.RESOURCE_PACK
-                17   -> ProjectType.WORLD
-                6552 -> ProjectType.SHADER
-
-                else -> return null.also { println("Project type ${response.classId} not found!") }
-            },
-            id = mutableMapOf(serialName to response.id.toString()),
-            files = mutableSetOf(),
-        )
+        ).data.firstOrNull()?.toProject()
     }
 
     override suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
     {
-        val response = json.decodeFromString<GetMultipleProjectsResponse>(
+        return json.decodeFromString<GetMultipleProjectsResponse>(
             this.requestProjectBody("mods", MultipleProjectsRequest(ids.map(String::toInt)))
                 ?: return mutableSetOf()
-        ).data
-
-        return response.map { project ->
-            Project(
-                name = mutableMapOf(serialName to project.name),
-                slug = mutableMapOf(serialName to project.slug),
-                type = when (project.classId)
-                {
-                    6    -> ProjectType.MOD
-                    12   -> ProjectType.RESOURCE_PACK
-                    17   -> ProjectType.WORLD
-                    6552 -> ProjectType.SHADER
-
-                    else -> ProjectType.MOD.also { println("Project type ${project.classId} not found!") }
-                },
-                id = mutableMapOf(serialName to project.id.toString()),
-                files = mutableSetOf(),
-            )
-        }.toMutableSet()
+        ).data.mapNotNull { it.toProject() }.toMutableSet()
     }
 
     // -- FILES --
+
+    private const val LOADER_VERSION_TYPE_ID = 68441
+
+    private fun List<CfModModel.File>.filterFileModels(
+        mcVersions: List<String>, loaders: List<String>
+    ): List<CfModModel.File> = this
+        .filter { file ->
+            file.gameVersions.any { it in mcVersions } && file.sortableGameVersions
+                .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID } // Filter to loader only
+                .takeIf { it.isNotEmpty() }
+                ?.map { it.gameVersionName.lowercase() }?.any {
+                    loaders.any { loader -> loader == it } || it in validLoaders // Check default valid loaders
+                } ?: true // If no loaders found, accept project
+        }
+
+    private fun CfModModel.File.toProjectFile(mcVersions: List<String>, gameVersionTypeIds: List<Int>): ProjectFile
+    {
+        return CfFile(
+            fileName = this.fileName,
+            mcVersions = this.sortableGameVersions
+                .filter { it.gameVersionTypeId in gameVersionTypeIds }
+                .map { it.gameVersionName }.toMutableList(),
+            loaders = this.sortableGameVersions
+                .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID } // Filter to loader only
+                .map { it.gameVersionName.lowercase() }.toMutableList(),
+            releaseType = when (this.releaseType)
+            {
+                1    -> "release"
+                2    -> "beta"
+                3    -> "alpha"
+
+                else -> "release"
+            },
+            url = this.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
+            id = this.id.toString(),
+            parentId = this.modId.toString(),
+            requiredDependencies = this.dependencies
+                .filter { it.relationType == 3 }
+                .map { it.modId.toString() }.toMutableSet()
+        )
+    }
 
     override suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?
     ): MutableSet<ProjectFile>
     {
-        val loaderVersionTypeId = 68441
-
         // Handle optional fileId
         val fileIdSuffix = if (fileId == null) "" else "/$fileId"
 
@@ -149,144 +155,51 @@ object CurseForge : Platform(
         // Handle loaders
         requestUrl += "&modLoaderTypes=${loaders.joinToString(",")}"
 
-        return if (fileId == null) // Multiple files
+        return if (fileId == null)
         {
-            val response = json.decodeFromString<GetMultipleFilesResponse>(
+            // Multiple files
+            json.decodeFromString<GetMultipleFilesResponse>(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
-
-            response.filter { file ->
-                file.gameVersions.any { it in mcVersions } && file.sortableGameVersions
-                    .filter { it.gameVersionTypeId == loaderVersionTypeId /* Filter to loader only */ }
-                    .takeIf { it.isNotEmpty() }
-                    ?.map { it.gameVersionName.lowercase() }?.any {
-                        loaders.any { loader -> loader == it } || it in listOf(
-                            "minecraft", "iris", "optifine", "datapack" // Loaders valid by default
-                        )
-                    } ?: true
-            }.map { file ->
-                CfFile(
-                    fileName = file.fileName,
-                    mcVersions = file.sortableGameVersions
-                        .filter { it.gameVersionTypeId in gameVersionTypeIds }
-                        .map { it.gameVersionName }.toMutableList(),
-                    loaders = file.sortableGameVersions
-                        .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
-                        .map { it.gameVersionName.lowercase() }.toMutableList(),
-                    releaseType = when (file.releaseType)
-                    {
-                        1 -> "release"
-                        2 -> "beta"
-                        3 -> "alpha"
-
-                        else -> "release"
-                    },
-                    url = file.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
-                    id = file.id.toString(),
-                    parentId = file.modId.toString(),
-                    requiredDependencies = file.dependencies
-                        .filter { it.relationType == 3 }
-                        .map { it.modId.toString() }.toMutableSet()
-                )
-            }.debug {
-                if (it.isEmpty()) println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
-            }.map { file ->
-                // Request alternative download URLs.
-                if (file.url != "null") file else
-                {
-                    val url = fetchAlternativeDownloadUrl(file.id, file.fileName)
-                    file.apply {
-                        // Replace empty characters in the URL.
-                        this.url = url.replace(" ", "%20")
-                    }
+                .filterFileModels(mcVersions, loaders)
+                .map { it.toProjectFile(loaders, gameVersionTypeIds).fetchAlternativeDownloadUrl() }
+                .debugIfEmpty {
+                    println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
                 }
-            }.toMutableSet()
-        } else // One file
+                .toMutableSet()
+        } else
         {
-            val response = json.decodeFromString<GetFileResponse>(
-                this.requestProjectBody(requestUrl) ?: return mutableSetOf()
-            ).data
-
+            // One file
             mutableSetOf(
-                CfFile(
-                    fileName = response.fileName,
-                    mcVersions = response.sortableGameVersions
-                        .filter { it.gameVersionTypeId in gameVersionTypeIds }
-                        .map { it.gameVersionName }.toMutableList(),
-                    loaders = response.sortableGameVersions
-                        .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
-                        .map { it.gameVersionName.lowercase() }.toMutableList(),
-                    releaseType = when (response.releaseType)
-                    {
-                        1 -> "release"
-                        2 -> "beta"
-                        3 -> "alpha"
-
-                        else -> "release"
-                    },
-                    url = response.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
-                    id = response.id.toString(),
-                    parentId = response.modId.toString(),
-                    requiredDependencies = response.dependencies
-                        .filter { it.relationType == 3 }
-                        .map { it.modId.toString() }.toMutableSet()
-                ).let { file ->
-                    if (file.url != "null") file else
-                    {
-                        val url = fetchAlternativeDownloadUrl(file.id, file.fileName)
-                        file.apply {
-                            // Replace empty characters in the URL.
-                            this.url = url.replace(" ", "%20")
-                        }
-                    }
-                }
+                json.decodeFromString<GetFileResponse>(
+                    this.requestProjectBody(requestUrl) ?: return mutableSetOf()
+                ).data
+                    .toProjectFile(loaders, gameVersionTypeIds)
+                    .fetchAlternativeDownloadUrl()
             )
         }
     }
 
-    override suspend fun requestMultipleProjectFiles(ids: List<String>): MutableSet<ProjectFile>
+    override suspend fun requestMultipleProjectFiles(
+        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+    ): MutableSet<ProjectFile>
     {
-        val response = json.decodeFromString<GetMultipleFilesResponse>(
-            this.requestProjectBody("files", MultipleFilesRequest(ids.map(String::toInt)))
-                ?: return mutableSetOf()
+        // Handle mcVersions
+        val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
+            requestGameVersionTypeId(version)
+        }
+
+        return json.decodeFromString<GetMultipleFilesResponse>(
+            this.requestProjectBody("mods/files", MultipleFilesRequest(ids.map(String::toInt))) ?: return mutableSetOf()
         ).data
-
-        return response.map { file ->
-            CfFile(
-                fileName = file.fileName,
-                mcVersions = file.sortableGameVersions
-                    .map { it.gameVersionName }.toMutableList(),
-                loaders = file.sortableGameVersions
-                    .filter { it.gameVersionTypeId == 68441 /* Filter to loader only */ }
-                    .map { it.gameVersionName.lowercase() }.toMutableList(),
-                releaseType = when (file.releaseType)
-                {
-                    1 -> "release"
-                    2 -> "beta"
-                    3 -> "alpha"
-
-                    else -> "release"
-                },
-                url = file.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
-                id = file.id.toString(),
-                parentId = file.modId.toString(),
-                requiredDependencies = file.dependencies
-                    .filter { it.relationType == 3 }
-                    .map { it.modId.toString() }.toMutableSet()
-            )
-        }.debug {
-            if (it.isEmpty()) println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
-        }.map { file ->
-            // Request alternative download URLs.
-            if (file.url != "null") file else
-            {
-                val url = fetchAlternativeDownloadUrl(file.id, file.fileName)
-                file.apply {
-                    // Replace empty characters in the URL.
-                    this.url = url.replace(" ", "%20")
-                }
+            .filterFileModels(mcVersions, loaders)
+            .map {
+                it.toProjectFile(loaders, gameVersionTypeIds).fetchAlternativeDownloadUrl()
             }
-        }.toMutableSet()
+            .debugIfEmpty {
+                println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
+            }
+            .toMutableSet()
     }
 
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
@@ -297,10 +210,17 @@ object CurseForge : Platform(
             .debug { println("${this.javaClass.simpleName}#requestGameVersionTypeId: $it") }
     }
 
-    fun fetchAlternativeDownloadUrl(fileId: String, fileName: String): String
-    {
-        return "https://edge.forgecdn.net/files/${fileId.substring(0, 4)}/${
-            fileId.toString().substring(4)
-        }/$fileName"
-    }
+    fun ProjectFile.fetchAlternativeDownloadUrl(): ProjectFile =
+        // Request alternative download URLs.
+        if (this.url != "null") this else
+        {
+            val url = fetchAlternativeDownloadUrl(this.id, this.fileName)
+            this.apply {
+                // Replace empty characters in the URL.
+                this.url = url.replace(" ", "%20")
+            }
+        }
+
+    fun fetchAlternativeDownloadUrl(fileId: String, fileName: String): String =
+        "https://edge.forgecdn.net/files/${fileId.substring(0, 4)}/${fileId.substring(4)}/$fileName"
 }
