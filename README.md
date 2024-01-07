@@ -2,7 +2,7 @@
 <p align="center">
   <a href="https://github.com/juraj-hrivnak/pakku">
     <img
-      src="https://github.com/juraj-hrivnak/Pakku/assets/71150936/f672f449-a6a8-478e-a33e-000f45601e4c"
+      src="https://github.com/juraj-hrivnak/Pakku/assets/71150936/818cb871-15eb-4052-9577-dc8ba75e0855"
       alt="Logo"
       width="200"
     >
