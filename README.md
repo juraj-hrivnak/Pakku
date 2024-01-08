@@ -1,5 +1,14 @@
 
-# Pakku
+<p align="center">
+  <a href="https://github.com/juraj-hrivnak/pakku">
+    <img
+      src="https://github.com/juraj-hrivnak/Pakku/assets/71150936/818cb871-15eb-4052-9577-dc8ba75e0855"
+      alt="Logo"
+      width="200"
+    >
+  </a>
+  <h1 align="center">Pakku</h1>
+</p>
 
 [![CodeQL](https://github.com/juraj-hrivnak/Pakku/actions/workflows/codeql.yml/badge.svg)](https://github.com/juraj-hrivnak/Pakku/actions/workflows/codeql.yml)
 
