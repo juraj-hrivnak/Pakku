@@ -199,9 +199,44 @@ object CurseForge : Platform(
                 it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl()
             }
             .debugIfEmpty {
-                println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
+                println("${this.javaClass.simpleName}#requestMultipleProjectFiles: file is null")
             }
             .toMutableSet()
+    }
+
+    suspend fun requestMultipleProjectsWithFiles(
+        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+    ): MutableSet<Project>
+    {
+        val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
+            requestGameVersionTypeId(version)
+        }
+
+        val response = json.decodeFromString<GetMultipleProjectsResponse>(
+            this.requestProjectBody("mods", MultipleProjectsRequest(ids.map(String::toInt)))
+                ?: return mutableSetOf()
+        ).data
+
+        val fileIds = response.flatMap { model ->
+            model.latestFilesIndexes
+                .filter { it.gameVersionTypeId in gameVersionTypeIds }
+                .map { it.fileId.toString() }
+        }
+
+        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, fileIds)
+
+        val projects = response.mapNotNull { it.toProject() }
+
+        projects.forEach { project ->
+            projectFiles.forEach { projectFile ->
+                if (project.id[this.serialName] == projectFile.parentId)
+                {
+                    project.files.add(projectFile)
+                }
+            }
+        }
+
+        return projects.toMutableSet()
     }
 
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
@@ -213,7 +248,7 @@ object CurseForge : Platform(
     }
 
     fun ProjectFile.fetchAlternativeDownloadUrl(): ProjectFile =
-        // Request alternative download URLs.
+        // Request alternative download URL.
         if (this.url != "null") this else
         {
             val url = fetchAlternativeDownloadUrl(this.id, this.fileName)
