@@ -186,6 +186,7 @@ object Modrinth : Platform(
         )
             .filterFileModels(mcVersions, loaders)
             .flatMap { version -> version.toProjectFiles() }
+            .asReversed()
             .toMutableSet()
     }
 

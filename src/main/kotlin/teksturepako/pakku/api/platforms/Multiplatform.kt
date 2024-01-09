@@ -74,15 +74,27 @@ object Multiplatform : IProjectProvider
     {
         val result: MutableSet<Project> = mutableSetOf()
 
-        val projectsCf = CurseForge.requestMultipleProjectsWithFiles(mcVersions, loaders, ids[CurseForge.serialName]!!, numberOfFiles)
-        val projectsMr = Modrinth.requestMultipleProjectsWithFiles(mcVersions, loaders, ids[Modrinth.serialName]!!, numberOfFiles)
+        val projectsCf = ids[CurseForge.serialName]?.let {
+            CurseForge.requestMultipleProjectsWithFiles(mcVersions, loaders, it, numberOfFiles)
+        }
+        val projectsMr = ids[Modrinth.serialName]?.let {
+            Modrinth.requestMultipleProjectsWithFiles(mcVersions, loaders, it, numberOfFiles)
+        }
 
-        for (projectCf in projectsCf)
+        when
         {
-            for (projectMr in projectsMr)
+            projectsCf != null && projectsMr != null ->
             {
-                if (projectCf isAlmostTheSameAs projectMr) result += projectCf + projectMr
+                for (projectCf in projectsCf)
+                {
+                    for (projectMr in projectsMr)
+                    {
+                        if (projectCf isAlmostTheSameAs projectMr) result += projectCf + projectMr
+                    }
+                }
             }
+            projectsCf != null -> result.addAll(projectsCf)
+            projectsMr != null -> result.addAll(projectsMr)
         }
 
         return result
