@@ -28,7 +28,7 @@ data class Project(
     val slug: MutableMap<String, String>,
     val name: MutableMap<String, String>,
     val id: MutableMap<String, String>,
-    val files: MutableSet<ProjectFile>
+    var files: MutableSet<ProjectFile>
 )
 {
     /**

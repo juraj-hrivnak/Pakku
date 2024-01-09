@@ -204,23 +204,17 @@ object CurseForge : Platform(
             .toMutableSet()
     }
 
-    suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+    override suspend fun requestMultipleProjectsWithFiles(
+        mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
     ): MutableSet<Project>
     {
-        val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
-            requestGameVersionTypeId(version)
-        }
-
         val response = json.decodeFromString<GetMultipleProjectsResponse>(
             this.requestProjectBody("mods", MultipleProjectsRequest(ids.map(String::toInt)))
                 ?: return mutableSetOf()
         ).data
 
         val fileIds = response.flatMap { model ->
-            model.latestFilesIndexes
-                .filter { it.gameVersionTypeId in gameVersionTypeIds }
-                .map { it.fileId.toString() }
+            model.latestFilesIndexes.map { it.fileId.toString() }
         }
 
         val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, fileIds)
@@ -236,7 +230,7 @@ object CurseForge : Platform(
             }
         }
 
-        return projects.toMutableSet()
+        return projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet()
     }
 
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
@@ -248,7 +242,6 @@ object CurseForge : Platform(
     }
 
     fun ProjectFile.fetchAlternativeDownloadUrl(): ProjectFile =
-        // Request alternative download URL.
         if (this.url != "null") this else
         {
             val url = fetchAlternativeDownloadUrl(this.id, this.fileName)

@@ -90,4 +90,8 @@ abstract class Platform(
             files.addAll(requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles))
         }
     }
+
+    abstract suspend fun requestMultipleProjectsWithFiles(
+        mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
+    ): MutableSet<Project>
 }

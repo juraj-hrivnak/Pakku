@@ -9,7 +9,14 @@ import teksturepako.pakku.api.platforms.Multiplatform
 class Ls : CliktCommand("List projects")
 {
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
+        val pakkuLock = PakkuLock.readToResult().fold(
+            onSuccess = { it },
+            onFailure = {
+                terminal.danger(it.message)
+                echo()
+                return@runBlocking
+            }
+        )
 
         for (project in pakkuLock.getAllProjects())
         {

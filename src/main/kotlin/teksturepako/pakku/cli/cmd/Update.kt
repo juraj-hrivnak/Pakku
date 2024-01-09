@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import teksturepako.pakku.api.data.PakkuLock
-import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.Project
 
 class Update : CliktCommand("Update projects")
@@ -45,22 +45,29 @@ class Update : CliktCommand("Update projects")
         }
 
         val updatedProjects: ReceiveChannel<Project> = produce {
-            val oldProjectIds = oldProjects.mapNotNull { it.id[CurseForge.serialName] }
+            val oldProjectIds = oldProjects.asSequence()
+                .flatMap {
+                    it.id.asSequence()
+                }.groupBy({ it.key }, { it.value })
 
-            val newProjects = CurseForge.requestMultipleProjectsWithFiles(
-                pakkuLock.getMcVersions(), pakkuLock.getLoaders(), oldProjectIds
+            val newProjects = Multiplatform.requestMultipleProjectsWithFiles(
+                pakkuLock.getMcVersions(), pakkuLock.getLoaders(), oldProjectIds, numberOfFiles = 1
             )
 
             oldProjects.map { oldProject ->
                 launch {
                     var updatedProject = oldProject.copy(files = mutableSetOf())
 
+                    // Handle versions
+                    val mcVersions = oldProject.files.flatMap { it.mcVersions }
+                    val loaders = oldProject.files.flatMap { it.loaders }
+
                     newProjects.forEach { newProject ->
                         if (newProject isAlmostTheSameAs oldProject)
                         {
                             updatedProject += newProject
 
-                            if (updatedProject != oldProject)
+                            if (updatedProject != oldProject && mcVersions.isNotEmpty() && loaders.isNotEmpty())
                             {
                                 send(updatedProject) // Send updated project to channel
                             }
@@ -98,16 +105,18 @@ class Update : CliktCommand("Update projects")
         }
 
         var updated = false
+        val jobs = mutableListOf<Job>()
 
         for (updatedProject in updatedProjects)
         {
-            launch {
+            jobs += launch {
                 pakkuLock.update(updatedProject)
                 terminal.success("${updatedProject.slug} updated")
 
                 updated = true
             }
         }
+        jobs.joinAll()
 
         if (!updated && updatedProjects.isClosedForReceive && oldProjects.isNotEmpty())
         {

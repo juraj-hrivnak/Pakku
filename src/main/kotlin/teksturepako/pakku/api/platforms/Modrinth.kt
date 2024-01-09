@@ -26,6 +26,7 @@ object Modrinth : Platform(
     // -- API RATE LIMIT --
 
     private var requestsRemaining = 0
+    private var waiting = false
 
     override suspend fun HttpResponse.checkLimit(): HttpResponse
     {
@@ -41,7 +42,8 @@ object Modrinth : Platform(
                 }
                 rateLimit < 100 ->
                 {
-                    print("Warning: Waiting because of height Modrinth API usage")
+                    if (!waiting) println("Warning: Waiting 30 seconds, because of height Modrinth API usage")
+                    waiting = true
                     delay(30.seconds)
                 }
             }
@@ -102,7 +104,7 @@ object Modrinth : Platform(
                 ids.map { "%22$it%22" }.toString()
                     .replace("[", "%5B")
                     .replace("]","%5D")
-            }") ?: return mutableSetOf()
+            }".replace(" ", "")) ?: return mutableSetOf()
         ).mapNotNull { it.toProject() }.toMutableSet()
     }
 
@@ -180,10 +182,40 @@ object Modrinth : Platform(
                 ids.map { "%22$it%22" }.toString()
                     .replace("[", "%5B")
                     .replace("]","%5D")
-            }") ?: return mutableSetOf()
+            }".replace(" ", "")) ?: return mutableSetOf()
         )
             .filterFileModels(mcVersions, loaders)
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()
+    }
+
+    override suspend fun requestMultipleProjectsWithFiles(
+        mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
+    ): MutableSet<Project>
+    {
+        val response = json.decodeFromString<List<MrProjectModel>>(
+            this.requestProjectBody("projects?ids=${
+                ids.map { "%22$it%22" }.toString()
+                    .replace("[", "%5B")
+                    .replace("]","%5D")
+            }".replace(" ", "")) ?: return mutableSetOf()
+        )
+
+        val fileIds = response.flatMap { it.versions }
+
+        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, fileIds)
+
+        val projects = response.mapNotNull { it.toProject() }
+
+        projects.forEach { project ->
+            projectFiles.forEach { projectFile ->
+                if (project.id[this.serialName] == projectFile.parentId)
+                {
+                    project.files.add(projectFile)
+                }
+            }
+        }
+
+        return projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet()
     }
 }

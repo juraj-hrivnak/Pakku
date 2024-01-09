@@ -4,6 +4,8 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import kotlinx.coroutines.async
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.Error
 import teksturepako.pakku.api.actions.createAdditionRequest
@@ -37,34 +39,29 @@ class Import : CliktCommand("Import modpack")
 
         projects.await().forEach { project ->
             files.await().forEach { file ->
-                project.apply { if (id[CurseForge.serialName] == file.parentId) this.files.add(file)}
+                if (project.id[CurseForge.serialName] == file.parentId) project.files.add(file)
             }
         }
 
-        projects.await().forEach { projectIn ->
-            projectIn.createAdditionRequest(
-                onError = { error ->
-                    if (error !is Error.CouldNotAdd) terminal.danger(error)
-                },
-                onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
-                onSuccess = { project, _, reqHandlers ->
-                    runBlocking {
-                        pakkuLock.add(project)
-                        project.resolveDependencies(
-                            terminal = terminal,
-                            reqHandlers = reqHandlers,
-                            pakkuLock = pakkuLock,
-                            projectProvider = CurseForge,
-                            platforms = listOf(CurseForge)
-                        )
-                        terminal.success("${project.slug} added")
-                    }
-                },
-                pakkuLock = pakkuLock,
-                platforms = listOf(CurseForge)
-            )
-            terminal.println()
-        }
+        projects.await().map { projectIn ->
+            launch {
+                projectIn.createAdditionRequest(
+                    onError = { error ->
+                        if (error !is Error.CouldNotAdd) terminal.danger(error.message)
+                    },
+                    onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
+                    onSuccess = { project, _, reqHandlers ->
+                        runBlocking {
+                            pakkuLock.add(project)
+                            project.resolveDependencies(terminal, reqHandlers, pakkuLock, CurseForge, listOf(CurseForge))
+                            terminal.success("${project.slug} added")
+                        }
+                    },
+                    pakkuLock,
+                    listOf(CurseForge)
+                )
+            }
+        }.joinAll()
 
         pakkuLock.write()
     }
