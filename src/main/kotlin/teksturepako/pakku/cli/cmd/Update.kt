@@ -16,7 +16,7 @@ import teksturepako.pakku.api.projects.Project
 class Update : CliktCommand("Update projects")
 {
     private val projectArgs: List<String> by argument().multiple()
-    private val all: Boolean by option("-a", "--all", help = "Update all projects").flag()
+    private val allFlag: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun run() = runBlocking {
@@ -29,7 +29,7 @@ class Update : CliktCommand("Update projects")
             }
         )
 
-        val oldProjects = if (all)
+        val oldProjects = if (allFlag)
         {
             pakkuLock.getAllProjects()
         } else
@@ -122,8 +122,8 @@ class Update : CliktCommand("Update projects")
         {
             when
             {
-                all || projectArgs.isEmpty() -> terminal.success("All projects are up to date")
-                oldProjects.size == 1        -> terminal.success("${oldProjects.first().slug} is up to date")
+                allFlag || projectArgs.isEmpty() -> terminal.success("All projects are up to date")
+                oldProjects.size == 1            -> terminal.success("${oldProjects.first().slug} is up to date")
                 else                         ->
                 {
                     terminal.success("${oldProjects.map { it.slug }} are up to date")

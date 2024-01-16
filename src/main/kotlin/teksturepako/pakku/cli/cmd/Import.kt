@@ -18,7 +18,7 @@ import teksturepako.pakku.cli.resolveDependencies
 
 class Import : CliktCommand("Import modpack")
 {
-    private val path: String by argument("path")
+    private val pathArg: String by argument("path")
 
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readOrNew()
@@ -28,11 +28,11 @@ class Import : CliktCommand("Import modpack")
         val projectProvider = Multiplatform
         // --
 
-        val cfManifest = importCfManifest(path)
+        val cfManifest = importCfManifest(pathArg)
 
         if (cfManifest == null)
         {
-            terminal.danger("Could not import from $path")
+            terminal.danger("Could not import from $pathArg")
             return@runBlocking
         }
 

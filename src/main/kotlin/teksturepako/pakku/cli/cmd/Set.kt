@@ -9,18 +9,18 @@ import teksturepako.pakku.api.data.PakkuLock
 
 class Set : CliktCommand("Set pack name, Minecraft versions and loaders")
 {
-    private val packName: String? by option("-n", "--packname", help = "Change the name of the pack")
-    private val mcVersions: List<String>? by option("-v", "--mcversion", help = "Change the minecraft version").varargValues()
-    private val loaders: List<String>? by option("-l", "--loader", help = "Change the mod loader").varargValues()
+    private val packNameOpt: String? by option("-n", "--packname", help = "Change the name of the pack")
+    private val mcVersionsOpts: List<String>? by option("-v", "--mcversion", help = "Change the minecraft version").varargValues()
+    private val loadersOpts: List<String>? by option("-l", "--loader", help = "Change the mod loader").varargValues()
 
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readOrNew()
 
-        packName?.let {
+        packNameOpt?.let {
             terminal.success("\"pack_name\" set to $it")
             pakkuLock.setPackName(it)
         }
-        mcVersions?.let { versions ->
+        mcVersionsOpts?.let { versions ->
             var failed = false
 
             pakkuLock.getAllProjects().forEach { project ->
@@ -42,7 +42,7 @@ class Set : CliktCommand("Set pack name, Minecraft versions and loaders")
                 terminal.success("\"mc_version\" set to $versions")
             }
         }
-        loaders?.let { loaders ->
+        loadersOpts?.let { loaders ->
             var failed = false
 
             pakkuLock.getAllProjects().forEach { project ->

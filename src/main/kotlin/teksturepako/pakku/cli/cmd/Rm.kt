@@ -14,13 +14,13 @@ import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand("Remove projects")
 {
-    private val projects: List<String> by argument().multiple()
-    private val all: Boolean by option("-a", "--all", help = "Remove all mods").flag()
+    private val projectArgs: List<String> by argument().multiple()
+    private val allFlag: Boolean by option("-a", "--all", help = "Remove all mods").flag()
 
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readOrNew()
 
-        if (all)
+        if (allFlag)
         {
             if (YesNoPrompt("Do you really want to remove all projects?", terminal).ask() == true)
             {
@@ -30,7 +30,7 @@ class Rm : CliktCommand("Remove projects")
                 echo()
             }
         }
-        else for (deferred in projects.map { arg ->
+        else for (deferred in projectArgs.map { arg ->
             async {
                 pakkuLock.getProject(arg) to arg
             }

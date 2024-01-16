@@ -15,7 +15,7 @@ import teksturepako.pakku.cli.resolveDependencies
 
 class Add : CliktCommand("Add projects")
 {
-    private val projects: List<String> by argument().multiple(required = true)
+    private val projectArgs: List<String> by argument().multiple(required = true)
 
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readOrNew()
@@ -25,7 +25,7 @@ class Add : CliktCommand("Add projects")
         val projectProvider = Multiplatform
         // --
 
-        for (projectIn in projects.map { arg ->
+        for (projectIn in projectArgs.map { arg ->
             Multiplatform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), arg)
         })
         {

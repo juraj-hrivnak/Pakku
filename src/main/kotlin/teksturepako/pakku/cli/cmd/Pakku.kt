@@ -7,10 +7,10 @@ import teksturepako.pakku.debugMode
 
 class Pakku : CliktCommand()
 {
-    private val debug: Boolean by option(help = "Enable additional debug logging").flag()
+    private val debugFlag: Boolean by option(help = "Enable additional debug logging").flag()
 
     override fun run()
     {
-        debugMode = debug
+        debugMode = debugFlag
     }
 }
