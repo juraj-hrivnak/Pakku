@@ -30,10 +30,10 @@ object Multiplatform : IProjectProvider
         // Retrieve project from another platform if it's missing.
         if (cf == null && mr != null)
         {
-            cf = CurseForge.requestProjectFromSlug(mr.slug[Modrinth.serialName]!!.replace("\"", ""))
+            cf = CurseForge.requestProjectFromSlug(mr.slug[Modrinth.serialName]!!)
         } else if (mr == null && cf != null)
         {
-            mr = Modrinth.requestProjectFromSlug(cf.slug[CurseForge.serialName]!!.replace("\"", ""))
+            mr = Modrinth.requestProjectFromSlug(cf.slug[CurseForge.serialName]!!)
         }
 
         // Combine projects or return one just of them

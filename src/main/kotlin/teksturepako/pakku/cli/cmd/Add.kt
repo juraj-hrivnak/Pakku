@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.platforms.Multiplatform
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.promptForProject
 import teksturepako.pakku.cli.resolveDependencies
 
@@ -18,6 +19,11 @@ class Add : CliktCommand("Add projects")
 
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readOrNew()
+
+        // TODO: Configuration
+        val platforms: List<Platform> = Multiplatform.platforms
+        val projectProvider = Multiplatform
+        // --
 
         for (projectIn in projects.map { arg ->
             Multiplatform.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), arg)
@@ -31,19 +37,13 @@ class Add : CliktCommand("Add projects")
                         if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
                         {
                             pakkuLock.add(project)
-                            project.resolveDependencies(
-                                terminal = terminal,
-                                reqHandlers = reqHandlers,
-                                pakkuLock = pakkuLock,
-                                projectProvider = Multiplatform,
-                                platforms = Multiplatform.platforms
-                            )
+                            project.resolveDependencies(terminal, reqHandlers, pakkuLock, projectProvider, platforms)
                             terminal.success("${project.slug} added")
                         }
                     }
                 },
-                pakkuLock = pakkuLock,
-                platforms = Multiplatform.platforms
+                pakkuLock,
+                platforms
             )
             terminal.println()
         }
