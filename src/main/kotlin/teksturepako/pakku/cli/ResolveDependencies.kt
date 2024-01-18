@@ -1,7 +1,6 @@
 package teksturepako.pakku.cli
 
 import com.github.ajalt.mordant.terminal.Terminal
-import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.RequestHandlers
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.PakkuLock
@@ -41,17 +40,15 @@ suspend fun Project.resolveDependencies(
                 onError = reqHandlers.onError,
                 onRetry = reqHandlers.onRetry,
                 onSuccess = { dependency, _, depReqHandlers ->
-                    runBlocking {
-                        /** Add dependency */
-                        pakkuLock.add(dependency)
+                    /** Add dependency */
+                    pakkuLock.add(dependency)
 
-                        /** Link dependency to parent project */
-                        pakkuLock.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
+                    /** Link dependency to parent project */
+                    pakkuLock.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
 
-                        /** Resolve dependencies for dependency */
-                        dependency.resolveDependencies(terminal, depReqHandlers, pakkuLock, projectProvider, platforms)
-                        terminal.info("${dependency.slug} added")
-                    }
+                    /** Resolve dependencies for dependency */
+                    dependency.resolveDependencies(terminal, depReqHandlers, pakkuLock, projectProvider, platforms)
+                    terminal.info("${dependency.slug} added")
                 },
                 pakkuLock,
                 platforms

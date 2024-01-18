@@ -6,7 +6,7 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
-fun Project?.createAdditionRequest(
+suspend fun Project?.createAdditionRequest(
     onError: ErrorBlock,
     onRetry: RetryBlock,
     onSuccess: SuccessBlock,
@@ -86,10 +86,10 @@ fun interface ErrorBlock
 
 fun interface RetryBlock
 {
-    fun retryWith(platform: Platform): Project?
+    suspend fun retryWith(platform: Platform): Project?
 }
 
 fun interface SuccessBlock
 {
-    fun success(project: Project, isRecommended: Boolean, ctx: RequestHandlers)
+    suspend fun success(project: Project, isRecommended: Boolean, ctx: RequestHandlers)
 }

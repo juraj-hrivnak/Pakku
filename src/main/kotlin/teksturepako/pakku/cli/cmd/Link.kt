@@ -12,7 +12,14 @@ class Link : CliktCommand("Link project to another project")
     private val projectIn: String by argument()
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
+        val pakkuLock = PakkuLock.readToResult().fold(
+            onSuccess = { it },
+            onFailure = {
+                terminal.danger(it.message)
+                echo()
+                return@runBlocking
+            }
+        )
 
         val outId = pakkuLock.getProject(projectOut)?.pakkuId ?: return@runBlocking
         val project = pakkuLock.getProject(projectIn) ?: return@runBlocking

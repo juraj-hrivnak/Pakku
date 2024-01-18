@@ -18,7 +18,9 @@ class Ls : CliktCommand("List projects")
             }
         )
 
-        for (project in pakkuLock.getAllProjects())
+        val projects = pakkuLock.getAllProjects()
+
+        for (project in projects)
         {
             val name: String? = project.name.values.firstOrNull()
             val links: String = project.pakkuLinks.size.toString() + "\uD83D\uDD17"
@@ -28,5 +30,6 @@ class Ls : CliktCommand("List projects")
 
             terminal.success("($links $platforms) $name")
         }
+        terminal.info("Projects total: ${projects.size}")
     }
 }

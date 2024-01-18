@@ -15,10 +15,17 @@ import teksturepako.pakku.cli.resolveDependencies
 
 class Add : CliktCommand("Add projects")
 {
-    private val projectArgs: List<String> by argument().multiple(required = true)
+    private val projectArgs: List<String> by argument("projects").multiple(required = true)
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
+        val pakkuLock = PakkuLock.readToResult().fold(
+            onSuccess = { it },
+            onFailure = {
+                terminal.danger(it.message)
+                echo()
+                return@runBlocking
+            }
+        )
 
         // TODO: Configuration
         val platforms: List<Platform> = Multiplatform.platforms
@@ -33,19 +40,16 @@ class Add : CliktCommand("Add projects")
                 onError = { error -> terminal.danger(error.message) },
                 onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
                 onSuccess = { project, isRecommended, reqHandlers ->
-                    runBlocking {
-                        if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
-                        {
-                            pakkuLock.add(project)
-                            project.resolveDependencies(terminal, reqHandlers, pakkuLock, projectProvider, platforms)
-                            terminal.success("${project.slug} added")
-                        }
+                    if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
+                    {
+                        pakkuLock.add(project)
+                        project.resolveDependencies(terminal, reqHandlers, pakkuLock, projectProvider, platforms)
+                        terminal.success("${project.slug} added")
                     }
                 },
                 pakkuLock,
                 platforms
             )
-            terminal.println()
         }
         pakkuLock.write()
     }

@@ -14,11 +14,18 @@ import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand("Remove projects")
 {
-    private val projectArgs: List<String> by argument().multiple()
+    private val projectArgs: List<String> by argument("projects").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Remove all mods").flag()
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
+        val pakkuLock = PakkuLock.readToResult().fold(
+            onSuccess = { it },
+            onFailure = {
+                terminal.danger(it.message)
+                echo()
+                return@runBlocking
+            }
+        )
 
         if (allFlag)
         {
@@ -45,7 +52,8 @@ class Rm : CliktCommand("Remove projects")
                 if (linkedProjects.isEmpty())
                 {
                     if (YesNoPrompt("Do you want to remove ${project.slug}?", terminal, true).ask() == false) continue
-                } else
+                }
+                else
                 {
                     terminal.warning("$arg is required by ${linkedProjects.map { it.slug }}")
                     if (YesNoPrompt("Do you want to remove it?", terminal, false).ask() == false) continue
@@ -72,7 +80,8 @@ class Rm : CliktCommand("Remove projects")
                 }
 
                 pakkuLock.removePakkuLink(project.pakkuId!!)
-            } else
+            }
+            else
             {
                 terminal.warning("$arg not found")
                 pakkuLock.getAllProjects().flatMap { it.slug.values }.also { args ->
