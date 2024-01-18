@@ -4,10 +4,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.*
-import teksturepako.pakku.api.projects.CfFile
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
-import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 
@@ -16,7 +13,8 @@ object CurseForge : Platform(
     name = "CurseForge",
     serialName = "curseforge",
     apiUrl = "https://cfproxy.bmpm.workers.dev",
-    apiVersion = 1
+    apiVersion = 1,
+    url = "https://www.curseforge.com/minecraft/mc-mods"
 )
 {
     // -- API KEY --
@@ -67,6 +65,7 @@ object CurseForge : Platform(
                 else -> return null.also { println("Project type $classId not found!") }
             },
             id = mutableMapOf(serialName to id.toString()),
+            url = mutableMapOf(serialName to "$url/$slug"),
             files = mutableSetOf(),
         )
     }
@@ -133,7 +132,8 @@ object CurseForge : Platform(
             parentId = this.modId.toString(),
             requiredDependencies = this.dependencies
                 .filter { it.relationType == 3 }
-                .map { it.modId.toString() }.toMutableSet()
+                .map { it.modId.toString() }.toMutableSet(),
+            size = this.fileLength,
         )
     }
 
@@ -166,7 +166,7 @@ object CurseForge : Platform(
                 .filterFileModels(mcVersions, loaders)
                 .map { it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl() }
                 .debugIfEmpty {
-                    println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
+                    println("${this.javaClass.simpleName}#requestProjectFiles: file is null")
                 }
                 .toMutableSet()
         } else
@@ -195,6 +195,7 @@ object CurseForge : Platform(
             this.requestProjectBody("mods/files", MultipleFilesRequest(ids.map(String::toInt))) ?: return mutableSetOf()
         ).data
             .filterFileModels(mcVersions, loaders)
+            .sortedByDescending { it.fileDate }
             .map {
                 it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl()
             }
@@ -221,14 +222,7 @@ object CurseForge : Platform(
 
         val projects = response.mapNotNull { it.toProject() }
 
-        projects.forEach { project ->
-            projectFiles.forEach { projectFile ->
-                if (project.id[this.serialName] == projectFile.parentId)
-                {
-                    project.files.add(projectFile)
-                }
-            }
-        }
+        projects.assignFiles(projectFiles, this)
 
         return projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet()
     }
@@ -242,7 +236,7 @@ object CurseForge : Platform(
     }
 
     fun ProjectFile.fetchAlternativeDownloadUrl(): ProjectFile =
-        if (this.url != "null") this else
+        if (this.url != "null" && this.url != null) this else
         {
             val url = fetchAlternativeDownloadUrl(this.id, this.fileName)
             this.apply {
