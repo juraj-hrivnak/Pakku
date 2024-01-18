@@ -1,6 +1,7 @@
 package teksturepako.pakku.api.http
 
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -13,9 +14,13 @@ open class Http
     /**
      * @return A body [ByteArray] of a https request or null if status code is not OK.
      */
-    open suspend fun requestByteArray(url: String): ByteArray?
+    open suspend fun requestByteArray(
+        url: String, onDownload: (bytesSentTotal: Long, contentLength: Long) -> Unit = { _: Long, _: Long ->}
+    ): ByteArray?
     {
-        return client.get(url)
+        return client.get(url) {
+            onDownload { bytesSentTotal, contentLength -> onDownload(bytesSentTotal, contentLength) }
+        }
             .debug { println("${this.javaClass.simpleName} $it") }
             .checkLimit()
             .bodyIfOK()

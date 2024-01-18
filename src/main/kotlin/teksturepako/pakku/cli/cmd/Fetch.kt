@@ -2,17 +2,11 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.mordant.animation.ProgressAnimation
 import com.github.ajalt.mordant.animation.progressAnimation
-import io.ktor.client.plugins.*
-import io.ktor.client.request.*
+import com.github.ajalt.mordant.widgets.Spinner
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import teksturepako.pakku.api.data.PakkuLock
-import teksturepako.pakku.api.http.client
-import teksturepako.pakku.api.platforms.CurseForge.bodyIfOK
-import teksturepako.pakku.api.platforms.CurseForge.checkLimit
+import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -24,41 +18,44 @@ import kotlin.io.path.writeBytes
 
 class Fetch : CliktCommand("Fetch projects to your pack folder")
 {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val downloadDispatcher = Dispatchers.Default.limitedParallelism(10)
-
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
+        val pakkuLock = PakkuLock.readToResult().fold(
+            onSuccess = { it },
+            onFailure = {
+                terminal.danger(it.message)
+                echo()
+                return@runBlocking
+            }
+        )
 
         var fetched = false
         val ignored = mutableListOf<Path>()
         val jobs = mutableListOf<Job>()
-        val progressBars = mutableListOf<ProgressAnimation>()
-        val mutex = Mutex()
 
         // Progress bar
         val progress = terminal.progressAnimation {
-            text("Fetching...")
-            percentage()
-            progressBar()
+            text("Fetching ")
+            spinner(Spinner.Dots())
             padding = 0
-        }.also { progressBars.add(it) }
+        }
+
+        var maxSize: Long = 0
 
         for (project in pakkuLock.getAllProjects())
         {
             var projectFile: ProjectFile? = null
 
-            platforms@ for (platform in Multiplatform.platforms)
+            x@ for (platform in Multiplatform.platforms)
             {
                 projectFile = project.getFilesForPlatform(platform)
                     .takeIf { it.isNotEmpty() }
-                    ?.first() ?: continue@platforms
-                break@platforms
+                    ?.first() ?: continue@x
+                break@x
             }
 
             if (projectFile?.url == null)
             {
-                terminal.danger("No files found for ${project.files.map { it.type }}")
+                terminal.danger("No files found for ${project.slug}")
                 echo()
                 continue
             }
@@ -69,51 +66,41 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
             // Skip to next if output file exists
             if (outputFile.toFile().exists()) continue
 
-            mutex.withLock {
-                // Download
-                val deferred = async(downloadDispatcher) {
-                    client.get(projectFile.url!!) {
-                        onDownload { bytesSentTotal, contentLength ->
-                            if (bytesSentTotal > 1)
-                            {
-                                if (bytesSentTotal + 64 > contentLength)
-                                {
-                                    progress.update(contentLength)
-                                } else
-                                {
-                                    progress.start()
-                                    progress.updateTotal(contentLength)
-                                    progress.update(bytesSentTotal)
-                                }
-                            }
-                        }
-                    }.checkLimit().bodyIfOK() as ByteArray?
-                }
+            maxSize += projectFile.size
 
-                jobs += launch(downloadDispatcher) {
-                    // Create parent folders
-                    if (!parentFolder.exists()) parentFolder.mkdirs()
+            // Download
+            val deferred = async {
+                Http().requestByteArray(projectFile.url!!) { _, _ ->
+                    progress.updateTotal(maxSize)
+                } to projectFile.size
+            }
 
-                    val bytes = deferred.await()
+            jobs += launch(Dispatchers.IO) {
+                // Create parent folders
+                if (!parentFolder.exists()) parentFolder.mkdirs()
 
-                    if (bytes != null) try
-                    {
-                        // Write to file
-                        outputFile.writeBytes(bytes)
-                        fetched = true
-                    } catch (e: Exception)
-                    {
-                        e.printStackTrace()
-                    }
+                val (bytes, fileSize) = deferred.await()
+
+                if (bytes != null) try
+                {
+                    // Write to file
+                    outputFile.writeBytes(bytes)
+                    terminal.success("$outputFile saved")
+                    progress.advance(fileSize.toLong())
+
+                    fetched = true
+                } catch (e: Exception)
+                {
+                    e.printStackTrace()
                 }
             }
         }
 
         jobs.joinAll()
-        progressBars.forEach { it.clear() }
 
         if (fetched)
         {
+            progress.clear()
             terminal.success("Projects successfully fetched")
             echo()
         }
