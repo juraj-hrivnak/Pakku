@@ -16,7 +16,8 @@ abstract class Platform(
     val name: String,
     val serialName: String,
     val apiUrl: String,
-    val apiVersion: Int
+    val apiVersion: Int,
+    val url: String,
 ) : Http(), IProjectProvider
 {
     suspend fun requestProjectBody(input: String): String? = this.requestBody("$apiUrl/v$apiVersion/$input")
