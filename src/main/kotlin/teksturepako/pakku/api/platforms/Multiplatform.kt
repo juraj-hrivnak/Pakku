@@ -31,7 +31,8 @@ object Multiplatform : IProjectProvider
         if (cf == null && mr != null)
         {
             cf = CurseForge.requestProjectFromSlug(mr.slug[Modrinth.serialName]!!)
-        } else if (mr == null && cf != null)
+        }
+        else if (mr == null && cf != null)
         {
             mr = Modrinth.requestProjectFromSlug(cf.slug[CurseForge.serialName]!!)
         }
@@ -68,35 +69,23 @@ object Multiplatform : IProjectProvider
         return project
     }
 
-    suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: Map<String, List<String>>, numberOfFiles: Int
+    /** @return List of updated projects. */
+    suspend fun updateMultipleProjectsWithFiles(
+        mcVersions: List<String>, loaders: List<String>, projects: MutableSet<Project>, numberOfFiles: Int
     ): MutableSet<Project>
     {
-        val result: MutableSet<Project> = mutableSetOf()
+        return platforms.fold(projects.map { it.copy(files = mutableSetOf()) }.toMutableSet()) { acc, platform ->
 
-        val projectsCf = ids[CurseForge.serialName]?.let {
-            CurseForge.requestMultipleProjectsWithFiles(mcVersions, loaders, it, numberOfFiles)
-        }
-        val projectsMr = ids[Modrinth.serialName]?.let {
-            Modrinth.requestMultipleProjectsWithFiles(mcVersions, loaders, it, numberOfFiles)
-        }
+            val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
 
-        when
-        {
-            projectsCf != null && projectsMr != null ->
-            {
-                for (projectCf in projectsCf)
-                {
-                    for (projectMr in projectsMr)
-                    {
-                        if (projectCf isAlmostTheSameAs projectMr) result += projectCf + projectMr
-                    }
+            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles).forEach { project ->
+                acc.find { it.slug[platform.serialName] == project.slug[platform.serialName] }?.let {
+                    acc -= it
+                    acc += it + project
                 }
             }
-            projectsCf != null -> result.addAll(projectsCf)
-            projectsMr != null -> result.addAll(projectsMr)
-        }
 
-        return result
+            acc
+        }.filter { projects.none { project -> project == it } }.toMutableSet()
     }
 }
