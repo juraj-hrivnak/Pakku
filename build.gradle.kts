@@ -1,7 +1,11 @@
+
+private val kotlinVersion = "1.9.22"
+private val ktorVersion = "2.3.7"
+
 plugins {
-    kotlin("jvm") version "1.9.0"
-    kotlin("plugin.serialization") version "1.9.0"
-    id("io.ktor.plugin") version "2.3.4"
+    kotlin("jvm") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
+    id("io.ktor.plugin") version "2.3.7"
     application
 }
 
@@ -17,11 +21,11 @@ dependencies {
 
     implementation(kotlin("stdlib-jdk8"))
     implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-client-okhttp:2.3.4")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
+    implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
     implementation("com.github.ajalt.clikt:clikt:4.2.1")
 
