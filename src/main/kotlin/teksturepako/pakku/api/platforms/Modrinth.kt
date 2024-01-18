@@ -6,12 +6,10 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import teksturepako.pakku.api.data.finalize
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.models.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.MrProjectModel
 import teksturepako.pakku.api.models.MrVersionModel
-import teksturepako.pakku.api.projects.MrFile
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
-import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debugIfEmpty
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -20,7 +18,8 @@ object Modrinth : Platform(
     name = "Modrinth",
     serialName = "modrinth",
     apiUrl = "https://api.modrinth.com",
-    apiVersion = 2
+    apiVersion = 2,
+    url = "https://modrinth.com/mod"
 )
 {
     // -- API RATE LIMIT --
@@ -68,17 +67,18 @@ object Modrinth : Platform(
     private fun MrProjectModel.toProject(): Project?
     {
         return Project(
-            name = mutableMapOf(serialName to this.title),
-            slug = mutableMapOf(serialName to this.slug),
-            type = when (this.projectType)
+            name = mutableMapOf(serialName to title),
+            slug = mutableMapOf(serialName to slug),
+            type = when (projectType)
             {
                 "mod"          -> ProjectType.MOD
                 "resourcepack" -> ProjectType.RESOURCE_PACK
                 "shader"       -> ProjectType.SHADER
 
-                else           -> return null.also { println("Project type ${this.projectType} not found!") }
+                else           -> return null.also { println("Project type $projectType not found!") }
             },
-            id = mutableMapOf(serialName to this.id),
+            id = mutableMapOf(serialName to id),
+            url = mutableMapOf(serialName to "$url/$slug"),
             files = mutableSetOf(),
         )
     }
@@ -123,7 +123,7 @@ object Modrinth : Platform(
 
     private fun MrVersionModel.toProjectFiles(): List<ProjectFile>
     {
-        return this.files.map { versionFile ->
+        return this.files.sortedBy { it.primary }.map { versionFile ->
             MrFile(
                 fileName = versionFile.filename,
                 mcVersions = this.gameVersions.toMutableList(),
@@ -142,7 +142,8 @@ object Modrinth : Platform(
                 },
                 requiredDependencies = this.dependencies
                     .filter { "required" in it.dependencyType }
-                    .mapNotNull { it.projectId }.toMutableSet()
+                    .mapNotNull { it.projectId }.toMutableSet(),
+                size = versionFile.size,
             )
         }
     }
@@ -177,15 +178,20 @@ object Modrinth : Platform(
         mcVersions: List<String>, loaders: List<String>, ids: List<String>
     ): MutableSet<ProjectFile>
     {
-        return json.decodeFromString<List<MrVersionModel>>(
-            this.requestProjectBody("versions?ids=${
-                ids.map { "%22$it%22" }.toString()
+        /* Chunk requests if there are too many ids */
+        return ids.chunked(2_000).flatMap { list ->
+            val url = "versions?ids=${
+                list.map { "%22$it%22" }.toString()
                     .replace("[", "%5B")
                     .replace("]","%5D")
-            }".replace(" ", "")) ?: return mutableSetOf()
-        )
-            .filterFileModels(mcVersions, loaders)
-            .flatMap { version -> version.toProjectFiles() }
+            }".replace(" ", "")
+
+            json.decodeFromString<List<MrVersionModel>>(
+                this.requestProjectBody(url) ?: return mutableSetOf()
+            )
+                .filterFileModels(mcVersions, loaders)
+                .flatMap { version -> version.toProjectFiles() }
+        }
             .asReversed()
             .toMutableSet()
     }
@@ -208,15 +214,26 @@ object Modrinth : Platform(
 
         val projects = response.mapNotNull { it.toProject() }
 
-        projects.forEach { project ->
-            projectFiles.forEach { projectFile ->
-                if (project.id[this.serialName] == projectFile.parentId)
-                {
-                    project.files.add(projectFile)
-                }
-            }
-        }
+        projects.assignFiles(projectFiles, this)
 
         return projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet()
+    }
+
+    suspend fun requestMultipleProjectsWithFilesFromHashes(
+        hashes: List<String>, algorithm: String
+    ): MutableSet<Project>
+    {
+        val response = json.decodeFromString<Map<String, MrVersionModel>>(
+            this.requestProjectBody("version_files", GetVersionsFromHashesRequest(hashes, algorithm))
+                ?: return mutableSetOf()
+        ).values
+
+        val files = response.flatMap { version -> version.toProjectFiles().asReversed().take(1) }
+        val projectIds = files.map { it.parentId }
+        val projects = requestMultipleProjects(projectIds)
+
+        projects.assignFiles(files, this)
+
+        return projects
     }
 }
