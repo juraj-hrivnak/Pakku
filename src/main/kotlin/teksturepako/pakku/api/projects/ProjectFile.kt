@@ -14,6 +14,7 @@ abstract class IProjectFile
     open val releaseType: String = ""
     open var url: String? = null
     open val requiredDependencies: MutableSet<String>? = null
+    open val size: Int = 0
 
     open val id: String = ""
     open val parentId: String = ""
@@ -38,6 +39,7 @@ data class MrFile(
 
     val hashes: MutableMap<String, String>? = null,
     @SerialName("required_dependencies") override val requiredDependencies: MutableSet<String>?,
+    override val size: Int,
 ) : ProjectFile(Modrinth.serialName)
 
 @Serializable
@@ -53,4 +55,5 @@ data class CfFile(
     @SerialName("parent_id") override val parentId: String,
 
     @SerialName("required_dependencies") override val requiredDependencies: MutableSet<String>?,
+    override val size: Int,
 ) : ProjectFile(CurseForge.serialName)
