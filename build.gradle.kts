@@ -27,6 +27,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
+    implementation("com.soywiz.korge:korge-core:5.3.0")
+
     implementation("com.github.ajalt.clikt:clikt:4.2.1")
 
     implementation("io.github.reactivecircus.cache4k:cache4k:0.12.0")
