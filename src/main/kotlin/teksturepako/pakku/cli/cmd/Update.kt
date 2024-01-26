@@ -16,14 +16,11 @@ class Update : CliktCommand("Update projects")
     private val allFlag: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readToResult().fold(
-            onSuccess = { it },
-            onFailure = {
-                terminal.danger(it.message)
-                echo()
-                return@runBlocking
-            }
-        )
+        val pakkuLock = PakkuLock.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
 
         val oldProjects = if (allFlag)
         {
@@ -33,10 +30,7 @@ class Update : CliktCommand("Update projects")
         {
             projectArgs.mapNotNull { projectArg ->
                 pakkuLock.getProject(projectArg).also {
-                    if (it == null)
-                    {
-                        terminal.danger("$projectArg not found")
-                    }
+                    if (it == null) terminal.danger("$projectArg not found")
                 }
             }
         }
@@ -51,7 +45,7 @@ class Update : CliktCommand("Update projects")
             terminal.success("${updatedProject.slug} updated")
         }
 
-        if (updatedProjects.isEmpty())
+        if (updatedProjects.isEmpty() && oldProjects.isNotEmpty())
         {
             when
             {

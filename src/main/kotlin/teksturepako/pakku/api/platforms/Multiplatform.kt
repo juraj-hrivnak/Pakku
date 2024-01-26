@@ -2,6 +2,7 @@ package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.UpdateStrategy
 
 object Multiplatform : IProjectProvider
 {
@@ -86,6 +87,10 @@ object Multiplatform : IProjectProvider
             }
 
             acc
-        }.filter { projects.none { project -> project == it } }.toMutableSet()
+        }.filter { newProject ->
+            projects.none {
+                oldProject -> oldProject == newProject
+            } && newProject.updateStrategy == UpdateStrategy.LATEST
+        }.toMutableSet()
     }
 }

@@ -28,7 +28,10 @@ data class Project(
     val slug: MutableMap<String, String>,
     val name: MutableMap<String, String>,
     val id: MutableMap<String, String>,
-    val url: MutableMap<String, String>,
+
+    @SerialName("update_strategy") var updateStrategy: UpdateStrategy = UpdateStrategy.LATEST,
+    @SerialName("can_redistribute") var canRedistribute: Boolean = true,
+
     var files: MutableSet<ProjectFile>
 )
 {
@@ -55,7 +58,10 @@ data class Project(
             name = (this.name + other.name).toMutableMap(),
             slug = (this.slug + other.slug).toMutableMap(),
             id = (this.id + other.id).toMutableMap(),
-            url = (this.url + other.url).toMutableMap(),
+
+            updateStrategy = this.updateStrategy,
+            canRedistribute = this.canRedistribute,
+
             files = (this.files + other.files).toMutableSet(),
         )
     }
