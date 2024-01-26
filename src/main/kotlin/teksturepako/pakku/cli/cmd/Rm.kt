@@ -18,14 +18,11 @@ class Rm : CliktCommand("Remove projects")
     private val allFlag: Boolean by option("-a", "--all", help = "Remove all mods").flag()
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readToResult().fold(
-            onSuccess = { it },
-            onFailure = {
-                terminal.danger(it.message)
-                echo()
-                return@runBlocking
-            }
-        )
+        val pakkuLock = PakkuLock.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
 
         if (allFlag)
         {
@@ -47,7 +44,7 @@ class Rm : CliktCommand("Remove projects")
 
             if (project != null)
             {
-                val linkedProjects = pakkuLock.getLinkedProjects(project.pakkuId!!, project)
+                val linkedProjects = pakkuLock.getLinkedProjects(project.pakkuId!!, ignore = project)
 
                 if (linkedProjects.isEmpty())
                 {

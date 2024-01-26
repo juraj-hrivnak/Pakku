@@ -19,14 +19,11 @@ import kotlin.io.path.writeBytes
 class Fetch : CliktCommand("Fetch projects to your pack folder")
 {
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readToResult().fold(
-            onSuccess = { it },
-            onFailure = {
-                terminal.danger(it.message)
-                echo()
-                return@runBlocking
-            }
-        )
+        val pakkuLock = PakkuLock.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
 
         var fetched = false
         val ignored = mutableListOf<Path>()

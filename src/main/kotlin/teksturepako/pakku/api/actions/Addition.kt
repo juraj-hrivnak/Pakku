@@ -81,7 +81,7 @@ sealed class Error(val message: String)
 
 fun interface ErrorBlock
 {
-    fun error(error: Error)
+    suspend fun error(error: Error)
 }
 
 fun interface RetryBlock

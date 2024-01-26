@@ -24,7 +24,7 @@ fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Pro
 {
     return this.map { project ->
         otherProjects.find { project isAlmostTheSameAs it }?.let {
-            project + it
+            if (project.type == it.type) project + it else project
         } ?: project
     }.toSet()
 }
