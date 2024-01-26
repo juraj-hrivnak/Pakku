@@ -9,7 +9,10 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.MrProjectModel
 import teksturepako.pakku.api.models.MrVersionModel
-import teksturepako.pakku.api.projects.*
+import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectFile
+import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.api.projects.assignFiles
 import teksturepako.pakku.debugIfEmpty
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -17,6 +20,7 @@ import kotlin.time.Duration.Companion.seconds
 object Modrinth : Platform(
     name = "Modrinth",
     serialName = "modrinth",
+    shortName = "mr",
     apiUrl = "https://api.modrinth.com",
     apiVersion = 2,
     url = "https://modrinth.com/mod"
@@ -52,7 +56,7 @@ object Modrinth : Platform(
 
     fun checkRateLimit()
     {
-        if (requestsRemaining > 0) println("Rate limit remaining: $requestsRemaining")
+        if (requestsRemaining < 200 && requestsRemaining != 0) println("Rate limit remaining: $requestsRemaining")
     }
 
     // -- PROJECT --
@@ -78,7 +82,6 @@ object Modrinth : Platform(
                 else           -> return null.also { println("Project type $projectType not found!") }
             },
             id = mutableMapOf(serialName to id),
-            url = mutableMapOf(serialName to "$url/$slug"),
             files = mutableSetOf(),
         )
     }
@@ -124,7 +127,8 @@ object Modrinth : Platform(
     private fun MrVersionModel.toProjectFiles(): List<ProjectFile>
     {
         return this.files.sortedBy { it.primary }.map { versionFile ->
-            MrFile(
+            ProjectFile(
+                type = this@Modrinth.serialName,
                 fileName = versionFile.filename,
                 mcVersions = this.gameVersions.toMutableList(),
                 loaders = this.loaders.toMutableList(),
@@ -159,7 +163,7 @@ object Modrinth : Platform(
                 this.requestProjectBody("project/$projectId/version") ?: return mutableSetOf()
             )
                 .filterFileModels(mcVersions, loaders)
-                .flatMap { version -> version.toProjectFiles() }
+                .flatMap { version -> version.toProjectFiles().asReversed() }
                 .debugIfEmpty {
                     println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
                 }.toMutableSet()
@@ -169,7 +173,7 @@ object Modrinth : Platform(
             json.decodeFromString<MrVersionModel>(
                 this.requestProjectBody("version/$fileId") ?: return mutableSetOf()
             )
-                .toProjectFiles()
+                .toProjectFiles().asReversed()
                 .toMutableSet()
         }
     }

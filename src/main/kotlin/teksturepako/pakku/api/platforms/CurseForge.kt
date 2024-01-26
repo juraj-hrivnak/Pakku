@@ -4,7 +4,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.*
-import teksturepako.pakku.api.projects.*
+import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectFile
+import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.api.projects.assignFiles
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 
@@ -12,6 +15,7 @@ import teksturepako.pakku.debugIfEmpty
 object CurseForge : Platform(
     name = "CurseForge",
     serialName = "curseforge",
+    shortName = "cf",
     apiUrl = "https://cfproxy.bmpm.workers.dev",
     apiVersion = 1,
     url = "https://www.curseforge.com/minecraft/mc-mods"
@@ -65,7 +69,6 @@ object CurseForge : Platform(
                 else -> return null.also { println("Project type $classId not found!") }
             },
             id = mutableMapOf(serialName to id.toString()),
-            url = mutableMapOf(serialName to "$url/$slug"),
             files = mutableSetOf(),
         )
     }
@@ -111,7 +114,8 @@ object CurseForge : Platform(
 
     private fun CfModModel.File.toProjectFile(gameVersionTypeIds: List<Int>): ProjectFile
     {
-        return CfFile(
+        return ProjectFile(
+            type = this@CurseForge.serialName,
             fileName = this.fileName,
             mcVersions = this.sortableGameVersions
                 .filter { it.gameVersionTypeId in gameVersionTypeIds }
@@ -130,6 +134,13 @@ object CurseForge : Platform(
             url = this.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
             id = this.id.toString(),
             parentId = this.modId.toString(),
+            hashes = this.hashes.associate {
+                when (it.algo)
+                {
+                    1 -> "sha1" to it.value
+                    else -> "md5" to it.value
+                }
+            }.toMutableMap(),
             requiredDependencies = this.dependencies
                 .filter { it.relationType == 3 }
                 .map { it.modId.toString() }.toMutableSet(),
