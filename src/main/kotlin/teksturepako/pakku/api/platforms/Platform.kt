@@ -15,6 +15,7 @@ import teksturepako.pakku.api.projects.ProjectFile
 abstract class Platform(
     val name: String,
     val serialName: String,
+    val shortName: String,
     val apiUrl: String,
     val apiVersion: Int,
     val url: String,
