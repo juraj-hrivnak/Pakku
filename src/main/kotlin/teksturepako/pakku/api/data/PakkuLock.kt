@@ -4,7 +4,13 @@ package teksturepako.pakku.api.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.api.platforms.Modrinth
+import teksturepako.pakku.api.platforms.Multiplatform
+import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.containsProject
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.writeToFile
@@ -20,7 +26,8 @@ import java.io.File
  */
 @Serializable
 data class PakkuLock(
-    @SerialName("pack_name") private var packName: String = "",
+    @SerialName("name") private var packName: String = "",
+    @SerialName("target") private var platformTarget: String? = null,
     @SerialName("mc_versions") private var mcVersions: MutableList<String> = mutableListOf(),
     private var loaders: MutableList<String> = mutableListOf(),
     private val projects: MutableList<Project> = mutableListOf()
@@ -28,7 +35,7 @@ data class PakkuLock(
 {
     fun add(project: Project): Boolean?
     {
-        val added: Boolean? = if (projects.any { project isAlmostTheSameAs it })
+        val added: Boolean? = if (projects containsProject project)
         {
             debug { println("Could not add ${project.name}") }
             null
@@ -141,25 +148,18 @@ data class PakkuLock(
         this.packName = packName
     }
 
-    fun setMcVersion(vararg mcVersion: String)
+    fun setPlatformTarget(target: String)
     {
-        this.mcVersions.clear()
-        this.mcVersions.addAll(mcVersion)
+        this.platformTarget = target
     }
 
-    fun setMcVersion(mcVersions: List<String>)
+    fun setMcVersions(mcVersions: List<String>)
     {
         this.mcVersions.clear()
         this.mcVersions.addAll(mcVersions)
     }
 
-    fun setModLoader(vararg loader: String)
-    {
-        this.loaders.clear()
-        this.loaders.addAll(loader)
-    }
-
-    fun setModLoader(loaders: List<String>)
+    fun setModLoaders(loaders: List<String>)
     {
         this.loaders.clear()
         this.loaders.addAll(loaders)
@@ -186,28 +186,60 @@ data class PakkuLock(
     fun getLoaders() = this.loaders
 
 
+    fun linkProjectToDependants(project: Project)
+    {
+        for (dependant in this.projects)
+        {
+            x@ for (file in dependant.files)
+            {
+                val deps = file.requiredDependencies ?: continue@x
+                if (project.id.values.any { it in deps } && project.pakkuId !in dependant.pakkuLinks)
+                {
+                    dependant.pakkuLinks.add(project.pakkuId!!)
+                }
+            }
+        }
+    }
+
+
+    fun getPlatforms(): Result<List<Platform>> = if (platformTarget != null) when (platformTarget!!.lowercase())
+    {
+        "curseforge" -> Result.success(listOf(CurseForge))
+        "modrinth" -> Result.success(listOf(Modrinth))
+        "multiplatform" -> Result.success(Multiplatform.platforms)
+        else -> Result.failure(PakkuException("Target '$platformTarget' not found"))
+    } else Result.failure(PakkuException("Target not found"))
+
+    fun getProjectProvider(): Result<IProjectProvider> = if (platformTarget != null) when (platformTarget!!.lowercase())
+    {
+        "curseforge" -> Result.success(CurseForge)
+        "modrinth" -> Result.success(Modrinth)
+        "multiplatform" -> Result.success(Multiplatform)
+        else -> Result.failure(PakkuException("Target (project provider) '$platformTarget' not found"))
+    } else Result.failure(PakkuException("Target (project provider) not found"))
+
     companion object
     {
-        private const val PAKKU_FILE = "pakku-lock.json"
+        private const val FILE_NAME = "pakku-lock.json"
 
         /**
-         * Reads [PakkuLock's][PakkuLock] [file][PAKKU_FILE] and parses it,
+         * Reads [PakkuLock's][PakkuLock] [file][FILE_NAME] and parses it,
          * or returns a new [PakkuLock].
          */
-        suspend fun readOrNew(): PakkuLock = readFileOrNull(File(PAKKU_FILE))?.let {
+        suspend fun readOrNew(): PakkuLock = readFileOrNull(File(FILE_NAME))?.let {
             runCatching { json.decodeFromString<PakkuLock>(it) }.getOrElse { PakkuLock() }
         } ?: PakkuLock()
 
         /**
-         * Reads [PakkuLock's][PakkuLock] [file][PAKKU_FILE] and parses it, or returns an exception.
+         * Reads [PakkuLock's][PakkuLock] [file][FILE_NAME] and parses it, or returns an exception.
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
-        suspend fun readToResult(): Result<PakkuLock> = readFileOrNull(File(PAKKU_FILE))?.let {
+        suspend fun readToResult(): Result<PakkuLock> = readFileOrNull(File(FILE_NAME))?.let {
             runCatching { Result.success(json.decodeFromString<PakkuLock>(it)) }.getOrElse { exception ->
-                Result.failure(PakkuException("Error occurred while reading '$PAKKU_FILE': ${exception.message}"))
+                Result.failure(PakkuException("Error occurred while reading '$FILE_NAME': ${exception.message}"))
             }
-        } ?: Result.failure(PakkuException("Could not read '$PAKKU_FILE'"))
+        } ?: Result.failure(PakkuException("Could not read '$FILE_NAME'"))
     }
 
-    fun write() = writeToFile(this, File(PAKKU_FILE), overrideText = true)
+    fun write() = writeToFile(this, File(FILE_NAME), overrideText = true)
 }
