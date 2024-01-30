@@ -7,15 +7,14 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.YesNoPrompt
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.PakkuLock
-import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand("Remove projects")
 {
     private val projectArgs: List<String> by argument("projects").multiple()
-    private val allFlag: Boolean by option("-a", "--all", help = "Remove all mods").flag()
+    private val allFlag: Boolean by option("-a", "--all", help = "Remove all projects").flag()
 
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readToResult().getOrElse {
@@ -34,62 +33,41 @@ class Rm : CliktCommand("Remove projects")
                 echo()
             }
         }
-        else for (deferred in projectArgs.map { arg ->
-            async {
-                pakkuLock.getProject(arg) to arg
-            }
+        else for (pair in projectArgs.map { arg ->
+            pakkuLock.getProject(arg) to arg
         })
         {
-            val (project, arg) = deferred.await()
+            val (projectIn, arg) = pair
 
-            if (project != null)
-            {
-                val linkedProjects = pakkuLock.getLinkedProjects(project.pakkuId!!, ignore = project)
-
-                if (linkedProjects.isEmpty())
-                {
-                    if (YesNoPrompt("Do you want to remove ${project.slug}?", terminal, true).ask() == false) continue
-                }
-                else
-                {
-                    terminal.warning("$arg is required by ${linkedProjects.map { it.slug }}")
-                    if (YesNoPrompt("Do you want to remove it?", terminal, false).ask() == false) continue
-                }
-
-                pakkuLock.remove(project)
-                terminal.danger("${project.slug} removed")
-
-                dependencies@ for (pakkuLink in project.pakkuLinks)
-                {
-                    val dep = pakkuLock.getProjectByPakkuId(pakkuLink) ?: continue@dependencies
-                    val linkedProjects2 = pakkuLock.getLinkedProjects(dep.pakkuId!!)
-
-                    if (linkedProjects2.isNotEmpty())
+            projectIn.createRemovalRequest(
+                onWarning = { warning -> terminal.warning(warning) },
+                onRemoval = { project, isRecommended ->
+                    if (YesNoPrompt("Do you want to remove ${project.slug}?", terminal, isRecommended).ask() == true)
                     {
-                        terminal.warning("${dep.slug} is required by ${linkedProjects2.map { it.slug }}")
-                        if (YesNoPrompt("Do you want to remove it?", terminal, false).ask() == false)
-                            continue@dependencies
+                        pakkuLock.remove(project)
+                        pakkuLock.removePakkuLinkFromAllProjects(project.pakkuId!!)
+                        terminal.danger("${project.slug} removed")
                     }
-
-                    pakkuLock.remove(dep)
-                    pakkuLock.removePakkuLink(dep.pakkuId!!)
-                    terminal.danger("${dep.slug} removed")
-                }
-
-                pakkuLock.removePakkuLink(project.pakkuId!!)
-            }
-            else
-            {
-                terminal.warning("$arg not found")
-                pakkuLock.getAllProjects().flatMap { it.slug.values }.also { args ->
-                    typoSuggester(arg, args).firstOrNull()?.let { arg ->
-                        terminal.warning("Did you mean $arg?")
+                },
+                onDepRemoval = { dependency, isRecommended ->
+                    if (isRecommended)
+                    {
+                        pakkuLock.remove(dependency)
+                        pakkuLock.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
+                        terminal.info("${dependency.slug} removed")
                     }
-                }
-            }
+                    else if (YesNoPrompt("Do you want to remove ${dependency.slug}?", terminal, false).ask() == true)
+                    {
+                        pakkuLock.remove(dependency)
+                        pakkuLock.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
+                        terminal.info("${dependency.slug} removed")
+                    }
+                },
+                arg, pakkuLock
+            )
+
             echo()
         }
-
         pakkuLock.write()
     }
 }

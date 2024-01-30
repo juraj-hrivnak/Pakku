@@ -6,6 +6,12 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
+data class RequestHandlers(
+    val onError: ErrorBlock,
+    val onRetry: RetryBlock,
+    val onSuccess: SuccessBlock
+)
+
 suspend fun Project?.createAdditionRequest(
     onError: ErrorBlock,
     onRetry: RetryBlock,
@@ -15,13 +21,13 @@ suspend fun Project?.createAdditionRequest(
 )
 {
     // Exist
-    var project = this ?: return onError.error(Error.ProjectNotFound("Project not found"))
+    var project = this ?: return onError.error(Error.ProjNotFound("Project not found"))
     var isRecommended = true
 
     // Already added
     if (pakkuLock.isProjectAdded(project))
     {
-        return onError.error(Error.CouldNotAdd("Could not add ${project.slug}. It is already added"))
+        return onError.error(Error.AlreadyAdded("Could not add ${project.slug}. It is already added"))
     }
 
     for (platform in platforms)
@@ -61,35 +67,4 @@ suspend fun Project?.createAdditionRequest(
     }
 
     onSuccess.success(project, isRecommended, RequestHandlers(onError, onRetry, onSuccess))
-}
-
-data class RequestHandlers(
-    val onError: ErrorBlock,
-    val onRetry: RetryBlock,
-    val onSuccess: SuccessBlock
-)
-
-sealed class Error(val message: String)
-{
-    class ProjectNotFound(message: String) : Error(message)
-    class CouldNotAdd(message: String) : Error(message)
-    class NotFoundOnPlatform(message: String) : Error(message)
-    class NoFilesOnPlatform(message: String) : Error(message)
-    class NoFiles(message: String) : Error(message)
-    class FileNamesDoNotMatch(message: String) : Error(message)
-}
-
-fun interface ErrorBlock
-{
-    suspend fun error(error: Error)
-}
-
-fun interface RetryBlock
-{
-    suspend fun retryWith(platform: Platform): Project?
-}
-
-fun interface SuccessBlock
-{
-    suspend fun success(project: Project, isRecommended: Boolean, ctx: RequestHandlers)
 }
