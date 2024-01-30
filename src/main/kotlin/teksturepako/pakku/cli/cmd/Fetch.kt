@@ -33,6 +33,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
         val progress = terminal.progressAnimation {
             text("Fetching ")
             spinner(Spinner.Dots())
+            percentage()
             padding = 0
         }
 

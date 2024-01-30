@@ -42,10 +42,7 @@ class Add : CliktCommand("Add projects")
         })
         {
             projectIn.createAdditionRequest(
-                onError = {
-                    error -> terminal.danger(error.message)
-                    echo()
-                },
+                onError = { error -> terminal.danger(error.message) },
                 onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
                 onSuccess = { project, isRecommended, reqHandlers ->
                     if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
@@ -54,12 +51,12 @@ class Add : CliktCommand("Add projects")
                         pakkuLock.linkProjectToDependants(project)
                         project.resolveDependencies(terminal, reqHandlers, pakkuLock, projectProvider, platforms)
                         terminal.success("${project.slug} added")
-                        echo()
                     }
                 },
-                pakkuLock,
-                platforms
+                pakkuLock, platforms
             )
+
+            echo()
         }
         pakkuLock.write()
     }

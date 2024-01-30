@@ -213,9 +213,7 @@ object Modrinth : Platform(
         )
 
         val fileIds = response.flatMap { it.versions }
-
         val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, fileIds)
-
         val projects = response.mapNotNull { it.toProject() }
 
         projects.assignFiles(projectFiles, this)
@@ -232,11 +230,11 @@ object Modrinth : Platform(
                 ?: return mutableSetOf()
         ).values
 
-        val files = response.flatMap { version -> version.toProjectFiles().asReversed().take(1) }
-        val projectIds = files.map { it.parentId }
+        val projectFiles = response.flatMap { version -> version.toProjectFiles().asReversed().take(1) }
+        val projectIds = projectFiles.map { it.parentId }
         val projects = requestMultipleProjects(projectIds)
 
-        projects.assignFiles(files, this)
+        projects.assignFiles(projectFiles, this)
 
         return projects
     }

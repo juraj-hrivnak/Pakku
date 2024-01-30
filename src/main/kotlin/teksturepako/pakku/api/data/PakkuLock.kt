@@ -140,7 +140,7 @@ data class PakkuLock(
     fun addPakkuLink(pakkuId: String, project: Project) =
         this.projects.find { it isAlmostTheSameAs project }?.pakkuLinks?.add(pakkuId)
 
-    fun removePakkuLink(pakkuId: String) = this.projects.map { it.pakkuLinks.remove(pakkuId) }
+    fun removePakkuLinkFromAllProjects(pakkuId: String) = this.projects.map { it.pakkuLinks.remove(pakkuId) }
 
 
     fun setPackName(packName: String)

@@ -12,7 +12,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.projects.UpdateStrategy
 
-class Set : CliktCommand("Set various properties of the pack or projects")
+class Set : CliktCommand("Set various properties of your pack or projects")
 {
     private val projectArgs: List<String> by argument("projects").multiple()
 
@@ -47,7 +47,7 @@ class Set : CliktCommand("Set various properties of the pack or projects")
         help = "Change the mod loaders"
     ).varargValues()
 
-    // TODO: Refactor the nested mess into functional implementation
+    // TODO: Refactor this nested mess
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readOrNew()
 
