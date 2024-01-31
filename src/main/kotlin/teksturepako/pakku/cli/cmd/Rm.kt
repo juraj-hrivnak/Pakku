@@ -50,13 +50,7 @@ class Rm : CliktCommand("Remove projects")
                     }
                 },
                 onDepRemoval = { dependency, isRecommended ->
-                    if (isRecommended)
-                    {
-                        pakkuLock.remove(dependency)
-                        pakkuLock.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
-                        terminal.info("${dependency.slug} removed")
-                    }
-                    else if (YesNoPrompt("Do you want to remove ${dependency.slug}?", terminal, false).ask() == true)
+                    if (isRecommended || YesNoPrompt("Do you want to remove ${dependency.slug}?", terminal, false).ask() == true)
                     {
                         pakkuLock.remove(dependency)
                         pakkuLock.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
