@@ -30,7 +30,7 @@ data class Project(
     val id: MutableMap<String, String>,
 
     @SerialName("update_strategy") var updateStrategy: UpdateStrategy = UpdateStrategy.LATEST,
-    @SerialName("can_redistribute") var canRedistribute: Boolean = true,
+    @SerialName("redistributable") var redistributable: Boolean = true,
 
     var files: MutableSet<ProjectFile>
 )
@@ -60,7 +60,7 @@ data class Project(
             id = (this.id + other.id).toMutableMap(),
 
             updateStrategy = this.updateStrategy,
-            canRedistribute = this.canRedistribute,
+            redistributable = this.redistributable,
 
             files = (this.files + other.files).toMutableSet(),
         )

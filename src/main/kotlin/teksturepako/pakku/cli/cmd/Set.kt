@@ -10,19 +10,25 @@ import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.choice
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 
 class Set : CliktCommand("Set various properties of your pack or projects")
 {
     private val projectArgs: List<String> by argument("projects").multiple()
 
+    private val sideOpt: String? by option(
+        "-s", "--side",
+        help = "Change the side of a project"
+    ).choice("client", "server", "both", ignoreCase = true)
+
     private val updateStrategyOpt: String? by option(
         "-u", "--update-strategy",
-        help = "Change the the update strategy of a project"
-    ).choice("latest", "none")
+        help = "Change the update strategy of a project"
+    ).choice("latest", "none", ignoreCase = true)
 
-    private val canRedistributeOpt: Boolean? by option(
-        "-r", "--can-redistribute",
+    private val redistributableOpt: Boolean? by option(
+        "-r", "--redistributable",
         help = "Change whether the project can be redistributed"
     ).boolean()
 
@@ -35,7 +41,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
     private val targetOpt: String? by option(
         "-t", "--target",
         help = "Change the target of the pack"
-    ).choice("curseforge", "modrinth", "multiplatform")
+    ).choice("curseforge", "modrinth", "multiplatform", ignoreCase = true)
 
     private val mcVersionsOpts: List<String>? by option(
         "-v", "--mc-versions",
@@ -56,6 +62,14 @@ class Set : CliktCommand("Set various properties of your pack or projects")
         {
             projectArgs.map { arg ->
                 pakkuLock.getProject(arg)?.apply {
+                    /** Side */
+                    sideOpt?.let { opt ->
+                        ProjectSide.valueOf(opt.uppercase())
+                    }?.let {
+                        side = it
+                        terminal.success("'side' set to '$it' for ${this.slug}")
+                    }
+
                     /** Update strategy */
                     updateStrategyOpt?.let { opt ->
                         UpdateStrategy.valueOf(opt.uppercase())
@@ -65,9 +79,9 @@ class Set : CliktCommand("Set various properties of your pack or projects")
                     }
 
                     /** Redistribution */
-                    canRedistributeOpt?.let { opt ->
-                        canRedistribute = opt
-                        terminal.success("'can_redistribute' set to '$opt' for ${this.slug}")
+                    redistributableOpt?.let { opt ->
+                        redistributable = opt
+                        terminal.success("'redistributable' set to '$opt' for ${this.slug}")
                     }
                 }
             }

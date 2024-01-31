@@ -2,13 +2,13 @@ package teksturepako.pakku.api.projects
 
 import teksturepako.pakku.api.platforms.Platform
 
-fun Collection<Project>.assignFiles(files: Collection<ProjectFile>, platform: Platform)
+fun Collection<Project>.assignFiles(projectFiles: Collection<ProjectFile>, platform: Platform)
 {
     this.forEach { project ->
-        files.forEach { file ->
-            if (project.id[platform.serialName] == file.parentId)
+        projectFiles.forEach { projectFile ->
+            if (project.id[platform.serialName] == projectFile.parentId)
             {
-                project.files.add(file)
+                project.files.add(projectFile)
             }
         }
     }

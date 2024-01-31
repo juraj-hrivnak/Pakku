@@ -46,7 +46,7 @@ class Ls : CliktCommand("List projects")
 
             val name: String? = when
             {
-                project.canRedistribute ->
+                project.redistributable ->
                 {
                     if (project.hasNoFiles()) project.name.values.firstOrNull()?.let { red(it) }
                     else project.name.values.firstOrNull()
