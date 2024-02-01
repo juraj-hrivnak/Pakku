@@ -11,10 +11,10 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.containsProject
+import teksturepako.pakku.api.projects.removeIf
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.writeToFile
-import java.io.File
 
 /**
  * A PakkuLock is used to define all properties of a Pakku modpack.
@@ -226,7 +226,7 @@ data class PakkuLock(
          * Reads [PakkuLock's][PakkuLock] [file][FILE_NAME] and parses it,
          * or returns a new [PakkuLock].
          */
-        suspend fun readOrNew(): PakkuLock = readFileOrNull(File(FILE_NAME))?.let {
+        suspend fun readOrNew(): PakkuLock = readFileOrNull(FILE_NAME)?.let {
             runCatching { json.decodeFromString<PakkuLock>(it) }.getOrElse { PakkuLock() }
         } ?: PakkuLock()
 
@@ -234,12 +234,12 @@ data class PakkuLock(
          * Reads [PakkuLock's][PakkuLock] [file][FILE_NAME] and parses it, or returns an exception.
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
-        suspend fun readToResult(): Result<PakkuLock> = readFileOrNull(File(FILE_NAME))?.let {
+        suspend fun readToResult(): Result<PakkuLock> = readFileOrNull(FILE_NAME)?.let {
             runCatching { Result.success(json.decodeFromString<PakkuLock>(it)) }.getOrElse { exception ->
                 Result.failure(PakkuException("Error occurred while reading '$FILE_NAME': ${exception.message}"))
             }
         } ?: Result.failure(PakkuException("Could not read '$FILE_NAME'"))
     }
 
-    fun write() = writeToFile(this, File(FILE_NAME), overrideText = true)
+    suspend fun write() = writeToFile(this, FILE_NAME, overrideText = true)
 }

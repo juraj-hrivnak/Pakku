@@ -2,19 +2,17 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.mordant.animation.progressAnimation
-import com.github.ajalt.mordant.widgets.Spinner
+import korlibs.io.file.PathInfo
+import korlibs.io.file.VfsFile
+import korlibs.io.file.baseName
+import korlibs.io.file.extension
+import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
-import java.io.File
-import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.name
-import kotlin.io.path.writeBytes
 
 class Fetch : CliktCommand("Fetch projects to your pack folder")
 {
@@ -26,16 +24,16 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
         }
 
         var fetched = false
-        val ignored = mutableListOf<Path>()
+        val ignored = mutableListOf<VfsFile>()
         val jobs = mutableListOf<Job>()
 
-        // Progress bar
-        val progress = terminal.progressAnimation {
-            text("Fetching ")
-            spinner(Spinner.Dots())
-            percentage()
-            padding = 0
-        }
+//        // Progress bar
+//        val progress = terminal.progressAnimation {
+//            text("Fetching ")
+//            spinner(Spinner.Dots())
+//            percentage()
+//            padding = 0
+//        }
 
         var maxSize: Long = 0
 
@@ -58,18 +56,18 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
                 continue
             }
 
-            val outputFile = Path(project.type.folderName, projectFile.fileName).also { ignored.add(it) }
-            val parentFolder = Path(project.type.folderName).toFile()
+            val outputFile = localCurrentDirVfs["${project.type.folderName}/${projectFile.fileName}"].also { ignored.add(it) }
+            val parentFolder = localCurrentDirVfs[project.type.folderName]
 
             // Skip to next if output file exists
-            if (outputFile.toFile().exists()) continue
+            if (outputFile.exists()) continue
 
             maxSize += projectFile.size
 
             // Download
             val deferred = async {
                 Http().requestByteArray(projectFile.url!!) { _, _ ->
-                    progress.updateTotal(maxSize)
+//                    progress.updateTotal(maxSize)
                 } to projectFile.size
             }
 
@@ -84,7 +82,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
                     // Write to file
                     outputFile.writeBytes(bytes)
                     terminal.success("$outputFile saved")
-                    progress.advance(fileSize.toLong())
+//                    progress.advance(fileSize.toLong())
 
                     fetched = true
                 } catch (e: Exception)
@@ -98,21 +96,23 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         if (fetched)
         {
-            progress.clear()
+//            progress.clear()
             terminal.success("Projects successfully fetched")
             echo()
         }
 
-        for (path in ignored)
+        for (file in ignored)
         {
             launch(Dispatchers.IO) {
-                if (path.parent.name in ProjectType.entries.map { it.folderName })
+                if (file.parent.pathInfo.baseName in ProjectType.entries.map { it.folderName })
                 {
-                    path.parent.toFile().listFiles()
+                    file.parent.listSimple()
                         .filter {
-                            it.name !in ignored.map { ignore -> ignore.name } && it.extension in listOf("jar", "zip")
+                            it.pathInfo.baseName !in ignored.map { ignore ->
+                                ignore.pathInfo.baseName
+                            } && it.extension in listOf("jar", "zip")
                         }
-                        .forEach(File::delete)
+                        .forEach { file -> file.delete() }
                 }
             }
         }

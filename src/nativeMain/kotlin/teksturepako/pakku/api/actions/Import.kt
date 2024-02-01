@@ -19,7 +19,6 @@ import teksturepako.pakku.api.projects.combineWith
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.unzip
-import java.io.File
 
 const val CF_MANIFEST = "manifest.json"
 const val MR_MANIFEST = "modrinth.index.json"
@@ -45,7 +44,7 @@ suspend fun import(
 suspend fun importCfManifestFile(path: String): CfModpackModel? =
     if (path.pathInfo.baseName == CF_MANIFEST)
     {
-        readFileOrNull(File(path))?.let { json.decodeFromString<CfModpackModel>(it) }
+        readFileOrNull(path)?.let { json.decodeFromString<CfModpackModel>(it) }
     }
     else null
 
@@ -65,7 +64,7 @@ suspend fun importCurseForge(path: String): Pair<CfModpackModel?, String> =
 suspend fun importMrManifestFile(path: String): MrModpackModel? =
     if (path.pathInfo.baseName == MR_MANIFEST)
     {
-        readFileOrNull(File(path))?.let { json.decodeFromString<MrModpackModel>(it) }
+        readFileOrNull(path)?.let { json.decodeFromString<MrModpackModel>(it) }
     }
     else null
 

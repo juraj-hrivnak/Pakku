@@ -10,6 +10,7 @@ import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.assignFiles
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
+import teksturepako.pakku.io.getEnv
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform(
@@ -28,12 +29,12 @@ object CurseForge : Platform(
 
     suspend fun getApiKey(): String?
     {
-        return if (hasValidApiKey()) System.getenv("CURSEFORGE_API_KEY") ?: null else null
+        return if (hasValidApiKey()) getEnv("CURSEFORGE_API_KEY") else null
     }
 
     private suspend fun hasValidApiKey(): Boolean
     {
-        return isApiKeyValid(System.getenv("CURSEFORGE_API_KEY") ?: return false)
+        return isApiKeyValid(getEnv("CURSEFORGE_API_KEY") ?: return false)
     }
 
     private suspend fun isApiKeyValid(apiKey: String): Boolean
@@ -177,7 +178,7 @@ object CurseForge : Platform(
                 .filterFileModels(mcVersions, loaders)
                 .map { it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl() }
                 .debugIfEmpty {
-                    println("${this.javaClass.simpleName}#requestProjectFiles: file is null")
+                    println("${this::class.simpleName}#requestProjectFiles: file is null")
                 }
                 .toMutableSet()
         } else
@@ -211,7 +212,7 @@ object CurseForge : Platform(
                 it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl()
             }
             .debugIfEmpty {
-                println("${this.javaClass.simpleName}#requestMultipleProjectFiles: file is null")
+                println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")
             }
             .toMutableSet()
     }
@@ -243,7 +244,7 @@ object CurseForge : Platform(
         return json.decodeFromString<JsonObject>(
             this.requestProjectBody("minecraft/version/$mcVersion") ?: return null
         )["data"]!!.jsonObject["gameVersionTypeId"].toString().toInt()
-            .debug { println("${this.javaClass.simpleName}#requestGameVersionTypeId: $it") }
+            .debug { println("${this::class.simpleName}#requestGameVersionTypeId: $it") }
     }
 
     fun ProjectFile.fetchAlternativeDownloadUrl(): ProjectFile =

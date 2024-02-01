@@ -21,7 +21,7 @@ open class Http
         return client.get(url) {
             onDownload { bytesSentTotal, contentLength -> onDownload(bytesSentTotal, contentLength) }
         }
-            .debug { println("${this.javaClass.simpleName} $it") }
+            .debug { println("${this::class.simpleName} $it") }
             .checkLimit()
             .bodyIfOK()
     }
@@ -32,7 +32,7 @@ open class Http
     open suspend fun requestBody(url: String): String?
     {
         return client.get(url)
-            .debug { println("${this.javaClass.simpleName} $it") }
+            .debug { println("${this::class.simpleName} $it") }
             .checkLimit()
             .bodyIfOK()
     }
@@ -43,7 +43,7 @@ open class Http
     suspend fun requestBody(url: String, vararg headers: Pair<String, String>): String?
     {
         return client.get(url) { headers.forEach { this.headers.append(it.first, it.second) } }
-            .debug { println("${this.javaClass.simpleName} $it") }
+            .debug { println("${this::class.simpleName} $it") }
             .checkLimit()
             .bodyIfOK()
     }
@@ -54,7 +54,7 @@ open class Http
             contentType(ContentType.Application.Json)
             setBody(Json.encodeToString(bodyContent)) // Don't use pretty print
         }
-            .debug { println("${this.javaClass.simpleName} ${it.call} ${it.request.content}") }
+            .debug { println("${this::class.simpleName} ${it.call} ${it.request.content}") }
             .checkLimit()
             .bodyIfOK()
     }

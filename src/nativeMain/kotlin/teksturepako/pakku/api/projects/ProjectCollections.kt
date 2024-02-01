@@ -20,6 +20,11 @@ infix fun Collection<Project>.containsProject(project: Project): Boolean =
 infix fun Collection<Project>.containsNotProject(project: Project): Boolean =
     !this.containsProject(project)
 
+fun MutableCollection<Project>.removeIf(predicate: (Project) -> Boolean): Boolean
+{
+    return this.removeAll(this.filter { predicate(it) }.toSet())
+}
+
 fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project>
 {
     return this.map { project ->

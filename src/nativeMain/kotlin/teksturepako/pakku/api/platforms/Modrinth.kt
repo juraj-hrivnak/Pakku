@@ -165,7 +165,7 @@ object Modrinth : Platform(
                 .filterFileModels(mcVersions, loaders)
                 .flatMap { version -> version.toProjectFiles().asReversed() }
                 .debugIfEmpty {
-                    println("${this.javaClass.simpleName}#requestProjectFilesFromId: file is null")
+                    println("${this::class.simpleName}#requestProjectFilesFromId: file is null")
                 }.toMutableSet()
         } else
         {

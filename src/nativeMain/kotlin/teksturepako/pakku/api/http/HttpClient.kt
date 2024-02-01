@@ -1,12 +1,12 @@
 package teksturepako.pakku.api.http
 
 import io.ktor.client.*
-import io.ktor.client.engine.okhttp.*
+import io.ktor.client.engine.curl.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import kotlinx.serialization.json.Json
 
-val client = HttpClient(OkHttp) {
+val client = HttpClient(Curl) {
     install(ContentNegotiation) {
         Json
     }
@@ -19,8 +19,6 @@ val client = HttpClient(OkHttp) {
     engine {
         threadsCount = 30
         pipelining = true
-        config {
-            retryOnConnectionFailure(true)
-        }
+        sslVerify = false
     }
 }
