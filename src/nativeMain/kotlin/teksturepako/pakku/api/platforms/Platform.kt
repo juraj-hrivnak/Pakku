@@ -18,7 +18,7 @@ abstract class Platform(
     val shortName: String,
     val apiUrl: String,
     val apiVersion: Int,
-    val url: String,
+    val siteUrl: String,
 ) : Http(), IProjectProvider
 {
     suspend fun requestProjectBody(input: String): String? = this.requestBody("$apiUrl/v$apiVersion/$input")

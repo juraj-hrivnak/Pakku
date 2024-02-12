@@ -19,7 +19,7 @@ object CurseForge : Platform(
     shortName = "cf",
     apiUrl = "https://cfproxy.bmpm.workers.dev",
     apiVersion = 1,
-    url = "https://www.curseforge.com/minecraft/mc-mods"
+    siteUrl = "https://www.curseforge.com/minecraft/mc-mods"
 )
 {
     // -- API KEY --

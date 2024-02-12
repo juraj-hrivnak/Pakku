@@ -73,7 +73,7 @@ class Ls : CliktCommand("List projects")
                 {
                     TextStyle(
                         color = brightGreen,
-                        hyperlink = "${it.url}/${project.slug[it.serialName]}"
+                        hyperlink = "${it.siteUrl}/${project.slug[it.serialName]}"
                     )(it.shortName)
                 }
                 else red(it.shortName)

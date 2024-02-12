@@ -23,7 +23,7 @@ object Modrinth : Platform(
     shortName = "mr",
     apiUrl = "https://api.modrinth.com",
     apiVersion = 2,
-    url = "https://modrinth.com/mod"
+    siteUrl = "https://modrinth.com/mod"
 )
 {
     // -- API RATE LIMIT --
