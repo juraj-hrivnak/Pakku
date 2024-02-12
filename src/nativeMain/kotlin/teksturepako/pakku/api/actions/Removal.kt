@@ -4,6 +4,16 @@ import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.typoSuggester
 
+fun interface WarningBlock
+{
+    suspend fun warning(message: String)
+}
+
+fun interface RemovalBlock
+{
+    suspend fun remove(project: Project, isRecommended: Boolean)
+}
+
 suspend fun Project?.createRemovalRequest(
     onWarning: WarningBlock,
     onRemoval: RemovalBlock,

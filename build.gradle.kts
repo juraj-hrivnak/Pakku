@@ -17,8 +17,6 @@ repositories {
 }
 
 kotlin {
-    jvm()
-
     val hostOs = System.getProperty("os.name")
     val isArm64 = System.getProperty("os.arch") == "aarch64"
     val isMingwX64 = hostOs.startsWith("Windows")
@@ -76,7 +74,6 @@ kotlin {
         }
         val commonTest by getting {
             dependencies {
-                // Test
                 api(kotlin("test"))
             }
         }
@@ -86,10 +83,6 @@ kotlin {
 application {
     mainClass.set("teksturepako.pakku.MainKt")
 }
-
-//tasks.test {
-//    useJUnitPlatform()
-//}
 
 //tasks.withType<Jar> {
 //    // Otherwise you'll get a "No main manifest attribute" error

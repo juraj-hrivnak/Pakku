@@ -6,6 +6,21 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
+fun interface ErrorBlock
+{
+    suspend fun error(error: Error)
+}
+
+fun interface RetryBlock
+{
+    suspend fun retryWith(platform: Platform): Project?
+}
+
+fun interface SuccessBlock
+{
+    suspend fun success(project: Project, isRecommended: Boolean, ctx: RequestHandlers)
+}
+
 data class RequestHandlers(
     val onError: ErrorBlock,
     val onRetry: RetryBlock,
