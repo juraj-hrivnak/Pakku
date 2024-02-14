@@ -21,13 +21,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-#      - name: Cache Kotlin Native Compiler
-#        uses: actions/cache@v3
-#        with:
-#          path: ~/.konan
-#          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}
-#          restore-keys: ${{ runner.os }}-konan-
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -55,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: native-package-${{ runner.os }}
-          path: build/bin/native/debugExecutable
+          path: build/bin/native/releaseExecutable
 
-#env:
-#  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
+env:
+  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
