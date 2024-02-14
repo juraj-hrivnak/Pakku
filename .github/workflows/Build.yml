@@ -5,6 +5,9 @@ on:
     paths-ignore:
       - '*.md'
 
+permissions:
+  contents: write
+
 jobs:
   build-native:
     name: Build Native
@@ -33,7 +36,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Link executable native
-        run: ./gradlew linkDebugExecutableNative --stacktrace
+        run: |
+          chmod +x ./gradlew
+          ./gradlew linkDebugExecutableNative --stacktrace
 
       - name: Bundle the build report
         if: failure()
