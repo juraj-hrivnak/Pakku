@@ -21,26 +21,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache Kotlin Native Compiler
-        uses: actions/cache@v3
-        with:
-          path: ~/.konan
-          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: ${{ runner.os }}-konan-
+#      - name: Cache Kotlin Native Compiler
+#        uses: actions/cache@v3
+#        with:
+#          path: ~/.konan
+#          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}
+#          restore-keys: ${{ runner.os }}-konan-
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: 17
+          distribution: 'temurin'
+          java-version: 8
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: current
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Link executable native
-        run: |
-          chmod +x ./gradlew
-          ./gradlew linkReleaseExecutableNative --stacktrace
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: linkDebugExecutableNative
 
       - name: Bundle the build report
         if: failure()
@@ -53,5 +61,11 @@ jobs:
           name: error-report
           path: build-reports.zip
 
-env:
-  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
+      - name: Upload Native
+        uses: actions/upload-artifact@v3
+        with:
+          name: native-package-linux
+          path: build/bin/native/debugExecutable
+
+#env:
+#  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
