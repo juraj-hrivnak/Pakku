@@ -6,17 +6,11 @@ on:
       - '*.md'
 
 jobs:
-  build:
+  build-native:
+    name: Build Native
     strategy:
       matrix:
         os: [ macos-latest,  windows-latest, ubuntu-latest ]
-        include:
-          - os: macos-latest
-            TASK: macosX64
-          - os: windows-latest
-            TASK: mingwX64
-          - os: ubuntu-latest
-            TASK: check
     runs-on: ${{matrix.os}}
     steps:
       - uses: actions/checkout@v4
@@ -26,13 +20,15 @@ jobs:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*') }}
           restore-keys: ${{ runner.os }}-konan-
-      - uses: actions/setup-java@v3
+      - name: Set-up Java
+        uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: 17
-      - uses: gradle/gradle-build-action@v2
+      - name: Build executable native
+        uses: gradle/gradle-build-action@v2
         with:
-          arguments: ${{matrix.TASK}} --stacktrace
+          arguments: linkDebugExecutableNative --stacktrace
       - name: Bundle the build report
         if: failure()
         run: find . -type d -name 'reports' | zip -@ -r build-reports.zip
@@ -42,12 +38,6 @@ jobs:
         with:
           name: error-report
           path: build-reports.zip
-#      - name: Upload artifact
-#        if: success()
-#        uses: actions/upload-artifact@master
-#        with:
-#          name: error-report
-#          path: build-reports.zip
 
 env:
   GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
