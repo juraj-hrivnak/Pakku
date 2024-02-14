@@ -9,7 +9,7 @@ import teksturepako.pakku.api.http.client
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
-import kotlin.system.exitProcess
+import teksturepako.pakku.io.exitProcess
 
 fun main(args: Array<String>)
 {
@@ -31,6 +31,5 @@ fun main(args: Array<String>)
     // Close client & exit program
     client.close()
     exitProcess(0)
-
 }
 

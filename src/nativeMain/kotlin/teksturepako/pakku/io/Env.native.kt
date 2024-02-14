@@ -4,4 +4,4 @@ import platform.posix.*
 import kotlinx.cinterop.*
 
 @OptIn(ExperimentalForeignApi::class)
-fun getEnv(env: String): String? = getenv(env)?.toKString()
+actual fun getEnv(env: String): String? = getenv(env)?.toKString()

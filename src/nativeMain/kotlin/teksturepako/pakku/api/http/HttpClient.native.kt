@@ -6,7 +6,7 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import kotlinx.serialization.json.Json
 
-val client = HttpClient(Curl) {
+actual val client = HttpClient(Curl) {
     install(ContentNegotiation) {
         Json
     }

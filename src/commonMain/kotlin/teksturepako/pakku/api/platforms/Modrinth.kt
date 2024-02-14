@@ -14,7 +14,7 @@ import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.assignFiles
 import teksturepako.pakku.debugIfEmpty
-import kotlin.system.exitProcess
+import teksturepako.pakku.io.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 object Modrinth : Platform(

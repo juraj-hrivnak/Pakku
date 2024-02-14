@@ -16,7 +16,7 @@ var debugMode = false
 inline fun <T> T.debug(block: (T) -> Unit): T
 {
     contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
     if (debugMode) block(this)
     return this
@@ -28,7 +28,7 @@ inline fun <T> Collection<T>.debugIf(
 ): Collection<T>
 {
     contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
     if (debugMode && predicate(this)) block(this)
     return this
@@ -38,7 +38,7 @@ inline fun <T> Collection<T>.debugIf(
 inline fun <T> Collection<T>.debugIfEmpty(block: (Collection<T>) -> Unit): Collection<T>
 {
     contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
     if (debugMode && this.isEmpty()) block(this)
     return this
