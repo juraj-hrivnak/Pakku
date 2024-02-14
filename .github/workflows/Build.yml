@@ -1,9 +1,14 @@
 name: Build
+run-name: "Build #${{ github.run_number }}"
 
 on:
   pull_request:
     paths-ignore:
       - '*.md'
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-native:
@@ -35,7 +40,7 @@ jobs:
       - name: Link executable native
         run: |
           chmod +x ./gradlew
-          ./gradlew linkDebugExecutableNative --stacktrace
+          ./gradlew build --stacktrace
 
       - name: Bundle the build report
         if: failure()
