@@ -40,7 +40,7 @@ jobs:
       - name: Link executable native
         run: |
           chmod +x ./gradlew
-          ./gradlew build --stacktrace
+          ./gradlew linkReleaseExecutableNative --stacktrace
 
       - name: Bundle the build report
         if: failure()
