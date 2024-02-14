@@ -44,6 +44,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Rename Native Binary
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        run: |
+          for old in build/bin/native/releaseExecutable/*.kexe; do mv $old `basename $old .txt`; done
+
       - name: Upload Native
         uses: actions/upload-artifact@v3
         with:
