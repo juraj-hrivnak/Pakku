@@ -15,7 +15,7 @@ jobs:
     name: Build Native
     strategy:
       matrix:
-        os: [ macos-latest,  windows-latest, ubuntu-20.04 ]
+        os: [ macos-latest,  windows-latest, ubuntu-latest ]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout repository
@@ -31,40 +31,30 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: 8
+          distribution: 'zulu'
+          java-version: 17
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Install Ubuntu Deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt install -y libcurl4-openssl-dev
 
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+      - name: Build Native Binary
+        uses: burrunan/gradle-cache-action@v1
         with:
-          gradle-version: current
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Link executable native
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: linkDebugExecutableNative
-
-      - name: Bundle the build report
-        if: failure()
-        run: find . -type d -name 'reports' | zip -@ -r build-reports.zip
-
-      - name: Upload the build report
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: error-report
-          path: build-reports.zip
+          gradle-version: wrapper
+          job-id: ${{ matrix.os }}
+          arguments: linkReleaseExecutableNative
+          properties: |
+            org.gradle.vfs.watch=false
+            org.gradle.vfs.verbose=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Native
         uses: actions/upload-artifact@v3
         with:
-          name: native-package-linux
+          name: native-package-${{ runner.os }}
           path: build/bin/native/debugExecutable
 
 #env:
