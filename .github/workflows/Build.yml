@@ -15,7 +15,7 @@ jobs:
     name: Build Native
     strategy:
       matrix:
-        os: [ macos-latest,  windows-latest, ubuntu-latest ]
+        os: [ macos-12,  windows-latest, ubuntu-latest ]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout repository
@@ -45,9 +45,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rename Native Binary
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-12'
         run: |
-          for old in build/bin/native/releaseExecutable/*.kexe; do mv $old `basename $old .txt`; done
+          cd build/bin/native/releaseExecutable
+          mv pakku.kexe pakku
 
       - name: Upload Native
         uses: actions/upload-artifact@v3
