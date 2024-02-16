@@ -64,7 +64,7 @@ jobs:
           mv pakku.kexe pakku-macos
 
       - name: Upload Native Binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: native-package-${{ runner.os }}
           path: |
