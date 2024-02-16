@@ -114,14 +114,6 @@ tasks.withType<KotlinJvmCompile>().configureEach {
     }
 }
 
-tasks.withType<ProcessResources> {
-    val properties = mapOf("version" to version)
-    inputs.properties(properties)
-    filesMatching("version.properties") {
-        expand(properties)
-    }
-}
-
 tasks.withType<Jar> {
     doFirst {
         archiveFileName.set("pakku.jar")
@@ -133,5 +125,15 @@ tasks.withType<Jar> {
             )
         }
         from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
+    }
+}
+
+// -- RESOURCES --
+
+tasks.withType<ProcessResources> {
+    val properties = mapOf("version" to version)
+    inputs.properties(properties)
+    filesMatching("version.properties") {
+        expand(properties)
     }
 }

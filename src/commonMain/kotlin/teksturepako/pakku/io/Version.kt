@@ -5,5 +5,5 @@ import korlibs.io.lang.readProperties
 
 suspend fun getPakkuVersion(): String?
 {
-    return resourcesVfs["version.properties"].readProperties()["version"]
+    return runCatching { resourcesVfs["version.properties"].readProperties()["version"] }.getOrNull()
 }
