@@ -54,7 +54,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: native-package-${{ runner.os }}
-          path: build/bin/native/releaseExecutable/pakku
+          path: |
+            build/bin/native/releaseExecutable/pakku
+            build/bin/native/releaseExecutable/pakku.exe
 
   build-jvm:
     name: Build JVM
