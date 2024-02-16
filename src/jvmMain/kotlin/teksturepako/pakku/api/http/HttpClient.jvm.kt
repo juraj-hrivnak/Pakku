@@ -3,7 +3,7 @@ package teksturepako.pakku.api.http
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.contentnegotiation.*
 import kotlinx.serialization.json.Json
 
 @Suppress("DEPRECATION")

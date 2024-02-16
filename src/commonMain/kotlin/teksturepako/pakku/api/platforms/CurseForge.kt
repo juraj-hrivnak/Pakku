@@ -2,6 +2,7 @@ package teksturepako.pakku.api.platforms
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import net.thauvin.erik.urlencoder.UrlEncoderUtil.decode
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.*
 import teksturepako.pakku.api.projects.Project
@@ -132,7 +133,7 @@ object CurseForge : Platform(
 
                 else -> "release"
             },
-            url = this.downloadUrl?.replace(" ", "%20"), // Replace empty characters in the URL
+            url = this.downloadUrl?.let { decode(it) }, // Decode URL
             id = this.id.toString(),
             parentId = this.modId.toString(),
             hashes = this.hashes.associate {
@@ -231,7 +232,6 @@ object CurseForge : Platform(
         }
 
         val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, fileIds)
-
         val projects = response.mapNotNull { it.toProject() }
 
         projects.assignFiles(projectFiles, this)
@@ -248,15 +248,10 @@ object CurseForge : Platform(
     }
 
     fun ProjectFile.fetchAlternativeDownloadUrl(): ProjectFile =
-        if (this.url != "null" && this.url != null) this else
-        {
-            val url = fetchAlternativeDownloadUrl(this.id, this.fileName)
-            this.apply {
-                // Replace empty characters in the URL.
-                this.url = url.replace(" ", "%20")
-            }
+        if (this.url != "null" && this.url != null) this else this.apply {
+            this.url = fetchAlternativeDownloadUrl(this.id, this.fileName)
         }
 
     fun fetchAlternativeDownloadUrl(fileId: String, fileName: String): String =
-        "https://edge.forgecdn.net/files/${fileId.substring(0, 4)}/${fileId.substring(4)}/$fileName"
+        decode("https://edge.forgecdn.net/files/${fileId.substring(0, 4)}/${fileId.substring(4)}/$fileName")
 }

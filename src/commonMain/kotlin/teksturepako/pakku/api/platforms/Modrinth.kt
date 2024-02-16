@@ -4,7 +4,8 @@ import io.ktor.client.call.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
-import teksturepako.pakku.api.data.finalize
+import net.thauvin.erik.urlencoder.UrlEncoderUtil
+import net.thauvin.erik.urlencoder.UrlEncoderUtil.encode
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.MrProjectModel
@@ -40,7 +41,7 @@ object Modrinth : Platform(
                 rateLimit == 0  ->
                 {
                     print("Error: ")
-                    println(json.decodeFromString<JsonObject>(this.body())["description"].finalize())
+                    println(json.decodeFromString<JsonObject>(this.body())["description"])
                     exitProcess(1)
                 }
                 rateLimit < 100 ->
@@ -102,12 +103,10 @@ object Modrinth : Platform(
 
     override suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
     {
+        val url = encode("projects?ids=${ids.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
+
         return json.decodeFromString<List<MrProjectModel>>(
-            this.requestProjectBody("projects?ids=${
-                ids.map { "%22$it%22" }.toString()
-                    .replace("[", "%5B")
-                    .replace("]","%5D")
-            }".replace(" ", "")) ?: return mutableSetOf()
+            this.requestProjectBody(url) ?: return mutableSetOf()
         ).mapNotNull { it.toProject() }.toMutableSet()
     }
 
@@ -135,7 +134,7 @@ object Modrinth : Platform(
                 releaseType = this.versionType.run {
                     if (isNullOrBlank() || this == "null") "release" else this // TODO: Maybe not good?
                 },
-                url = versionFile.url,
+                url = UrlEncoderUtil.decode(versionFile.url), // Decode URL
                 id = this.id,
                 parentId = this.projectId,
                 hashes = versionFile.hashes.let {
@@ -184,11 +183,7 @@ object Modrinth : Platform(
     {
         /* Chunk requests if there are too many ids */
         return ids.chunked(2_000).flatMap { list ->
-            val url = "versions?ids=${
-                list.map { "%22$it%22" }.toString()
-                    .replace("[", "%5B")
-                    .replace("]","%5D")
-            }".replace(" ", "")
+            val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
             json.decodeFromString<List<MrVersionModel>>(
                 this.requestProjectBody(url) ?: return mutableSetOf()
@@ -204,12 +199,10 @@ object Modrinth : Platform(
         mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
     ): MutableSet<Project>
     {
+        val url = encode("projects?ids=${ids.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
+
         val response = json.decodeFromString<List<MrProjectModel>>(
-            this.requestProjectBody("projects?ids=${
-                ids.map { "%22$it%22" }.toString()
-                    .replace("[", "%5B")
-                    .replace("]","%5D")
-            }".replace(" ", "")) ?: return mutableSetOf()
+            this.requestProjectBody(url) ?: return mutableSetOf()
         )
 
         val fileIds = response.flatMap { it.versions }

@@ -11,8 +11,3 @@ val json = Json {
     classDiscriminator = "_internal"
     explicitNulls = false
 }
-
-fun Any?.finalize(): String
-{
-    return this.toString().replace("\"", "")
-}

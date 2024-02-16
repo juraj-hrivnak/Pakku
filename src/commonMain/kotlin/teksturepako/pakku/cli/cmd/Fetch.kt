@@ -2,7 +2,6 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import korlibs.io.file.PathInfo
 import korlibs.io.file.VfsFile
 import korlibs.io.file.baseName
 import korlibs.io.file.extension
