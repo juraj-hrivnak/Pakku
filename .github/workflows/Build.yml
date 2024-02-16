@@ -66,7 +66,7 @@ jobs:
       - name: Upload Native Binary
         uses: actions/upload-artifact@v3
         with:
-          name: native-package-${{ runner.os }}
+          name: native-package-${{ matrix.os }}
           path: |
             build/bin/native/releaseExecutable/pakku
             build/bin/native/releaseExecutable/pakku-macos
@@ -106,13 +106,14 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: [build-native, build-jvm]
+    permissions:
+      contents: write
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: build
-          pattern: "*-package*"
+          path: package
           merge-multiple: true
         
       - name: Create release
@@ -121,13 +122,10 @@ jobs:
           prerelease: true
           generate_release_notes: true
           files: |
-            build/pakku
-            build/pakku-macos
-            build/pakku.exe
-            build/pakku.jar
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            package/pakku
+            package/pakku-macos
+            package/pakku.exe
+            package/pakku.jar
 
 env:
   GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
