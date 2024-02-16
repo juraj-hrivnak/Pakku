@@ -110,11 +110,29 @@ jobs:
       contents: write
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: Download Artifacts
+      - name: Download Artifact Linux
         uses: actions/download-artifact@v3
         with:
+          name: native-package-Linux
           path: package
-          merge-multiple: true
+          
+      - name: Download Artifact macOS
+        uses: actions/download-artifact@v3
+        with:
+          name: native-package-macOS
+          path: package
+          
+      - name: Download Artifact Windows
+        uses: actions/download-artifact@v3
+        with:
+          name: native-package-Windows
+          path: package
+          
+      - name: Download Artifact JVM
+        uses: actions/download-artifact@v3
+        with:
+          name: jvm-package
+          path: package
         
       - name: Create release
         uses: softprops/action-gh-release@v1
