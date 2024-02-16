@@ -111,6 +111,8 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
+          path: build
+          pattern: "*-package*"
           merge-multiple: true
         
       - name: Create release
@@ -119,10 +121,10 @@ jobs:
           prerelease: true
           generate_release_notes: true
           files: |
-            pakku
-            pakku-macos
-            pakku.exe
-            pakku.jar
+            build/pakku
+            build/pakku-macos
+            build/pakku.exe
+            build/pakku.jar
           tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
