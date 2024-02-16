@@ -1,12 +1,13 @@
+@file:Suppress("UNUSED_VARIABLE", "KotlinRedundantDiagnosticSuppress")
 
-private val kotlinVersion = "1.9.22"
-private val ktorVersion = "2.3.7"
+import org.gradle.jvm.tasks.Jar
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-    kotlin("jvm") version "1.9.22"
-    kotlin("plugin.serialization") version "1.9.22"
-    id("io.ktor.plugin") version "2.3.7"
-    application
+    kotlin("multiplatform") version libs.versions.kotlin
+    kotlin("plugin.serialization") version libs.versions.kotlin
+    id("io.ktor.plugin") version libs.versions.ktor
 }
 
 group = "teksturepako.pakku"
@@ -16,51 +17,123 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    testImplementation(kotlin("test"))
-
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
-
-    implementation("com.soywiz.korge:korge-core:5.3.0")
-
-    implementation("com.github.ajalt.clikt:clikt:4.2.1")
-
-    implementation("io.github.reactivecircus.cache4k:cache4k:0.12.0")
-
-    implementation("org.slf4j:slf4j-api:2.0.7")
-    implementation("org.slf4j:slf4j-simple:2.0.7")
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
+private val ktorVersion: String = libs.versions.ktor.get()
 
 kotlin {
-    jvmToolchain(8)
+    val hostOs = System.getProperty("os.name")
+    val isArm64 = System.getProperty("os.arch") == "aarch64"
+    val isMingwX64 = hostOs.startsWith("Windows")
+    val nativeTarget = when {
+        hostOs == "Mac OS X" && isArm64 -> macosArm64("native")
+        hostOs == "Mac OS X" && !isArm64 -> macosX64("native")
+        hostOs == "Linux" && isArm64 -> linuxArm64("native")
+        hostOs == "Linux" && !isArm64 -> linuxX64("native")
+        isMingwX64 -> mingwX64("native")
+        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+    }
+
+    nativeTarget.apply {
+        binaries {
+            executable {
+                entryPoint = "teksturepako.pakku.main"
+            }
+        }
+    }
+
+    jvm()
+
+    sourceSets {
+        // -- COMMON --
+
+        val commonMain by getting {
+            dependencies {
+                // Kotlin
+                implementation("org.jetbrains.kotlin:kotlin-stdlib")
+
+                // Ktor
+                implementation("io.ktor:ktor-client-core:$ktorVersion")
+                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+
+                // Coroutines
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
+                // Serialization
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+
+                // URL Encoding
+                implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
+
+                // File I/O
+                implementation("com.soywiz.korlibs.korio:korio:4.0.10")
+
+                // CLI
+                implementation("com.github.ajalt.clikt:clikt:4.2.1")
+
+                // Cache
+                implementation("io.github.reactivecircus.cache4k:cache4k:0.12.0")
+
+                // Logging
+                implementation("org.slf4j:slf4j-api:2.0.7")
+                implementation("org.slf4j:slf4j-simple:2.0.7")
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+
+        // -- NATIVE --
+
+        val nativeMain by getting {
+            dependencies {
+                // Ktor
+                implementation("io.ktor:ktor-client-curl:$ktorVersion")
+            }
+        }
+
+        val nativeTest by getting
+
+        // -- JVM --
+
+        val jvmMain by getting {
+            dependencies {
+                // Ktor
+                implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
+            }
+        }
+
+        val jvmTest by getting
+    }
 }
 
-application {
-    mainClass.set("teksturepako.pakku.MainKt")
+tasks.withType<KotlinJvmCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+    }
 }
 
 tasks.withType<Jar> {
-    // Otherwise you'll get a "No main manifest attribute" error
-    manifest {
-        attributes["Main-Class"] = "teksturepako.pakku.MainKt"
+    doFirst {
+        archiveFileName.set("pakku.jar")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        val main by kotlin.jvm().compilations.getting
+        manifest {
+            attributes(
+                "Main-Class" to "teksturepako.pakku.MainKt",
+            )
+        }
+        from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
     }
+}
 
-    // To avoid the duplicate handling strategy error
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+// -- RESOURCES --
 
-    // To add all the dependencies
-    from(sourceSets.main.get().output)
-
-    dependsOn(configurations.runtimeClasspath)
-    from(configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) })
+tasks.withType<ProcessResources> {
+    val properties = mapOf("version" to version)
+    inputs.properties(properties)
+    filesMatching("version.properties") {
+        expand(properties)
+    }
 }

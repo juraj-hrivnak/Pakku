@@ -1,0 +1,92 @@
+name: Build
+run-name: "Build #${{ github.run_number }}"
+
+on:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-native:
+    name: Build Native
+    strategy:
+      matrix:
+        os: [ macos-11,  windows-latest, ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Install Ubuntu Deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt install -y libcurl4-openssl-dev
+
+      - name: 📦 Build Native Binary
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          gradle-version: wrapper
+          job-id: ${{ matrix.os }}
+          arguments: linkReleaseExecutableNative
+          properties: |
+            org.gradle.vfs.watch=false
+            org.gradle.vfs.verbose=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename Native Binary
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-11'
+        run: |
+          cd build/bin/native/releaseExecutable
+          mv pakku.kexe pakku
+
+      - name: Upload Native Binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: native-package-${{ runner.os }}
+          path: |
+            build/bin/native/releaseExecutable/pakku
+            build/bin/native/releaseExecutable/pakku.exe
+
+  build-jvm:
+    name: Build JVM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: 📦 Build JVM
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          gradle-version: wrapper
+          arguments: jvmJar
+          properties: |
+            org.gradle.vfs.watch=false
+            org.gradle.vfs.verbose=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload JVM
+        uses: actions/upload-artifact@v3
+        with:
+          name: jvm-package
+          path: build/libs/pakku.jar
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
