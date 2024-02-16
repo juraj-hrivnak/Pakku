@@ -43,6 +43,8 @@ kotlin {
     jvm()
 
     sourceSets {
+        // -- COMMON --
+
         val commonMain by getting {
             dependencies {
                 // Kotlin
@@ -58,6 +60,9 @@ kotlin {
                 // Serialization
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
+                // URL Encoding
+                implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
+
                 // File I/O
                 implementation("com.soywiz.korlibs.korio:korio:4.0.10")
 
@@ -72,11 +77,14 @@ kotlin {
                 implementation("org.slf4j:slf4j-simple:2.0.7")
             }
         }
+
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
+
+        // -- NATIVE --
 
         val nativeMain by getting {
             dependencies {
@@ -84,7 +92,10 @@ kotlin {
                 implementation("io.ktor:ktor-client-curl:$ktorVersion")
             }
         }
+
         val nativeTest by getting
+
+        // -- JVM --
 
         val jvmMain by getting {
             dependencies {
@@ -92,6 +103,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
             }
         }
+
         val jvmTest by getting
     }
 }
@@ -104,6 +116,7 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 
 tasks.withType<Jar> {
     doFirst {
+        archiveFileName.set("pakku.jar")
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         val main by kotlin.jvm().compilations.getting
         manifest {
