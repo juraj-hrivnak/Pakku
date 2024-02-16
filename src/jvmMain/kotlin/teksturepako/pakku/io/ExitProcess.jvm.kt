@@ -1,3 +1,8 @@
 package teksturepako.pakku.io
 
-actual fun exitProcess(statusCode: Int): Nothing = kotlin.system.exitProcess(statusCode)
+import kotlin.system.exitProcess
+
+actual fun exitPakku(statusCode: Int)
+{
+    exitProcess(statusCode)
+}
