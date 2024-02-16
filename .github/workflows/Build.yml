@@ -32,7 +32,7 @@ jobs:
         run: |
           sudo apt install -y libcurl4-openssl-dev
 
-      - name: Build Native Binary
+      - name: 📦 Build Native Binary
         uses: burrunan/gradle-cache-action@v1
         with:
           gradle-version: wrapper
@@ -45,7 +45,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rename Native Binary
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-12'
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-11'
         run: |
           cd build/bin/native/releaseExecutable
           mv pakku.kexe pakku
