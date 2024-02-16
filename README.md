@@ -12,10 +12,10 @@
 
 
 <p align="center">
-  <a href="https://github.com/juraj-hrivnak/Pakku/actions/workflows/codeql.yml">
+  <a href="https://github.com/juraj-hrivnak/Pakku/actions/workflows/Build.yml">
     <img
-      src="https://github.com/juraj-hrivnak/Pakku/actions/workflows/codeql.yml/badge.svg"
-      alt="CodeQL"
+      src="https://github.com/juraj-hrivnak/Pakku/actions/workflows/Build.yml/badge.svg"
+      alt="Build"
     >
   </a>
 </p>
@@ -36,65 +36,18 @@
 <h2 align="center">Usage</h2>
 
 ```
-java -jar Pakku-<version>.jar [<options>] <command> [<args>]...
+// Java:
+java -jar pakku.jar [<options>] <command> [<args>]...
+
+// Native - Linux/macOS:
+./pakku [<options>] <command> [<args>]...
+
+// Native - Windows:
+.\pakku [<options>] <command> [<args>]...
 ```
 
-<table align="center">
-<thead>
-  <tr>
-    <th colspan="2">Commands</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td><code>set</code></td>
-    <td>Set various properties of your pack or projects</td>
-  </tr>
-  <tr>
-    <td><code>add</code></td>
-    <td>Add projects</td>
-  </tr>
-  <tr>
-    <td><code>rm</code></td>
-    <td>Remove projects</td>
-  </tr>
-  <tr>
-    <td><code>update</code></td>
-    <td>Update projects</td>
-  </tr>
-  <tr>
-    <td><code>ls</code></td>
-    <td>List projects</td>
-  </tr>
-  <tr>
-    <td><code>fetch</code></td>
-    <td>Fetch projects to your pack folder</td>
-  </tr>
-  <tr>
-    <td><code>link</code></td>
-    <td>Link project to another project</td>
-  </tr>
-  <tr>
-    <td><code>import</code></td>
-    <td>Import modpack</td>
-  </tr>
-</tbody>
-</table>
+<h2 align="center">Documentation</h2>
 
-<table align="center">
-<thead>
-  <tr>
-    <th colspan="2">Options</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td><code>--debug</code></td>
-    <td>Enable additional debug logging</td>
-  </tr>
-  <tr>
-    <td><code>-h</code>, <code>--help</code></td>
-    <td>Show help message and exit</td>
-  </tr>
-</tbody>
-</table>
+<p align="center">
+  Link to documentation can be found <a href="https://juraj-hrivnak.github.io/Pakku-Docs/home.html">here</a>.
+</p>
