@@ -45,8 +45,22 @@ java -jar pakku.jar [<options>] <command> [<args>]...
 .\pakku.exe [<options>] <command> [<args>]...
 ```
 
+<h3 align="center">System Requirements</h3>
+
+<p align="center">
+  macOS <b>11 or higher</b>.
+</p>
+
 <h2 align="center">Documentation</h2>
 
 <p align="center">
-  Link to documentation can be found <a href="https://juraj-hrivnak.github.io/Pakku-Docs/home.html">here</a>.
+  See <a href="https://juraj-hrivnak.github.io/Pakku-Docs/home.html">juraj-hrivnak.github.io/Pakku-Docs/</a>.
 </p>
+
+<h2 align="center">Development</h2>
+
+<p align="center">
+  To build Pakku for the JVM, run the <code>gradlew jvmJar</code>. <br>
+  To build Pakku using Kotlin/Native, run the <code>gradlew linkDebugExecutableNative</code> or <code>gradlew linkReleaseExecutableNative</code>.
+</p>
+
