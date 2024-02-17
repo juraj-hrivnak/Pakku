@@ -48,13 +48,13 @@ java -jar pakku.jar [<options>] <command> [<args>]...
 <h3 align="center">System Requirements</h3>
 
 <p align="center">
-  macOS <b>11 or higher</b>.
+  macOS <b>11 or higher</b>
 </p>
 
 <h2 align="center">Documentation</h2>
 
 <p align="center">
-  See <a href="https://juraj-hrivnak.github.io/Pakku-Docs/home.html">juraj-hrivnak.github.io/Pakku-Docs/</a>.
+  See <a href="https://juraj-hrivnak.github.io/Pakku-Docs/home.html">juraj-hrivnak.github.io/Pakku-Docs/</a>
 </p>
 
 <h2 align="center">Development</h2>
