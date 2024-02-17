@@ -3,6 +3,7 @@
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import java.io.InputStream
 
 plugins {
     kotlin("multiplatform") version libs.versions.kotlin
@@ -128,12 +129,35 @@ tasks.withType<Jar> {
     }
 }
 
-// -- RESOURCES --
+// -- VERSION --
 
-tasks.withType<ProcessResources> {
-    val properties = mapOf("version" to version)
-    inputs.properties(properties)
-    filesMatching("version.properties") {
-        expand(properties)
+private val sourceFile = File("$rootDir/resources/teksturepako/pakku/TemplateVersion.kt")
+private val destFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/Version.kt")
+
+tasks.register("generateVersion") {
+    group = "build"
+
+    inputs.file(sourceFile)
+    outputs.file(destFile)
+
+    doFirst {
+        generateVersion()
     }
+}
+
+tasks.named("compileKotlinNative") {
+    dependsOn("generateVersion")
+}
+
+fun generateVersion() {
+    val inputStream: InputStream = sourceFile.inputStream()
+
+    destFile.printWriter().use { out ->
+        inputStream.bufferedReader().forEachLine { inputLine ->
+            val newLine = inputLine.replace("__VERSION", version.toString())
+            out.println(newLine)
+        }
+    }
+
+    inputStream.close()
 }
