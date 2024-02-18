@@ -9,6 +9,7 @@ plugins {
     kotlin("multiplatform") version libs.versions.kotlin
     kotlin("plugin.serialization") version libs.versions.kotlin
     id("io.ktor.plugin") version libs.versions.ktor
+    id("io.kotest.multiplatform") version libs.versions.kotest
 }
 
 group = "teksturepako.pakku"
@@ -19,6 +20,7 @@ repositories {
 }
 
 private val ktorVersion: String = libs.versions.ktor.get()
+private val kotestVersion: String = libs.versions.kotest.get()
 
 kotlin {
     val hostOs = System.getProperty("os.name")
@@ -82,6 +84,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation("io.kotest:kotest-framework-engine:$kotestVersion")
             }
         }
 
@@ -108,6 +111,8 @@ kotlin {
         val jvmTest by getting
     }
 }
+
+// -- JVM --
 
 tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
@@ -146,6 +151,10 @@ tasks.register("generateVersion") {
 }
 
 tasks.named("compileKotlinNative") {
+    dependsOn("generateVersion")
+}
+
+tasks.named("compileKotlinJvm") {
     dependsOn("generateVersion")
 }
 
