@@ -222,6 +222,8 @@ data class PakkuLock(
     {
         private const val FILE_NAME = "pakku-lock.json"
 
+        suspend fun exists(): Boolean = readFileOrNull(FILE_NAME) != null
+
         /**
          * Reads [PakkuLock's][PakkuLock] [file][FILE_NAME] and parses it,
          * or returns a new [PakkuLock].

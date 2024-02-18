@@ -90,7 +90,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
         /** Pack name */
         packNameOpt?.let {
             pakkuLock.setPackName(it)
-            terminal.success("'pack_name' set to '$it'")
+            terminal.success("'name' set to '$it'")
         }
 
         /** Target */

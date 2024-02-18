@@ -19,17 +19,15 @@ fun main(args: Array<String>)
             theme = Theme.Default, ansiLevel = AnsiLevel.TRUECOLOR, interactive = true
         )
     }.subcommands(
-        Set(), Add(), Rm(), Update(), Ls(), Fetch(), Link(), Import()
+        Init(), Import(), Set(), Add(), Rm(), Update(), Ls(), Fetch(), Link(), Version()
     ).main(args)
 
     // Check Modrinth's rate limit
     Modrinth.checkRateLimit()
 
     println("Program arguments: ${args.joinToString()}")
-    println("Pakku version: $VERSION")
 
-    // Close client & exit program
+    // Close http client & exit program
     client.close()
     exitPakku(0)
 }
-
