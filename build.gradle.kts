@@ -9,7 +9,7 @@ plugins {
     kotlin("multiplatform") version libs.versions.kotlin
     kotlin("plugin.serialization") version libs.versions.kotlin
     id("io.ktor.plugin") version libs.versions.ktor
-    id("io.kotest.multiplatform") version libs.versions.kotest
+//    id("io.kotest.multiplatform") version libs.versions.kotest
 }
 
 group = "teksturepako.pakku"
@@ -84,7 +84,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("io.kotest:kotest-framework-engine:$kotestVersion")
+//                implementation("io.kotest:kotest-framework-engine:$kotestVersion")
             }
         }
 
