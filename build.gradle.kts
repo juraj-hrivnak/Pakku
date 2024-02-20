@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.0.9.1"
+version = "0.0.10"
 
 repositories {
     mavenCentral()
@@ -105,6 +105,9 @@ kotlin {
             dependencies {
                 // Ktor
                 implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
+
+                // ZIP
+                implementation("org.zeroturnaround:zt-zip:1.17")
             }
         }
 
