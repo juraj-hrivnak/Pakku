@@ -70,7 +70,7 @@ object Multiplatform : IProjectProvider
         return project
     }
 
-    /** @return List of updated projects. */
+
     suspend fun updateMultipleProjectsWithFiles(
         mcVersions: List<String>, loaders: List<String>, projects: MutableSet<Project>, numberOfFiles: Int
     ): MutableSet<Project>

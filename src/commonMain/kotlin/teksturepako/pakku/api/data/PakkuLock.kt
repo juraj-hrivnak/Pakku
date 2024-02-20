@@ -4,6 +4,7 @@ package teksturepako.pakku.api.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Multiplatform
@@ -30,9 +31,40 @@ data class PakkuLock(
     @SerialName("target") private var platformTarget: String? = null,
     @SerialName("mc_versions") private var mcVersions: MutableList<String> = mutableListOf(),
     private var loaders: MutableList<String> = mutableListOf(),
-    private val projects: MutableList<Project> = mutableListOf()
+    private val projects: MutableList<Project> = mutableListOf(),
+    private val overrides: MutableList<String> = mutableListOf(),
 )
 {
+    // -- PACK --
+
+    fun setPackName(packName: String)
+    {
+        this.packName = packName
+    }
+
+    fun setPlatformTarget(target: String)
+    {
+        this.platformTarget = target
+    }
+
+    fun setMcVersions(mcVersions: Collection<String>)
+    {
+        this.mcVersions.clear()
+        this.mcVersions.addAll(mcVersions)
+    }
+
+    fun setModLoaders(loaders: Collection<String>)
+    {
+        this.loaders.clear()
+        this.loaders.addAll(loaders)
+    }
+
+    fun getPackName() = this.packName
+    fun getMcVersions() = this.mcVersions
+    fun getLoaders() = this.loaders
+
+    // -- PROJECTS --
+
     fun add(project: Project): Boolean?
     {
         val added: Boolean? = if (projects containsProject project)
@@ -51,7 +83,7 @@ data class PakkuLock(
         return added
     }
 
-    fun addAll(projects: List<Project>): Boolean
+    fun addAll(projects: Collection<Project>): Boolean
     {
         var added: Boolean
         this.projects.addAll(projects).also {
@@ -61,6 +93,8 @@ data class PakkuLock(
 
         return added
     }
+
+    fun isProjectAdded(project: Project): Boolean = this.projects.any { it isAlmostTheSameAs project }
 
     fun update(project: Project): Boolean?
     {
@@ -86,7 +120,7 @@ data class PakkuLock(
         return updated
     }
 
-    fun updateAll(projects: List<Project>): Boolean
+    fun updateAll(projects: Collection<Project>): Boolean
     {
         var updated: Boolean
         this.projects.removeAll(projects).also {
@@ -118,7 +152,7 @@ data class PakkuLock(
         return removed
     }
 
-    fun removeAll() = this.projects.clear()
+    fun removeAllProjects() = this.projects.clear()
 
     fun removeProjectByPakkuId(pakkuId: String): Boolean?
     {
@@ -137,37 +171,6 @@ data class PakkuLock(
         return removed
     }
 
-    fun addPakkuLink(pakkuId: String, project: Project) =
-        this.projects.find { it isAlmostTheSameAs project }?.pakkuLinks?.add(pakkuId)
-
-    fun removePakkuLinkFromAllProjects(pakkuId: String) = this.projects.map { it.pakkuLinks.remove(pakkuId) }
-
-
-    fun setPackName(packName: String)
-    {
-        this.packName = packName
-    }
-
-    fun setPlatformTarget(target: String)
-    {
-        this.platformTarget = target
-    }
-
-    fun setMcVersions(mcVersions: List<String>)
-    {
-        this.mcVersions.clear()
-        this.mcVersions.addAll(mcVersions)
-    }
-
-    fun setModLoaders(loaders: List<String>)
-    {
-        this.loaders.clear()
-        this.loaders.addAll(loaders)
-    }
-
-
-    fun isProjectAdded(project: Project): Boolean = this.projects.any { it isAlmostTheSameAs project }
-
     fun getProject(input: String): Project? = this.projects.find { project -> input in project }
 
     fun getProject(project: Project): Project? = this.projects.find { it isAlmostTheSameAs project }
@@ -176,31 +179,36 @@ data class PakkuLock(
 
     fun getProjectByPakkuId(pakkuId: String): Project? = this.projects.find { pakkuId == it.pakkuId }
 
+    // -- DEPENDENCIES --
+
+    fun addPakkuLink(pakkuId: String, project: Project) =
+        this.projects.find { it isAlmostTheSameAs project }?.pakkuLinks?.add(pakkuId)
+
     fun getLinkedProjects(pakkuId: String): List<Project> = this.projects.filter { pakkuId in it.pakkuLinks }
 
     fun getLinkedProjects(pakkuId: String, ignore: Project): List<Project> =
         this.projects.filter { pakkuId in it.pakkuLinks && !ignore.isAlmostTheSameAs(it) }
 
-    fun getPackName() = this.packName
-    fun getMcVersions() = this.mcVersions
-    fun getLoaders() = this.loaders
+    fun removePakkuLinkFromAllProjects(pakkuId: String) = this.projects.map { it.pakkuLinks.remove(pakkuId) }
 
+    // -- DEPENDENTS --
 
-    fun linkProjectToDependants(project: Project)
+    fun linkProjectToDependents(project: Project)
     {
-        for (dependant in this.projects)
+        for (dependent in this.projects)
         {
-            x@ for (file in dependant.files)
+            x@ for (file in dependent.files)
             {
                 val deps = file.requiredDependencies ?: continue@x
-                if (project.id.values.any { it in deps } && project.pakkuId !in dependant.pakkuLinks)
+                if (project.id.values.any { it in deps } && project.pakkuId !in dependent.pakkuLinks)
                 {
-                    dependant.pakkuLinks.add(project.pakkuId!!)
+                    dependent.pakkuLinks.add(project.pakkuId!!)
                 }
             }
         }
     }
 
+    // -- TARGET --
 
     fun getPlatforms(): Result<List<Platform>> = if (platformTarget != null) when (platformTarget!!.lowercase())
     {
@@ -218,9 +226,35 @@ data class PakkuLock(
         else -> Result.failure(PakkuException("Target (project provider) '$platformTarget' not found"))
     } else Result.failure(PakkuException("Target (project provider) not found"))
 
+    // -- OVERRIDES --
+
+    fun addOverride(override: String)
+    {
+        this.overrides.add(override)
+    }
+
+    fun addAllOverride(overrides: Collection<String>)
+    {
+        this.overrides.addAll(overrides)
+    }
+
+    fun removeOverride(override: String)
+    {
+        this.overrides.remove(override)
+    }
+
+    fun removeAllOverrides()
+    {
+        this.overrides.clear()
+    }
+
+    fun getAllOverrides(): List<String> = Overrides.filter(this.overrides)
+
+    // -- FILE I/O --
+
     companion object
     {
-        private const val FILE_NAME = "pakku-lock.json"
+        const val FILE_NAME = "pakku-lock.json"
 
         suspend fun exists(): Boolean = readFileOrNull(FILE_NAME) != null
 

@@ -4,17 +4,22 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.promptForProject
 import teksturepako.pakku.cli.resolveDependencies
+import teksturepako.pakku.toPrettyString
 
 class Add : CliktCommand("Add projects")
 {
     private val projectArgs: List<String> by argument("projects").multiple(required = true)
+    private val overridesFlag: Boolean by option("-o", "--overrides").flag()
 
     override fun run() = runBlocking {
         val pakkuLock = PakkuLock.readToResult().getOrElse {
@@ -23,6 +28,19 @@ class Add : CliktCommand("Add projects")
             return@runBlocking
         }
 
+        if (!overridesFlag)
+        {
+            runWithProjects(pakkuLock)
+        }
+        else
+        {
+            runWithOverrides(pakkuLock)
+        }
+
+        pakkuLock.write()
+    }
+
+    private fun runWithProjects(pakkuLock: PakkuLock) = runBlocking {
         // Configuration
         val platforms: List<Platform> = pakkuLock.getPlatforms().getOrElse {
             terminal.danger(it.message)
@@ -48,7 +66,7 @@ class Add : CliktCommand("Add projects")
                     if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
                     {
                         pakkuLock.add(project)
-                        pakkuLock.linkProjectToDependants(project)
+                        pakkuLock.linkProjectToDependents(project)
                         project.resolveDependencies(terminal, reqHandlers, pakkuLock, projectProvider, platforms)
                         terminal.success("${project.slug} added")
                     }
@@ -58,6 +76,17 @@ class Add : CliktCommand("Add projects")
 
             echo()
         }
-        pakkuLock.write()
+    }
+
+    private fun runWithOverrides(pakkuLock: PakkuLock)
+    {
+        val overrides = Overrides.filter(projectArgs)
+
+        overrides.forEach { override ->
+            pakkuLock.addOverride(override)
+            terminal.success("Override $override added")
+        }
+
+        echo()
     }
 }

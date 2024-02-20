@@ -5,10 +5,13 @@ import com.github.ajalt.clikt.core.terminal
 import korlibs.io.file.VfsFile
 import korlibs.io.file.baseName
 import korlibs.io.file.extension
+import korlibs.io.file.pathInfo
 import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.data.PakkuLock
 import teksturepako.pakku.api.http.Http
+import teksturepako.pakku.api.overrides.Overrides
+import teksturepako.pakku.api.overrides.Overrides.PROJECT_OVERRIDES_FOLDER
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -55,7 +58,9 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
                 continue
             }
 
-            val outputFile = localCurrentDirVfs["${project.type.folderName}/${projectFile.fileName}"].also { ignored.add(it) }
+            val outputFile = localCurrentDirVfs["${project.type.folderName}/${projectFile.fileName}"]
+                .also { ignored.add(it) }
+
             val parentFolder = localCurrentDirVfs[project.type.folderName]
 
             // Skip to next if output file exists
@@ -80,7 +85,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
                 {
                     // Write to file
                     outputFile.writeBytes(bytes)
-                    terminal.success("$outputFile saved")
+                    terminal.success("${outputFile.baseName} saved")
 //                    progress.advance(fileSize.toLong())
 
                     fetched = true
@@ -100,20 +105,55 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
             echo()
         }
 
-        for (file in ignored)
-        {
-            launch(Dispatchers.IO) {
-                if (file.parent.pathInfo.baseName in ProjectType.entries.map { it.folderName })
-                {
-                    file.parent.listSimple()
-                        .filter {
-                            it.pathInfo.baseName !in ignored.map { ignore ->
-                                ignore.pathInfo.baseName
-                            } && it.extension in listOf("jar", "zip")
-                        }
-                        .forEach { file -> file.delete() }
+        val projectOverrides = Overrides.getProjectOverrides()
+        var synced = false
+
+        // Copy project overrides
+        projectOverrides.map { projectOverride ->
+            launch {
+                val file = localCurrentDirVfs["${projectOverride.type.folderName}/${projectOverride.fileName}"]
+                if (!file.exists()) runCatching {
+                    file.parent.mkdir()
+                    localCurrentDirVfs["$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/" +
+                            projectOverride.fileName].copyTo(file)
+
+                    terminal.info("${projectOverride.fileName} synced")
+                    synced = true
                 }
             }
+        }.joinAll()
+
+        if (synced)
+        {
+            terminal.info("Project overrides successfully synced")
+            echo()
+        }
+
+        var removed = false
+
+        ignored.map { file ->
+            launch(Dispatchers.IO) {
+                if (file.parent.baseName in ProjectType.entries.map { it.folderName })
+                {
+                    file.parent.listSimple().filter {
+                            it.baseName !in ignored.map { ignore ->
+                                ignore.baseName
+                            } && it.baseName !in projectOverrides.map { projectOverride ->
+                                projectOverride.fileName
+                            } && it.extension in listOf("jar", "zip")
+                        }.forEach { file ->
+                            file.delete()
+                            terminal.warning("${file.baseName} deleted")
+                            removed = true
+                        }
+                }
+            }
+        }.joinAll()
+
+        if (removed)
+        {
+            terminal.warning("Old project files successfully deleted")
+            echo()
         }
     }
 }

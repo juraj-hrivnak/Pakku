@@ -16,7 +16,7 @@ data class MrModpackModel(
     data class File(
         val path: String,
         val hashes: Hashes,
-        val env: Env,
+        val env: Env? = null,
         val downloads: Set<String>,
         val fileSize: Int
     ) {

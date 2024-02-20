@@ -11,3 +11,10 @@ val json = Json {
     classDiscriminator = "_internal"
     explicitNulls = false
 }
+
+val jsonEncodeDefaults = Json {
+    prettyPrint = true
+    classDiscriminator = "_internal"
+    encodeDefaults = true
+}
+

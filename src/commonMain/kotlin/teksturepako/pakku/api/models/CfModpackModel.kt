@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CfModpackModel(
     val minecraft: CfMinecraftData,
-    val manifestType: String,
-    val manifestVersion: Double,
-    val name: String,
-    val version: String,
-    val author: String,
+    val manifestType: String = "minecraftModpack",
+    val manifestVersion: Int = 1,
+    val name: String = "",
+    val version: String = "",
+    val author: String = "",
     val files: List<CfModData>,
-    val overrides: String
+    val overrides: String = "overrides"
 ) {
     @Serializable
     data class CfMinecraftData(
@@ -29,6 +29,6 @@ data class CfModpackModel(
     data class CfModData(
         val projectID: String,
         val fileID: String,
-        val required: Boolean
+        val required: Boolean = true
     )
 }
