@@ -105,10 +105,11 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
             echo()
         }
 
+        // -- OVERRIDES
+
         val projectOverrides = Overrides.getProjectOverrides()
         var synced = false
 
-        // Copy project overrides
         projectOverrides.map { projectOverride ->
             launch {
                 val file = localCurrentDirVfs["${projectOverride.type.folderName}/${projectOverride.fileName}"]
@@ -128,6 +129,8 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
             terminal.info("Project overrides successfully synced")
             echo()
         }
+
+        // -- OLD FILES --
 
         var removed = false
 

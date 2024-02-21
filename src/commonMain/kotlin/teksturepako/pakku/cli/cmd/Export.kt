@@ -66,7 +66,8 @@ class Export : CliktCommand("Export modpack")
             )
 
         }
-        else if (Modrinth in platforms)
+
+        if (Modrinth in platforms)
         {
             // -- MODRINTH --
 
