@@ -39,7 +39,6 @@ kotlin {
         binaries {
             executable("pakku") {
                 entryPoint = "teksturepako.pakku.main"
-                outputFile.setExecutable(true)
             }
         }
     }
