@@ -9,4 +9,5 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
 }
 
-rootProject.name = "pakku"
+// Due to an IntelliJ bug, this has to be done
+rootProject.name = rootProject.projectDir.name
