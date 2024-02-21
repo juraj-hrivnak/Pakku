@@ -37,8 +37,9 @@ kotlin {
 
     nativeTarget.apply {
         binaries {
-            executable("pakku") {
+            executable {
                 entryPoint = "teksturepako.pakku.main"
+                baseName = "pakku"
             }
         }
     }
