@@ -26,7 +26,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
         }
 
         var fetched = false
-        val ignored = mutableListOf<VfsFile>()
+        val ignored = mutableMapOf<ProjectType, List<VfsFile>>()
         val jobs = mutableListOf<Job>()
 
 //        // Progress bar
@@ -59,7 +59,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
             }
 
             val outputFile = localCurrentDirVfs["${project.type.folderName}/${projectFile.fileName}"]
-                .also { ignored.add(it) }
+                .also { ignored[project.type] = ignored[project.type]?.let { list -> list + it } ?: listOf(it) }
 
             val parentFolder = localCurrentDirVfs[project.type.folderName]
 
@@ -105,7 +105,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
             echo()
         }
 
-        // -- OVERRIDES
+        // -- OVERRIDES --
 
         val projectOverrides = Overrides.getProjectOverrides()
         var synced = false
@@ -134,22 +134,25 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         var removed = false
 
-        ignored.map { file ->
+        val ignoredProjectOverrides = projectOverrides.map { projectOverride ->
+            projectOverride.fileName
+        }
+
+        ignored.map { (projectType, ignoredFiles) ->
             launch(Dispatchers.IO) {
-                if (file.parent.baseName in ProjectType.entries.map { it.folderName })
-                {
-                    file.parent.listSimple().filter {
-                            it.baseName !in ignored.map { ignore ->
-                                ignore.baseName
-                            } && it.baseName !in projectOverrides.map { projectOverride ->
-                                projectOverride.fileName
-                            } && it.extension in listOf("jar", "zip")
-                        }.forEach { file ->
-                            file.delete()
-                            terminal.warning("${file.baseName} deleted")
-                            removed = true
-                        }
-                }
+                val ignoredNames = ignoredFiles.map { it.baseName }
+
+                localCurrentDirVfs[projectType.folderName].listSimple()
+                    .filter { file ->
+                        file.baseName !in ignoredNames
+                                && file.baseName !in ignoredProjectOverrides
+                                && file.extension in listOf("jar", "zip")
+                                && file.parent.baseName == projectType.folderName
+                    }.forEach { file ->
+                        file.delete()
+                        terminal.warning("${file.baseName} deleted")
+                        removed = true
+                    }
             }
         }.joinAll()
 
