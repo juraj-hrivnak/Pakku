@@ -18,6 +18,12 @@
       alt="Build"
     >
   </a>
+  <a href="https://github.com/juraj-hrivnak/Pakku/actions/workflows/Build.yml">
+    <img
+      src="https://img.shields.io/github/downloads/juraj-hrivnak/Pakku/total?color=light&label=Downloads"
+      alt="Downloads"
+    >
+  </a>
 </p>
 
 <p align="center">
