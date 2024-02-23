@@ -10,10 +10,7 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.MrProjectModel
 import teksturepako.pakku.api.models.MrVersionModel
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
-import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.api.projects.assignFiles
+import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.exitPakku
 import kotlin.time.Duration.Companion.seconds
@@ -82,7 +79,15 @@ object Modrinth : Platform(
 
                 else           -> return null.also { println("Project type $projectType not found!") }
             },
+            side = when
+            {
+                serverSide == "required" && clientSide == "required" -> ProjectSide.BOTH
+                serverSide != "required" && clientSide == "required" -> ProjectSide.SERVER
+                serverSide == "required" && clientSide != "required" -> ProjectSide.CLIENT
+                else -> ProjectSide.BOTH
+            },
             id = mutableMapOf(serialName to id),
+            redistributable = license.id != "ARR",
             files = mutableSetOf(),
         )
     }
@@ -181,8 +186,8 @@ object Modrinth : Platform(
         mcVersions: List<String>, loaders: List<String>, ids: List<String>
     ): MutableSet<ProjectFile>
     {
-        /* Chunk requests if there are too many ids */
-        return ids.chunked(2_000).flatMap { list ->
+        /* Chunk requests if there is too many ids */
+        return ids.chunked(1_000).flatMap { list ->
             val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
             json.decodeFromString<List<MrVersionModel>>(

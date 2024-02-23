@@ -53,7 +53,8 @@ data class Project(
             pakkuId = this.pakkuId,
             pakkuLinks = this.pakkuLinks,
             type = this.type,
-            side = this.side,
+            side = if (this.side != null) this.side else if (other.side != null) other.side else null,
+            // TODO: Maybe different approach to sides would be better
 
             name = (this.name + other.name).toMutableMap(),
             slug = (this.slug + other.slug).toMutableMap(),
@@ -137,7 +138,5 @@ data class Project(
     {
         // Init Pakku ID
         if (pakkuId == null) pakkuId = generatePakkuId()
-        // Init ProjectSide
-        if (side == null) side = ProjectSide.BOTH
     }
 }

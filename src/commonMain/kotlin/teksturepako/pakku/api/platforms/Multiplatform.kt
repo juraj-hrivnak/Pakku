@@ -79,17 +79,20 @@ object Multiplatform : IProjectProvider
 
             val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
 
-            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles).forEach { project ->
-                acc.find { it.slug[platform.serialName] == project.slug[platform.serialName] }?.let {
-                    acc -= it
-                    acc += it + project
+            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles)
+                .forEach { newProject ->
+                    acc.find { accProject ->
+                        accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
+                    }?.let { accProject ->
+                        acc -= accProject
+                        acc += accProject + newProject
+                    }
                 }
-            }
 
             acc
         }.filter { newProject ->
-            projects.none {
-                oldProject -> oldProject == newProject
+            projects.none { oldProject ->
+                oldProject == newProject
             } && newProject.updateStrategy == UpdateStrategy.LATEST
         }.toMutableSet()
     }

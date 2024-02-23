@@ -54,9 +54,9 @@ class Ls : CliktCommand("List projects")
                 else                    ->
                 {
                     if (project.hasNoFiles()) project.name.values.firstOrNull()?.let {
-                        TextStyle(bgColor = gray, color = red)("⚠$it")
+                        TextStyle(bgColor = white, color = red)("⚠$it")
                     } else project.name.values.firstOrNull()?.let {
-                        TextStyle(bgColor = gray, color = black)("⚠$it")
+                        TextStyle(bgColor = white, color = black)("⚠$it")
                     }
                 }
             }

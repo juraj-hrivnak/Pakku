@@ -71,6 +71,7 @@ object CurseForge : Platform(
                 else -> return null.also { println("Project type $classId not found!") }
             },
             id = mutableMapOf(serialName to id.toString()),
+            redistributable = allowModDistribution ?: isAvailable,
             files = mutableSetOf(),
         )
     }

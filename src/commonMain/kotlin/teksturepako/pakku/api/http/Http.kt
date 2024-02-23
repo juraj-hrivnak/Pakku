@@ -63,7 +63,8 @@ open class Http
 
     suspend inline fun <reified T> HttpResponse.bodyIfOK(): T?
     {
-        return if (this.status == HttpStatusCode.OK) this.body() else null
+        return if (this.status == HttpStatusCode.OK) this.body() else null.also {
+            println("Error: ${this::class.simpleName} HTTP request returned: ${this.status}")
+        }
     }
 }
-
