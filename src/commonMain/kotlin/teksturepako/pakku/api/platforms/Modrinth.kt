@@ -82,8 +82,8 @@ object Modrinth : Platform(
             side = when
             {
                 serverSide == "required" && clientSide == "required" -> ProjectSide.BOTH
-                serverSide != "required" && clientSide == "required" -> ProjectSide.SERVER
-                serverSide == "required" && clientSide != "required" -> ProjectSide.CLIENT
+                serverSide != "required" && clientSide == "required" -> ProjectSide.CLIENT
+                serverSide == "required" && clientSide != "required" -> ProjectSide.SERVER
                 else -> ProjectSide.BOTH
             },
             id = mutableMapOf(serialName to id),
