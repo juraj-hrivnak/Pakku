@@ -2,6 +2,9 @@ package teksturepako.pakku.api.platforms
 
 import io.ktor.client.call.*
 import io.ktor.client.statement.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
@@ -177,26 +180,30 @@ object Modrinth : Platform(
             json.decodeFromString<MrVersionModel>(
                 this.requestProjectBody("version/$fileId") ?: return mutableSetOf()
             )
-                .toProjectFiles().asReversed()
+                .toProjectFiles()
+                .asReversed()
                 .toMutableSet()
         }
     }
 
     override suspend fun requestMultipleProjectFiles(
         mcVersions: List<String>, loaders: List<String>, ids: List<String>
-    ): MutableSet<ProjectFile>
-    {
-        /* Chunk requests if there is too many ids */
-        return ids.chunked(1_000).flatMap { list ->
-            val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
+    ): MutableSet<ProjectFile> = coroutineScope {
+        /* Chunk requests if there are too many ids; Also do this in parallel */
+        return@coroutineScope ids.chunked(1_000).map { list ->
+            async {
+                val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
-            json.decodeFromString<List<MrVersionModel>>(
-                this.requestProjectBody(url) ?: return mutableSetOf()
-            )
-                .filterFileModels(mcVersions, loaders)
-                .flatMap { version -> version.toProjectFiles() }
+                json.decodeFromString<List<MrVersionModel>>(
+                    this@Modrinth.requestProjectBody(url) ?: return@async mutableSetOf()
+                )
+            }
         }
-            .asReversed()
+            .awaitAll()
+            .flatten()
+            .sortedByDescending { it.datePublished }
+            .filterFileModels(mcVersions, loaders)
+            .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()
     }
 
