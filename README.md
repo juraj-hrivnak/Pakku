@@ -44,18 +44,7 @@
 ```
 // Java:
 java -jar pakku.jar [<options>] <command> [<args>]...
-
-// Native - Linux, macOS, Windows:
-./pakku [<options>] <command> [<args>]...
-./pakku-macos [<options>] <command> [<args>]...
-.\pakku.exe [<options>] <command> [<args>]...
 ```
-
-<h3 align="center">System Requirements</h3>
-
-<p align="center">
-  macOS <b>11 or higher</b>
-</p>
 
 <h2 align="center">Documentation</h2>
 
