@@ -10,8 +10,6 @@ import korlibs.io.stream.openAsync
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import teksturepako.pakku.api.data.PakkuException
-import teksturepako.pakku.api.overrides.Overrides.PROJECT_OVERRIDES_FOLDER
-import teksturepako.pakku.api.overrides.Overrides.ProjectOverride
 
 suspend fun unzip(path: String): VfsFile
 {
@@ -23,7 +21,6 @@ suspend fun zip(
     outputFileName: String,
     extension: String = "zip",
     overrides: List<String>,
-    projectOverrides: Array<ProjectOverride> = arrayOf(),
     vararg create: Pair<String, Any>
 ): Result<String> = coroutineScope {
     val outputFile = kotlin.runCatching { localCurrentDirVfs["$outputFileName.$extension"] }.getOrElse {
@@ -38,17 +35,6 @@ suspend fun zip(
             if (vfs.exists()) vfs.copyToRecursively(archive["overrides"][path])
         }
     }.joinAll()
-
-//    projectOverrides.map { projectOverride ->
-//        launch {
-//            val vfs = localCurrentDirVfs["$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/${projectOverride.fileName}"]
-//            if (vfs.exists())
-//            {
-//                vfs.parent.mkdirs()
-//                vfs.copyToRecursively(archive["overrides"][projectOverride.type.folderName][projectOverride.fileName])
-//            }
-//        }
-//    }.joinAll()
 
     val zipBytes = kotlin.runCatching { archive.createZipFromTree().openAsync() }.getOrElse {
         return@coroutineScope Result.failure(PakkuException("Error: Could not create zip: ${it.message}"))

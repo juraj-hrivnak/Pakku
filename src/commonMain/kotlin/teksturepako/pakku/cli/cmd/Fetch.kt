@@ -5,7 +5,6 @@ import com.github.ajalt.clikt.core.terminal
 import korlibs.io.file.VfsFile
 import korlibs.io.file.baseName
 import korlibs.io.file.extension
-import korlibs.io.file.pathInfo
 import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.data.PakkuLock

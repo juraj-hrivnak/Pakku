@@ -14,7 +14,6 @@ import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.promptForProject
 import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.toPrettyString
 
 class Add : CliktCommand("Add projects")
 {

@@ -12,7 +12,6 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.containsProject
-import teksturepako.pakku.api.projects.removeIf
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.writeToFile
@@ -71,7 +70,8 @@ data class PakkuLock(
         {
             debug { println("Could not add ${project.name}") }
             null
-        } else
+        }
+        else
         {
             // Add project
             this.projects.add(project)
@@ -107,7 +107,8 @@ data class PakkuLock(
             {
                 debug { println("Could not update ${project.name}") }
                 null
-            } else
+            }
+            else
             {
                 // Add project
                 this.projects.add(project)
@@ -143,10 +144,8 @@ data class PakkuLock(
             {
                 debug { println("Could not remove ${project.name}") }
                 null
-            } else
-            {
-                true
             }
+            else true
         }
 
         return removed
@@ -163,10 +162,8 @@ data class PakkuLock(
             {
                 debug { println("Could not remove project from pakku id ($pakkuId)") }
                 null
-            } else
-            {
-                true
             }
+            else true
         }
         return removed
     }
@@ -275,6 +272,12 @@ data class PakkuLock(
                 Result.failure(PakkuException("Error occurred while reading '$FILE_NAME': ${exception.message}"))
             }
         } ?: Result.failure(PakkuException("Could not read '$FILE_NAME'"))
+
+        suspend fun readToResultFrom(path: String): Result<PakkuLock> = readFileOrNull(path)?.let {
+            runCatching { Result.success(json.decodeFromString<PakkuLock>(it)) }.getOrElse { exception ->
+                Result.failure(PakkuException("Error occurred while reading '$path': ${exception.message}"))
+            }
+        } ?: Result.failure(PakkuException("Could not read '$path'"))
     }
 
     suspend fun write() = writeToFile(this, FILE_NAME, overrideText = true)

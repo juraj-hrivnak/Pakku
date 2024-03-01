@@ -13,7 +13,9 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.0.13"
+version = "0.0.14"
+
+val nativeEnabled = false
 
 repositories {
     mavenCentral()
@@ -23,23 +25,25 @@ private val ktorVersion: String = libs.versions.ktor.get()
 private val kotestVersion: String = libs.versions.kotest.get()
 
 kotlin {
-    val hostOs = System.getProperty("os.name")
-    val isArm64 = System.getProperty("os.arch") == "aarch64"
-    val isMingwX64 = hostOs.startsWith("Windows")
-    val nativeTarget = when {
-        hostOs == "Mac OS X" && isArm64 -> macosArm64("native")
-        hostOs == "Mac OS X" && !isArm64 -> macosX64("native")
-        hostOs == "Linux" && isArm64 -> linuxArm64("native")
-        hostOs == "Linux" && !isArm64 -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-    }
+    if (nativeEnabled) {
+        val hostOs = System.getProperty("os.name")
+        val isArm64 = System.getProperty("os.arch") == "aarch64"
+        val isMingwX64 = hostOs.startsWith("Windows")
+        val nativeTarget = when {
+            hostOs == "Mac OS X" && isArm64 -> macosArm64("native")
+            hostOs == "Mac OS X" && !isArm64 -> macosX64("native")
+            hostOs == "Linux" && isArm64 -> linuxArm64("native")
+            hostOs == "Linux" && !isArm64 -> linuxX64("native")
+            isMingwX64 -> mingwX64("native")
+            else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+        }
 
-    nativeTarget.apply {
-        binaries {
-            executable {
-                entryPoint = "teksturepako.pakku.main"
-                baseName = "pakku"
+        nativeTarget.apply {
+            binaries {
+                executable {
+                    entryPoint = "teksturepako.pakku.main"
+                    baseName = "pakku"
+                }
             }
         }
     }
@@ -91,14 +95,17 @@ kotlin {
 
         // -- NATIVE --
 
-        val nativeMain by getting {
-            dependencies {
-                // Ktor
-                implementation("io.ktor:ktor-client-curl:$ktorVersion")
+        if (nativeEnabled)
+        {
+            val nativeMain by getting {
+                dependencies {
+                    // Ktor
+                    implementation("io.ktor:ktor-client-curl:$ktorVersion")
+                }
             }
-        }
 
-        val nativeTest by getting
+            val nativeTest by getting
+        }
 
         // -- JVM --
 
@@ -108,7 +115,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
 
                 // ZIP
-                implementation("org.zeroturnaround:zt-zip:1.17")
+                implementation("net.lingala.zip4j:zip4j:2.11.5")
             }
         }
 
@@ -154,8 +161,11 @@ tasks.register("generateVersion") {
     }
 }
 
-tasks.named("compileKotlinNative") {
-    dependsOn("generateVersion")
+if (nativeEnabled)
+{
+    tasks.named("compileKotlinNative") {
+        dependsOn("generateVersion")
+    }
 }
 
 tasks.named("compileKotlinJvm") {

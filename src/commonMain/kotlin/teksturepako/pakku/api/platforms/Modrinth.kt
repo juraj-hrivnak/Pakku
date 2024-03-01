@@ -174,7 +174,8 @@ object Modrinth : Platform(
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFilesFromId: file is null")
                 }.toMutableSet()
-        } else
+        }
+        else
         {
             // One file
             json.decodeFromString<MrVersionModel>(
