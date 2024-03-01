@@ -61,7 +61,7 @@ data class Project(
             id = (this.id + other.id).toMutableMap(),
 
             updateStrategy = this.updateStrategy,
-            redistributable = this.redistributable,
+            redistributable = this.redistributable && other.redistributable,
 
             files = (this.files + other.files).toMutableSet(),
         )
