@@ -3,12 +3,13 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.LockFile
 
 class Init : CliktCommand("Initialize modpack")
 {
     override fun run() = runBlocking {
-        if (PakkuLock.exists())
+        if (LockFile.exists())
         {
             terminal.danger("Modpack is already initialized")
             terminal.info("To change already initialized properties, use the command: \"set\"")
@@ -16,36 +17,68 @@ class Init : CliktCommand("Initialize modpack")
             return@runBlocking
         }
 
-        val pakkuLock = PakkuLock.readOrNew()
+        val configFile = ConfigFile.readOrNew()
+        val lockFile = LockFile.readOrNew()
 
-        val packName: String =
-            terminal.prompt("? Modpack name") ?: ""
+        // -- NAME --
 
-        pakkuLock.setPackName(packName)
-        terminal.success("'name' set to '$packName'")
+        with(terminal.prompt("? Modpack name") ?: "")
+        {
+            lockFile.setName(this)
+            terminal.success("'name' set to '$this'")
+        }
 
-        val mcVersions: List<String> =
-            terminal.prompt("? Minecraft versions")?.split(" ") ?: return@runBlocking
+        // -- VERSION --
 
-        pakkuLock.setMcVersions(mcVersions)
-        terminal.success("'mc_version' set to $mcVersions")
+        with(terminal.prompt("? Modpack version") ?: "0.0.1")
+        {
+            configFile.version = this
+            terminal.success("'version' set to $this")
+        }
 
-        val loaders: List<String> =
-            terminal.prompt("? Loaders")?.split(" ") ?: return@runBlocking
+        // -- MC VERSIONS --
 
-        pakkuLock.setModLoaders(loaders)
-        terminal.success("'loaders' set to $loaders")
+        with(terminal.prompt("? Minecraft versions")?.split(" ") ?: return@runBlocking)
+        {
+            lockFile.setMcVersions(this)
+            terminal.success("'mc_version' set to $this")
+        }
 
-        val target: String =
+        // -- LOADERS --
+
+        with(terminal.prompt("? Loaders")?.split(" ") ?: return@runBlocking)
+        {
+            lockFile.setLoaders(this)
+            this.forEach { configFile.loaders[it] = "" }
+            terminal.success("'loaders' set to $this")
+        }
+
+        configFile.loaders.forEach { (loader, _) ->
+            with(terminal.prompt("? $loader version") ?: "")
+            {
+                configFile.loaders[loader] = this
+                terminal.success("$loader version set to $this")
+            }
+        }
+
+        // -- TARGET --
+
+        with(
             terminal.prompt("? Target", choices = listOf("curseforge", "modrinth", "multiplatform"))
-                ?: return@runBlocking
+            ?: return@runBlocking
+        )
+        {
 
-        pakkuLock.setPlatformTarget(target)
-        terminal.success("'target' set to '$target'")
+            lockFile.setTarget(this)
+            terminal.success("'target' set to '$this'")
+        }
+
+        // -- FINISH --
 
         echo()
 
-        pakkuLock.write()
+        lockFile.write()
+        configFile.write()
         terminal.success("Modpack successfully initialized")
         echo()
     }

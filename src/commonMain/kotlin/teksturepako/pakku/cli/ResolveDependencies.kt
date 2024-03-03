@@ -3,7 +3,7 @@ package teksturepako.pakku.cli
 import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.pakku.api.actions.RequestHandlers
 import teksturepako.pakku.api.actions.createAdditionRequest
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
@@ -13,24 +13,24 @@ import teksturepako.pakku.toPrettyString
 suspend fun Project.resolveDependencies(
     terminal: Terminal,
     reqHandlers: RequestHandlers,
-    pakkuLock: PakkuLock,
+    lockFile: LockFile,
     projectProvider: IProjectProvider,
     platforms: List<Platform>,
     addAsProjects: Boolean = true
 )
 {
-    val dependencies = this.requestDependencies(projectProvider, pakkuLock)
+    val dependencies = this.requestDependencies(projectProvider, lockFile)
     if (dependencies.isEmpty()) return
 
     terminal.info("Resolving dependencies...")
 
     for (dependencyIn in dependencies)
     {
-        if (pakkuLock.isProjectAdded(dependencyIn))
+        if (lockFile.isProjectAdded(dependencyIn))
         {
             /** Link project to dependency if dependency is already added */
-            pakkuLock.getProject(dependencyIn)?.pakkuId?.let { pakkuId ->
-                pakkuLock.addPakkuLink(pakkuId, this)
+            lockFile.getProject(dependencyIn)?.pakkuId?.let { pakkuId ->
+                lockFile.addPakkuLink(pakkuId, this)
             }
         } else if (addAsProjects)
         {
@@ -41,16 +41,16 @@ suspend fun Project.resolveDependencies(
                 onRetry = reqHandlers.onRetry,
                 onSuccess = { dependency, _, depReqHandlers ->
                     /** Add dependency */
-                    pakkuLock.add(dependency)
+                    lockFile.add(dependency)
 
                     /** Link dependency to parent project */
-                    pakkuLock.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
+                    lockFile.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
 
                     /** Resolve dependencies for dependency */
-                    dependency.resolveDependencies(terminal, depReqHandlers, pakkuLock, projectProvider, platforms)
+                    dependency.resolveDependencies(terminal, depReqHandlers, lockFile, projectProvider, platforms)
                     terminal.info("${dependency.slug} added")
                 },
-                pakkuLock,
+                lockFile,
                 platforms
             )
         }

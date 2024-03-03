@@ -3,6 +3,7 @@ package teksturepako.pakku.api.overrides
 import korlibs.io.file.baseName
 import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.projects.ProjectType
 
 object Overrides
@@ -27,6 +28,7 @@ object Overrides
         }
     }
 
+    @Serializable
     data class ProjectOverride(
         val type: ProjectType,
         @SerialName("file_name") val fileName: String = "",
@@ -43,5 +45,13 @@ object Overrides
                 }
             }
         }.getOrDefault(listOf())
+    }
+
+    suspend fun List<ProjectOverride>.toExportData(): Array<Pair<String, ByteArray>>
+    {
+        return this.map {
+            "/overrides/${it.type.folderName}/${it.fileName}" to
+                    localCurrentDirVfs["$PROJECT_OVERRIDES_FOLDER/${it.type.folderName}/${it.fileName}"].readBytes()
+        }.toTypedArray()
     }
 }

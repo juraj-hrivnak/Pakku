@@ -4,7 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 
 class Link : CliktCommand("Link project to another project")
 {
@@ -12,18 +12,18 @@ class Link : CliktCommand("Link project to another project")
     private val projectIn: String by argument()
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readToResult().getOrElse {
+        val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        val outId = pakkuLock.getProject(projectOut)?.pakkuId ?: return@runBlocking
-        val project = pakkuLock.getProject(projectIn) ?: return@runBlocking
-        pakkuLock.addPakkuLink(outId, project)
+        val outId = lockFile.getProject(projectOut)?.pakkuId ?: return@runBlocking
+        val project = lockFile.getProject(projectIn) ?: return@runBlocking
+        lockFile.addPakkuLink(outId, project)
         terminal.success("$projectOut ($outId) linked to ${project.slug}")
 
-        pakkuLock.write()
+        lockFile.write()
         echo()
     }
 }

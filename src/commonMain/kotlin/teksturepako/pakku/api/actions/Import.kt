@@ -6,7 +6,7 @@ import korlibs.io.file.extension
 import korlibs.io.file.pathInfo
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.CfModpackModel
 import teksturepako.pakku.api.models.MrModpackModel
@@ -26,17 +26,17 @@ const val MR_MANIFEST = "modrinth.index.json"
 suspend fun import(
     onError: ErrorBlock,
     path: String,
-    pakkuLock: PakkuLock,
+    lockFile: LockFile,
     platforms: List<Platform>
 ): Set<Project> = when
 {
     path.endsWith("zip") || CF_MANIFEST in path    ->
     {
-        importCurseForge(path).asSetOfCfProjects(onError, pakkuLock, platforms)
+        importCurseForge(path).asSetOfCfProjects(onError, lockFile, platforms)
     }
     path.endsWith("mrpack") || MR_MANIFEST in path ->
     {
-        importModrinth(path).asSetOfMrProjects(onError, pakkuLock, platforms)
+        importModrinth(path).asSetOfMrProjects(onError, lockFile, platforms)
     }
     else -> setOf()
 }
@@ -84,7 +84,7 @@ suspend fun importModrinth(path: String): Pair<MrModpackModel?, String> =
 
 suspend fun Pair<CfModpackModel?, String>.asSetOfCfProjects(
     onError: ErrorBlock,
-    pakkuLock: PakkuLock,
+    lockFile: LockFile,
     platforms: List<Platform>
 ): Set<Project>
 {
@@ -97,7 +97,7 @@ suspend fun Pair<CfModpackModel?, String>.asSetOfCfProjects(
     }
 
     val projects = CurseForge.requestMultipleProjects(model.files.map { it.projectID })
-    val projectFiles = CurseForge.requestMultipleProjectFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), model.files.map { it.fileID })
+    val projectFiles = CurseForge.requestMultipleProjectFiles(lockFile.getMcVersions(), lockFile.getLoaders(), model.files.map { it.fileID })
 
     projects.assignFiles(projectFiles, CurseForge)
 
@@ -111,7 +111,7 @@ suspend fun Pair<CfModpackModel?, String>.asSetOfCfProjects(
         }
 
         val mrProjects = Modrinth.requestMultipleProjectsWithFiles(
-            pakkuLock.getMcVersions(), pakkuLock.getLoaders(), slugs, 1
+            lockFile.getMcVersions(), lockFile.getLoaders(), slugs, 1
         )
 
         projects.combineWith(mrProjects)
@@ -122,7 +122,7 @@ suspend fun Pair<CfModpackModel?, String>.asSetOfCfProjects(
 
 suspend fun Pair<MrModpackModel?, String>.asSetOfMrProjects(
     onError: ErrorBlock,
-    pakkuLock: PakkuLock,
+    lockFile: LockFile,
     platforms: List<Platform>
 ): Set<Project>
 {
@@ -152,7 +152,7 @@ suspend fun Pair<MrModpackModel?, String>.asSetOfMrProjects(
                 async {
                     CurseForge.requestProjectFromSlug(slug)?.apply {
                         files += CurseForge.requestFilesForProject(
-                            pakkuLock.getMcVersions(), pakkuLock.getLoaders(), this
+                            lockFile.getMcVersions(), lockFile.getLoaders(), this
                         )
                     }
                 }

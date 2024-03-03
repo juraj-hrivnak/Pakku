@@ -2,16 +2,16 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.jsonEncodeDefaults
 import teksturepako.pakku.api.models.CfModpackModel
 import teksturepako.pakku.api.models.CfModpackModel.*
 import teksturepako.pakku.api.models.MrModpackModel
 import teksturepako.pakku.api.overrides.Overrides
-import teksturepako.pakku.api.overrides.Overrides.PROJECT_OVERRIDES_FOLDER
+import teksturepako.pakku.api.overrides.Overrides.toExportData
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
@@ -23,22 +23,25 @@ import teksturepako.pakku.io.zipFile
 class Export : CliktCommand("Export modpack")
 {
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readToResult().getOrElse {
+        val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        val platforms: List<Platform> = pakkuLock.getPlatforms().getOrElse {
+        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        val projectOverrides = Overrides.getProjectOverrides().map {
-            "/overrides/${it.type.folderName}/${it.fileName}" to
-                    localCurrentDirVfs["$PROJECT_OVERRIDES_FOLDER/${it.type.folderName}/${it.fileName}"].readBytes()
-        }.toTypedArray()
+        val configFile = ConfigFile.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
+
+        val projectOverrides = Overrides.getProjectOverrides().toExportData()
 
         // -- CURSEFORGE --
 
@@ -48,16 +51,17 @@ class Export : CliktCommand("Export modpack")
 
             val cfManifestData = CfModpackModel(
                 CfMinecraftData(
-                    version = pakkuLock.getMcVersions().firstOrNull()!!,
-                    modLoaders = pakkuLock.getLoaders().map { loader ->
+                    version = lockFile.getMcVersions().firstOrNull()!!,
+                    modLoaders = configFile.loaders.toList().map { dep ->
                         CfModLoaderData(
-                            id = loader,
-                            primary = pakkuLock.getLoaders().firstOrNull()!! == loader
+                            id = "${dep.first}-${dep.second}",
+                            primary = configFile.loaders.toList().firstOrNull()!! == dep
                         )
                     }
                 ),
-                name = pakkuLock.getPackName(),
-                files = pakkuLock.getAllProjects().mapNotNull { project ->
+                name = lockFile.getName(),
+                version = configFile.version,
+                files = lockFile.getAllProjects().mapNotNull { project ->
                     val file = project.getFilesForPlatform(CurseForge).firstOrNull()
                         ?: return@mapNotNull null.also {
                             project.getFilesForPlatform(Modrinth).firstOrNull()?.let {
@@ -74,9 +78,9 @@ class Export : CliktCommand("Export modpack")
             )
 
             zipFile(
-                pakkuLock.getPackName(),
+                lockFile.getName(),
                 "zip",
-                pakkuLock.getAllOverrides(),
+                configFile.getAllOverrides(),
                 "manifest.json" to jsonEncodeDefaults.encodeToString(cfManifestData),
                 "overrides/config/mod-director/.bundle.json" to jsonEncodeDefaults.encodeToString(fileDirector),
                 *projectOverrides
@@ -93,8 +97,9 @@ class Export : CliktCommand("Export modpack")
             val fileDirector = FileDirectorData()
 
             val mrModpackModel = MrModpackModel(
-                name = pakkuLock.getPackName(),
-                files = pakkuLock.getAllProjects().mapNotNull { project ->
+                name = lockFile.getName(),
+                versionId = configFile.version,
+                files = lockFile.getAllProjects().mapNotNull { project ->
                     val file = project.getFilesForPlatform(Modrinth).firstOrNull()
                         ?: return@mapNotNull null.also {
                             project.getFilesForPlatform(CurseForge).firstOrNull()?.let {
@@ -120,16 +125,19 @@ class Export : CliktCommand("Export modpack")
                         fileSize = file.size
                     )
                 }.toSet(),
-                dependencies = mapOf(
-                    "minecraft" to pakkuLock.getMcVersions().firstOrNull()!!,
-                    pakkuLock.getLoaders().firstOrNull()!! to ""
-                )
+                dependencies = mutableMapOf(
+                    "minecraft" to lockFile.getMcVersions().firstOrNull()!!,
+                ).apply { this.putAll(
+                    configFile.loaders.mapNotNull { dep ->
+                        Modrinth.getExportLoaderName(dep.key)?.let { it to dep.value  }
+                    }
+                ) }
             )
 
             zipFile(
-                pakkuLock.getPackName(),
+                lockFile.getName(),
                 "mrpack",
-                pakkuLock.getAllOverrides(),
+                configFile.getAllOverrides(),
                 "modrinth.index.json" to jsonEncodeDefaults.encodeToString(mrModpackModel),
                 "overrides/config/mod-director/.bundle.json" to jsonEncodeDefaults.encodeToString(fileDirector),
                 *projectOverrides

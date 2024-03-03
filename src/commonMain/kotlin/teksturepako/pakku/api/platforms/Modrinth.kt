@@ -27,6 +27,15 @@ object Modrinth : Platform(
     siteUrl = "https://modrinth.com/mod"
 )
 {
+    private val exportLoaders = mapOf(
+        "forge" to "forge",
+        "neoforge" to "neoforge",
+        "fabric" to "fabric-loader",
+        "quilt" to "quilt-loader"
+    )
+
+    fun getExportLoaderName(loader: String) = exportLoaders[loader]
+
     // -- API RATE LIMIT --
 
     private var requestsRemaining = 0
@@ -156,7 +165,7 @@ object Modrinth : Platform(
                     .mapNotNull { it.projectId }.toMutableSet(),
                 size = versionFile.size,
             )
-        }
+        }.asReversed() // Reverse to make non source files first
     }
 
     override suspend fun requestProjectFiles(
@@ -170,7 +179,7 @@ object Modrinth : Platform(
                 this.requestProjectBody("project/$projectId/version") ?: return mutableSetOf()
             )
                 .filterFileModels(mcVersions, loaders)
-                .flatMap { version -> version.toProjectFiles().asReversed() }
+                .flatMap { version -> version.toProjectFiles() }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFilesFromId: file is null")
                 }.toMutableSet()
@@ -182,7 +191,6 @@ object Modrinth : Platform(
                 this.requestProjectBody("version/$fileId") ?: return mutableSetOf()
             )
                 .toProjectFiles()
-                .asReversed()
                 .toMutableSet()
         }
     }
@@ -236,7 +244,7 @@ object Modrinth : Platform(
                 ?: return mutableSetOf()
         ).values
 
-        val projectFiles = response.flatMap { version -> version.toProjectFiles().asReversed().take(1) }
+        val projectFiles = response.flatMap { version -> version.toProjectFiles().take(1) }
         val projectIds = projectFiles.map { it.parentId }
         val projects = requestMultipleProjects(projectIds)
 

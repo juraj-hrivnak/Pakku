@@ -9,7 +9,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.Error
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.import
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.promptForProject
@@ -20,16 +20,16 @@ class Import : CliktCommand("Import modpack")
     private val pathArg: String by argument("path")
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
+        val lockFile = LockFile.readOrNew()
 
         // Configuration
-        val platforms: List<Platform> = pakkuLock.getPlatforms().getOrElse {
+        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        val projectProvider = pakkuLock.getProjectProvider().getOrElse {
+        val projectProvider = lockFile.getProjectProvider().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
@@ -38,7 +38,7 @@ class Import : CliktCommand("Import modpack")
 
         val importedProjects = import(
             onError = { error -> terminal.danger(error.message) },
-            pathArg, pakkuLock, platforms
+            pathArg, lockFile, platforms
         )
 
         importedProjects.map { projectIn ->
@@ -47,18 +47,18 @@ class Import : CliktCommand("Import modpack")
                     onError = { error ->
                         if (error !is Error.AlreadyAdded) terminal.danger(error.message)
                     },
-                    onRetry = { platform -> promptForProject(platform, terminal, pakkuLock) },
+                    onRetry = { platform -> promptForProject(platform, terminal, lockFile) },
                     onSuccess = { project, _, reqHandlers ->
-                        pakkuLock.add(project)
-                        project.resolveDependencies(terminal, reqHandlers, pakkuLock, projectProvider, platforms)
+                        lockFile.add(project)
+                        project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         terminal.success("${project.slug} added")
                         Modrinth.checkRateLimit()
                     },
-                    pakkuLock, platforms
+                    lockFile, platforms
                 )
             }
         }.joinAll()
 
-        pakkuLock.write()
+        lockFile.write()
     }
 }

@@ -7,7 +7,7 @@ import korlibs.io.file.baseName
 import korlibs.io.file.extension
 import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.coroutines.*
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.PROJECT_OVERRIDES_FOLDER
@@ -18,7 +18,7 @@ import teksturepako.pakku.api.projects.ProjectType
 class Fetch : CliktCommand("Fetch projects to your pack folder")
 {
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readToResult().getOrElse {
+        val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
@@ -38,7 +38,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         var maxSize: Long = 0
 
-        for (project in pakkuLock.getAllProjects())
+        for (project in lockFile.getAllProjects())
         {
             var projectFile: ProjectFile? = null
 

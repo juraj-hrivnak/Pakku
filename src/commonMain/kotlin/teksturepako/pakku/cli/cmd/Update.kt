@@ -7,7 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
 
 class Update : CliktCommand("Update projects")
@@ -16,7 +16,7 @@ class Update : CliktCommand("Update projects")
     private val allFlag: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readToResult().getOrElse {
+        val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
@@ -24,24 +24,24 @@ class Update : CliktCommand("Update projects")
 
         val oldProjects = if (allFlag)
         {
-            pakkuLock.getAllProjects()
+            lockFile.getAllProjects()
         }
         else
         {
             projectArgs.mapNotNull { projectArg ->
-                pakkuLock.getProject(projectArg).also {
+                lockFile.getProject(projectArg).also {
                     if (it == null) terminal.danger("$projectArg not found")
                 }
             }
         }
 
         val updatedProjects = Multiplatform.updateMultipleProjectsWithFiles(
-            pakkuLock.getMcVersions(), pakkuLock.getLoaders(), oldProjects.toMutableSet(), numberOfFiles = 1
+            lockFile.getMcVersions(), lockFile.getLoaders(), oldProjects.toMutableSet(), numberOfFiles = 1
         )
 
         for (updatedProject in updatedProjects)
         {
-            pakkuLock.update(updatedProject)
+            lockFile.update(updatedProject)
             terminal.success("${updatedProject.slug} updated")
         }
 
@@ -59,6 +59,6 @@ class Update : CliktCommand("Update projects")
         }
 
         echo()
-        pakkuLock.write()
+        lockFile.write()
     }
 }

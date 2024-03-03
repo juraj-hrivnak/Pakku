@@ -125,12 +125,12 @@ data class Project(
      * Requests [projects with files][IProjectProvider.requestProjectWithFiles] for all dependencies of this project.
      * @return List of [dependencies][Project].
      */
-    suspend fun requestDependencies(projectProvider: IProjectProvider, pakkuLock: PakkuLock): List<Project>
+    suspend fun requestDependencies(projectProvider: IProjectProvider, lockFile: LockFile): List<Project>
     {
         return this.files
             .flatMap { it.requiredDependencies ?: emptyList() }
             .mapNotNull {
-                projectProvider.requestProjectWithFiles(pakkuLock.getMcVersions(), pakkuLock.getLoaders(), it)
+                projectProvider.requestProjectWithFiles(lockFile.getMcVersions(), lockFile.getLoaders(), it)
             }
     }
 

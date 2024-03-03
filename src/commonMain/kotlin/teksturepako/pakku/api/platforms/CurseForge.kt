@@ -148,7 +148,7 @@ object CurseForge : Platform(
                 .filter { it.relationType == 3 }
                 .map { it.modId.toString() }.toMutableSet(),
             size = this.fileLength,
-        )
+        ).fetchAlternativeDownloadUrl()
     }
 
     override suspend fun requestProjectFiles(
@@ -178,7 +178,7 @@ object CurseForge : Platform(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
                 .filterFileModels(mcVersions, loaders)
-                .map { it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl() }
+                .map { it.toProjectFile(gameVersionTypeIds) }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
                 }
@@ -189,9 +189,7 @@ object CurseForge : Platform(
             mutableSetOf(
                 json.decodeFromString<GetFileResponse>(
                     this.requestProjectBody(requestUrl) ?: return mutableSetOf()
-                ).data
-                    .toProjectFile(gameVersionTypeIds)
-                    .fetchAlternativeDownloadUrl()
+                ).data.toProjectFile(gameVersionTypeIds)
             )
         }
     }
@@ -211,7 +209,7 @@ object CurseForge : Platform(
             .filterFileModels(mcVersions, loaders)
             .sortedByDescending { it.fileDate }
             .map {
-                it.toProjectFile(gameVersionTypeIds).fetchAlternativeDownloadUrl()
+                it.toProjectFile(gameVersionTypeIds)
             }
             .debugIfEmpty {
                 println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")

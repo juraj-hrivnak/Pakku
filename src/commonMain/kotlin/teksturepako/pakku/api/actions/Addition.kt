@@ -1,7 +1,7 @@
 package teksturepako.pakku.api.actions
 
 import kotlinx.serialization.encodeToString
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
@@ -31,7 +31,7 @@ suspend fun Project?.createAdditionRequest(
     onError: ErrorBlock,
     onRetry: RetryBlock,
     onSuccess: SuccessBlock,
-    pakkuLock: PakkuLock,
+    lockFile: LockFile,
     platforms: List<Platform>
 )
 {
@@ -40,7 +40,7 @@ suspend fun Project?.createAdditionRequest(
     var isRecommended = true
 
     // Already added
-    if (pakkuLock.isProjectAdded(project))
+    if (lockFile.isProjectAdded(project))
     {
         return onError.error(Error.AlreadyAdded("Could not add ${project.slug}. It is already added"))
     }
@@ -69,7 +69,7 @@ suspend fun Project?.createAdditionRequest(
     // Check if project has any files at all
     if (project.hasNoFiles())
     {
-        onError.error(Error.NoFiles("No files found for ${project.slug} ${pakkuLock.getMcVersions()}"))
+        onError.error(Error.NoFiles("No files found for ${project.slug} ${lockFile.getMcVersions()}"))
         isRecommended = false
     }
 

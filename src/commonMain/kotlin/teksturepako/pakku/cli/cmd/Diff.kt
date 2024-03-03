@@ -5,7 +5,7 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.containsNotProject
 import java.io.File
 
@@ -17,21 +17,21 @@ class Diff : CliktCommand("Diff projects in modpack")
     private val markdownOpt by option("--markdown", metavar = "<path>")
 
     override fun run(): Unit = runBlocking {
-        val oldPakkuLock = PakkuLock.readToResultFrom(oldPathArg).getOrElse {
+        val oldLockFile = LockFile.readToResultFrom(oldPathArg).getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        val newPakkuLock = PakkuLock.readToResultFrom(newPathArg).getOrElse {
+        val newLockFile = LockFile.readToResultFrom(newPathArg).getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        val added = newPakkuLock.getAllProjects()
+        val added = newLockFile.getAllProjects()
             .mapNotNull { newProject ->
-                if (oldPakkuLock.getAllProjects() containsNotProject newProject)
+                if (oldLockFile.getAllProjects() containsNotProject newProject)
                 {
                     newProject
                 }
@@ -41,9 +41,9 @@ class Diff : CliktCommand("Diff projects in modpack")
 
         added.forEach { terminal.success("+ $it") }
 
-        val removed = oldPakkuLock.getAllProjects()
+        val removed = oldLockFile.getAllProjects()
             .mapNotNull { oldProject ->
-                if (newPakkuLock.getAllProjects() containsNotProject oldProject)
+                if (newLockFile.getAllProjects() containsNotProject oldProject)
                 {
                     oldProject
                 }

@@ -9,7 +9,7 @@ import com.github.ajalt.clikt.parameters.options.varargValues
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.choice
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.data.PakkuLock
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 
@@ -55,13 +55,13 @@ class Set : CliktCommand("Set various properties of your pack or projects")
 
     // TODO: Refactor this nested mess
     override fun run() = runBlocking {
-        val pakkuLock = PakkuLock.readOrNew()
+        val lockFile = LockFile.readOrNew()
 
         /** Projects */
         if (projectArgs.isNotEmpty())
         {
             projectArgs.map { arg ->
-                pakkuLock.getProject(arg)?.apply {
+                lockFile.getProject(arg)?.apply {
                     /** Side */
                     sideOpt?.let { opt ->
                         ProjectSide.valueOf(opt.uppercase())
@@ -89,13 +89,13 @@ class Set : CliktCommand("Set various properties of your pack or projects")
 
         /** Pack name */
         packNameOpt?.let {
-            pakkuLock.setPackName(it)
+            lockFile.setName(it)
             terminal.success("'name' set to '$it'")
         }
 
         /** Target */
         targetOpt?.let {
-            pakkuLock.setPlatformTarget(it)
+            lockFile.setTarget(it)
             terminal.success("'target' set to '$it'")
         }
 
@@ -103,7 +103,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
         mcVersionsOpts?.let { versions ->
             var failed = false
 
-            pakkuLock.getAllProjects().forEach { project ->
+            lockFile.getAllProjects().forEach { project ->
                 for (file in project.files)
                 {
                     if (file.mcVersions.none { it in versions })
@@ -119,7 +119,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
 
             if (!failed)
             {
-                pakkuLock.setMcVersions(versions)
+                lockFile.setMcVersions(versions)
                 terminal.success("'mc_version' set to $versions")
             }
         }
@@ -128,7 +128,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
         loadersOpts?.let { loaders ->
             var failed = false
 
-            pakkuLock.getAllProjects().forEach { project ->
+            lockFile.getAllProjects().forEach { project ->
                 for (file in project.files)
                 {
                     if (file.loaders.none { it in loaders })
@@ -144,12 +144,12 @@ class Set : CliktCommand("Set various properties of your pack or projects")
 
             if (!failed)
             {
-                pakkuLock.setModLoaders(loaders)
+                lockFile.setLoaders(loaders)
                 terminal.success("'loaders' set to $loaders")
             }
         }
 
-        pakkuLock.write()
+        lockFile.write()
         echo()
     }
 }
