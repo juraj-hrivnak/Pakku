@@ -70,7 +70,7 @@ suspend fun exportCurseForge(
         val file = project.getFilesForPlatform(CurseForge).firstOrNull()
             ?: return@mapNotNull null.also { project.addToFileDirectorFrom(Modrinth, fileDirector) }
 
-        return@mapNotNull CfModData(
+        CfModData(
             projectID = project.id[CurseForge.serialName]!!, fileID = file.id
         )
     }
