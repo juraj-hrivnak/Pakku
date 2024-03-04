@@ -3,13 +3,11 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.exportCurseForge
-import teksturepako.pakku.api.actions.exportModrinth
+import teksturepako.pakku.api.actions.export
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 
 
@@ -36,21 +34,11 @@ class Export : CliktCommand("Export modpack")
 
         val projectOverrides = Overrides.getProjectOverrides()
 
-        if (CurseForge in platforms)
-        {
-            exportCurseForge(lockFile, configFile, projectOverrides).fold(
-                onSuccess = { terminal.success("${CurseForge.name} modpack exported to '$it'") },
-                onFailure = { terminal.danger(it.message) }
-            )
-        }
-
-        if (Modrinth in platforms)
-        {
-            exportModrinth(lockFile, configFile, projectOverrides).fold(
-                onSuccess = { terminal.success("${Modrinth.name} modpack exported to '$it'") },
-                onFailure = { terminal.danger(it.message) }
-            )
-        }
+        export(
+            onSuccess = { terminal.success("${CurseForge.name} modpack exported to '$it'") },
+            onError = { terminal.danger(it) },
+            lockFile, configFile, projectOverrides, platforms
+        )
 
         echo()
     }

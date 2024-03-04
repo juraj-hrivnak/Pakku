@@ -24,7 +24,7 @@ const val CF_MANIFEST = "manifest.json"
 const val MR_MANIFEST = "modrinth.index.json"
 
 suspend fun import(
-    onError: ErrorBlock,
+    onError: (error: Error) -> Unit,
     path: String,
     lockFile: LockFile,
     platforms: List<Platform>
@@ -83,7 +83,7 @@ suspend fun importModrinth(path: String): Pair<MrModpackModel?, String> =
     else importMrManifestFile(path) to path
 
 suspend fun Pair<CfModpackModel?, String>.asSetOfCfProjects(
-    onError: ErrorBlock,
+    onError: (error: Error) -> Unit,
     lockFile: LockFile,
     platforms: List<Platform>
 ): Set<Project>
@@ -92,7 +92,7 @@ suspend fun Pair<CfModpackModel?, String>.asSetOfCfProjects(
 
     if (model == null)
     {
-        onError.error(Error.CouldNotImport("Could not import from $path"))
+        onError(Error.CouldNotImport("Could not import from $path"))
         return setOf()
     }
 
@@ -121,7 +121,7 @@ suspend fun Pair<CfModpackModel?, String>.asSetOfCfProjects(
 
 
 suspend fun Pair<MrModpackModel?, String>.asSetOfMrProjects(
-    onError: ErrorBlock,
+    onError: (error: Error) -> Unit,
     lockFile: LockFile,
     platforms: List<Platform>
 ): Set<Project>
@@ -130,7 +130,7 @@ suspend fun Pair<MrModpackModel?, String>.asSetOfMrProjects(
 
     if (model == null)
     {
-        onError.error(Error.CouldNotImport("Could not import from $path"))
+        onError(Error.CouldNotImport("Could not import from $path"))
         return setOf()
     }
 

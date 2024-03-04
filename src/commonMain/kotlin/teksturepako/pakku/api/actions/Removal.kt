@@ -4,20 +4,10 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.typoSuggester
 
-fun interface WarningBlock
-{
-    suspend fun warning(message: String)
-}
-
-fun interface RemovalBlock
-{
-    suspend fun remove(project: Project, isRecommended: Boolean)
-}
-
 suspend fun Project?.createRemovalRequest(
-    onWarning: WarningBlock,
-    onRemoval: RemovalBlock,
-    onDepRemoval: RemovalBlock,
+    onWarning: suspend (message: String) -> Unit,
+    onRemoval: suspend (project: Project, isRecommended: Boolean) -> Unit,
+    onDepRemoval: suspend (project: Project, isRecommended: Boolean) -> Unit,
     projectArg: String,
     lockFile: LockFile,
 )
@@ -28,12 +18,12 @@ suspend fun Project?.createRemovalRequest(
 
         if (linkedProjects.isEmpty())
         {
-            onRemoval.remove(this, true)
+            onRemoval(this, true)
         }
         else
         {
-            onWarning.warning("$projectArg is required by ${linkedProjects.map { it.slug }}")
-            onRemoval.remove(this, false)
+            onWarning("$projectArg is required by ${linkedProjects.map { it.slug }}")
+            onRemoval(this, false)
         }
 
         x@ for (pakkuLink in this.pakkuLinks)
@@ -43,19 +33,19 @@ suspend fun Project?.createRemovalRequest(
 
             if (depLinkedProjects.isNotEmpty())
             {
-                onWarning.warning("${dependency.slug} is required by ${depLinkedProjects.map { it.slug }}")
-                onDepRemoval.remove(dependency, false)
+                onWarning("${dependency.slug} is required by ${depLinkedProjects.map { it.slug }}")
+                onDepRemoval(dependency, false)
             }
-            else onDepRemoval.remove(dependency, true)
+            else onDepRemoval(dependency, true)
         }
     }
     else
     {
-        onWarning.warning("$projectArg not found")
+        onWarning("$projectArg not found")
         val slugs = lockFile.getAllProjects().flatMap { it.slug.values }
 
         typoSuggester(projectArg, slugs).firstOrNull()?.let { arg ->
-            onWarning.warning("Did you mean $arg?")
+            onWarning("Did you mean $arg?")
         }
     }
 }
