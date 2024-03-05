@@ -7,7 +7,6 @@ import teksturepako.pakku.api.actions.export
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.Overrides
-import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
 
 
@@ -35,7 +34,7 @@ class Export : CliktCommand("Export modpack")
         val projectOverrides = Overrides.getProjectOverrides()
 
         export(
-            onSuccess = { terminal.success("${CurseForge.name} modpack exported to '$it'") },
+            onSuccess = { terminal.success(it) },
             onError = { terminal.danger(it) },
             lockFile, configFile, projectOverrides, platforms
         )

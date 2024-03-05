@@ -1,6 +1,7 @@
 package teksturepako.pakku.io
 
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import net.lingala.zip4j.ZipFile
 import java.io.File
 
@@ -9,11 +10,12 @@ actual suspend fun zipFile(
     extension: String,
     overrides: List<String>,
     vararg create: Pair<String, Any>
-): Result<String> = coroutineScope {
+): Result<String> = withContext(Dispatchers.IO) {
 
     val pakkuTemp = "./.pakku/.tmp"
     val output = "$outputFileName.$extension"
 
+    File(pakkuTemp).deleteRecursively()
     if (File(output).exists()) File(output).delete()
 
     for (pair in create)
@@ -42,5 +44,5 @@ actual suspend fun zipFile(
 
     File(pakkuTemp).deleteRecursively()
 
-    return@coroutineScope Result.success(output)
+    return@withContext Result.success(output)
 }
