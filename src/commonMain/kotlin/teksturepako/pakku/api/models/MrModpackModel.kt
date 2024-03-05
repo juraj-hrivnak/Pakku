@@ -8,6 +8,7 @@ data class MrModpackModel(
     val game: String = "minecraft",
     val versionId: String = "",
     val name: String = "",
+    val summary: String = "",
     val files: Set<File> = setOf(),
     val dependencies: Map<String, String> = mapOf()
 )

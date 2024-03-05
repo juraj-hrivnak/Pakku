@@ -29,12 +29,19 @@ suspend fun export(
     platforms: List<Platform>,
 )
 {
+    val outputFileName = when
+    {
+        lockFile.getName().isBlank()    -> return onError("Could not export: 'name' is not specified")
+        configFile.version.isNotBlank() -> "${lockFile.getName()}-${configFile.version}"
+        else -> lockFile.getName()
+    }
+
     val mcVersion = lockFile.getMcVersions().firstOrNull()
         ?: return onError("Could not export: 'mc_versions' is not specified")
 
     if (CurseForge in platforms)
     {
-        exportCurseForge(mcVersion, lockFile, configFile, projectOverrides).fold(
+        exportCurseForge(outputFileName, mcVersion, lockFile, configFile, projectOverrides).fold(
             onSuccess = { onSuccess("${CurseForge.name} modpack exported to '$it'") },
             onFailure = { onError(it.message ?: "") }
         )
@@ -42,7 +49,7 @@ suspend fun export(
 
     if (Modrinth in platforms)
     {
-        exportModrinth(mcVersion, lockFile, configFile, projectOverrides).fold(
+        exportModrinth(outputFileName, mcVersion, lockFile, configFile, projectOverrides).fold(
             onSuccess = { onSuccess("${Modrinth.name} modpack exported to '$it'") },
             onFailure = { onError(it.message ?: "") }
         )
@@ -50,6 +57,7 @@ suspend fun export(
 }
 
 suspend fun exportCurseForge(
+    outputFileName: String,
     mcVersion: String,
     lockFile: LockFile,
     configFile: ConfigFile,
@@ -82,11 +90,12 @@ suspend fun exportCurseForge(
         ),
         name = lockFile.getName(),
         version = configFile.version,
+        author = configFile.author,
         files = cfFiles
     )
 
     return zipFile(
-        lockFile.getName(),
+        outputFileName,
         "zip",
         configFile.getAllOverrides(),
         "manifest.json" to jsonEncodeDefaults.encodeToString(cfManifestData),
@@ -96,6 +105,7 @@ suspend fun exportCurseForge(
 }
 
 suspend fun exportModrinth(
+    outputFileName: String,
     mcVersion: String,
     lockFile: LockFile,
     configFile: ConfigFile,
@@ -134,13 +144,14 @@ suspend fun exportModrinth(
 
     val mrModpackModel = MrModpackModel(
         name = lockFile.getName(),
+        summary = configFile.description,
         versionId = configFile.version,
         files = mrFiles,
         dependencies = mrDependencies
     )
 
     return zipFile(
-        lockFile.getName(),
+        outputFileName,
         "mrpack",
         configFile.getAllOverrides(),
         "modrinth.index.json" to jsonEncodeDefaults.encodeToString(mrModpackModel),

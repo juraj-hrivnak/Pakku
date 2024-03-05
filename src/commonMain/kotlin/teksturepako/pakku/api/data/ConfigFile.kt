@@ -12,9 +12,10 @@ import teksturepako.pakku.io.writeToFile
 @Serializable
 data class ConfigFile(
     var name: String? = null,
+
     var version: String = "",
-    val description: String? = null,
-    val author: String? = null,
+    var description: String = "",
+    var author: String = "",
     val loaders: MutableMap<String, String> = mutableMapOf(),
     val overrides: MutableList<String> = mutableListOf(),
 )
