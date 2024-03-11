@@ -14,6 +14,9 @@ fun Collection<Project>.assignFiles(projectFiles: Collection<ProjectFile>, platf
     }
 }
 
+//operator fun Collection<Project>.contains(input: String): Boolean =
+//    this.any { input in it  }
+
 infix fun Collection<Project>.containsProject(project: Project): Boolean =
     this.any { it isAlmostTheSameAs project }
 

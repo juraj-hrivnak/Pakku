@@ -24,17 +24,13 @@ class Init : CliktCommand("Initialize modpack")
 
         with(terminal.prompt("? Modpack name") ?: "")
         {
-            lockFile.setName(this)
+            configFile.setName(this)
             terminal.success("'name' set to '$this'")
         }
 
         // -- VERSION --
 
-        with(terminal.prompt("? Modpack version") ?: "0.0.1")
-        {
-            configFile.version = this
-            terminal.success("'version' set to $this")
-        }
+        configFile.setVersion("0.0.1")
 
         // -- MC VERSIONS --
 
@@ -48,16 +44,15 @@ class Init : CliktCommand("Initialize modpack")
 
         with(terminal.prompt("? Loaders")?.split(" ") ?: return@runBlocking)
         {
-            lockFile.setLoaders(this)
-            this.forEach { configFile.loaders[it] = "" }
+            this.forEach { lockFile.addLoader(it, "") }
             terminal.success("'loaders' set to $this")
         }
 
-        configFile.loaders.forEach { (loader, _) ->
-            with(terminal.prompt("? $loader version") ?: "")
+        lockFile.getLoadersWithVersions().forEach { (loaderName, _) ->
+            with(terminal.prompt("    ? $loaderName version") ?: "")
             {
-                configFile.loaders[loader] = this
-                terminal.success("$loader version set to $this")
+                lockFile.setLoader(loaderName, this)
+                terminal.success("    $loaderName version set to $this")
             }
         }
 

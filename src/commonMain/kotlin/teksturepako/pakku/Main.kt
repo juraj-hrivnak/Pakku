@@ -8,6 +8,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.pakku.api.http.client
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.cli.cmd.*
+import teksturepako.pakku.cli.cmd.Set
 import teksturepako.pakku.io.exitPakku
 
 fun main(args: Array<String>)

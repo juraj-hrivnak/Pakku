@@ -1,16 +1,18 @@
 package teksturepako.pakku.api.actions
 
 import kotlinx.serialization.encodeToString
-import net.thauvin.erik.urlencoder.UrlEncoderUtil.encode
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.data.jsonEncodeDefaults
 import teksturepako.pakku.api.models.CfModpackModel
 import teksturepako.pakku.api.models.CfModpackModel.*
 import teksturepako.pakku.api.models.MrModpackModel
 import teksturepako.pakku.api.models.MrModpackModel.File
 import teksturepako.pakku.api.models.MrModpackModel.File.Env
+import teksturepako.pakku.api.models.MrModpackModel.File.Hashes
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverride
+import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.REAL
 import teksturepako.pakku.api.overrides.Overrides.toExportData
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
@@ -25,15 +27,15 @@ suspend fun export(
     onError: suspend (message: String) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile,
-    projectOverrides: List<ProjectOverride>,
+    projectOverrides: MutableList<ProjectOverride>,
     platforms: List<Platform>,
 )
 {
     val outputFileName = when
     {
-        lockFile.getName().isBlank()    -> return onError("Could not export: 'name' is not specified")
-        configFile.version.isNotBlank() -> "${lockFile.getName()}-${configFile.version}"
-        else -> lockFile.getName()
+        configFile.getName().isBlank()    -> return onError("Could not export: 'name' is not specified")
+        configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
+        else -> configFile.getName()
     }
 
     val mcVersion = lockFile.getMcVersions().firstOrNull()
@@ -61,22 +63,42 @@ suspend fun exportCurseForge(
     mcVersion: String,
     lockFile: LockFile,
     configFile: ConfigFile,
-    projectOverrides: List<ProjectOverride>
+    projectOverrides: MutableList<ProjectOverride>
 ): Result<String>
 {
     val fileDirector = FileDirectorData()
+    val create: MutableList<Pair<String, Any>> = mutableListOf()
+
+    // File Director
+    if (lockFile.getAllProjects().any { "filedirector" in it })
+    {
+        create += "overrides/config/mod-director/.bundle.json" to json.encodeToString(fileDirector)
+    }
 
     val cfLoaders: List<CfModLoaderData> =
-        configFile.loaders.toList().map { dep ->
+        lockFile.getLoadersWithVersions().map { dep ->
             CfModLoaderData(
                 id = "${dep.first}-${dep.second}",
-                primary = configFile.loaders.toList().firstOrNull()!! == dep
+                primary = lockFile.getLoadersWithVersions().firstOrNull()!! == dep
             )
         }
 
     val cfFiles = lockFile.getAllProjects().mapNotNull { project ->
         val file = project.getFilesForPlatform(CurseForge).firstOrNull()
-            ?: return@mapNotNull null.also { project.addToFileDirectorFrom(Modrinth, fileDirector) }
+            ?: return@mapNotNull null.also {
+                if (lockFile.getAllProjects().any { "filedirector" in it })
+                {
+                    project.addToFileDirectorFrom(Modrinth, fileDirector)
+                }
+                else if (project.redistributable)
+                {
+                    project.getFilesForPlatform(Modrinth).firstOrNull()?.let { file ->
+                        projectOverrides += ProjectOverride(
+                            project.type, file.fileName, location = REAL
+                        )
+                    }
+                }
+            }
 
         CfModData(
             projectID = project.id[CurseForge.serialName]!!, fileID = file.id
@@ -88,19 +110,23 @@ suspend fun exportCurseForge(
             version = mcVersion,
             modLoaders = cfLoaders
         ),
-        name = lockFile.getName(),
-        version = configFile.version,
-        author = configFile.author,
+        name = configFile.getName(),
+        version = configFile.getVersion(),
+        author = configFile.getAuthor(),
         files = cfFiles
     )
 
+    // Manifest
+    create += "manifest.json" to jsonEncodeDefaults.encodeToString(cfManifestData)
+
+    // Project Overrides
+    create += projectOverrides.toExportData()
+
     return zipFile(
-        outputFileName,
-        "zip",
-        configFile.getAllOverrides(),
-        "manifest.json" to jsonEncodeDefaults.encodeToString(cfManifestData),
-        "overrides/config/mod-director/.bundle.json" to jsonEncodeDefaults.encodeToString(fileDirector),
-        *projectOverrides.toExportData()
+        outputFileName = outputFileName,
+        extension = "zip",
+        overrides = configFile.getAllOverrides(),
+        create = create.toTypedArray()
     )
 }
 
@@ -109,22 +135,43 @@ suspend fun exportModrinth(
     mcVersion: String,
     lockFile: LockFile,
     configFile: ConfigFile,
-    projectOverrides: List<ProjectOverride>
+    projectOverrides: MutableList<ProjectOverride>
 ): Result<String>
 {
     val fileDirector = FileDirectorData()
+    val create: MutableList<Pair<String, Any>> = mutableListOf()
 
-    val mrLoaders: List<Pair<String, String>> = configFile.loaders.mapNotNull { dep ->
-        Modrinth.getExportLoaderName(dep.key)?.let { it to dep.value }
+    // File Director
+    if (lockFile.getAllProjects().any { "filedirector" in it })
+    {
+        create += "overrides/config/mod-director/.bundle.json" to json.encodeToString(fileDirector)
     }
+
+    val mrLoaders: List<Pair<String, String>> = lockFile.getLoadersWithVersions()
+        .mapNotNull { (loaderName, loaderVersion) ->
+            Modrinth.getExportLoaderName(loaderName)?.let { it to loaderVersion }
+        }
 
     val mrFiles: Set<File> = lockFile.getAllProjects().mapNotNull { project ->
         val file = project.getFilesForPlatform(Modrinth).firstOrNull()
-            ?: return@mapNotNull null.also { project.addToFileDirectorFrom(CurseForge, fileDirector) }
+            ?: return@mapNotNull null.also {
+                if (lockFile.getAllProjects().any { "filedirector" in it })
+                {
+                    project.addToFileDirectorFrom(CurseForge, fileDirector)
+                }
+                else if (project.redistributable)
+                {
+                    project.getFilesForPlatform(CurseForge).firstOrNull()?.let { file ->
+                        projectOverrides += ProjectOverride(
+                            project.type, file.fileName, location = REAL
+                        )
+                    }
+                }
+            }
 
         File(
             path = "${project.type.folderName}/${file.fileName}",
-            hashes = File.Hashes(
+            hashes = Hashes(
                 sha512 = file.hashes?.get("sha512")!!,
                 sha1 = file.hashes["sha1"]!!
             ),
@@ -134,7 +181,7 @@ suspend fun exportModrinth(
                 server = if (project.side == ProjectSide.SERVER || project.side ==  ProjectSide.BOTH)
                     "required" else "unsupported"
             ),
-            downloads = setOf(encode(file.url!!)), // Encode URLs
+            downloads = setOf(file.url!!.replace(" ", "+")), // Replace spaces with '+' in URLs
             fileSize = file.size
         )
     }.toSet()
@@ -143,19 +190,23 @@ suspend fun exportModrinth(
         .apply { this.putAll(mrLoaders) }
 
     val mrModpackModel = MrModpackModel(
-        name = lockFile.getName(),
-        summary = configFile.description,
-        versionId = configFile.version,
+        name = configFile.getName(),
+        summary = configFile.getDescription(),
+        versionId = configFile.getVersion(),
         files = mrFiles,
         dependencies = mrDependencies
     )
 
+    // Index
+    create += "modrinth.index.json" to jsonEncodeDefaults.encodeToString(mrModpackModel)
+
+    // Project Overrides
+    create += projectOverrides.toExportData()
+
     return zipFile(
-        outputFileName,
-        "mrpack",
-        configFile.getAllOverrides(),
-        "modrinth.index.json" to jsonEncodeDefaults.encodeToString(mrModpackModel),
-        "overrides/config/mod-director/.bundle.json" to jsonEncodeDefaults.encodeToString(fileDirector),
-        *projectOverrides.toExportData()
+        outputFileName = outputFileName,
+        extension = "mrpack",
+        overrides = configFile.getAllOverrides(),
+        create = create.toTypedArray()
     )
 }

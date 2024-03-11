@@ -2,7 +2,6 @@
 
 package teksturepako.pakku.api.data
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.platforms.CurseForge
@@ -28,25 +27,13 @@ import teksturepako.pakku.io.writeToFile
  */
 @Serializable
 data class LockFile(
-    private var name: String = "",
     private var target: String? = null,
     @SerialName("mc_versions") private var mcVersions: MutableList<String> = mutableListOf(),
-    private var loaders: MutableList<String> = mutableListOf(),
+    private val loaders: MutableMap<String, String> = mutableMapOf(),
     private val projects: MutableList<Project> = mutableListOf(),
-
 )
 {
-    // -- PACK --
-
-    fun setName(name: String)
-    {
-        this.name = name
-    }
-
-    fun setTarget(target: String)
-    {
-        this.target = target
-    }
+    // -- MC VERSIONS --
 
     fun setMcVersions(mcVersions: Collection<String>)
     {
@@ -54,17 +41,35 @@ data class LockFile(
         this.mcVersions.addAll(mcVersions)
     }
 
-    fun setLoaders(loaders: Collection<String>)
+    fun getMcVersions() = this.mcVersions
+
+    // -- LOADERS --
+
+    fun addLoader(loaderName: String, loaderVersion: String)
     {
-        this.loaders.clear()
-        this.loaders.addAll(loaders)
+        this.loaders[loaderName] = loaderVersion
     }
 
-    fun getName() = this.name
-    fun getMcVersions() = this.mcVersions
-    fun getLoaders() = this.loaders
+    fun setLoader(loaderName: String, loaderVersion: String)
+    {
+        this.loaders[loaderName] = loaderVersion
+    }
+
+    fun setLoaders(loaders: Map<String, String>)
+    {
+        this.loaders.clear()
+        this.loaders.putAll(loaders)
+    }
+
+    fun getLoaders() = this.loaders.keys.toList()
+    fun getLoadersWithVersions() = this.loaders.toList()
 
     // -- TARGET --
+
+    fun setTarget(target: String)
+    {
+        this.target = target
+    }
 
     fun getPlatforms(): Result<List<Platform>> = if (target != null) when (target!!.lowercase())
     {
@@ -227,14 +232,6 @@ data class LockFile(
 
     // -- FILE I/O --
 
-    private val configFile = runBlocking { ConfigFile.readToResult().getOrNull() }
-
-    init
-    {
-        // Inherit name
-        configFile?.name?.let { name = it }
-    }
-
     companion object
     {
         const val FILE_NAME = "pakku-lock.json"
@@ -248,9 +245,9 @@ data class LockFile(
          * Reads [LockFile] and parses it, or returns an exception.
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
-        suspend fun readToResult(): Result<LockFile> = decodeToResult(LockFile(), FILE_NAME)
+        suspend fun readToResult(): Result<LockFile> = decodeToResult(FILE_NAME)
 
-        suspend fun readToResultFrom(path: String): Result<LockFile> = decodeToResult(LockFile(), path)
+        suspend fun readToResultFrom(path: String): Result<LockFile> = decodeToResult(path)
     }
 
     suspend fun write() = writeToFile(this, FILE_NAME, overrideText = true)

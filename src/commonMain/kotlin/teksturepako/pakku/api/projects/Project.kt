@@ -75,10 +75,12 @@ data class Project(
                 || this.slug.values.any { it in other.slug.values }
     }
 
-    /** Checks if the current project contains the specified string in its slugs or IDs. */
+    /** Checks if the current project contains the specified string in its slugs, names or IDs. */
     operator fun contains(input: String): Boolean
     {
-        return input in this.slug.values || input in this.id.values
+        return input in this.slug.values
+                || input in this.name.values
+                || input in this.id.values
     }
 
     /** Checks if the project has any files. */

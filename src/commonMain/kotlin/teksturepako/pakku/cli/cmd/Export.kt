@@ -36,7 +36,7 @@ class Export : CliktCommand("Export modpack")
         export(
             onSuccess = { terminal.success(it) },
             onError = { terminal.danger(it) },
-            lockFile, configFile, projectOverrides, platforms
+            lockFile, configFile, projectOverrides.toMutableList(), platforms
         )
 
         echo()

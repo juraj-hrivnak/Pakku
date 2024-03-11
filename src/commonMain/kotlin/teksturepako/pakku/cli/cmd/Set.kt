@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.options.associate
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.varargValues
 import com.github.ajalt.clikt.parameters.types.boolean
@@ -15,6 +16,8 @@ import teksturepako.pakku.api.projects.UpdateStrategy
 
 class Set : CliktCommand("Set various properties of your pack or projects")
 {
+    // -- PROJECTS --
+
     private val projectArgs: List<String> by argument("projects").multiple()
 
     private val sideOpt: String? by option(
@@ -32,11 +35,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
         help = "Change whether the project can be redistributed"
     ).boolean()
 
-
-    private val packNameOpt: String? by option(
-        "-n", "--name",
-        help = "Change the name of the pack"
-    )
+    // -- PACK --
 
     private val targetOpt: String? by option(
         "-t", "--target",
@@ -48,21 +47,27 @@ class Set : CliktCommand("Set various properties of your pack or projects")
         help = "Change the minecraft versions"
     ).varargValues()
 
-    private val loadersOpts: List<String>? by option(
+    private val loadersOpts: Map<String, String>? by option(
         "-l", "--loaders",
         help = "Change the mod loaders"
-    ).varargValues()
+    ).associate()
 
-    // TODO: Refactor this nested mess
     override fun run() = runBlocking {
-        val lockFile = LockFile.readOrNew()
+        val lockFile = LockFile.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
 
-        /** Projects */
+        // -- PROJECTS --
+
         if (projectArgs.isNotEmpty())
         {
-            projectArgs.map { arg ->
-                lockFile.getProject(arg)?.apply {
-                    /** Side */
+            for (arg in projectArgs)
+            {
+                val project = lockFile.getProject(arg) ?: continue
+
+                project.apply {
                     sideOpt?.let { opt ->
                         ProjectSide.valueOf(opt.uppercase())
                     }?.let {
@@ -70,7 +75,6 @@ class Set : CliktCommand("Set various properties of your pack or projects")
                         terminal.success("'side' set to '$it' for ${this.slug}")
                     }
 
-                    /** Update strategy */
                     updateStrategyOpt?.let { opt ->
                         UpdateStrategy.valueOf(opt.uppercase())
                     }?.let {
@@ -78,7 +82,6 @@ class Set : CliktCommand("Set various properties of your pack or projects")
                         terminal.success("'update_strategy' set to '$it' for ${this.slug}")
                     }
 
-                    /** Redistribution */
                     redistributableOpt?.let { opt ->
                         redistributable = opt
                         terminal.success("'redistributable' set to '$opt' for ${this.slug}")
@@ -87,19 +90,15 @@ class Set : CliktCommand("Set various properties of your pack or projects")
             }
         }
 
-        /** Pack name */
-        packNameOpt?.let {
-            lockFile.setName(it)
-            terminal.success("'name' set to '$it'")
-        }
+        // -- PACK --
 
-        /** Target */
+        /* Target */
         targetOpt?.let {
             lockFile.setTarget(it)
             terminal.success("'target' set to '$it'")
         }
 
-        /** Minecraft versions */
+        /* Minecraft versions */
         mcVersionsOpts?.let { versions ->
             var failed = false
 
@@ -124,7 +123,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
             }
         }
 
-        /** Loaders */
+        /* Loaders */
         loadersOpts?.let { loaders ->
             var failed = false
 

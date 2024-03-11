@@ -11,15 +11,40 @@ import teksturepako.pakku.io.writeToFile
 
 @Serializable
 data class ConfigFile(
-    var name: String? = null,
-
-    var version: String = "",
-    var description: String = "",
-    var author: String = "",
-    val loaders: MutableMap<String, String> = mutableMapOf(),
-    val overrides: MutableList<String> = mutableListOf(),
+    private var name: String = "",
+    private var version: String = "",
+    private var description: String = "",
+    private var author: String = "",
+    private val overrides: MutableList<String> = mutableListOf(),
 )
 {
+    // -- PACK --
+
+    fun setName(name: String)
+    {
+        this.name = name
+    }
+
+    fun setVersion(version: String)
+    {
+        this.version = version
+    }
+
+    fun setDescription(description: String)
+    {
+        this.description = description
+    }
+
+    fun setAuthor(author: String)
+    {
+        this.author = author
+    }
+
+    fun getName() = this.name
+    fun getVersion() = this.version
+    fun getDescription() = this.description
+    fun getAuthor() = this.author
+
     // -- OVERRIDES --
 
     fun addOverride(override: String)
@@ -27,7 +52,7 @@ data class ConfigFile(
         this.overrides.add(override)
     }
 
-    fun addAllOverride(overrides: Collection<String>)
+    fun addAllOverrides(overrides: Collection<String>)
     {
         this.overrides.addAll(overrides)
     }
@@ -58,10 +83,10 @@ data class ConfigFile(
          * Reads [LockFile] and parses it, or returns an exception.
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
-        suspend fun readToResult(): Result<ConfigFile> = decodeToResult(ConfigFile(), FILE_NAME)
+        suspend fun readToResult(): Result<ConfigFile> = decodeToResult(FILE_NAME)
 
-        suspend fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(ConfigFile(), path)
+        suspend fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
     }
 
-    suspend fun write() = writeToFile(this, FILE_NAME, overrideText = true)
+    suspend fun write() = writeToFile(this, FILE_NAME, overrideText = true, format = jsonEncodeDefaults)
 }
