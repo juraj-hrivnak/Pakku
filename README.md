@@ -59,6 +59,5 @@ java -jar pakku.jar [<options>] <command> [<args>]...
 
 <p align="center">
   To build Pakku for the JVM, run the <code>gradlew jvmJar</code>. <br>
-  To build Pakku using Kotlin/Native, run the <code>gradlew linkDebugExecutableNative</code> or <code>gradlew linkReleaseExecutableNative</code>.
 </p>
 
