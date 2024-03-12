@@ -6,10 +6,10 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.mordant.terminal.YesNoPrompt
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.cli.ynPrompt
 
 class Rm : CliktCommand("Remove projects")
 {
@@ -25,7 +25,7 @@ class Rm : CliktCommand("Remove projects")
 
         if (allFlag)
         {
-            if (YesNoPrompt("Do you really want to remove all projects?", terminal).ask() == true)
+            if (ynPrompt("Do you really want to remove all projects?", terminal))
             {
                 echo()
                 lockFile.removeAllProjects()
@@ -42,7 +42,7 @@ class Rm : CliktCommand("Remove projects")
             projectIn.createRemovalRequest(
                 onWarning = { warning -> terminal.warning(warning) },
                 onRemoval = { project, isRecommended ->
-                    if (YesNoPrompt("Do you want to remove ${project.slug}?", terminal, isRecommended).ask() == true)
+                    if (ynPrompt("Do you want to remove ${project.slug}?", terminal, isRecommended))
                     {
                         lockFile.remove(project)
                         lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
@@ -50,7 +50,7 @@ class Rm : CliktCommand("Remove projects")
                     }
                 },
                 onDepRemoval = { dependency, isRecommended ->
-                    if (isRecommended || YesNoPrompt("Do you want to remove ${dependency.slug}?", terminal, false).ask() == true)
+                    if (isRecommended || ynPrompt("Do you want to remove ${dependency.slug}?", terminal, false))
                     {
                         lockFile.remove(dependency)
                         lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)

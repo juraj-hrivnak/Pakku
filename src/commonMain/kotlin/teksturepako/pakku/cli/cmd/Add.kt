@@ -4,13 +4,13 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
-import com.github.ajalt.mordant.terminal.YesNoPrompt
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.promptForProject
 import teksturepako.pakku.cli.resolveDependencies
+import teksturepako.pakku.cli.ynPrompt
 
 class Add : CliktCommand("Add projects")
 {
@@ -45,7 +45,7 @@ class Add : CliktCommand("Add projects")
                 onError = { error -> terminal.danger(error.message) },
                 onRetry = { platform -> promptForProject(platform, terminal, lockFile) },
                 onSuccess = { project, isRecommended, reqHandlers ->
-                    if (YesNoPrompt("Do you want to add ${project.slug}?", terminal, isRecommended).ask() == true)
+                    if (ynPrompt("Do you want to add ${project.slug}?", terminal, isRecommended))
                     {
                         lockFile.add(project)
                         lockFile.linkProjectToDependents(project)
