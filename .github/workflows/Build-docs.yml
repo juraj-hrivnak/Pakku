@@ -1,4 +1,5 @@
 name: Build documentation
+run-name: "Build documentation #${{ github.run_number }}"
 
 on:
   push:
