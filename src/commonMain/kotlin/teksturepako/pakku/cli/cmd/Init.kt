@@ -68,6 +68,10 @@ class Init : CliktCommand("Initialize modpack")
             terminal.success("'target' set to '$this'")
         }
 
+        // -- OVERRIDES --
+
+        configFile.addOverride("config")
+
         // -- FINISH --
 
         echo()

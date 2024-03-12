@@ -49,7 +49,8 @@ class Set : CliktCommand("Set various properties of your pack or projects")
 
     private val loadersOpts: Map<String, String>? by option(
         "-l", "--loaders",
-        help = "Change the mod loaders"
+        help = "Change the mod loaders",
+        metavar = "<name>=<version>"
     ).associate()
 
     override fun run() = runBlocking {
