@@ -1,5 +1,5 @@
 
-<p align="center">  
+<p align="center">
   <a href="https://github.com/juraj-hrivnak/pakku">
     <img
       src="https://github.com/juraj-hrivnak/Pakku/assets/71150936/818cb871-15eb-4052-9577-dc8ba75e0855"
@@ -37,6 +37,15 @@
 
 <p align="center">
   Pakku includes many features to make your life easier as a modpack developer. 
+</p>
+
+<p align="center">
+  <a href="https://github.com/juraj-hrivnak/pakku">
+    <img
+      src="docs/images/screenshot_export.png"
+      alt="Exporting a Modpack"
+    >
+  </a>
 </p>
 
 <h2 align="center">Usage</h2>

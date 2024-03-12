@@ -8,6 +8,7 @@ import java.io.InputStream
 plugins {
     kotlin("multiplatform") version libs.versions.kotlin
     kotlin("plugin.serialization") version libs.versions.kotlin
+    id("org.jetbrains.dokka") version libs.versions.kotlin
     id("io.ktor.plugin") version libs.versions.ktor
 //    id("io.kotest.multiplatform") version libs.versions.kotest
 }
