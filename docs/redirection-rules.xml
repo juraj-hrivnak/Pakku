@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rules SYSTEM "https://resources.jetbrains.com/writerside/1.0/redirection-rules.dtd">
+<rules>
+    <!-- format is as follows
+    <rule id="<unique id>">
+        <accepts>page.html</accepts>
+    </rule>
+    -->
+    <rule id="55d123f2">
+        <description>Created after removal of "Starter" from Help Instance</description>
+        <accepts>Starter.html</accepts>
+    </rule>
+    <rule id="5e5d9475">
+        <description>Created after removal of "Tutorial" from Help Instance</description>
+        <accepts>Tutorial.html</accepts>
+    </rule>
+    <rule id="7690ada2">
+        <description>Created after removal of "How to" from Help Instance</description>
+        <accepts>How-to.html</accepts>
+    </rule>
+    <rule id="b3619b2">
+        <description>Created after removal of "Section Starting Page" from Pakku</description>
+        <accepts>Section-Starting-Page.html</accepts>
+    </rule>
+    <rule id="5c460200">
+        <description>Created after removal of "Section Starting Page" from Pakku</description>
+        <accepts>Section-Starting-Page.html</accepts>
+    </rule>
+    <rule id="55fc03ad">
+        <description>Created after removal of "Pakku Docs" from Pakku</description>
+        <accepts>Docs.html</accepts>
+    </rule>
+    <rule id="3efe8007">
+        <description>Created after removal of "API" from Pakku</description>
+        <accepts>API.html</accepts>
+    </rule>
+    <rule id="719892d5">
+        <description>Created after removal of "Desktop" from Pakku</description>
+        <accepts>Desktop.html</accepts>
+    </rule>
+    <rule id="7fef7771">
+        <description>Created after removal of "CLI" from Pakku</description>
+        <accepts>CLI.html</accepts>
+    </rule>
+    <rule id="7b7645c0">
+        <description>Created after removal of "Commands" from Pakku</description>
+        <accepts>Commands.html</accepts>
+    </rule>
+    <rule id="181b6094">
+        <description>Created after removal of "Pakku CLI" from Pakku</description>
+        <accepts>Pakku-CLI.html</accepts>
+    </rule>
+    <rule id="4b516ac4">
+        <description>Created after removal of "Getting started" from Pakku</description>
+        <accepts>Getting-Started.html</accepts>
+    </rule>
+    <rule id="5b75f270">
+        <description>Created after removal of "Using as standalone api" from Pakku</description>
+        <accepts>API.html</accepts>
+    </rule>
+    <rule id="4eb78711">
+        <description>Created after removal of "Overview" from Pakku</description>
+        <accepts>Overview.html</accepts>
+    </rule>
+    <rule id="1e29141b">
+        <description>Created after removal of "Starter" from Pakku</description>
+        <accepts>Starter.html</accepts>
+    </rule>
+    <rule id="1926e1fd">
+        <description>Created after removal of "Reference" from Pakku</description>
+        <accepts>Reference.html</accepts>
+    </rule>
+    <rule id="3cc25bb4">
+        <description>Created after removal of "Reference" from Pakku</description>
+        <accepts>Reference.html</accepts>
+    </rule>
+    <rule id="331f6583">
+        <description>Created after removal of "Starter" from Pakku</description>
+        <accepts>Starter.html</accepts>
+    </rule>
+    <rule id="93c0d09">
+        <description>Created after removal of "Set up Your Modpack" from Pakku</description>
+        <accepts>Setup-Your-Modpack.html</accepts>
+    </rule>
+    <rule id="70f5864">
+        <description>Created after removal of ".pakku Directory" from Pakku</description>
+        <accepts>pakku-directory.html</accepts>
+    </rule>
+    <rule id="1f55091f">
+        <description>Created after removal of "pakku-lock.json" from Pakku</description>
+        <accepts>Pakku-Lock.html</accepts>
+    </rule>
+</rules>

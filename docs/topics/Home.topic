@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/xhtml-entities.dtd">
+<!--suppress ALL -->
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
+       title="Pakku Docs" id="Home">
+
+    <section-starting-page>
+        <title>Pakku Docs</title>
+        <description>
+            Documentation for the multiplatform modpack manager for Minecraft: Java Edition.
+        </description>
+
+        <spotlight>
+            <a href="About.md"/>
+            <a href="Pakku-Terminology.md"/>
+            <a href="Installing-Pakku.md"/>
+            <a href="Setting-Up-a-Modpack.md"/>
+        </spotlight>
+
+        <primary>
+            <title>CLI Commands</title>
+            <a href="pakku-init.md"/>
+            <a href="pakku-import.md"/>
+            <a href="pakku-set.md"/>
+            <a href="pakku-add.md"/>
+            <a href="pakku-rm.md"/>
+            <a href="pakku-update.md"/>
+            <a href="pakku-ls.md"/>
+            <a href="pakku-fetch.md"/>
+            <a href="pakku-link.md"/>
+            <a href="pakku-export.md"/>
+            <a href="pakku-diff.md"/>
+            <a href="pakku-version.md"/>
+        </primary>
+
+        <secondary>
+            <title>Configuring Pakku</title>
+            <a href="Pakku-Directory.md"/>
+            <a href="Config-File.md"/>
+            <a href="Lock-File.md"/>
+        </secondary>
+    </section-starting-page>
+
+</topic>
