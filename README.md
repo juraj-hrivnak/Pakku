@@ -52,7 +52,7 @@ java -jar pakku.jar [<options>] <command> [<args>]...
 <h2 align="center">Documentation</h2>
 
 <p align="center">
-  See <a href="https://juraj-hrivnak.github.io/Pakku-Docs/home.html">juraj-hrivnak.github.io/Pakku-Docs/</a>
+  See <a href="https://juraj-hrivnak.github.io/Pakku/home.html">juraj-hrivnak.github.io/Pakku/</a>
 </p>
 
 <h2 align="center">Development</h2>
