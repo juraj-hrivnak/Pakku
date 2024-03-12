@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="p"
+                 name="Pakku"
+                 start-page="Home.topic">
+
+    <toc-element topic="Home.topic" toc-title="Home">
+    </toc-element>
+    <toc-element topic="About.md"/>
+    <toc-element topic="Pakku-Terminology.md"/>
+    <toc-element toc-title="Getting Started">
+        <toc-element topic="Installing-Pakku.md"/>
+        <toc-element topic="Setting-Up-a-Modpack.md"/>
+    </toc-element>
+    <toc-element toc-title="CLI Commands">
+        <toc-element topic="pakku.md"/>
+        <toc-element topic="pakku-init.md"/>
+        <toc-element topic="pakku-import.md"/>
+        <toc-element topic="pakku-set.md"/>
+        <toc-element topic="pakku-add.md"/>
+        <toc-element topic="pakku-rm.md"/>
+        <toc-element topic="pakku-update.md"/>
+        <toc-element topic="pakku-ls.md"/>
+        <toc-element topic="pakku-fetch.md"/>
+        <toc-element topic="pakku-link.md"/>
+        <toc-element topic="pakku-export.md"/>
+        <toc-element topic="pakku-diff.md"/>
+        <toc-element topic="pakku-version.md"/>
+    </toc-element>
+    <toc-element toc-title="Configuring Pakku">
+        <toc-element topic="Pakku-Directory.md"/>
+        <toc-element topic="Config-File.md"/>
+        <toc-element topic="Lock-File.md"/>
+    </toc-element>
+</instance-profile>

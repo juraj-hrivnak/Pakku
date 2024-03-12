@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<buildprofiles xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/build-profiles.xsd"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <variables>
+        <primary-color>aqua</primary-color>
+        <custom-favicons>pakku.svg</custom-favicons>
+        <header-logo>pakku.svg</header-logo>
+        <product-web-url>https://github.com/juraj-hrivnak/Pakku</product-web-url>
+        <download-title>Get Pakku</download-title>
+        <download-page>https://github.com/juraj-hrivnak/Pakku</download-page>
+        <showDownloadButton>true</showDownloadButton>
+    </variables>
+    <build-profile instance="p">
+        <variables>
+            <noindex-content>true</noindex-content>
+        </variables>
+    </build-profile>
+    <footer>
+        <link href="https://github.com/juraj-hrivnak/Pakku">GitHub</link>
+        <link href="https://discord.gg/dtAyqdzTMj">Discord</link>
+    </footer>
+</buildprofiles>
