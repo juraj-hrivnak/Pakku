@@ -11,6 +11,7 @@ suspend fun unzip(path: String): VfsFile
 }
 
 expect suspend fun zipFile(
+    path: String?,
     outputFileName: String,
     extension: String,
     overrides: List<String>,

@@ -8,6 +8,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.containsProject
 
@@ -44,22 +45,7 @@ class Ls : CliktCommand("List projects")
                 else                  -> cyan(project.updateStrategy.short)
             }
 
-            val name: String? = when
-            {
-                project.redistributable ->
-                {
-                    if (project.hasNoFiles()) project.name.values.firstOrNull()?.let { red(it) }
-                    else project.name.values.firstOrNull()
-                }
-                else                    ->
-                {
-                    if (project.hasNoFiles()) project.name.values.firstOrNull()?.let {
-                        TextStyle(bgColor = white, color = red)("⚠$it")
-                    } else project.name.values.firstOrNull()?.let {
-                        TextStyle(bgColor = white, color = black)("⚠$it")
-                    }
-                }
-            }
+            val name: String? = project.getFlavoredProjectName()
 
             val deps: String = when
             {
@@ -84,5 +70,23 @@ class Ls : CliktCommand("List projects")
         echo()
         terminal.info("Projects total: ${projects.size}")
         echo()
+    }
+}
+
+fun Project.getFlavoredProjectName(): String? = when
+{
+    this.redistributable ->
+    {
+        if (this.hasNoFiles()) this.name.values.firstOrNull()?.let { red(it) }
+        else this.name.values.firstOrNull()
+    }
+    else                    ->
+    {
+        if (this.hasNoFiles()) this.name.values.firstOrNull()?.let {
+            TextStyle(bgColor = white, color = red)("⚠$it")
+        }
+        else this.name.values.firstOrNull()?.let {
+            TextStyle(bgColor = white, color = black)("⚠$it")
+        }
     }
 }

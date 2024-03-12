@@ -3,9 +3,11 @@ package teksturepako.pakku.io
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.lingala.zip4j.ZipFile
+import teksturepako.pakku.api.data.PakkuException
 import java.io.File
 
 actual suspend fun zipFile(
+    path: String?,
     outputFileName: String,
     extension: String,
     overrides: List<String>,
@@ -15,8 +17,13 @@ actual suspend fun zipFile(
     val pakkuTemp = "./.pakku/.tmp"
     val output = "$outputFileName.$extension"
 
+    if (path != null && !File(path).isDirectory)
+        return@withContext Result.failure(PakkuException("${this::class.simpleName}#zipFile: $path is not a valid path"))
+
     File(pakkuTemp).deleteRecursively()
-    if (File(output).exists()) File(output).delete()
+
+    val outputFile = if (path != null) File(path, output) else File(output)
+    if (outputFile.exists()) outputFile.delete()
 
     for (pair in create)
     {
@@ -28,7 +35,7 @@ actual suspend fun zipFile(
         else if (pair.second is String && file.isFile) file.writeText(pair.second as String)
     }
 
-    val zip = ZipFile(output)
+    val zip = ZipFile(outputFile)
 
     for (file in File(pakkuTemp).listFiles())
     {
@@ -44,5 +51,5 @@ actual suspend fun zipFile(
 
     File(pakkuTemp).deleteRecursively()
 
-    return@withContext Result.success(output)
+    return@withContext Result.success(outputFile.path)
 }

@@ -17,7 +17,9 @@ import teksturepako.pakku.api.overrides.Overrides.toExportData
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
+import teksturepako.pakku.cli.cmd.getFlavoredProjectName
 import teksturepako.pakku.compat.FileDirectorData
 import teksturepako.pakku.compat.addToFileDirectorFrom
 import teksturepako.pakku.io.zipFile
@@ -25,6 +27,9 @@ import teksturepako.pakku.io.zipFile
 suspend fun export(
     onSuccess: suspend (message: String) -> Unit,
     onError: suspend (message: String) -> Unit,
+    onWarning: suspend (message: String) -> Unit,
+    onInfo: suspend (message: String) -> Unit,
+    path: String?,
     lockFile: LockFile,
     configFile: ConfigFile,
     projectOverrides: MutableList<ProjectOverride>,
@@ -43,22 +48,69 @@ suspend fun export(
 
     if (CurseForge in platforms)
     {
-        exportCurseForge(outputFileName, mcVersion, lockFile, configFile, projectOverrides).fold(
-            onSuccess = { onSuccess("${CurseForge.name} modpack exported to '$it'") },
-            onFailure = { onError(it.message ?: "") }
+        exportCurseForge(
+            onInfo = { onInfo("(${CurseForge.name}) $it") },
+            onWarning = { onWarning("(${CurseForge.name}) Warning: $it") },
+            path, outputFileName, mcVersion, lockFile, configFile, projectOverrides
+        ).fold(
+            onSuccess = { onSuccess("(${CurseForge.name}) modpack exported to '$it'") },
+            onFailure = { onError("(${CurseForge.name}) ${it.message}") }
         )
     }
 
+    onInfo("")
+
     if (Modrinth in platforms)
     {
-        exportModrinth(outputFileName, mcVersion, lockFile, configFile, projectOverrides).fold(
-            onSuccess = { onSuccess("${Modrinth.name} modpack exported to '$it'") },
-            onFailure = { onError(it.message ?: "") }
+        exportModrinth(
+            onInfo = { onInfo("(${Modrinth.name}) $it") },
+            onWarning = { onWarning("(${Modrinth.name}) Warning: $it") },
+            path, outputFileName, mcVersion, lockFile, configFile, projectOverrides
+        ).fold(
+            onSuccess = { onSuccess("(${Modrinth.name}) modpack exported to '$it'") },
+            onFailure = { onError("(${Modrinth.name}) ${it.message}") }
         )
     }
 }
 
+suspend fun onProjectMissing(
+    onInfo: suspend (message: String) -> Unit,
+    onWarning: suspend (message: String) -> Unit,
+    project: Project,
+    platform: Platform,
+    lockFile: LockFile,
+    fileDirector: FileDirectorData,
+    projectOverrides: MutableList<ProjectOverride>,
+)
+{
+    if (!project.redistributable)
+    {
+        return onWarning(
+            "${project.getFlavoredProjectName()} could not be exported as 'project override'" +
+                    " because it is not redistributable"
+        )
+    }
+
+    if (lockFile.getAllProjects().any { "filedirector" in it })
+    {
+        project.addToFileDirectorFrom(platform, fileDirector)
+        onInfo("${project.getFlavoredProjectName()} exported to file director config")
+    }
+    else
+    {
+        project.getFilesForPlatform(platform).firstOrNull()?.let { file ->
+            projectOverrides += ProjectOverride(
+                project.type, file.fileName, location = REAL
+            )
+            onInfo("${project.getFlavoredProjectName()} exported as 'project override'")
+        }
+    }
+}
+
 suspend fun exportCurseForge(
+    onInfo: suspend (message: String) -> Unit,
+    onWarning: suspend (message: String) -> Unit,
+    path: String?,
     outputFileName: String,
     mcVersion: String,
     lockFile: LockFile,
@@ -85,19 +137,12 @@ suspend fun exportCurseForge(
 
     val cfFiles = lockFile.getAllProjects().mapNotNull { project ->
         val file = project.getFilesForPlatform(CurseForge).firstOrNull()
-            ?: return@mapNotNull null.also {
-                if (lockFile.getAllProjects().any { "filedirector" in it })
-                {
-                    project.addToFileDirectorFrom(Modrinth, fileDirector)
-                }
-                else if (project.redistributable)
-                {
-                    project.getFilesForPlatform(Modrinth).firstOrNull()?.let { file ->
-                        projectOverrides += ProjectOverride(
-                            project.type, file.fileName, location = REAL
-                        )
-                    }
-                }
+            ?: return@mapNotNull null.also { _ ->
+                onProjectMissing(
+                    onInfo = { onInfo(it) },
+                    onWarning = { onWarning(it) },
+                    project, Modrinth, lockFile, fileDirector, projectOverrides
+                )
             }
 
         CfModData(
@@ -118,11 +163,14 @@ suspend fun exportCurseForge(
 
     // Manifest
     create += "manifest.json" to jsonEncodeDefaults.encodeToString(cfManifestData)
+    onInfo("${cfManifestData.files.size} projects exported to 'manifest.json'")
 
     // Project Overrides
     create += projectOverrides.toExportData()
+    onInfo("${projectOverrides.size} project overrides exported to the 'overrides' folder")
 
     return zipFile(
+        path = path,
         outputFileName = outputFileName,
         extension = "zip",
         overrides = configFile.getAllOverrides(),
@@ -131,6 +179,9 @@ suspend fun exportCurseForge(
 }
 
 suspend fun exportModrinth(
+    onInfo: suspend (message: String) -> Unit,
+    onWarning: suspend (message: String) -> Unit,
+    path: String?,
     outputFileName: String,
     mcVersion: String,
     lockFile: LockFile,
@@ -155,18 +206,11 @@ suspend fun exportModrinth(
     val mrFiles: Set<File> = lockFile.getAllProjects().mapNotNull { project ->
         val file = project.getFilesForPlatform(Modrinth).firstOrNull()
             ?: return@mapNotNull null.also {
-                if (lockFile.getAllProjects().any { "filedirector" in it })
-                {
-                    project.addToFileDirectorFrom(CurseForge, fileDirector)
-                }
-                else if (project.redistributable)
-                {
-                    project.getFilesForPlatform(CurseForge).firstOrNull()?.let { file ->
-                        projectOverrides += ProjectOverride(
-                            project.type, file.fileName, location = REAL
-                        )
-                    }
-                }
+                onProjectMissing(
+                    onInfo = { onInfo(it) },
+                    onWarning = { onWarning(it) },
+                    project, CurseForge, lockFile, fileDirector, projectOverrides
+                )
             }
 
         File(
@@ -199,11 +243,14 @@ suspend fun exportModrinth(
 
     // Index
     create += "modrinth.index.json" to jsonEncodeDefaults.encodeToString(mrModpackModel)
+    onInfo("${mrModpackModel.files.size} projects exported to 'modrinth.index.json'")
 
     // Project Overrides
     create += projectOverrides.toExportData()
+    onInfo("${projectOverrides.size} project overrides exported to the 'overrides' folder")
 
     return zipFile(
+        path = path,
         outputFileName = outputFileName,
         extension = "mrpack",
         overrides = configFile.getAllOverrides(),
