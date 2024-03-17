@@ -70,3 +70,9 @@ java -jar pakku.jar [<options>] <command> [<args>]...
   To build Pakku for the JVM, run the <code>gradlew jvmJar</code>. <br>
 </p>
 
+<h2 align="center">License</h2>
+
+<p align="center">
+  Licensed under the EUPL-1.2-or-later
+</p>
+
