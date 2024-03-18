@@ -2,6 +2,8 @@
 
 [//]: # (To run Pakku, you have two options:)
 
+Currently, the only option to run Pakku is:
+
 - [Run Pakku using Java](#running_pakku_using_java).
     - This requires Java to be installed on your computer.
 
@@ -105,7 +107,7 @@
 [//]: # ()
 [//]: # (</procedure>)
 
-<note style="info">
+<note>
    <p>From onward, for simplicity, running Pakku CLI will be only referenced
    as <code>./pakku</code>.</p>
 </note>

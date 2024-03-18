@@ -5,7 +5,7 @@ Export modpack.
 ## Usage
 
 ```
-./pakku export [<options>]
+./pakku export [<options>] [<path>]
 ```
 {prompt="$"}
 

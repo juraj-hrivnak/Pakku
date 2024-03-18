@@ -68,7 +68,7 @@ abstract class Platform(
     }
 
     /**
-     * [Requests a project][requestProject] and [files][requestFilesForProject], and returns a [project][Project],
+     * [Requests a project][requestProject] with [files][requestFilesForProject], and returns a [project][Project],
      * with optional [number of files][numberOfFiles] to take.
      */
     override suspend fun requestProjectWithFiles(

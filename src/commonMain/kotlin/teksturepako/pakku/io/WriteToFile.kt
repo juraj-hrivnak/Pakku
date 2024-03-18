@@ -15,7 +15,7 @@ suspend inline fun <reified T> writeToFile(
     val file = localCurrentDirVfs[path]
 
     // Override file text
-    if (overrideText) file.delete()
+    if (overrideText && file.exists()) file.delete()
 
     // Write to file
     file.writeString(format.encodeToString(value))

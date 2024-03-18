@@ -1,8 +1,10 @@
 package teksturepako.pakku.api.platforms
 
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
+import teksturepako.pakku.api.projects.inheritPropertiesFrom
 
 object Multiplatform : IProjectProvider
 {
@@ -13,15 +15,15 @@ object Multiplatform : IProjectProvider
     )
 
     /**
-     * Requests a project from all platforms based on the provided input.
+     * Requests a [project][Project] from all platforms.
      *
-     * This function takes an input string and attempts to retrieve project details from all platforms.
+     * This function takes a string and attempts to retrieve a project from all platforms.
      * If the project is missing on one platform, it attempts to retrieve it from the other using platform-specific slugs.
-     * The result is a combined [Project] object if details are available from all platforms, otherwise, it returns the
-     * [Project] object from the available platform or null if no details are found on either platform.
+     * The result is a combined project; project from the available platform; or null if no
+     * project is found on either platform.
      *
      * @param input The project ID or slug.
-     * @return A [Project] object containing data retrieved from all platforms, or null if no data is found.
+     * @return A [project][Project] containing data retrieved from all platforms, or null if no data is found.
      */
     override suspend fun requestProject(input: String): Project?
     {
@@ -46,15 +48,15 @@ object Multiplatform : IProjectProvider
         } ?: mr // Return the Modrinth project if CurseForge project is missing.
     }
 
-    /**
-     * Requests project with files for specified combinations of Minecraft versions and mod loaders for all platforms.
+     /**
+     * [Requests a project][requestProject] with files from all platforms, and returns a [project][Project],
+     * with optional [number of files][numberOfFiles] to take.
      *
      * @param mcVersions The list of Minecraft versions.
      * @param loaders The list of mod loader types.
      * @param input The project ID or slug.
      * @param numberOfFiles The number of requested files for each platform. Defaults to 1.
-     * @return A [Project] object with requested project files from all platforms.
-     *         Returns null if the initial project request is unsuccessful.
+     * @return A [project][Project] with files from all platforms or null if the initial project request is unsuccessful.
      */
     override suspend fun requestProjectWithFiles(
         mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int
@@ -70,9 +72,17 @@ object Multiplatform : IProjectProvider
         return project
     }
 
-
+    /**
+     * Requests new data for provided [projects] from all platforms and updates them based on platform-specific slugs,
+     * with optional [number of files][numberOfFiles] to take.
+     * Projects are also filtered using their [update strategy][UpdateStrategy].
+     */
     suspend fun updateMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, projects: MutableSet<Project>, numberOfFiles: Int
+        mcVersions: List<String>,
+        loaders: List<String>,
+        projects: MutableSet<Project>,
+        configFile: ConfigFile?,
+        numberOfFiles: Int
     ): MutableSet<Project>
     {
         return platforms.fold(projects.map { it.copy(files = mutableSetOf()) }.toMutableSet()) { acc, platform ->
@@ -80,6 +90,7 @@ object Multiplatform : IProjectProvider
             val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
 
             platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles)
+                .inheritPropertiesFrom(configFile)
                 .forEach { newProject ->
                     acc.find { accProject ->
                         accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
