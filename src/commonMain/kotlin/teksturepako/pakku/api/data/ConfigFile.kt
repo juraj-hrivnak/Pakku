@@ -2,12 +2,12 @@
 
 package teksturepako.pakku.api.data
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.overrides.Overrides
-import teksturepako.pakku.io.decodeOrNew
-import teksturepako.pakku.io.decodeToResult
-import teksturepako.pakku.io.readFileOrNull
-import teksturepako.pakku.io.writeToFile
+import teksturepako.pakku.api.projects.ProjectSide
+import teksturepako.pakku.api.projects.UpdateStrategy
+import teksturepako.pakku.io.*
 
 @Serializable
 data class ConfigFile(
@@ -16,6 +16,7 @@ data class ConfigFile(
     private var description: String = "",
     private var author: String = "",
     private val overrides: MutableList<String> = mutableListOf(),
+    private val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
 )
 {
     // -- PACK --
@@ -69,6 +70,17 @@ data class ConfigFile(
 
     fun getAllOverrides(): List<String> = Overrides.filter(this.overrides)
 
+    // -- PROJECTS --
+
+    fun getProjects() = this.projects
+
+    @Serializable
+    data class ProjectConfig(
+        var side: ProjectSide?,
+        @SerialName("update_strategy") var updateStrategy: UpdateStrategy?,
+        @SerialName("redistributable") var redistributable: Boolean?
+    )
+
     // -- FILE I/O --
 
     companion object
@@ -78,6 +90,8 @@ data class ConfigFile(
         suspend fun exists(): Boolean = readFileOrNull(FILE_NAME) != null
 
         suspend fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), FILE_NAME)
+
+        suspend fun readOrNull() = decodeToResult<ConfigFile>(FILE_NAME).getOrNull()
 
         /**
          * Reads [LockFile] and parses it, or returns an exception.

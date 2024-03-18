@@ -1,6 +1,25 @@
 package teksturepako.pakku.api.projects
 
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.platforms.Platform
+
+fun Collection<Project>.inheritPropertiesFrom(configFile: ConfigFile?): MutableList<Project>
+{
+    if (configFile == null) return this.toMutableList()
+
+    configFile.getProjects().forEach { (input, config) ->
+        this.forEach { project ->
+            if (input in project || project.files.any { input in it.fileName })
+            {
+                project.side = config.side
+                config.updateStrategy?.let { project.updateStrategy = it }
+                config.redistributable?.let { project.redistributable = it }
+            }
+        }
+    }
+
+    return this.toMutableList()
+}
 
 fun Collection<Project>.assignFiles(projectFiles: Collection<ProjectFile>, platform: Platform)
 {

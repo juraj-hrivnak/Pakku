@@ -11,6 +11,7 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.containsProject
+import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.decodeOrNew
 import teksturepako.pakku.io.decodeToResult
@@ -30,7 +31,7 @@ data class LockFile(
     private var target: String? = null,
     @SerialName("mc_versions") private var mcVersions: MutableList<String> = mutableListOf(),
     private val loaders: MutableMap<String, String> = mutableMapOf(),
-    private val projects: MutableList<Project> = mutableListOf(),
+    private var projects: MutableList<Project> = mutableListOf(),
 )
 {
     // -- MC VERSIONS --
@@ -230,6 +231,13 @@ data class LockFile(
         }
     }
 
+    // -- CONFIG INHERITANCE --
+
+    fun inheritConfig(configFile: ConfigFile?)
+    {
+        this.projects = this.projects.inheritPropertiesFrom(configFile)
+    }
+
     // -- FILE I/O --
 
     companion object
@@ -239,15 +247,18 @@ data class LockFile(
         suspend fun exists(): Boolean = readFileOrNull(FILE_NAME) != null
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
-        suspend fun readOrNew(): LockFile = decodeOrNew(LockFile(), FILE_NAME)
+        suspend fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), FILE_NAME)
+            .also { it.inheritConfig(ConfigFile.readOrNull()) }
 
         /**
          * Reads [LockFile] and parses it, or returns an exception.
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
-        suspend fun readToResult(): Result<LockFile> = decodeToResult(FILE_NAME)
+        suspend fun readToResult(): Result<LockFile> = decodeToResult<LockFile>(FILE_NAME)
+            .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
 
-        suspend fun readToResultFrom(path: String): Result<LockFile> = decodeToResult(path)
+        suspend fun readToResultFrom(path: String): Result<LockFile> = decodeToResult<LockFile>(path)
+            .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
     }
 
     suspend fun write() = writeToFile(this, FILE_NAME, overrideText = true)
