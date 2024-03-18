@@ -8,9 +8,9 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.cli.promptForProject
+import teksturepako.pakku.cli.ui.promptForProject
 import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ynPrompt
+import teksturepako.pakku.cli.ui.ynPrompt
 
 class Add : CliktCommand("Add projects")
 {

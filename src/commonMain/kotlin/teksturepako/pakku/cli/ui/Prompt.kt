@@ -1,4 +1,4 @@
-package teksturepako.pakku.cli
+package teksturepako.pakku.cli.ui
 
 import com.github.ajalt.mordant.terminal.StringPrompt
 import com.github.ajalt.mordant.terminal.Terminal

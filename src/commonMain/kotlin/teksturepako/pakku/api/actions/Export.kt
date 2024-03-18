@@ -19,7 +19,7 @@ import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
-import teksturepako.pakku.cli.cmd.getFlavoredProjectName
+import teksturepako.pakku.cli.ui.getFlavoredProjectName
 import teksturepako.pakku.compat.FileDirectorData
 import teksturepako.pakku.compat.addToFileDirectorFrom
 import teksturepako.pakku.io.zipFile
@@ -38,7 +38,7 @@ suspend fun export(
 {
     val outputFileName = when
     {
-        configFile.getName().isBlank()    -> return onError("Could not export: 'name' is not specified")
+        configFile.getName().isBlank()       -> return onError("Could not export: 'name' is not specified")
         configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
         else -> configFile.getName()
     }

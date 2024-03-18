@@ -5,13 +5,13 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyle
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.containsProject
-
+import teksturepako.pakku.cli.ui.getFlavoredProjectName
 
 class Ls : CliktCommand("List projects")
 {
@@ -26,7 +26,7 @@ class Ls : CliktCommand("List projects")
         val platforms: List<Platform> = lockFile.getPlatforms().getOrDefault(listOf())
 
         val updatedProjects = Multiplatform.updateMultipleProjectsWithFiles(
-            lockFile.getMcVersions(), lockFile.getLoaders(), projects.toMutableSet(), numberOfFiles = 1
+            lockFile.getMcVersions(), lockFile.getLoaders(), projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
         )
 
         for (project in projects)
@@ -70,23 +70,5 @@ class Ls : CliktCommand("List projects")
         echo()
         terminal.info("Projects total: ${projects.size}")
         echo()
-    }
-}
-
-fun Project.getFlavoredProjectName(): String? = when
-{
-    this.redistributable ->
-    {
-        if (this.hasNoFiles()) this.name.values.firstOrNull()?.let { red(it) }
-        else this.name.values.firstOrNull()
-    }
-    else                    ->
-    {
-        if (this.hasNoFiles()) this.name.values.firstOrNull()?.let {
-            TextStyle(bgColor = white, color = red)("⚠$it")
-        }
-        else this.name.values.firstOrNull()?.let {
-            TextStyle(bgColor = white, color = black)("⚠$it")
-        }
     }
 }

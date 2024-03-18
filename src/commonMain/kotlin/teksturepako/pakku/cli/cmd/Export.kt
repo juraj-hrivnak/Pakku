@@ -23,13 +23,13 @@ class Export : CliktCommand("Export modpack")
             return@runBlocking
         }
 
-        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
+        val configFile = ConfigFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        val configFile = ConfigFile.readToResult().getOrElse {
+        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking

@@ -9,7 +9,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.cli.ynPrompt
+import teksturepako.pakku.cli.ui.ynPrompt
 
 class Rm : CliktCommand("Remove projects")
 {

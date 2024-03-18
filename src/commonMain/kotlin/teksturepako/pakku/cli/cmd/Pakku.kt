@@ -3,7 +3,7 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import teksturepako.pakku.cli.overrideYes
+import teksturepako.pakku.cli.ui.overrideYes
 import teksturepako.pakku.debugMode
 
 class Pakku : CliktCommand()
