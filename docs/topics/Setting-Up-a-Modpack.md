@@ -10,7 +10,7 @@ To set up a modpack, you can:
 To create a new modpack, run the [`pakku init`](pakku-init.md) command:
 
 ```
-./pakku init
+%pakku% init
 ```
 {prompt="$"}
 
@@ -30,7 +30,7 @@ using the [`pakku set`](pakku-set.md) command.
 To import an existing modpack, run the [`pakku import`](pakku-import.md) command with the `<path>` argument:
 
 ```
-./pakku import <path>
+%pakku% import <path>
 ```
 {prompt="$"}
 

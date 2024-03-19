@@ -7,12 +7,21 @@ Link project to another project.
 
 ## Usage
 
+<snippet id="snippet-cmd">
+
 ```
-./pakku link [<options>] <projectout> <projectin>
+%pakku% link [<options>] <projectout> <projectin>
 ```
 {prompt="$"}
 
+</snippet>
+
 ## Options
+
+<snippet id="snippet-options">
 
 `-h`, `--help`                                        
 : Show help message and exit
+{id="option-help"}
+
+</snippet>

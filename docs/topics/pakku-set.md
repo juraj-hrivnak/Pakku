@@ -4,12 +4,18 @@ Set various properties of your pack or projects.
 
 ## Usage
 
+<snippet id="snippet-cmd">
+
 ```
-./pakku set [<options>] [<projects>]...
+%pakku% set [<options>] [<projects>]...
 ```
 {prompt="$"}
 
+</snippet>
+
 ## Options
+
+<snippet id="snippet-options">
 
 `-s`, `--side=(client|server|both)`                   
 : Change the side of a project
@@ -31,3 +37,6 @@ Set various properties of your pack or projects.
 
 `-h`, `--help`                                        
 : Show help message and exit
+{id="option-help"}
+
+</snippet>

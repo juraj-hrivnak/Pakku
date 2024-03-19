@@ -108,8 +108,8 @@ Currently, the only option to run Pakku is:
 [//]: # (</procedure>)
 
 <note>
-   <p>From onward, for simplicity, running Pakku CLI will be only referenced
-   as <code>./pakku</code>.</p>
+   <p>From onward, running Pakku in CLI will be only referenced
+   as <code>%pakku%</code>.</p>
 </note>
    
 [GitHub releases]: https://github.com/juraj-hrivnak/Pakku/releases/latest

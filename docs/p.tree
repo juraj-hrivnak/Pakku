@@ -6,13 +6,13 @@
                  name="Pakku"
                  start-page="Home.topic">
 
-    <toc-element topic="Home.topic" toc-title="Home">
-    </toc-element>
+    <toc-element topic="Home.topic" toc-title="Home"/>
     <toc-element topic="About.md"/>
     <toc-element topic="Pakku-Terminology.md"/>
     <toc-element toc-title="Getting Started">
         <toc-element topic="Installing-Pakku.md"/>
         <toc-element topic="Setting-Up-a-Modpack.md"/>
+        <toc-element topic="Managing-Projects.md"/>
     </toc-element>
     <toc-element toc-title="CLI Commands">
         <toc-element topic="pakku.md"/>
