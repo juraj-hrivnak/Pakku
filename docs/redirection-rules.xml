@@ -90,4 +90,8 @@
         <description>Created after removal of "pakku-lock.json" from Pakku</description>
         <accepts>Pakku-Lock.html</accepts>
     </rule>
+    <rule id="630f8aa6">
+        <description>Created after removal of "Getting Informtion About Your Modpack" from Pakku</description>
+        <accepts>Getting-Informtion-About-Your-Modpack.html</accepts>
+    </rule>
 </rules>
