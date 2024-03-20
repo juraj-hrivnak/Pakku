@@ -22,5 +22,6 @@ Remove projects.
 
 `-h`, `--help`
 : Show help message and exit
+{id="option-help"}
 
 </snippet>

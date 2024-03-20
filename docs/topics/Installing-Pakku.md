@@ -2,16 +2,14 @@
 
 [//]: # (To run Pakku, you have two options:)
 
-Currently, the only option to run Pakku is:
-
-- [Run Pakku using Java](#running_pakku_using_java).
-    - This requires Java to be installed on your computer.
+Currently, the only option is to [install and run Pakku using Java](#install-java).
+This requires Java to be installed on your computer.
 
 [//]: # (2. [Run Pakku as native executable]&#40;#running_pakku_as_native_executable&#41;.)
 
 [//]: # (    - Depending on your operating system, you will need to use a different version of native Pakku.)
 
-<procedure title="Running Pakku using Java" id="running_pakku_using_java">
+<procedure title="Install and run Pakku using Java" id="install-java">
 
 1. Check whether you have Java installed on your computer.
    If not, install it from [here](https://www.java.com/en/download/).
@@ -25,7 +23,7 @@ Currently, the only option to run Pakku is:
    ```
    {prompt="$"}
 
-   > To get to your modpack folder, use the `cd` command.
+   > To get to your modpack folder, use the [`cd` command](https://en.wikipedia.org/wiki/Cd_(command)).
    {style="note"}
 
 </procedure>
