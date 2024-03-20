@@ -1,6 +1,6 @@
 # Managing Projects
 
-On this page you will learn how to:
+On this page, you will learn how to:
 
 - [Add projects](#adding-projects)
 - [Remove projects](#removing-projects)
