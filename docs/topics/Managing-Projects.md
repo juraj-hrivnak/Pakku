@@ -71,3 +71,9 @@ To update all project in the modpack, use the `--all` flag:
 ```
 %pakku% update --all
 ```
+
+<seealso style="cards">
+   <category ref="related">
+       <a href="Developing-a-Modpack.md"/>
+   </category>
+</seealso>

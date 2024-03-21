@@ -2,7 +2,7 @@
 
 [//]: # (To run Pakku, you have two options:)
 
-Currently, the only option is to [install and run Pakku using Java](#install-java).
+Currently, the only option to install and run Pakku is [using Java](#install-java).
 This requires Java to be installed on your computer.
 
 [//]: # (2. [Run Pakku as native executable]&#40;#running_pakku_as_native_executable&#41;.)

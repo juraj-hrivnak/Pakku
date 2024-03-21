@@ -34,3 +34,9 @@ To import an existing modpack, run the [`pakku import`](pakku-import.md) command
 ```
 {prompt="$"}
 
+<seealso style="cards">
+   <category ref="related">
+       <a href="Config-File.md"/>
+       <a href="Lock-File.md"/>
+   </category>
+</seealso>
