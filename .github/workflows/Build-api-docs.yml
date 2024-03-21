@@ -65,9 +65,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: api-docs
-
-      - name: Unzip artifact
-        run: unzip -O UTF-8 -qq api-docs.zip -d dir
+          path: dir
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
