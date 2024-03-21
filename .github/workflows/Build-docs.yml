@@ -100,7 +100,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: api-docs
-          path: dir
+          path: dir/api
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
