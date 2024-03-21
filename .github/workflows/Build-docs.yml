@@ -84,7 +84,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     # Requires build job results
-    needs: build
+    needs: ['build-docs', 'build-api-docs']
     runs-on: ubuntu-latest
 
     steps:
