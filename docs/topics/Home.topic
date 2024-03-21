@@ -12,35 +12,45 @@
             Documentation for the multiplatform modpack manager for Minecraft: Java Edition.
         </description>
 
-        <spotlight>
+        <primary>
+            <title>Getting Started</title>
             <a href="About.md"/>
             <a href="Pakku-Terminology.md"/>
             <a href="Installing-Pakku.md"/>
-            <a href="Setting-Up-a-Modpack.md"/>
-        </spotlight>
-
-        <primary>
-            <title>CLI Commands</title>
-            <a href="pakku-init.md"/>
-            <a href="pakku-import.md"/>
-            <a href="pakku-set.md"/>
-            <a href="pakku-add.md"/>
-            <a href="pakku-rm.md"/>
-            <a href="pakku-update.md"/>
-            <a href="pakku-ls.md"/>
-            <a href="pakku-fetch.md"/>
-            <a href="pakku-link.md"/>
-            <a href="pakku-export.md"/>
-            <a href="pakku-diff.md"/>
-            <a href="pakku-version.md"/>
         </primary>
 
         <secondary>
-            <title>Configuring Pakku</title>
-            <a href="Pakku-Directory.md"/>
-            <a href="Config-File.md"/>
-            <a href="Lock-File.md"/>
+            <title>Pakku Basics</title>
+            <a href="Setting-Up-a-Modpack.md"/>
+            <a href="Managing-Projects.md"/>
+            <a href="Getting-Info-About-Your-Modpack.md"/>
+            <a href="Developing-a-Modpack.md"/>
+            <a href="Exporting-a-Modpack.md"/>
         </secondary>
+
+        <misc>
+            <cards narrow="false">
+                <title>Configuring Pakku</title>
+                <a href="Pakku-Directory.md"/>
+                <a href="Config-File.md"/>
+                <a href="Lock-File.md"/>
+            </cards>
+            <cards narrow="true">
+                <title>CLI Commands</title>
+                <a href="pakku-init.md"/>
+                <a href="pakku-import.md"/>
+                <a href="pakku-set.md"/>
+                <a href="pakku-add.md"/>
+                <a href="pakku-rm.md"/>
+                <a href="pakku-update.md"/>
+                <a href="pakku-ls.md"/>
+                <a href="pakku-fetch.md"/>
+                <a href="pakku-link.md"/>
+                <a href="pakku-export.md"/>
+                <a href="pakku-diff.md"/>
+                <a href="pakku-version.md"/>
+            </cards>
+        </misc>
     </section-starting-page>
 
 </topic>

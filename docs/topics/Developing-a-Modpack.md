@@ -1,6 +1,6 @@
 # Developing a Modpack
 
-To be able to properly run and start working on your modpack, you need to have
+To be able to run and start working on your modpack, you need to have
 [project files](Pakku-Terminology.md#project-file) fetched to your modpack folder.
 
 To do that, run the [`pakku fetch`](pakku-fetch.md) command:
