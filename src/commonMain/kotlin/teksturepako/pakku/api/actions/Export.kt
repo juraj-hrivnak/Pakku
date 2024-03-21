@@ -1,10 +1,7 @@
 package teksturepako.pakku.api.actions
 
 import kotlinx.serialization.encodeToString
-import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.data.jsonEncodeDefaults
+import teksturepako.pakku.api.data.*
 import teksturepako.pakku.api.models.CfModpackModel
 import teksturepako.pakku.api.models.CfModpackModel.*
 import teksturepako.pakku.api.models.MrModpackModel
@@ -54,7 +51,7 @@ suspend fun export(
             path, outputFileName, mcVersion, lockFile, configFile, projectOverrides
         ).fold(
             onSuccess = { onSuccess("(${CurseForge.name}) modpack exported to '$it'") },
-            onFailure = { onError("(${CurseForge.name}) ${it.message}") }
+            onFailure = { onError("(${CurseForge.name}) Error: ${it.message}") }
         )
     }
 
@@ -68,7 +65,7 @@ suspend fun export(
             path, outputFileName, mcVersion, lockFile, configFile, projectOverrides
         ).fold(
             onSuccess = { onSuccess("(${Modrinth.name}) modpack exported to '$it'") },
-            onFailure = { onError("(${Modrinth.name}) ${it.message}") }
+            onFailure = { onError("(${Modrinth.name}) Error: ${it.message}") }
         )
     }
 }
@@ -166,7 +163,7 @@ suspend fun exportCurseForge(
     onInfo("${cfManifestData.files.size} projects exported to 'manifest.json'")
 
     // Project Overrides
-    create += projectOverrides.toExportData()
+    create += projectOverrides.toExportData().getOrElse { return Result.failure(it) }
     onInfo("${projectOverrides.size} project overrides exported to the 'overrides' folder")
 
     return zipFile(
@@ -246,7 +243,7 @@ suspend fun exportModrinth(
     onInfo("${mrModpackModel.files.size} projects exported to 'modrinth.index.json'")
 
     // Project Overrides
-    create += projectOverrides.toExportData()
+    create += projectOverrides.toExportData().getOrElse { return Result.failure(it) }
     onInfo("${projectOverrides.size} project overrides exported to the 'overrides' folder")
 
     return zipFile(

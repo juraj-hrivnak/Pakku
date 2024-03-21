@@ -4,9 +4,11 @@ import korlibs.io.file.baseName
 import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.PAKKU_FOLDER
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.REAL
 import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.io.readFileBytesOrNull
 
 object Overrides
 {
@@ -17,11 +19,9 @@ object Overrides
 
         val path = override.relativePathTo(localCurrentDirVfs["."])!!
 
-        if (path.contains("..")
-            || path.contains("[A-Z]:/".toRegex())
-            || path.contains("[A-Z]:\\\\".toRegex())
-            || path.startsWith("/")
-            || path.startsWith("\\\\")
+        if (path.contains("..") || path.contains("[A-Z]:/".toRegex()) || path.contains("[A-Z]:\\\\".toRegex()) || path.startsWith(
+                "/"
+            ) || path.startsWith("\\\\")
         ) return@mapNotNull null
 
         return@mapNotNull path
@@ -29,8 +29,7 @@ object Overrides
 
     enum class ProjectOverrideLocation
     {
-        PAKKU_FOLDER,
-        REAL
+        PAKKU_FOLDER, REAL
     }
 
     @Serializable
@@ -53,20 +52,56 @@ object Overrides
         }.getOrDefault(mutableListOf())
     }
 
-    suspend fun List<ProjectOverride>.toExportData(): Array<Pair<String, ByteArray>>
+    suspend fun List<ProjectOverride>.toExportData(): Result<Array<Pair<String, ByteArray>>>
     {
-        return this.map { projectOverride ->
+        val projectOverrides: List<Pair<String, ByteArray?>> = this.map { projectOverride ->
             when (projectOverride.location)
             {
                 PAKKU_FOLDER -> Pair(
                     "/overrides/${projectOverride.type.folderName}/${projectOverride.fileName}",
-                    localCurrentDirVfs["$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/${projectOverride.fileName}"].readBytes()
+                    readFileBytesOrNull("$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/${projectOverride.fileName}")
                 )
+
                 REAL         -> Pair(
                     "/overrides/${projectOverride.type.folderName}/${projectOverride.fileName}",
-                    localCurrentDirVfs["${projectOverride.type.folderName}/${projectOverride.fileName}"].readBytes()
+                    readFileBytesOrNull("${projectOverride.type.folderName}/${projectOverride.fileName}")
                 )
             }
-        }.toTypedArray()
+        }
+
+        val result: List<Result<Pair<String, ByteArray>>> =
+            projectOverrides.fold(listOf()) { acc, (relativePath, bytes) ->
+                if (bytes == null)
+                {
+                    acc + Result.failure(PakkuException(relativePath.substringAfterLast("/")))
+                }
+                else acc
+            }
+
+        return if (result.any { it.isFailure })
+        {
+            val messages = result.mapNotNull { it.exceptionOrNull()?.message }
+
+            if (messages.size > 1)
+            {
+                Result.failure(PakkuException(
+                    "Project overrides ${
+                        messages.joinToString(", ")
+                    } could not be found;\n Try running the 'pakku fetch' command before exporting the modpack."
+                ))
+            }
+            else
+            {
+                Result.failure(PakkuException(
+                    "Project override ${
+                        messages.first()
+                    } could not be found;\n Try running the 'pakku fetch' command before exporting the modpack."
+                ))
+            }
+        }
+        else
+        {
+            Result.success(result.mapNotNull { it.getOrNull() }.toTypedArray())
+        }
     }
 }

@@ -15,6 +15,15 @@ suspend fun readFileOrNull(path: String): String?
     } else null
 }
 
+suspend fun readFileBytesOrNull(path: String): ByteArray?
+{
+    val file = localCurrentDirVfs[path]
+
+    return if (file.exists()) {
+        runCatching { file.readBytes() }.getOrNull()
+    } else null
+}
+
 suspend inline fun <reified T> decodeOrNew(
     value: T, path: String, format: StringFormat = json
 ): T = readFileOrNull(path)?.let {

@@ -45,8 +45,15 @@ actual suspend fun zipFile(
 
     for (ovName in overrides)
     {
-        zip.addFolder(File(ovName))
-        zip.renameFile("$ovName/", "overrides/$ovName/")
+        if (File(ovName).exists())
+        {
+            zip.addFolder(File(ovName))
+            zip.renameFile("$ovName/", "overrides/$ovName/")
+        }
+        else
+        {
+            return@withContext Result.failure(PakkuException("Override '$ovName' could not be found"))
+        }
     }
 
     File(pakkuTemp).deleteRecursively()
