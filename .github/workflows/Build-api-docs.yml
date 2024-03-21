@@ -1,0 +1,82 @@
+name: Build API documentation
+run-name: "Build API documentation #${{ github.run_number }}"
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+permissions:
+  id-token: write
+  pages: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: 📦 Build API docs using Dokka
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          gradle-version: wrapper
+          arguments: dokkaHtml
+          properties: |
+            org.gradle.vfs.watch=false
+            org.gradle.vfs.verbose=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload API docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: |
+            build/dokka/html
+          retention-days: 7
+
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Requires build job results
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-docs
+
+      - name: Unzip artifact
+        run: unzip -O UTF-8 -qq api-docs.zip -d dir
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dir
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
