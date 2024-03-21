@@ -39,4 +39,8 @@
         <toc-element topic="pakku-diff.md"/>
         <toc-element topic="pakku-version.md"/>
     </toc-element>
+    <toc-element toc-title="Reference">
+        <toc-element toc-title="API Reference"
+                     href="https://juraj-hrivnak.github.io/Pakku/api/"/>
+    </toc-element>
 </instance-profile>
