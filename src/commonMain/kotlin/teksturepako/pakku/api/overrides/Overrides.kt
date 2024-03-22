@@ -15,16 +15,8 @@ object Overrides
     fun filter(overrides: List<String>): List<String> = overrides.mapNotNull { overrideIn ->
         val override = runCatching { localCurrentDirVfs[overrideIn] }.getOrNull()
 
-        if (override == null) return@mapNotNull null
-
-        val path = override.relativePathTo(localCurrentDirVfs["."])!!
-
-        if (path.contains("..") || path.contains("[A-Z]:/".toRegex()) || path.contains("[A-Z]:\\\\".toRegex()) || path.startsWith(
-                "/"
-            ) || path.startsWith("\\\\")
-        ) return@mapNotNull null
-
-        return@mapNotNull path
+        return@mapNotNull if (override == null) null
+        else filterPath(override.relativePathTo(localCurrentDirVfs["."])!!)
     }
 
     enum class ProjectOverrideLocation

@@ -11,9 +11,13 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.PROJECT_OVERRIDES_FOLDER
+import teksturepako.pakku.api.overrides.createHash
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.debug
+import java.math.BigInteger
+import java.security.MessageDigest
 
 class Fetch : CliktCommand("Fetch projects to your pack folder")
 {
@@ -71,17 +75,34 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
             val deferred = async {
                 Http().requestByteArray(projectFile.url!!) { _, _ ->
 //                    progress.updateTotal(maxSize)
-                } to projectFile.size
+                } to projectFile
             }
 
             jobs += launch(Dispatchers.IO) {
                 // Create parent folders
                 if (!parentFolder.exists()) parentFolder.mkdirs()
 
-                val (bytes, fileSize) = deferred.await()
+                val (bytes, file) = deferred.await()
 
                 if (bytes != null) try
                 {
+                    if (file.hashes != null)
+                    {
+                        for ((hashType, originalHash) in file.hashes)
+                        {
+                            val newHash = createHash(hashType, bytes)
+                            debug { println("$hashType: $originalHash : $newHash") }
+
+                            if (originalHash != newHash)
+                            {
+                                terminal.danger("${outputFile.baseName} failed to mach hash $hashType")
+                                terminal.danger("File will not be saved")
+                                return@launch
+                            }
+                            else continue
+                        }
+                    }
+
                     // Write to file
                     outputFile.writeBytes(bytes)
                     terminal.success("${outputFile.baseName} saved")
