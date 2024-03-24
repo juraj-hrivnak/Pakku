@@ -7,7 +7,10 @@ import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.io.*
+import teksturepako.pakku.io.decodeOrNew
+import teksturepako.pakku.io.decodeToResult
+import teksturepako.pakku.io.readFileOrNull
+import teksturepako.pakku.io.writeToFile
 
 @Serializable
 data class ConfigFile(
@@ -16,6 +19,8 @@ data class ConfigFile(
     private var description: String = "",
     private var author: String = "",
     private val overrides: MutableList<String> = mutableListOf(),
+    @SerialName("server_overrides") private val serverOverrides: MutableList<String> = mutableListOf(),
+    @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
     private val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
 )
 {
@@ -70,6 +75,10 @@ data class ConfigFile(
 
     fun getAllOverrides(): List<String> = Overrides.filter(this.overrides)
 
+    fun getAllServerOverrides(): List<String> = Overrides.filter(this.serverOverrides)
+
+    fun getAllClientOverrides(): List<String> = Overrides.filter(this.clientOverrides)
+
     // -- PROJECTS --
 
     fun getProjects() = this.projects
@@ -85,7 +94,7 @@ data class ConfigFile(
 
     companion object
     {
-        private const val FILE_NAME = "pakku.json"
+        const val FILE_NAME = "pakku.json"
 
         suspend fun exists(): Boolean = readFileOrNull(FILE_NAME) != null
 

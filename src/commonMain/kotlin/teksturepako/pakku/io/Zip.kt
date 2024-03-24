@@ -15,5 +15,7 @@ expect suspend fun zipFile(
     outputFileName: String,
     extension: String,
     overrides: List<String>,
+    serverOverrides: List<String>,
+    clientOverrides: List<String>,
     vararg create: Pair<String, Any>
 ): Result<String>

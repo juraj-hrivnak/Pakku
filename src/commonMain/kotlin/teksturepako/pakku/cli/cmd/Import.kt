@@ -12,8 +12,8 @@ import teksturepako.pakku.api.actions.import
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.cli.ui.promptForProject
 import teksturepako.pakku.cli.resolveDependencies
+import teksturepako.pakku.cli.ui.promptForProject
 
 class Import : CliktCommand("Import modpack")
 {

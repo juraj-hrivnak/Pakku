@@ -2,22 +2,21 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import korlibs.io.file.VfsFile
-import korlibs.io.file.baseName
-import korlibs.io.file.extension
-import korlibs.io.file.std.localCurrentDirVfs
+import com.github.ajalt.mordant.animation.progressAnimation
+import com.github.ajalt.mordant.widgets.Spinner
+import kotlinx.atomicfu.AtomicLong
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.PROJECT_OVERRIDES_FOLDER
-import teksturepako.pakku.api.overrides.createHash
 import teksturepako.pakku.api.platforms.Multiplatform
-import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.debug
-import java.math.BigInteger
-import java.security.MessageDigest
+import teksturepako.pakku.io.createHash
+import java.io.File
 
 class Fetch : CliktCommand("Fetch projects to your pack folder")
 {
@@ -29,56 +28,61 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
         }
 
         var fetched = false
-        val ignored = mutableMapOf<ProjectType, List<VfsFile>>()
+        val ignored = mutableMapOf<ProjectType, List<File>>()
         val jobs = mutableListOf<Job>()
 
-//        // Progress bar
-//        val progress = terminal.progressAnimation {
-//            text("Fetching ")
-//            spinner(Spinner.Dots())
-//            percentage()
-//            padding = 0
-//        }
+        // Progress bar
+        val progress = terminal.progressAnimation {
+            text("Fetching ")
+            spinner(Spinner.Dots())
+            percentage()
+            padding = 0
+        }
 
-        var maxSize: Long = 0
+        val maxSize: AtomicLong = atomic(0L)
 
-        for (project in lockFile.getAllProjects())
+        val projectFiles = lockFile.getAllProjects()
+            .map { project ->
+                for (platform in Multiplatform.platforms)
+                {
+                    return@map Result.success(project.type to (project.getFilesForPlatform(platform)
+                        .takeIf { it.isNotEmpty() }
+                        ?.first() ?: break)
+                    )
+                }
+                return@map Result.failure(PakkuException("No files found for ${project.slug}"))
+            }.mapNotNull { result ->
+                result.getOrElse {
+                    terminal.danger(it.message)
+                    echo()
+                    null
+                }
+            }
+
+        for ((projectType, projectFile) in projectFiles)
         {
-            var projectFile: ProjectFile? = null
+            val outputFile = File("${projectType.folderName}/${projectFile.fileName}")
+                .also { ignored[projectType] = ignored[projectType]?.let { list -> list + it } ?: listOf(it) }
 
-            x@ for (platform in Multiplatform.platforms)
-            {
-                projectFile = project.getFilesForPlatform(platform)
-                    .takeIf { it.isNotEmpty() }
-                    ?.first() ?: continue@x
-                break@x
-            }
-
-            if (projectFile?.url == null)
-            {
-                terminal.danger("No files found for ${project.slug}")
-                echo()
-                continue
-            }
-
-            val outputFile = localCurrentDirVfs["${project.type.folderName}/${projectFile.fileName}"]
-                .also { ignored[project.type] = ignored[project.type]?.let { list -> list + it } ?: listOf(it) }
-
-            val parentFolder = localCurrentDirVfs[project.type.folderName]
+            val parentFolder = File(projectType.folderName)
 
             // Skip to next if output file exists
             if (outputFile.exists()) continue
 
-            maxSize += projectFile.size
-
-            // Download
-            val deferred = async {
-                Http().requestByteArray(projectFile.url!!) { _, _ ->
-//                    progress.updateTotal(maxSize)
-                } to projectFile
-            }
-
             jobs += launch(Dispatchers.IO) {
+                maxSize += projectFile.size.toLong()
+                val prevBytes: AtomicLong = atomic(0L)
+
+                // Download
+                val deferred = async {
+                    Http().requestByteArray(projectFile.url!!) { bytesSentTotal, _ ->
+                        progress.advance(bytesSentTotal - prevBytes.value)
+                        progress.updateTotal(maxSize.value)
+
+                        prevBytes.getAndSet(bytesSentTotal)
+                    } to projectFile
+                }
+
                 // Create parent folders
                 if (!parentFolder.exists()) parentFolder.mkdirs()
 
@@ -95,7 +99,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
                             if (originalHash != newHash)
                             {
-                                terminal.danger("${outputFile.baseName} failed to mach hash $hashType")
+                                terminal.danger("${outputFile.name} failed to mach hash $hashType")
                                 terminal.danger("File will not be saved")
                                 return@launch
                             }
@@ -105,8 +109,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
                     // Write to file
                     outputFile.writeBytes(bytes)
-                    terminal.success("${outputFile.baseName} saved")
-//                    progress.advance(fileSize.toLong())
+                    terminal.success("${outputFile.name} saved")
 
                     fetched = true
                 } catch (e: Exception)
@@ -120,7 +123,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         if (fetched)
         {
-//            progress.clear()
+            progress.clear()
             terminal.success("Projects successfully fetched")
             echo()
         }
@@ -132,11 +135,11 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         projectOverrides.map { projectOverride ->
             launch {
-                val file = localCurrentDirVfs["${projectOverride.type.folderName}/${projectOverride.fileName}"]
+                val file = File("${projectOverride.type.folderName}/${projectOverride.fileName}")
                 if (!file.exists()) runCatching {
-                    file.parent.mkdir()
-                    localCurrentDirVfs["$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/" +
-                            projectOverride.fileName].copyTo(file)
+                    file.parentFile.mkdir()
+                    File("$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/" +
+                            projectOverride.fileName).copyTo(file)
 
                     terminal.info("${projectOverride.fileName} synced")
                     synced = true
@@ -160,17 +163,17 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         ignored.map { (projectType, ignoredFiles) ->
             launch(Dispatchers.IO) {
-                val ignoredNames = ignoredFiles.map { it.baseName }
+                val ignoredNames = ignoredFiles.map { it.name }
 
-                localCurrentDirVfs[projectType.folderName].listSimple()
+                File(projectType.folderName).listFiles()
                     .filter { file ->
-                        file.baseName !in ignoredNames
-                                && file.baseName !in ignoredProjectOverrides
+                        file.name !in ignoredNames
+                                && file.name !in ignoredProjectOverrides
                                 && file.extension in listOf("jar", "zip")
-                                && file.parent.baseName == projectType.folderName
+                                && file.parentFile.name == projectType.folderName
                     }.forEach { file ->
                         file.delete()
-                        terminal.warning("${file.baseName} deleted")
+                        terminal.warning("${file.name} deleted")
                         removed = true
                     }
             }

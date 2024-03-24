@@ -54,11 +54,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
     ).associate()
 
     override fun run() = runBlocking {
-        val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
-            echo()
-            return@runBlocking
-        }
+        val lockFile = LockFile.readOrNew()
 
         // -- PROJECTS --
 
@@ -106,7 +102,7 @@ class Set : CliktCommand("Set various properties of your pack or projects")
             lockFile.getAllProjects().forEach { project ->
                 for (file in project.files)
                 {
-                    if (file.mcVersions.none { it in versions })
+                    if (file.mcVersions.isNotEmpty() && file.mcVersions.none { it in versions })
                     {
                         terminal.danger(
                             "Can not set to $versions,"
@@ -126,12 +122,14 @@ class Set : CliktCommand("Set various properties of your pack or projects")
 
         /* Loaders */
         loadersOpts?.let { loaders ->
+            if (loadersOpts.isNullOrEmpty()) return@let
+
             var failed = false
 
             lockFile.getAllProjects().forEach { project ->
                 for (file in project.files)
                 {
-                    if (file.loaders.none { it in loaders })
+                    if (file.loaders.isNotEmpty() && file.loaders.none { it in loaders })
                     {
                         terminal.danger(
                             "Can not set to $loaders,"
