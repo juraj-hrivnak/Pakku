@@ -12,6 +12,7 @@ import teksturepako.pakku.api.projects.assignFiles
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.getEnv
+import teksturepako.pakku.io.toMurmur2
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform(
@@ -121,6 +122,7 @@ object CurseForge : Platform(
             type = this@CurseForge.serialName,
             fileName = this.fileName,
             mcVersions = this.sortableGameVersions
+                // TODO: Rework this to only filter type IDs other than for mc versions.
                 .filter { it.gameVersionTypeId in gameVersionTypeIds }
                 .map { it.gameVersionName }.toMutableList(),
             loaders = this.sortableGameVersions
@@ -183,7 +185,8 @@ object CurseForge : Platform(
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
                 }
                 .toMutableSet()
-        } else
+        }
+        else
         {
             // One file
             mutableSetOf(
@@ -208,9 +211,7 @@ object CurseForge : Platform(
         ).data
             .filterFileModels(mcVersions, loaders)
             .sortedByDescending { it.fileDate }
-            .map {
-                it.toProjectFile(gameVersionTypeIds)
-            }
+            .map { it.toProjectFile(gameVersionTypeIds) }
             .debugIfEmpty {
                 println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")
             }
@@ -238,6 +239,33 @@ object CurseForge : Platform(
         return projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet()
     }
 
+    suspend fun requestMultipleProjectsWithFilesFromBytes(
+        mcVersions: List<String>, bytes: List<ByteArray>
+    ): MutableSet<Project>
+    {
+        // Handle mcVersions
+        val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
+            requestGameVersionTypeId(version)
+        }
+
+        val murmurs = bytes.map { it.toMurmur2() }
+
+        debug { println(murmurs) }
+
+        val response = json.decodeFromString<GetFingerprintsMatchesResponse>(
+            this.requestProjectBody("fingerprints/432", GetFingerprintsMatches(murmurs))
+                ?: return mutableSetOf()
+        ).data.exactMatches
+
+        val projectFiles = response.map { match -> match.file.toProjectFile(gameVersionTypeIds) }
+        val projectIds = projectFiles.map { it.parentId }
+        val projects = requestMultipleProjects(projectIds)
+
+        projects.assignFiles(projectFiles, this)
+
+        return projects
+    }
+
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
     {
         return json.decodeFromString<JsonObject>(
@@ -254,3 +282,4 @@ object CurseForge : Platform(
     fun fetchAlternativeDownloadUrl(fileId: String, fileName: String): String =
         decode("https://edge.forgecdn.net/files/${fileId.substring(0, 4)}/${fileId.substring(4)}/$fileName")
 }
+

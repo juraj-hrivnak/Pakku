@@ -7,7 +7,7 @@ import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.debug
 import java.io.File
 
-actual suspend fun zipFile(
+actual suspend fun zipModpack(
     path: String?,
     outputFileName: String,
     extension: String,

@@ -72,6 +72,9 @@ kotlin {
                 // URL Encoding
                 implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
 
+                // Murmur Hash
+                implementation("com.goncalossilva:murmurhash:0.4.0")
+
                 // File I/O
                 implementation("com.soywiz.korlibs.korio:korio:4.0.10")
 
@@ -145,6 +148,24 @@ tasks.withType<Jar> {
         from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
     }
 }
+
+reporting.baseDir = file("my-reports")
+java.testResultsDir = layout.buildDirectory.dir("my-test-results")
+
+tasks.register("showDirs") {
+    val rootDir = project.rootDir
+    val reportsDir = project.reporting.baseDirectory
+    val testResultsDir = project.java.testResultsDir
+
+    doLast {
+        logger.quiet(rootDir.toPath().relativize(reportsDir.get().asFile.toPath()).toString())
+        logger.quiet(rootDir.toPath().relativize(testResultsDir.get().asFile.toPath()).toString())
+    }
+}
+
+
+
+
 
 // -- VERSION --
 

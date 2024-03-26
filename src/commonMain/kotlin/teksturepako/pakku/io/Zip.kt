@@ -10,7 +10,7 @@ suspend fun unzip(path: String): VfsFile
     return file.openAsZip()
 }
 
-expect suspend fun zipFile(
+expect suspend fun zipModpack(
     path: String?,
     outputFileName: String,
     extension: String,

@@ -74,3 +74,16 @@ data class GetMultipleFilesResponse(val `data`: List<CfModModel.File> = listOf()
 
 @Serializable
 data class MultipleFilesRequest(val fileIds: List<Int>)
+
+@Serializable
+data class GetFingerprintsMatches(val fingerprints: List<Long>)
+
+@Serializable
+data class GetFingerprintsMatchesResponse(val `data`: Data)
+{
+    @Serializable
+    data class Data(val exactMatches: List<Match>, val partialMatches: List<Match>)
+
+    @Serializable
+    data class Match(val id: Int, val file: CfModModel.File)
+}

@@ -23,7 +23,7 @@ import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.cli.ui.getFlavoredProjectName
 import teksturepako.pakku.compat.FileDirectorData
 import teksturepako.pakku.compat.addToFileDirectorFrom
-import teksturepako.pakku.io.zipFile
+import teksturepako.pakku.io.zipModpack
 
 suspend fun export(
     onSuccess: suspend (message: String) -> Unit,
@@ -204,7 +204,7 @@ suspend fun exportCurseForge(
 
     if (side == ProjectSide.SERVER)
     {
-        return zipFile(
+        return zipModpack(
             path = path,
             outputFileName = outputFileName,
             extension = "zip",
@@ -217,7 +217,7 @@ suspend fun exportCurseForge(
     }
     else
     {
-        return zipFile(
+        return zipModpack(
             path = path,
             outputFileName = outputFileName,
             extension = "zip",
@@ -307,7 +307,7 @@ suspend fun exportModrinth(
     }
     onInfo("${projectOverrides.size} project overrides exported to the 'overrides' folder")
 
-    return zipFile(
+    return zipModpack(
         path = path,
         outputFileName = outputFileName,
         extension = "mrpack",
