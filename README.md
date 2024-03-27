@@ -51,12 +51,8 @@
 <h2 align="center">Usage</h2>
 
 ```
-// Java:
 java -jar pakku.jar [<options>] <command> [<args>]...
 ```
-
-> [!WARNING]  
-> Pakku is currently in the alpha stage and not ready for production.
 
 <h2 align="center">Documentation</h2>
 
