@@ -15,6 +15,9 @@
 
 <snippet id="snippet-options">
 
+`--version`
+: Get pakku version
+
 `-y`, `--yes`
 : Overwrite every prompt to 'yes' without asking
 
