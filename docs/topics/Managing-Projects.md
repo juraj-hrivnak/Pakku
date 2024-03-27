@@ -12,15 +12,38 @@ To add a project, run the [`pakku add`](pakku-add.md) command:
 
 <include from="pakku-add.md" element-id="snippet-cmd"/>
 
-The `<projects>...` argument accepts only the project slug or ID 
+The `<projects>...` argument accepts only the project slug or ID;
+plus optionally specified file ID (using `:` as separator)
 and allows multiple projects to be added.
 
-Examples:
+### Examples
+
+Adding the latest version of project:
 
 ```
 %pakku% add jei
+```
+
+Adding the latest version of project using the project's
+CurseForge and Modrinth ID: 
+
+```
 %pakku% add 238222
-%pakku% add jei terrafirmacraft
+%pakku% add u6dRKJwZ
+```
+
+Adding multiple projects:
+
+```
+%pakku% add jei terrafirmacraft appleskin
+```
+
+Adding a project with the project's
+CurseForge and Modrinth file ID specified:
+
+```
+%pakku% add jei:5101366
+%pakku% add jei:PeYsGsQy
 ```
 
 ## Removing Projects
@@ -42,6 +65,7 @@ and allows multiple projects to be removed.
 To remove all project from the modpack, use the `--all` flag:
 
 ```
+%pakku% rm -a
 %pakku% rm --all
 ```
 
@@ -69,6 +93,7 @@ and allows multiple projects to be updated.
 To update all project in the modpack, use the `--all` flag:
 
 ```
+%pakku% update -a
 %pakku% update --all
 ```
 
