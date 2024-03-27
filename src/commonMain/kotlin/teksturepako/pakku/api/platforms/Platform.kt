@@ -59,11 +59,11 @@ abstract class Platform(
      * [number of files][numberOfFiles] to take.
      */
     suspend fun requestFilesForProject(
-        mcVersions: List<String>, loaders: List<String>, project: Project, numberOfFiles: Int = 1
+        mcVersions: List<String>, loaders: List<String>, project: Project, fileId: String? = null, numberOfFiles: Int = 1
     ): MutableSet<ProjectFile>
     {
         return project.id[this.serialName]?.let { projectId ->
-            this.requestProjectFiles(mcVersions, loaders, projectId).take(numberOfFiles).toMutableSet()
+            this.requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles).toMutableSet()
         } ?: mutableSetOf()
     }
 
@@ -72,24 +72,11 @@ abstract class Platform(
      * with optional [number of files][numberOfFiles] to take.
      */
     override suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, input: String, fileId: String?, numberOfFiles: Int
     ): Project?
     {
         return requestProject(input)?.apply {
-            files.addAll(requestFilesForProject(mcVersions, loaders, this, numberOfFiles))
-        }
-    }
-
-    /**
-     * [Requests a project][requestProjectFromId] with [files][requestProjectFiles] using its [projectId] & [fileId],
-     * with optional [number of files][numberOfFiles] to take.
-     */
-    suspend fun requestProjectWithFilesFromIds(
-        mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String, numberOfFiles: Int = 1
-    ): Project?
-    {
-        return requestProjectFromId(projectId)?.apply {
-            files.addAll(requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles))
+            files.addAll(requestFilesForProject(mcVersions, loaders, this, fileId, numberOfFiles))
         }
     }
 

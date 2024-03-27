@@ -149,24 +149,6 @@ tasks.withType<Jar> {
     }
 }
 
-reporting.baseDir = file("my-reports")
-java.testResultsDir = layout.buildDirectory.dir("my-test-results")
-
-tasks.register("showDirs") {
-    val rootDir = project.rootDir
-    val reportsDir = project.reporting.baseDirectory
-    val testResultsDir = project.java.testResultsDir
-
-    doLast {
-        logger.quiet(rootDir.toPath().relativize(reportsDir.get().asFile.toPath()).toString())
-        logger.quiet(rootDir.toPath().relativize(testResultsDir.get().asFile.toPath()).toString())
-    }
-}
-
-
-
-
-
 // -- VERSION --
 
 private val sourceFile = File("$rootDir/resources/teksturepako/pakku/TemplateVersion.kt")

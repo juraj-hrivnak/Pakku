@@ -252,4 +252,16 @@ object Modrinth : Platform(
 
         return projects
     }
+
+    suspend fun requestMultipleProjectFilesFromHashes(
+        hashes: List<String>, algorithm: String
+    ): MutableSet<ProjectFile>
+    {
+        return json.decodeFromString<Map<String, MrVersionModel>>(
+            this.requestProjectBody("version_files", GetVersionsFromHashesRequest(hashes, algorithm))
+                ?: return mutableSetOf()
+        ).values
+            .flatMap { version -> version.toProjectFiles().take(1) }
+            .toMutableSet()
+    }
 }

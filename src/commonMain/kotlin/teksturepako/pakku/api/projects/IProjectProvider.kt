@@ -20,6 +20,6 @@ interface IProjectProvider
      * @return A [Project] object with requested project files, or null if no data is found.
      */
     suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int = 1
+        mcVersions: List<String>, loaders: List<String>, input: String, fileId: String? = null, numberOfFiles: Int = 1
     ): Project?
 }

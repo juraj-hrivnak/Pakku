@@ -266,6 +266,27 @@ object CurseForge : Platform(
         return projects
     }
 
+    suspend fun requestMultipleProjectFilesFromBytes(
+        mcVersions: List<String>, bytes: List<ByteArray>
+    ): MutableSet<ProjectFile>
+    {
+        // Handle mcVersions
+        val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
+            requestGameVersionTypeId(version)
+        }
+
+        val murmurs = bytes.map { it.toMurmur2() }
+
+        debug { println(murmurs) }
+
+        return json.decodeFromString<GetFingerprintsMatchesResponse>(
+            this.requestProjectBody("fingerprints/432", GetFingerprintsMatches(murmurs))
+                ?: return mutableSetOf()
+        ).data.exactMatches
+            .map { match -> match.file.toProjectFile(gameVersionTypeIds) }
+            .toMutableSet()
+    }
+
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
     {
         return json.decodeFromString<JsonObject>(

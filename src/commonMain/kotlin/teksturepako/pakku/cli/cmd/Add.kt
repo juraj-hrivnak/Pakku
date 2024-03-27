@@ -38,19 +38,29 @@ class Add : CliktCommand("Add projects")
         // --
 
         for (projectIn in projectArgs.map { arg ->
-            projectProvider.requestProjectWithFiles(lockFile.getMcVersions(), lockFile.getLoaders(), arg)
+            val splitArg = arg.split(":")
+            val input: String = splitArg[0]
+            val fileId: String? = splitArg.getOrNull(1)
+
+            projectProvider.requestProjectWithFiles(lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId)
         })
         {
             projectIn.createAdditionRequest(
                 onError = { error -> terminal.danger(error.message) },
-                onRetry = { platform -> promptForProject(platform, terminal, lockFile) },
+                onRetry = { platform, project ->
+                    val fileId = project.getFilesForPlatform(platform).firstOrNull()?.id
+
+                    promptForProject(platform, terminal, lockFile, fileId)
+                },
                 onSuccess = { project, isRecommended, reqHandlers ->
-                    if (ynPrompt("Do you want to add ${project.slug}?", terminal, isRecommended))
+                    val slugMsg = project.slug.toString()
+
+                    if (ynPrompt("Do you want to add $slugMsg?", terminal, isRecommended))
                     {
                         lockFile.add(project)
                         lockFile.linkProjectToDependents(project)
                         project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        terminal.success("${project.slug} added")
+                        terminal.success("$slugMsg added")
                     }
                 },
                 lockFile, platforms

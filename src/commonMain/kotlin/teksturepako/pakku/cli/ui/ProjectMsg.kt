@@ -21,3 +21,9 @@ fun Project.getFlavoredProjectName(): String? = when
         }
     }
 }
+
+fun dim(string: String): String = TextStyle(color = brightBlue)(string)
+
+fun Project.getFlavoredSlug(): String = "${dim("{")}${this.slug.map { (platform, slug) ->
+    "$platform${dim("=")}$slug"
+}.joinToString(dim(", "))}${dim("}")}"

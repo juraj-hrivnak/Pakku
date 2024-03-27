@@ -5,16 +5,18 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.debug
+import teksturepako.pakku.toPrettyString
 
 data class RequestHandlers(
     val onError: suspend (error: Error) -> Unit,
-    val onRetry: suspend (platform: Platform) -> Project?,
+    val onRetry: suspend (platform: Platform, project: Project) -> Project?,
     val onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit
 )
 
 suspend fun Project?.createAdditionRequest(
     onError: suspend (error: Error) -> Unit,
-    onRetry: suspend (platform: Platform) -> Project?,
+    onRetry: suspend (platform: Platform, project: Project) -> Project?,
     onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit,
     lockFile: LockFile,
     platforms: List<Platform>
@@ -37,9 +39,12 @@ suspend fun Project?.createAdditionRequest(
         {
             onError(Error.NotFoundOnPlatform("${project.slug} was not found on ${platform.name}"))
 
+            debug { println(project.toPrettyString()) }
+
             // Retry
-            val project2 =  onRetry(platform)
+            val project2 =  onRetry(platform, project)
             if (project2 != null && project2.hasFilesOnPlatform(platform)) project += project2
+            debug { println(project2?.toPrettyString()) }
             continue
         }
 

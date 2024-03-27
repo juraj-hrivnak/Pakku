@@ -40,7 +40,7 @@ object Multiplatform : IProjectProvider
             mr = Modrinth.requestProjectFromSlug(cf.slug[CurseForge.serialName]!!)
         }
 
-        // Combine projects or return one just of them
+        // Combine projects or return just one of them.
         return cf?.let { c ->
             mr?.let { m ->
                 c + m // Combine projects if project is available from both platforms.
@@ -59,14 +59,65 @@ object Multiplatform : IProjectProvider
      * @return A [project][Project] with files from all platforms or null if the initial project request is unsuccessful.
      */
     override suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, input: String, fileId: String?, numberOfFiles: Int
     ): Project?
     {
         val project = requestProject(input) ?: return null
 
-        for (platform in platforms)
+        if (fileId == null)
         {
-            project.files.addAll(platform.requestFilesForProject(mcVersions, loaders, project, numberOfFiles))
+            for (platform in platforms)
+            {
+                project.files.addAll(platform.requestFilesForProject(mcVersions, loaders, project, null, numberOfFiles))
+            }
+        }
+        else
+        {
+            if (project.isOnPlatform(CurseForge))
+            {
+                val cfFile =
+                    CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId)
+                        .firstOrNull()
+
+                val hash = cfFile?.hashes?.get("sha1")
+
+                if (hash != null)
+                {
+                    val mrFile =
+                        Modrinth.requestMultipleProjectFilesFromHashes(listOf(hash), "sha1")
+                            .firstOrNull()
+
+                    if (mrFile != null)
+                    {
+                        project.files.add(mrFile)
+                    }
+
+                    project.files.add(cfFile)
+                }
+            }
+
+            if (project.isOnPlatform(Modrinth))
+            {
+                val mrFile =
+                    Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId)
+                        .firstOrNull()
+
+                val bytes = mrFile?.url?.let { Modrinth.requestByteArray(it) }
+
+                if (bytes != null)
+                {
+                    val cfFile =
+                        CurseForge.requestMultipleProjectFilesFromBytes(mcVersions, listOf(bytes))
+                            .firstOrNull()
+
+                    if (cfFile != null)
+                    {
+                        project.files.add(cfFile)
+                    }
+
+                    project.files.add(mrFile)
+                }
+            }
         }
 
         return project

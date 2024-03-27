@@ -47,7 +47,7 @@ class Import : CliktCommand("Import modpack")
                     onError = { error ->
                         if (error !is Error.AlreadyAdded) terminal.danger(error.message)
                     },
-                    onRetry = { platform -> promptForProject(platform, terminal, lockFile) },
+                    onRetry = { platform, _ -> promptForProject(platform, terminal, lockFile) },
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)
                         project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)

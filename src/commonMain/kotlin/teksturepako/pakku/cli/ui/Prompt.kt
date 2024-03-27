@@ -8,14 +8,18 @@ import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
-suspend fun promptForProject(platform: Platform, terminal: Terminal, lockFile: LockFile): Project?
+suspend fun promptForProject(platform: Platform, terminal: Terminal, lockFile: LockFile, fileId: String? = null): Project?
 {
     val prompt = StringPrompt("Specify ${platform.name}", terminal).ask()
 
     if (prompt.isNullOrBlank()) return null
 
+    val splitArg = prompt.split(":")
+    val input: String = splitArg[0]
+    val fileIdArg: String? = splitArg.getOrNull(1) ?: fileId
+
     return Multiplatform.requestProjectWithFiles(
-        lockFile.getMcVersions(), lockFile.getLoaders(), prompt
+        lockFile.getMcVersions(), lockFile.getLoaders(), input, fileIdArg
     )
 }
 
