@@ -315,7 +315,7 @@ suspend fun exportServerPack(
     create += projectOverrides.toExportData("/").map { result ->
         result.getOrElse { return Result.failure(it) }
     }
-    onInfo("${projectOverrides.size} project overrides exported to the Server-Pack folder")
+    onInfo("${projectOverrides.size} project overrides exported to the Server-Pack")
 
     return zipModpack(
         path = path,
