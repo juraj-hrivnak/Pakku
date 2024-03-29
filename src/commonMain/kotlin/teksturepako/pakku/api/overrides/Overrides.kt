@@ -47,7 +47,9 @@ object Overrides
         }.getOrDefault(mutableListOf())
     }
 
-    suspend fun List<ProjectOverride>.toExportData(): List<Result<Pair<String, ByteArray>>> = this.map {
+    suspend fun List<ProjectOverride>.toExportData(
+        resultLocation: String = "/overrides/"
+    ): List<Result<Pair<String, ByteArray>>> = this.map {
         projectOverride ->
             when (projectOverride.location)
             {
@@ -56,7 +58,7 @@ object Overrides
                     val bytes =
                         readFileBytesOrNull("$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/${projectOverride.fileName}")
 
-                    if (bytes != null) Result.success("/overrides/${projectOverride.type
+                    if (bytes != null) Result.success("$resultLocation${projectOverride.type
                         .folderName}/${projectOverride.fileName}" to bytes)
                     else Result.failure(PakkuException(
                         "Project overrides '${projectOverride.fileName}' could not be found.\n" +
@@ -69,7 +71,7 @@ object Overrides
                     val bytes =
                         readFileBytesOrNull("${projectOverride.type.folderName}/${projectOverride.fileName}")
 
-                    if (bytes != null) Result.success("/overrides/${projectOverride.type
+                    if (bytes != null) Result.success("$resultLocation${projectOverride.type
                         .folderName}/${projectOverride.fileName}" to bytes)
                     else Result.failure(PakkuException(
                         "Project overrides '${projectOverride.fileName}' could not be found.\n" +

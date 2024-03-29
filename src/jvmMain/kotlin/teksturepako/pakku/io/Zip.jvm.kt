@@ -11,9 +11,7 @@ actual suspend fun zipModpack(
     path: String?,
     outputFileName: String,
     extension: String,
-    overrides: List<String>,
-    serverOverrides: List<String>,
-    clientOverrides: List<String>,
+    overrides: List<Pair<String?, List<String>>>,
     vararg create: Pair<String, Any>
 ): Result<String> = withContext(Dispatchers.IO) {
 
@@ -56,42 +54,23 @@ actual suspend fun zipModpack(
 
     // -- OVERRIDES --
 
-    for (ovName in overrides)
+    for ((ovFolderName, ovNames) in overrides)
     {
-        if (File(ovName).exists())
+        for (ovName in ovNames)
         {
-            zip.addFolder(File(ovName))
-            zip.renameFile("$ovName/", "overrides/$ovName/")
-        }
-        else
-        {
-            return@withContext Result.failure(PakkuException("Override '$ovName' could not be found"))
-        }
-    }
+            if (File(ovName).exists())
+            {
+                zip.addFolder(File(ovName))
 
-    for (ovName in serverOverrides)
-    {
-        if (File(ovName).exists())
-        {
-            zip.addFolder(File(ovName))
-            zip.renameFile("$ovName/", "server-overrides/$ovName/")
-        }
-        else
-        {
-            return@withContext Result.failure(PakkuException("Server override '$ovName' could not be found"))
-        }
-    }
-
-    for (ovName in clientOverrides)
-    {
-        if (File(ovName).exists())
-        {
-            zip.addFolder(File(ovName))
-            zip.renameFile("$ovName/", "client-overrides/$ovName/")
-        }
-        else
-        {
-            return@withContext Result.failure(PakkuException("Client override '$ovName' could not be found"))
+                if (ovFolderName != null)
+                {
+                    zip.renameFile("$ovName/", "$ovFolderName/$ovName/")
+                }
+            }
+            else
+            {
+                return@withContext Result.failure(PakkuException("($ovFolderName) Override '$ovName' could not be found"))
+            }
         }
     }
 

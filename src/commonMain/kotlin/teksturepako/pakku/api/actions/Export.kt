@@ -31,7 +31,7 @@ suspend fun export(
     onWarning: suspend (message: String) -> Unit,
     onInfo: suspend (message: String) -> Unit,
     path: String?,
-    side: ProjectSide,
+    serverPack: Boolean,
     lockFile: LockFile,
     configFile: ConfigFile,
     platforms: List<Platform>,
@@ -47,34 +47,32 @@ suspend fun export(
     val mcVersion = lockFile.getMcVersions().firstOrNull()
         ?: return onError("Could not export: 'mc_versions' is not specified")
 
-    if (CurseForge in platforms)
+    if (serverPack)
     {
-        if (side == ProjectSide.BOTH || side == ProjectSide.CLIENT)
-        {
-            exportCurseForge(
-                onInfo = { onInfo("(${CurseForge.name}) $it") },
-                onWarning = { onWarning("(${CurseForge.name}) Warning: $it") },
-                path, side, outputFileName, mcVersion, lockFile, configFile,
-            ).fold(
-                onSuccess = { onSuccess("(${CurseForge.name}) modpack exported to '$it'") },
-                onFailure = { onError("(${CurseForge.name}) Error: ${it.message}") }
-            )
-        }
+        exportServerPack(
+            onInfo = { onInfo("(${Modrinth.name}) $it") },
+            path, outputFileName, lockFile, configFile,
+        ).fold(
+            onSuccess = { onSuccess("Server-Pack exported to '$it'") },
+            onFailure = { onError("Server-Pack Error: ${it.message}") }
+        )
+        onInfo(" ")
 
-        if (side == ProjectSide.BOTH || side == ProjectSide.SERVER)
-        {
-            exportCurseForge(
-                onInfo = { onInfo("(${CurseForge.name} Server Pack) $it") },
-                onWarning = { onWarning("(${CurseForge.name} Server Pack) Warning: $it") },
-                path, ProjectSide.SERVER, "$outputFileName-Server-Pack", mcVersion, lockFile, configFile,
-            ).fold(
-                onSuccess = { onSuccess("(${CurseForge.name} Server Pack) modpack exported to '$it'") },
-                onFailure = { onError("(${CurseForge.name} Server Pack) Error: ${it.message}") }
-            )
-        }
+        return
     }
 
-    onInfo("")
+    if (CurseForge in platforms)
+    {
+        exportCurseForge(
+            onInfo = { onInfo("(${CurseForge.name}) $it") },
+            onWarning = { onWarning("(${CurseForge.name}) Warning: $it") },
+            path, outputFileName, mcVersion, lockFile, configFile,
+        ).fold(
+            onSuccess = { onSuccess("(${CurseForge.name}) modpack exported to '$it'") },
+            onFailure = { onError("(${CurseForge.name}) Error: ${it.message}") }
+        )
+        onInfo(" ")
+    }
 
     if (Modrinth in platforms)
     {
@@ -86,6 +84,7 @@ suspend fun export(
             onSuccess = { onSuccess("(${Modrinth.name}) modpack exported to '$it'") },
             onFailure = { onError("(${Modrinth.name}) Error: ${it.message}") }
         )
+        onInfo(" ")
     }
 }
 
@@ -127,26 +126,13 @@ suspend fun exportCurseForge(
     onInfo: suspend (message: String) -> Unit,
     onWarning: suspend (message: String) -> Unit,
     path: String?,
-    side: ProjectSide,
     outputFileName: String,
     mcVersion: String,
     lockFile: LockFile,
     configFile: ConfigFile
 ): Result<String>
 {
-    val projects = lockFile.getAllProjects().filter { project ->
-        when
-        {
-            project.side == null -> true
-
-            side == ProjectSide.BOTH -> true
-            side == ProjectSide.CLIENT -> project.side == ProjectSide.CLIENT
-            side == ProjectSide.SERVER -> project.side == ProjectSide.SERVER || project.side == ProjectSide.BOTH
-
-            else                     -> false
-        }
-    }
-
+    val projects = lockFile.getAllProjects()
     val projectOverrides = Overrides.getProjectOverrides().toMutableList()
 
     val fileDirector = FileDirectorData()
@@ -202,33 +188,17 @@ suspend fun exportCurseForge(
     }
     onInfo("${projectOverrides.size} project overrides exported to the 'overrides' folder")
 
-    if (side == ProjectSide.SERVER)
-    {
-        return zipModpack(
-            path = path,
-            outputFileName = outputFileName,
-            extension = "zip",
-            overrides = configFile.getAllOverrides()
-                    + configFile.getAllServerOverrides(),
-            serverOverrides = listOf(),
-            clientOverrides = listOf(),
-            create = create.toTypedArray()
-        )
-    }
-    else
-    {
-        return zipModpack(
-            path = path,
-            outputFileName = outputFileName,
-            extension = "zip",
-            overrides = configFile.getAllOverrides()
-                    + configFile.getAllServerOverrides()
-                    + configFile.getAllClientOverrides(),
-            serverOverrides = listOf(),
-            clientOverrides = listOf(),
-            create = create.toTypedArray()
-        )
-    }
+    return zipModpack(
+        path = path,
+        outputFileName = outputFileName,
+        extension = "zip",
+        overrides = listOf(
+            "overrides" to configFile.getAllOverrides()
+                + configFile.getAllServerOverrides()
+                + configFile.getAllClientOverrides()
+        ),
+        create = create.toTypedArray()
+    )
 }
 
 suspend fun exportModrinth(
@@ -311,9 +281,50 @@ suspend fun exportModrinth(
         path = path,
         outputFileName = outputFileName,
         extension = "mrpack",
-        overrides = configFile.getAllOverrides(),
-        serverOverrides = configFile.getAllServerOverrides(),
-        clientOverrides = configFile.getAllClientOverrides(),
+        overrides = listOf(
+            "overrides" to configFile.getAllOverrides(),
+            "server-overrides" to configFile.getAllServerOverrides(),
+            "client-overrides" to configFile.getAllClientOverrides()
+        ),
+        create = create.toTypedArray()
+    )
+}
+
+suspend fun exportServerPack(
+    onInfo: suspend (message: String) -> Unit,
+    path: String?,
+    outputFileName: String,
+    lockFile: LockFile,
+    configFile: ConfigFile,
+): Result<String>
+{
+    val projects = lockFile.getAllProjects()
+    val projectOverrides = Overrides.getProjectOverrides().toMutableList()
+    val create: MutableList<Pair<String, Any>> = mutableListOf()
+
+    // Projects
+    projects.mapNotNull { project ->
+        project.files.firstOrNull()?.let { project.type to it }
+    }.forEach { (type, file) ->
+        projectOverrides += ProjectOverride(
+            type, file.fileName, location = REAL
+        )
+    }
+
+    // Project Overrides
+    create += projectOverrides.toExportData("/").map { result ->
+        result.getOrElse { return Result.failure(it) }
+    }
+    onInfo("${projectOverrides.size} project overrides exported to the Server-Pack folder")
+
+    return zipModpack(
+        path = path,
+        outputFileName = "$outputFileName-Server-Pack",
+        extension = "zip",
+        overrides = listOf(
+            null to configFile.getAllOverrides()
+                + configFile.getAllServerOverrides()
+        ),
         create = create.toTypedArray()
     )
 }

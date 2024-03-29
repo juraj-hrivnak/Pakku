@@ -14,8 +14,6 @@ expect suspend fun zipModpack(
     path: String?,
     outputFileName: String,
     extension: String,
-    overrides: List<String>,
-    serverOverrides: List<String>,
-    clientOverrides: List<String>,
+    overrides: List<Pair<String?, List<String>>>,
     vararg create: Pair<String, Any>
 ): Result<String>

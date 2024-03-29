@@ -17,8 +17,8 @@ Export modpack.
 
 <snippet id="snippet-options">
 
-`-s`, `--side=(client|server|both)`
-: The side to export only
+`-s`, `--server-pack`
+: Export Server-Pack only
 
 `-h`, `--help`                                        
 : Show help message and exit
