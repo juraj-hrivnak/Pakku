@@ -50,7 +50,7 @@ suspend fun export(
     if (serverPack)
     {
         exportServerPack(
-            onInfo = { onInfo("(${Modrinth.name}) $it") },
+            onInfo = { onInfo("Server-Pack $it") },
             path, outputFileName, lockFile, configFile,
         ).fold(
             onSuccess = { onSuccess("Server-Pack exported to '$it'") },
@@ -299,6 +299,7 @@ suspend fun exportServerPack(
 ): Result<String>
 {
     val projects = lockFile.getAllProjects()
+        .filterNot { it.side == ProjectSide.CLIENT }
     val projectOverrides = Overrides.getProjectOverrides().toMutableList()
     val create: MutableList<Pair<String, Any>> = mutableListOf()
 
