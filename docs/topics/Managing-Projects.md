@@ -16,15 +16,13 @@ The `<projects>...` argument accepts only the project slug or ID;
 plus optionally specified file ID (using `:` as separator)
 and allows multiple projects to be added.
 
-### Examples
-
-Adding the latest version of project:
+Adding the latest version of a project.
 
 ```
 %pakku% add jei
 ```
 
-Adding the latest version of project using the project's
+Adding the latest version of a project using its
 CurseForge and Modrinth ID: 
 
 ```
@@ -38,7 +36,7 @@ Adding multiple projects:
 %pakku% add jei terrafirmacraft appleskin
 ```
 
-Adding a project with the project's
+Adding a project with its
 CurseForge and Modrinth file ID specified:
 
 ```
