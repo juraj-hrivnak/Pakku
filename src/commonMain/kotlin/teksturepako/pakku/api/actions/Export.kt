@@ -11,15 +11,18 @@ import teksturepako.pakku.api.models.MrModpackModel
 import teksturepako.pakku.api.models.MrModpackModel.File
 import teksturepako.pakku.api.models.MrModpackModel.File.Env
 import teksturepako.pakku.api.models.MrModpackModel.File.Hashes
+import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverride
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.REAL
 import teksturepako.pakku.api.overrides.Overrides.toExportData
+import teksturepako.pakku.api.overrides.Overrides.toOverrideType
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
+import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.cli.ui.getFlavoredProjectName
 import teksturepako.pakku.compat.FileDirectorData
 import teksturepako.pakku.compat.addToFileDirectorFrom
@@ -115,7 +118,7 @@ suspend fun onProjectMissing(
     {
         project.getFilesForPlatform(platform).firstOrNull()?.let { file ->
             projectOverrides += ProjectOverride(
-                project.type, file.fileName, location = REAL
+                project.type, project.toOverrideType(), file.fileName, location = REAL
             )
             onInfo("${project.getFlavoredProjectName()} exported as 'project override'")
         }
@@ -183,7 +186,7 @@ suspend fun exportCurseForge(
     onInfo("${cfManifestData.files.size} projects exported to 'manifest.json'")
 
     // Project Overrides
-    create += projectOverrides.toExportData().map { result ->
+    create += projectOverrides.toExportData(onlyOverridesFolders = true).map { result ->
         result.getOrElse { return Result.failure(it) }
     }
     onInfo("${projectOverrides.size} project overrides exported to the 'overrides' folder")
@@ -298,22 +301,27 @@ suspend fun exportServerPack(
     configFile: ConfigFile,
 ): Result<String>
 {
-    val projects = lockFile.getAllProjects()
-        .filterNot { it.side == ProjectSide.CLIENT }
-    val projectOverrides = Overrides.getProjectOverrides().toMutableList()
+    val projects = lockFile.getAllProjects().filterNot {
+        it.side == ProjectSide.CLIENT || it.type == ProjectType.SHADER || it.type == ProjectType.RESOURCE_PACK
+    }
+
+    val projectOverrides = Overrides.getProjectOverrides().filterNot {
+        it.overrideType == OverrideType.CLIENT_OVERRIDE
+    }.toMutableList()
+
     val create: MutableList<Pair<String, Any>> = mutableListOf()
 
     // Projects
     projects.mapNotNull { project ->
-        project.files.firstOrNull()?.let { project.type to it }
-    }.forEach { (type, file) ->
+        project.files.firstOrNull()?.let { project to it }
+    }.forEach { (project, file) ->
         projectOverrides += ProjectOverride(
-            type, file.fileName, location = REAL
+            project.type, project.toOverrideType(), file.fileName, location = REAL
         )
     }
 
     // Project Overrides
-    create += projectOverrides.toExportData("/").map { result ->
+    create += projectOverrides.toExportData(noOverrideFolders = true).map { result ->
         result.getOrElse { return Result.failure(it) }
     }
     onInfo("${projectOverrides.size} project overrides exported to the Server-Pack")

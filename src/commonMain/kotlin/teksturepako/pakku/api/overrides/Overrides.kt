@@ -3,8 +3,10 @@ package teksturepako.pakku.api.overrides
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.data.PakkuException
-import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.PAKKU_FOLDER
+import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.FAKE
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.REAL
+import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.io.filterPath
 import teksturepako.pakku.io.readFileBytesOrNull
@@ -23,62 +25,100 @@ object Overrides
 
     enum class ProjectOverrideLocation
     {
-        PAKKU_FOLDER, REAL
+        FAKE, REAL
     }
 
     @Serializable
     data class ProjectOverride(
-        val type: ProjectType,
+        @SerialName("project_type") val projectType: ProjectType,
+        @SerialName("override_type") val overrideType: OverrideType,
         @SerialName("file_name") val fileName: String,
-        val location: ProjectOverrideLocation = PAKKU_FOLDER
+        val location: ProjectOverrideLocation = FAKE
     )
 
-    const val PROJECT_OVERRIDES_FOLDER = ".pakku/overrides"
+    const val PAKKU_DIR = ".pakku"
 
     fun getProjectOverrides(): List<ProjectOverride>
     {
         return runCatching {
-            ProjectType.entries.flatMap { projectType ->
-                File("$PROJECT_OVERRIDES_FOLDER/${projectType.folderName}").walkTopDown().mapNotNull {
-                    if (it.isFile) ProjectOverride(projectType, it.name)
-                    else null
+            OverrideType.entries.flatMap { overrideType ->
+                ProjectType.entries.flatMap { projectType ->
+                    File("$PAKKU_DIR/${overrideType.folderName}/${projectType.folderName}")
+                        .walkTopDown()
+                        .mapNotNull {
+                            if (it.isFile) ProjectOverride(projectType, overrideType, it.name) else null
+                        }
                 }
             }
         }.getOrDefault(mutableListOf())
     }
 
+    fun Project.toOverrideType(): OverrideType = when
+    {
+        this.type == ProjectType.SHADER || this.type == ProjectType.RESOURCE_PACK -> OverrideType.CLIENT_OVERRIDE
+        this.side == ProjectSide.BOTH                                             -> OverrideType.OVERRIDE
+        this.side == ProjectSide.SERVER                                           -> OverrideType.SERVER_OVERRIDE
+        this.side == ProjectSide.CLIENT                                           -> OverrideType.CLIENT_OVERRIDE
+        this.side == null                                                         -> OverrideType.OVERRIDE
+        else                                                                      -> OverrideType.OVERRIDE
+    }
+
     suspend fun List<ProjectOverride>.toExportData(
-        resultLocation: String = "/overrides/"
-    ): List<Result<Pair<String, ByteArray>>> = this.map {
-        projectOverride ->
+        noOverrideFolders: Boolean = false,
+        onlyOverridesFolders: Boolean = false
+    ): List<Result<Pair<String, ByteArray>>>
+    {
+        return this.map { projectOverride ->
+            val resultOverridesFolder = when
+            {
+                noOverrideFolders    -> ""
+                onlyOverridesFolders -> "overrides"
+                else                 -> projectOverride.overrideType.folderName
+            }
             when (projectOverride.location)
             {
-                PAKKU_FOLDER ->
+                FAKE ->
                 {
-                    val bytes =
-                        readFileBytesOrNull("$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/${projectOverride.fileName}")
+                    val bytes = readFileBytesOrNull(
+                        "$PAKKU_DIR/${projectOverride.overrideType.folderName}/" +
+                                "${projectOverride.projectType.folderName}/${projectOverride.fileName}"
+                    )
 
-                    if (bytes != null) Result.success("$resultLocation${projectOverride.type
-                        .folderName}/${projectOverride.fileName}" to bytes)
-                    else Result.failure(PakkuException(
-                        "Project overrides '${projectOverride.fileName}' could not be found.\n" +
-                                " Try running the 'pakku fetch' command before exporting the modpack."
-                    ))
+                    if (bytes != null)
+                    {
+                        Result.success("$resultOverridesFolder/" +
+                                "${projectOverride.projectType.folderName}/${projectOverride.fileName}" to bytes)
+                    }
+                    else
+                    {
+                        Result.failure(PakkuException(
+                            "Project overrides '${projectOverride.fileName}' could not be found.\n" +
+                                    " Try running the 'pakku fetch' command before exporting the modpack."
+                        ))
+                    }
                 }
 
                 REAL         ->
                 {
-                    val bytes =
-                        readFileBytesOrNull("${projectOverride.type.folderName}/${projectOverride.fileName}")
+                    val bytes = readFileBytesOrNull(
+                        "${projectOverride.projectType.folderName}/${projectOverride.fileName}"
+                    )
 
-                    if (bytes != null) Result.success("$resultLocation${projectOverride.type
-                        .folderName}/${projectOverride.fileName}" to bytes)
-                    else Result.failure(PakkuException(
-                        "Project overrides '${projectOverride.fileName}' could not be found.\n" +
-                                " Try running the 'pakku fetch' command before exporting the modpack."
-                    ))
+                    if (bytes != null)
+                    {
+                        Result.success("$resultOverridesFolder/" +
+                                "${projectOverride.projectType.folderName}/${projectOverride.fileName}" to bytes)
+                    }
+                    else
+                    {
+                        Result.failure(PakkuException(
+                            "Project overrides '${projectOverride.fileName}' could not be found.\n" +
+                                    " Try running the 'pakku fetch' command before exporting the modpack."
+                        ))
+                    }
                 }
             }
         }
+    }
 
 }

@@ -19,7 +19,8 @@ data class ConfigFile(
     private var description: String = "",
     private var author: String = "",
     private val overrides: MutableList<String> = mutableListOf(),
-    @SerialName("server_overrides") private val serverOverrides: MutableList<String> = mutableListOf(),
+    @SerialName("server_overrides")
+    private val serverOverrides: MutableList<String> = mutableListOf(),
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
     private val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
 )

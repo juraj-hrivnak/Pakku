@@ -11,7 +11,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.Overrides
-import teksturepako.pakku.api.overrides.Overrides.PROJECT_OVERRIDES_FOLDER
+import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.debug
@@ -135,11 +135,13 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         projectOverrides.map { projectOverride ->
             launch {
-                val file = File("${projectOverride.type.folderName}/${projectOverride.fileName}")
+                val file = File("${projectOverride.projectType.folderName}/${projectOverride.fileName}")
                 if (!file.exists()) runCatching {
                     file.parentFile.mkdir()
-                    File("$PROJECT_OVERRIDES_FOLDER/${projectOverride.type.folderName}/" +
-                            projectOverride.fileName).copyTo(file)
+                    File(
+                        "$PAKKU_DIR/${projectOverride.overrideType.folderName}/" +
+                                "${projectOverride.projectType.folderName}/${projectOverride.fileName}"
+                    ).copyTo(file)
 
                     terminal.info("${projectOverride.fileName} synced")
                     synced = true
