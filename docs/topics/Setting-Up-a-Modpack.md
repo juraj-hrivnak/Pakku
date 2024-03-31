@@ -27,6 +27,12 @@ If you made a mistake, you can change the properties of the modpack
 using the [`pakku set`](pakku-set.md) command.
 
 ## Importing an existing modpack
+
+<note>
+Pakku as of version 0.6.4 only imports projects. Make sure you have Minecraft versions and mod loaders
+set up before importing.
+</note>
+
 To import an existing modpack, run the [`pakku import`](pakku-import.md) command with the `<path>` argument:
 
 ```
