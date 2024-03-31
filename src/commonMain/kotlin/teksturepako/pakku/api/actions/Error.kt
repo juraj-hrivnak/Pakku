@@ -2,6 +2,9 @@ package teksturepako.pakku.api.actions
 
 sealed class Error(val message: String)
 {
+    // File
+    class FileNotFound(file: String) : Error("File not found: $file")
+
     // Addition
     class ProjNotFound(message: String) : Error(message)
     class AlreadyAdded(message: String) : Error(message)
@@ -11,5 +14,5 @@ sealed class Error(val message: String)
     class FileNamesDoNotMatch(message: String) : Error(message)
 
     // Import
-    class CouldNotImport(message: String) : Error(message)
+    class CouldNotImport(file: String) : Error("Could not import from: '$file'. It is not a proper modpack file.")
 }

@@ -3,12 +3,13 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.Error
 import teksturepako.pakku.api.actions.createAdditionRequest
-import teksturepako.pakku.api.actions.import
+import teksturepako.pakku.api.actions.import.import
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
@@ -36,10 +37,11 @@ class Import : CliktCommand("Import modpack")
         }
         // --
 
-        val importedProjects = import(
-            onError = { error -> terminal.danger(error.message) },
-            pathArg, lockFile, platforms
-        )
+        val importedProjects = import(pathArg, lockFile, platforms).getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
 
         importedProjects.map { projectIn ->
             launch {

@@ -5,12 +5,10 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.data.jsonEncodeDefaults
-import teksturepako.pakku.api.models.CfModpackModel
-import teksturepako.pakku.api.models.CfModpackModel.*
-import teksturepako.pakku.api.models.MrModpackModel
-import teksturepako.pakku.api.models.MrModpackModel.File
-import teksturepako.pakku.api.models.MrModpackModel.File.Env
-import teksturepako.pakku.api.models.MrModpackModel.File.Hashes
+import teksturepako.pakku.api.models.ModpackModel.CfModpackModel
+import teksturepako.pakku.api.models.ModpackModel.CfModpackModel.*
+import teksturepako.pakku.api.models.ModpackModel.MrModpackModel
+import teksturepako.pakku.api.models.ModpackModel.MrModpackModel.File
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverride
@@ -150,8 +148,7 @@ suspend fun exportCurseForge(
     val cfLoaders: List<CfModLoaderData> =
         lockFile.getLoadersWithVersions().map { dep ->
             CfModLoaderData(
-                id = "${dep.first}-${dep.second}",
-                primary = lockFile.getLoadersWithVersions().firstOrNull()!! == dep
+                id = "${dep.first}-${dep.second}", primary = lockFile.getLoadersWithVersions().firstOrNull()!! == dep
             )
         }
 
@@ -172,8 +169,7 @@ suspend fun exportCurseForge(
 
     val cfManifestData = CfModpackModel(
         CfMinecraftData(
-            version = mcVersion,
-            modLoaders = cfLoaders
+            version = mcVersion, modLoaders = cfLoaders
         ),
         name = configFile.getName(),
         version = configFile.getVersion(),
@@ -243,18 +239,12 @@ suspend fun exportModrinth(
             }
 
         File(
-            path = "${project.type.folderName}/${file.fileName}",
-            hashes = Hashes(
-                sha512 = file.hashes?.get("sha512")!!,
-                sha1 = file.hashes["sha1"]!!
-            ),
-            env = Env(
-                client = if (project.side == ProjectSide.CLIENT || project.side ==  ProjectSide.BOTH)
-                    "required" else "unsupported",
-                server = if (project.side == ProjectSide.SERVER || project.side ==  ProjectSide.BOTH)
-                    "required" else "unsupported"
-            ),
-            downloads = setOf(file.url!!.replace(" ", "+")), // Replace spaces with '+' in URLs
+            path = "${project.type.folderName}/${file.fileName}", hashes = File.Hashes(
+                sha512 = file.hashes?.get("sha512")!!, sha1 = file.hashes["sha1"]!!
+            ), env = File.Env(
+                client = if (project.side == ProjectSide.CLIENT || project.side == ProjectSide.BOTH) "required" else "unsupported",
+                server = if (project.side == ProjectSide.SERVER || project.side == ProjectSide.BOTH) "required" else "unsupported"
+            ), downloads = setOf(file.url!!.replace(" ", "+")), // Replace spaces with '+' in URLs
             fileSize = file.size
         )
     }.toSet()
