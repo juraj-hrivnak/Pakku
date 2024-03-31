@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'gradle/wrapper/**'
+
 jobs:
   validation:
     name: "Validation"
