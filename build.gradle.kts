@@ -72,8 +72,8 @@ kotlin {
                 // URL Encoding
                 implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
 
-                // Murmur Hash
-                implementation("com.goncalossilva:murmurhash:0.4.0")
+                // Kotlin Result
+                implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
                 // File I/O
                 implementation("com.soywiz.korlibs.korio:korio:4.0.10")
