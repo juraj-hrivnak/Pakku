@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.7.5"
+version = "0.7.6"
 
 val nativeEnabled = false
 
@@ -216,6 +216,13 @@ publishing {
                 username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_ACTOR")
                 password = githubProperties["gpr.key"] as String? ?: System.getenv("GITHUB_TOKEN")
             }
+        }
+    }
+    publications.withType<MavenPublication> {
+        artifactId = if (name == "kotlinMultiplatform") {
+            artifactId.lowercase()
+        } else {
+            "$artifactId-$name".lowercase()
         }
     }
 }
