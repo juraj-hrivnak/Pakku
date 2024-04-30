@@ -1,6 +1,7 @@
 package teksturepako.pakku.api.actions
 
 import kotlinx.serialization.encodeToString
+import teksturepako.pakku.api.actions.PError.*
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.platforms.Platform
@@ -9,13 +10,13 @@ import teksturepako.pakku.debug
 import teksturepako.pakku.toPrettyString
 
 data class RequestHandlers(
-    val onError: suspend (error: Error) -> Unit,
+    val onError: suspend (error: PError) -> Unit,
     val onRetry: suspend (platform: Platform, project: Project) -> Project?,
     val onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit
 )
 
 suspend fun Project?.createAdditionRequest(
-    onError: suspend (error: Error) -> Unit,
+    onError: suspend (error: PError) -> Unit,
     onRetry: suspend (platform: Platform, project: Project) -> Project?,
     onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit,
     lockFile: LockFile,
@@ -23,13 +24,13 @@ suspend fun Project?.createAdditionRequest(
 )
 {
     // Exist
-    var project = this ?: return onError(Error.ProjNotFound("Project not found"))
+    var project = this ?: return onError(ProjNotFound("Project not found"))
     var isRecommended = true
 
     // Already added
     if (lockFile.isProjectAdded(project))
     {
-        return onError(Error.AlreadyAdded("Could not add ${project.slug}. It is already added"))
+        return onError(AlreadyAdded("Could not add ${project.slug}. It is already added"))
     }
 
     for (platform in platforms)
@@ -37,7 +38,7 @@ suspend fun Project?.createAdditionRequest(
         // Check if project is on each platform
         if (project.isNotOnPlatform(platform))
         {
-            onError(Error.NotFoundOnPlatform("${project.slug} was not found on ${platform.name}"))
+            onError(NotFoundOnPlatform("${project.slug} was not found on ${platform.name}"))
 
             debug { println(project.toPrettyString()) }
 
@@ -51,7 +52,7 @@ suspend fun Project?.createAdditionRequest(
         // Check if project has files on each platform
         if (project.hasNoFilesOnPlatform(platform))
         {
-            onError(Error.NoFilesOnPlatform("No files for ${project.slug} found on ${platform.name}"))
+            onError(NoFilesOnPlatform("No files for ${project.slug} found on ${platform.name}"))
             isRecommended = false
         }
     }
@@ -59,15 +60,15 @@ suspend fun Project?.createAdditionRequest(
     // Check if project has any files at all
     if (project.hasNoFiles())
     {
-        onError(Error.NoFiles("No files found for ${project.slug} ${lockFile.getMcVersions()}"))
+        onError(NoFiles("No files found for ${project.slug} ${lockFile.getMcVersions()}"))
         isRecommended = false
     }
 
     // Check if project files match across platforms
     if (project.fileNamesDoNotMatchAcrossPlatforms(platforms))
     {
-        onError(Error.FileNamesDoNotMatch("${project.slug} versions do not match across platforms"))
-        onError(Error.FileNamesDoNotMatch((json.encodeToString(project.files.map { it.fileName }))))
+        onError(FileNamesDoNotMatch("${project.slug} versions do not match across platforms"))
+        onError(FileNamesDoNotMatch((json.encodeToString(project.files.map { it.fileName }))))
         isRecommended = false
     }
 

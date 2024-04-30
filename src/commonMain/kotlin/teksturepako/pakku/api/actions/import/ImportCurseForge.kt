@@ -3,8 +3,8 @@ package teksturepako.pakku.api.actions.import
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import teksturepako.pakku.api.actions.Error
-import teksturepako.pakku.api.actions.Error.FileNotFound
+import teksturepako.pakku.api.actions.PError
+import teksturepako.pakku.api.actions.PError.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.io.readFileOrNull
@@ -19,7 +19,7 @@ private fun String?.toCfModpackModel(): ModpackModel? =
 
 fun String.isCfModpack(): Boolean = this.endsWith(CF_EXTENSION) || this == CF_MANIFEST
 
-suspend fun importCurseForge(path: String): Result<ModpackModel, Error>
+suspend fun importCurseForge(path: String): Result<ModpackModel, PError>
 {
     val file = File(path)
 
