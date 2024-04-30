@@ -208,7 +208,7 @@ repositories {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/juraj-hrivnak/Pakku")
         credentials {
-            username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_USERNAME")
+            username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_ACTOR")
             password = githubProperties["gpr.key"] as String? ?: System.getenv("GITHUB_TOKEN")
         }
     }
