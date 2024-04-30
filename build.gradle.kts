@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.7.4"
+version = "0.7.5"
 
 val nativeEnabled = false
 
@@ -176,6 +176,10 @@ if (nativeEnabled)
 }
 
 tasks.named("compileKotlinJvm") {
+    dependsOn("generateVersion")
+}
+
+tasks.named("jvmSourcesJar") {
     dependsOn("generateVersion")
 }
 
