@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.7.3"
+version = "0.7.4"
 
 val nativeEnabled = false
 
@@ -203,13 +203,15 @@ val githubProperties: Properties = Properties().apply {
     properties.onSuccess { load(it) }
 }
 
-repositories {
-    maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/juraj-hrivnak/Pakku")
-        credentials {
-            username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_ACTOR")
-            password = githubProperties["gpr.key"] as String? ?: System.getenv("GITHUB_TOKEN")
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/juraj-hrivnak/Pakku")
+            credentials {
+                username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_ACTOR")
+                password = githubProperties["gpr.key"] as String? ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
 }
