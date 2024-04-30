@@ -117,18 +117,10 @@ jobs:
           name: jvm-package
           path: package
 
-
-      - name: "✏️ Generate release changelog"
-        id: changelog
-        uses: heinrichreimer/action-github-changelog-generator@v2.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           prerelease: false
-          body: ${{ steps.changelog.outputs.changelog }}
           files: |
             package/pakku.jar
 
