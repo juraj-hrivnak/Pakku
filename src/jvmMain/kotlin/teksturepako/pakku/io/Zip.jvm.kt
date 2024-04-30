@@ -22,6 +22,7 @@ actual suspend fun zipModpack(
         return@withContext Result.failure(PakkuException("Zip.jvm.kt#zipFile: $path is not a valid path"))
 
     File(pakkuTemp).deleteRecursively()
+    File(output).delete()
 
     val outputFile = if (path != null) File(path, output) else File(output)
     if (outputFile.exists()) outputFile.delete()

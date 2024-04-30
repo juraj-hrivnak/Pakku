@@ -275,9 +275,11 @@ suspend fun exportModrinth(
         outputFileName = outputFileName,
         extension = "mrpack",
         overrides = listOf(
-            "overrides" to configFile.getAllOverrides(),
-            "server-overrides" to configFile.getAllServerOverrides(),
-            "client-overrides" to configFile.getAllClientOverrides()
+            "client-overrides" to configFile.getAllOverrides()
+                    + configFile.getAllServerOverrides()
+                    + configFile.getAllClientOverrides(),
+            "server-overrides" to configFile.getAllServerOverrides()
+                    + (configFile.getAllOverrides() - configFile.getAllClientOverrides().toSet()),
         ),
         create = create.toTypedArray()
     )
