@@ -198,6 +198,13 @@ fun generateVersion() {
 
 // -- PUBLISHING --
 
+fun getPublishVersion(): String {
+    // Call gradle with -PsnapshotVersion to set the version as a snapshot.
+    if (!project.hasProperty("snapshotVersion")) return version.toString()
+    val buildNumber = System.getenv("GITHUB_RUN_NUMBER") ?: "0"
+    return "$version.$buildNumber-SNAPSHOT"
+}
+
 /**
  * Create `github.properties` in root project folder file with
  * `gpr.usr=GITHUB_USER_ID` & `gpr.key=PERSONAL_ACCESS_TOKEN`
@@ -219,10 +226,7 @@ publishing {
         }
     }
     publications.withType<MavenPublication> {
-        artifactId = if (name == "kotlinMultiplatform") {
-            artifactId.lowercase()
-        } else {
-            "$artifactId-$name".lowercase()
-        }
+        artifactId = artifactId.lowercase()
+        version = getPublishVersion()
     }
 }
