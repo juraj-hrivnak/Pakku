@@ -3,7 +3,9 @@
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import java.io.FileInputStream
 import java.io.InputStream
+import java.util.*
 
 plugins {
     kotlin("multiplatform") version libs.versions.kotlin
@@ -11,10 +13,11 @@ plugins {
     id("org.jetbrains.dokka") version libs.versions.kotlin
     id("io.ktor.plugin") version libs.versions.ktor
 //    id("io.kotest.multiplatform") version libs.versions.kotest
+    id("maven-publish")
 }
 
 group = "teksturepako.pakku"
-version = "0.7.0"
+version = "0.7.1"
 
 val nativeEnabled = false
 
@@ -187,4 +190,26 @@ fun generateVersion() {
     }
 
     inputStream.close()
+}
+
+// -- PUBLISHING --
+
+/**
+ * Create `github.properties` in root project folder file with
+ * `gpr.usr=GITHUB_USER_ID` & `gpr.key=PERSONAL_ACCESS_TOKEN`
+ **/
+val githubProperties: Properties = Properties().apply {
+    val properties = runCatching { FileInputStream(rootProject.file("github.properties")) }
+    properties.onSuccess { load(it) }
+}
+
+repositories {
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/juraj-hrivnak/Pakku")
+        credentials {
+            username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_USERNAME")
+            password = githubProperties["gpr.key"] as String? ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
 }

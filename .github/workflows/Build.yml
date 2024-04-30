@@ -117,6 +117,12 @@ jobs:
           name: jvm-package
           path: package
 
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
