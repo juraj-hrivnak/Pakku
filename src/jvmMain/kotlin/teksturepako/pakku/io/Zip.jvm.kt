@@ -4,6 +4,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.lingala.zip4j.ZipFile
 import teksturepako.pakku.api.data.PakkuException
+import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
 import teksturepako.pakku.debug
 import java.io.File
 
@@ -15,17 +17,18 @@ actual suspend fun zipModpack(
     vararg create: Pair<String, Any>
 ): Result<String> = withContext(Dispatchers.IO) {
 
-    val pakkuTemp = "./.pakku/.tmp"
-    val output = "$outputFileName.$extension"
+    val pakkuTemp = "$workingPath/$PAKKU_DIR/.tmp"
+    val output = if (path != null)
+    {
+        File("$workingPath/$path/$outputFileName.$extension")
+    }
+    else File("$workingPath/$outputFileName.$extension")
 
     if (path != null && !File(path).isDirectory)
         return@withContext Result.failure(PakkuException("Zip.jvm.kt#zipFile: $path is not a valid path"))
 
     File(pakkuTemp).deleteRecursively()
-    File(output).delete()
-
-    val outputFile = if (path != null) File(path, output) else File(output)
-    if (outputFile.exists()) outputFile.delete()
+    if (output.exists()) output.delete()
 
     for (pair in create)
     {
@@ -45,7 +48,7 @@ actual suspend fun zipModpack(
         }
     }
 
-    val zip = ZipFile(outputFile)
+    val zip = ZipFile(output)
 
     for (file in File(pakkuTemp).listFiles())
     {
@@ -59,9 +62,9 @@ actual suspend fun zipModpack(
     {
         for (ovName in ovNames)
         {
-            if (File(ovName).exists())
+            if (File("$workingPath/$ovName").exists())
             {
-                zip.addFolder(File(ovName))
+                zip.addFolder(File("$workingPath/$ovName"))
 
                 if (ovFolderName != null)
                 {
@@ -77,5 +80,5 @@ actual suspend fun zipModpack(
 
     File(pakkuTemp).deleteRecursively()
 
-    return@withContext Result.success(outputFile.path)
+    return@withContext Result.success(output.path)
 }

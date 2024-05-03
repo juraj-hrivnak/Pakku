@@ -102,7 +102,7 @@ object Overrides
                 REAL         ->
                 {
                     val bytes = readFileBytesOrNull(
-                        "${projectOverride.projectType.folderName}/${projectOverride.fileName}"
+                        "$workingPath/${projectOverride.projectType.folderName}/${projectOverride.fileName}"
                     )
 
                     if (bytes != null)

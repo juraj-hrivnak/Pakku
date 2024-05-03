@@ -22,7 +22,11 @@ class Pakku : CliktCommand()
 
     private val debugFlag: Boolean by option("--debug", help = "Enable additional debug logging").flag()
 
-    private val workingPathOpt: String? by option("--working-path", help = "Change the working path of Pakku")
+    private val workingPathOpt: String? by option(
+        "--working-path",
+        help = "Change the working path of Pakku",
+        metavar = "<path>"
+    )
 
     override fun run()
     {

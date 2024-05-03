@@ -62,10 +62,10 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         for ((projectType, projectFile) in projectFiles)
         {
-            val outputFile = File("${projectType.folderName}/${projectFile.fileName}")
+            val outputFile = File("$workingPath/${projectType.folderName}/${projectFile.fileName}")
                 .also { ignored[projectType] = ignored[projectType]?.let { list -> list + it } ?: listOf(it) }
 
-            val parentFolder = File(projectType.folderName)
+            val parentFolder = File("$workingPath/${projectType.folderName}")
 
             // Skip to next if output file exists
             if (outputFile.exists()) continue
@@ -136,7 +136,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         projectOverrides.map { projectOverride ->
             launch {
-                val file = File("${projectOverride.projectType.folderName}/${projectOverride.fileName}")
+                val file = File("$workingPath/${projectOverride.projectType.folderName}/${projectOverride.fileName}")
                 if (!file.exists()) runCatching {
                     file.parentFile.mkdir()
                     File(
@@ -161,14 +161,14 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
         var removed = false
 
         val ignoredProjectOverrides = projectOverrides.map { projectOverride ->
-            projectOverride.fileName
+            "$workingPath/${projectOverride.fileName}"
         }
 
         ignored.map { (projectType, ignoredFiles) ->
             launch(Dispatchers.IO) {
                 val ignoredNames = ignoredFiles.map { it.name }
 
-                File(projectType.folderName).listFiles()
+                File("$workingPath/${projectType.folderName}").listFiles()
                     .filter { file ->
                         file.name !in ignoredNames
                                 && file.name !in ignoredProjectOverrides
