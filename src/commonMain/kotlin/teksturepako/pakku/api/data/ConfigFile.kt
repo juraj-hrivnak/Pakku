@@ -108,6 +108,8 @@ data class ConfigFile(
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
         suspend fun readToResult(): Result<ConfigFile> = decodeToResult("$workingPath/$FILE_NAME")
+
+        suspend fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult("$workingPath/$path")
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonEncodeDefaults)
