@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.7.6"
+version = "0.8.0"
 
 val nativeEnabled = false
 
@@ -223,10 +223,13 @@ publishing {
                 username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_ACTOR")
                 password = githubProperties["gpr.key"] as String? ?: System.getenv("GITHUB_TOKEN")
             }
+
         }
     }
     publications.withType<MavenPublication> {
         artifactId = artifactId.lowercase()
         version = getPublishVersion()
+        description = """A multiplatform modpack manager for Minecraft: Java Edition.
+            | Create modpacks for CurseForge, Modrinth or both simultaneously.""".trimMargin()
     }
 }
