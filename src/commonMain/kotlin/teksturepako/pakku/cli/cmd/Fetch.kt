@@ -9,6 +9,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.PakkuException
+import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
@@ -139,7 +140,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
                 if (!file.exists()) runCatching {
                     file.parentFile.mkdir()
                     File(
-                        "$PAKKU_DIR/${projectOverride.overrideType.folderName}/" +
+                        "$workingPath/$PAKKU_DIR/${projectOverride.overrideType.folderName}/" +
                                 "${projectOverride.projectType.folderName}/${projectOverride.fileName}"
                     ).copyTo(file)
 

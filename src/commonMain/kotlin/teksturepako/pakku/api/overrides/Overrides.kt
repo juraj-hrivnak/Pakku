@@ -3,6 +3,7 @@ package teksturepako.pakku.api.overrides
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.data.PakkuException
+import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.FAKE
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.REAL
 import teksturepako.pakku.api.projects.Project
@@ -43,7 +44,7 @@ object Overrides
         return runCatching {
             OverrideType.entries.flatMap { overrideType ->
                 ProjectType.entries.flatMap { projectType ->
-                    File("$PAKKU_DIR/${overrideType.folderName}/${projectType.folderName}")
+                    File("$workingPath/$PAKKU_DIR/${overrideType.folderName}/${projectType.folderName}")
                         .walkTopDown()
                         .mapNotNull {
                             if (it.isFile) ProjectOverride(projectType, overrideType, it.name) else null
@@ -80,7 +81,7 @@ object Overrides
                 FAKE ->
                 {
                     val bytes = readFileBytesOrNull(
-                        "$PAKKU_DIR/${projectOverride.overrideType.folderName}/" +
+                        "$workingPath/$PAKKU_DIR/${projectOverride.overrideType.folderName}/" +
                                 "${projectOverride.projectType.folderName}/${projectOverride.fileName}"
                     )
 

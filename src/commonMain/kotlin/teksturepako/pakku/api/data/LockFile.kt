@@ -244,22 +244,19 @@ data class LockFile(
     {
         const val FILE_NAME = "pakku-lock.json"
 
-        suspend fun exists(): Boolean = readFileOrNull(FILE_NAME) != null
+        suspend fun exists(): Boolean = readFileOrNull("$workingPath/$FILE_NAME") != null
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
-        suspend fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), FILE_NAME)
+        suspend fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
             .also { it.inheritConfig(ConfigFile.readOrNull()) }
 
         /**
          * Reads [LockFile] and parses it, or returns an exception.
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
-        suspend fun readToResult(): Result<LockFile> = decodeToResult<LockFile>(FILE_NAME)
-            .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
-
-        suspend fun readToResultFrom(path: String): Result<LockFile> = decodeToResult<LockFile>(path)
+        suspend fun readToResult(): Result<LockFile> = decodeToResult<LockFile>("$workingPath/$FILE_NAME")
             .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
     }
 
-    suspend fun write() = writeToFile(this, FILE_NAME, overrideText = true)
+    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true)
 }

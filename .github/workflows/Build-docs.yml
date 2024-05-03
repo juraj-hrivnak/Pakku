@@ -3,10 +3,12 @@ run-name: "Build documentation #${{ github.run_number }}"
 
 on:
   push:
-    # To trigger the workflow once you push to the `main` branch
-    # Replace `main` with your branch’s name
-    branches: ["main"]
-  # Specify to run a workflow manually from the Actions tab on GitHub
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'src/**'
+      - '*.yml'
   workflow_dispatch:
 
 permissions:
