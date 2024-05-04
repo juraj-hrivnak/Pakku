@@ -2,6 +2,7 @@
 
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import java.io.FileInputStream
 import java.io.InputStream
@@ -17,7 +18,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.8.3"
+version = "0.8.4"
 
 val nativeEnabled = false
 
@@ -238,3 +239,9 @@ publishing {
 
 // Required by the 'shadowJar' task
 project.setProperty("mainClassName", "teksturepako.pakku.MainKt")
+
+distributions {
+    main {
+        distributionBaseName = "Pakku"
+    }
+}
