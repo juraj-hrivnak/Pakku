@@ -13,11 +13,11 @@
     </variables>
     <build-profile instance="p">
         <variables>
-            <noindex-content>true</noindex-content>
+            <noindex-content>false</noindex-content>
         </variables>
     </build-profile>
     <footer>
-        <copyright>Juraj Hrivnák 2024</copyright>
+        <copyright>2024 Juraj Hrivnák</copyright>
         <link href="https://github.com/juraj-hrivnak/Pakku">GitHub</link>
         <link href="https://discord.gg/dtAyqdzTMj">Discord</link>
     </footer>
