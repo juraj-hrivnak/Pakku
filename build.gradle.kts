@@ -1,6 +1,5 @@
 @file:Suppress("UNUSED_VARIABLE", "KotlinRedundantDiagnosticSuppress")
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -18,7 +17,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.8.2"
+version = "0.8.3"
 
 val nativeEnabled = false
 
