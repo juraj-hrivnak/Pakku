@@ -15,8 +15,8 @@ on:
       - '*.md'
 
 jobs:
-  build-jvm:
-    name: Build JVM
+  build-jvm-jar:
+    name: Build JVM Jar
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -28,7 +28,7 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: 📦 Build JVM
+      - name: 📦 Build JVM Jar
         uses: burrunan/gradle-cache-action@v1
         with:
           gradle-version: wrapper
@@ -40,14 +40,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload JVM
+      - name: Upload JVM Jar
         uses: actions/upload-artifact@v4
         with:
-          name: jvm-package
+          name: jvm-jar
           path: build/libs/pakku.jar
 
-  build-jvm-dist:
-    name: Build JVM Distributions
+  build-jvm-dist-zip:
+    name: Build JVM ZIP Distribution
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -67,8 +67,28 @@ jobs:
           properties: |
             org.gradle.vfs.watch=false
             org.gradle.vfs.verbose=false
+          gradle-distribution-sha-256-sum-warning: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload JVM ZIP Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-dist-zip
+          path: build/distributions/*.zip
+
+  build-jvm-dist-tar:
+    name: Build JVM Tar Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
 
       - name: 📦 Build JVM distTar
         uses: burrunan/gradle-cache-action@v1
@@ -82,30 +102,36 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload JVM Distributions
+      - name: Upload JVM Tar Distribution
         uses: actions/upload-artifact@v4
         with:
-          name: jvm-dist
+          name: jvm-dist-tar
           path: build/distributions/
 
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [build-jvm, build-jvm-dist]
+    needs: [build-jvm-jar, build-jvm-dist-zip, build-jvm-dist-tar]
     permissions:
       contents: write
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: Download Artifact JVM
+      - name: Download Artifact JVM Jar
         uses: actions/download-artifact@v4
         with:
-          name: jvm-package
-          path: package
+          name: jvm-jar
+          path: jar
 
-      - name: Download Artifact JVM Distributions
+      - name: Download Artifact JVM ZIP Distribution
         uses: actions/download-artifact@v4
         with:
-          name: jvm-dist
+          name: jvm-dist-zip
+          path: dist
+
+      - name: Download Artifact JVM Tar Distribution
+        uses: actions/download-artifact@v4
+        with:
+          name: jvm-dist-tar
           path: dist
 
       - name: Create release
@@ -113,7 +139,7 @@ jobs:
         with:
           prerelease: false
           files: |
-            package/pakku.jar
+            jar/pakku.jar
             dist/*.zip
             dist/*.tar
 
