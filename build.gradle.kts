@@ -1,5 +1,6 @@
 @file:Suppress("UNUSED_VARIABLE", "KotlinRedundantDiagnosticSuppress")
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -233,3 +234,8 @@ publishing {
             | Create modpacks for CurseForge, Modrinth or both simultaneously.""".trimMargin()
     }
 }
+
+// -- DIST --
+
+// Required by the 'shadowJar' task
+project.setProperty("mainClassName", "teksturepako.pakku.MainKt")
