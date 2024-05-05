@@ -89,14 +89,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create Distribution Forms
-        run: sh ../create-dist-forms.sh
+        run: sh .github/create-dist-forms.sh
 
       - name: Upload API docs
         uses: actions/upload-artifact@v4
         with:
           name: dist-forms
           path: |
-            build/install/
+            build/install/**
           retention-days: 7
 
   deploy:

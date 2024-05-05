@@ -8,12 +8,11 @@ latest_tag=$(git describe --tags --abbrev=0)
 
 # Exit if latest tag is not version tag
 if [[ $latest_tag != v* ]]; then
-    exit 1
+  exit 1
 fi
 
 # Create '../build/install/' directory
-
-[ -d '../build/install/' ] || mkdir ../build/install/
+[ -d 'build/install' ] || mkdir build/install
 
 # Remove 'v' from tag
 latest_version="${latest_tag//v}"
@@ -45,7 +44,7 @@ end
 
 EOM
 
-echo "$brewform" >> ../build/install/pakku.rb
+echo "$brewform" >> build/install/pakku.rb
 
 # -- SCOOP --
 
@@ -72,4 +71,4 @@ read -r -d '' scoopform << EOM
 
 EOM
 
-echo "$scoopform" >> ../build/install/pakku.json
+echo "$scoopform" >> build/install/pakku.json
