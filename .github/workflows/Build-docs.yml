@@ -8,7 +8,7 @@ on:
     paths:
       - 'docs/**'
       - 'src/**'
-      - '*.yml'
+      - '.github/**'
   workflow_dispatch:
 
 permissions:
