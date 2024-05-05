@@ -18,12 +18,23 @@ open class Http
         url: String, onDownload: (bytesSentTotal: Long, contentLength: Long) -> Unit = { _: Long, _: Long ->}
     ): ByteArray?
     {
-        return client.get(url) {
-            onDownload { bytesSentTotal, contentLength -> onDownload(bytesSentTotal, contentLength) }
+        return try
+        {
+            client.get(url) {
+                onDownload { bytesSentTotal, contentLength -> onDownload(bytesSentTotal, contentLength) }
+            }
+                .debug { println("${this::class.simpleName} $it") }
+                .checkLimit()
+                .bodyIfOK()
         }
-            .debug { println("${this::class.simpleName} $it") }
-            .checkLimit()
-            .bodyIfOK()
+        catch (e: Exception)
+        {
+            println(
+                "Error: ${this@Http::class.simpleName} " +
+                    "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
+            )
+            null
+        }
     }
 
     /**
@@ -31,10 +42,21 @@ open class Http
      */
     open suspend fun requestBody(url: String): String?
     {
-        return client.get(url)
-            .debug { println("${this::class.simpleName} $it") }
-            .checkLimit()
-            .bodyIfOK()
+        return try
+        {
+            client.get(url)
+                .debug { println("${this::class.simpleName} $it") }
+                .checkLimit()
+                .bodyIfOK()
+        }
+        catch (e: Exception)
+        {
+            println(
+                "Error: ${this@Http::class.simpleName} " +
+                        "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
+            )
+            null
+        }
     }
 
     /**
@@ -42,21 +64,43 @@ open class Http
      */
     suspend fun requestBody(url: String, vararg headers: Pair<String, String>): String?
     {
-        return client.get(url) { headers.forEach { this.headers.append(it.first, it.second) } }
-            .debug { println("${this::class.simpleName} $it") }
-            .checkLimit()
-            .bodyIfOK()
+        return try
+        {
+            client.get(url) { headers.forEach { this.headers.append(it.first, it.second) } }
+                .debug { println("${this::class.simpleName} $it") }
+                .checkLimit()
+                .bodyIfOK()
+        }
+        catch (e: Exception)
+        {
+            println(
+                "Error: ${this@Http::class.simpleName} " +
+                        "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
+            )
+            null
+        }
     }
 
     suspend inline fun <reified T> requestBody(url: String, bodyContent: T): String?
     {
-        return client.post(url) {
-            contentType(ContentType.Application.Json)
-            setBody(Json.encodeToString(bodyContent)) // Don't use pretty print
+        return try
+        {
+            client.post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bodyContent)) // Don't use pretty print
+            }
+                .debug { println("${this::class.simpleName} ${it.call} ${it.request.content}") }
+                .checkLimit()
+                .bodyIfOK()
         }
-            .debug { println("${this::class.simpleName} ${it.call} ${it.request.content}") }
-            .checkLimit()
-            .bodyIfOK()
+        catch (e: Exception)
+        {
+            println(
+                "Error: ${this@Http::class.simpleName} " +
+                        "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
+            )
+            null
+        }
     }
 
     open suspend fun HttpResponse.checkLimit(): HttpResponse = this
