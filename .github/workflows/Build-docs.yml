@@ -87,6 +87,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Create Distribution Forms
         run: sh .github/create-dist-forms.sh

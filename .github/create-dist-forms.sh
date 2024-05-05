@@ -12,7 +12,7 @@ if [[ $latest_tag != v* ]]; then
 fi
 
 # Create '../build/install/' directory
-[ -d 'build/install' ] || mkdir build/install
+[ -d 'build/install/' ] || mkdir build/install/
 
 # Remove 'v' from tag
 latest_version="${latest_tag//v}"
