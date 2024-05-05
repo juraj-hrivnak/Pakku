@@ -92,7 +92,9 @@ jobs:
 
       - name: Create Distribution Forms
         shell: bash
-        run: sh .github/create-dist-forms.sh
+        run: |
+          chmod +x .github/create-dist-forms.sh
+          .github/create-dist-forms.sh
 
       - name: Upload API docs
         uses: actions/upload-artifact@v4
