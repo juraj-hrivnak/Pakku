@@ -1,10 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Do not stop workflows on errors from this script
 set +e
 
 # Get latest tag
 latest_tag=$(git describe --tags --abbrev=0)
+echo "latest_tag: $latest_tag"
 
 # Exit if latest tag is not version tag
 if [[ $latest_tag != v* ]]; then
@@ -12,10 +13,11 @@ if [[ $latest_tag != v* ]]; then
 fi
 
 # Create '../build/install/' directory
-[ -d 'build/install/' ] || mkdir build/install/
+[ -d 'build/install/' ] || mkdir -p build/install/
 
 # Remove 'v' from tag
 latest_version="${latest_tag//v}"
+echo "latest_version: $latest_version"
 
 # -- BREW --
 
