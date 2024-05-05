@@ -163,7 +163,7 @@ suspend fun exportCurseForge(
             }
 
         CfModData(
-            projectID = project.id[CurseForge.serialName]!!, fileID = file.id
+            projectID = project.id[CurseForge.serialName]!!.toInt(), fileID = file.id.toInt()
         )
     }
 

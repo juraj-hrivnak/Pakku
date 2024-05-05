@@ -46,8 +46,8 @@ sealed class ModpackModel
 
         @Serializable
         data class CfModData(
-            val projectID: String,
-            val fileID: String,
+            val projectID: Int,
+            val fileID: Int,
             val required: Boolean = true
         )
 
@@ -56,9 +56,9 @@ sealed class ModpackModel
             platforms: List<Platform>
         ): Set<Project>
         {
-            val projects = CurseForge.requestMultipleProjects(this.files.map { it.projectID })
+            val projects = CurseForge.requestMultipleProjects(this.files.map { it.projectID.toString() })
             val projectFiles = CurseForge.requestMultipleProjectFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), this.files.map { it.fileID }
+                lockFile.getMcVersions(), lockFile.getLoaders(), this.files.map { it.fileID.toString() }
             )
 
             projects.assignFiles(projectFiles, CurseForge)
