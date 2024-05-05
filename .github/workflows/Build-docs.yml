@@ -80,13 +80,31 @@ jobs:
             build/dokka/html
           retention-days: 7
 
+  build-dist-forms:
+    name: Build Distribution Forms
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Distribution Forms
+        run: sh ../create-dist-forms.sh
+
+      - name: Upload API docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-forms
+          path: |
+            build/install/
+          retention-days: 7
+
   deploy:
     name: Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    # Requires build job results
-    needs: ['build-docs', 'build-api-docs']
+    needs: ['build-docs', 'build-api-docs', 'build-dist-forms']
     runs-on: ubuntu-latest
 
     steps:
@@ -103,6 +121,12 @@ jobs:
         with:
           name: api-docs
           path: dir/api
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-forms
+          path: dir/install
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
