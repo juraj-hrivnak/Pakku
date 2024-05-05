@@ -91,6 +91,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create Distribution Forms
+        shell: bash
         run: sh .github/create-dist-forms.sh
 
       - name: Upload API docs
