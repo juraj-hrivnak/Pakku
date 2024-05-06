@@ -109,7 +109,7 @@ data class ConfigFile(
          */
         suspend fun readToResult(): Result<ConfigFile> = decodeToResult("$workingPath/$FILE_NAME")
 
-        suspend fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult("$workingPath/$path")
+        suspend fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonEncodeDefaults)

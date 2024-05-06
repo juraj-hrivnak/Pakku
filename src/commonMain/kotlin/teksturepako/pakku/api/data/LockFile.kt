@@ -257,7 +257,7 @@ data class LockFile(
         suspend fun readToResult(): Result<LockFile> = decodeToResult<LockFile>("$workingPath/$FILE_NAME")
             .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
 
-        suspend fun readToResultFrom(path: String): Result<LockFile> = decodeToResult<LockFile>("$workingPath/$path")
+        suspend fun readToResultFrom(path: String): Result<LockFile> = decodeToResult<LockFile>(path)
             .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
     }
 
