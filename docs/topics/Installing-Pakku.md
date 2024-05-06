@@ -1,23 +1,35 @@
 # Installing Pakku
 
-[//]: # (To run Pakku, you have two options:)
+Currently, you can only install Pakku [using Scoop](#install-scoop) for Windows,
+or [manually](#install-manually).
 
-Currently, the only option to install and run Pakku is [using Java](#install-java).
-This requires Java to be installed on your computer.
+Pakku also requires Java to be installed on your computer,
+so please, before installing, check whether you have Java installed on your computer.
+If not, install it from [here](https://www.java.com/en/download/).
 
-[//]: # (2. [Run Pakku as native executable]&#40;#running_pakku_as_native_executable&#41;.)
+<procedure title="Install Pakku using Scoop for Windows" id="install-scoop">
 
-[//]: # (    - Depending on your operating system, you will need to use a different version of native Pakku.)
+1. Check whether you have Scoop installed on your computer.
+   If not, check the installation instructions from [here](https://scoop.sh/).
+2. In your Terminal/CMD, run this Scoop command:
+   ```
+   scoop install https://juraj-hrivnak.github.io/Pakku/install/pakku.json
+   ```
+   {prompt="$"}
+3. In your modpack folder, run Pakku from your Terminal/CMD:
+   ```
+   pakku
+   ```
+   {prompt="$"}
 
-<procedure title="Install and run Pakku using Java" id="install-java">
+</procedure>
 
-1. Check whether you have Java installed on your computer.
-   If not, install it from [here](https://www.java.com/en/download/).
+<procedure title="Install Pakku manually" id="install-manually">
 
-2. Download the `pakku.jar` from [GitHub releases]
+1. Download the `pakku.jar` from [GitHub releases]
    and place it into your modpack folder.
 
-3. In your modpack folder, run Pakku from the Terminal/CMD:
+2. In your modpack folder, run Pakku locally from your Terminal/CMD:
    ```
    java -jar pakku.jar
    ```
@@ -28,86 +40,20 @@ This requires Java to be installed on your computer.
 
 </procedure>
 
-[//]: # (<procedure title="Running Pakku as native executable" id="running_pakku_as_native_executable">)
-
-[//]: # ()
-[//]: # (1. Download the [respective native executable]&#40;#exe&#41; from [GitHub releases])
-
-[//]: # (   and place it into your modpack folder.)
-
-[//]: # ()
-[//]: # (   | Operating System | Native Executable |)
-
-[//]: # (   |------------------|-------------------|)
-
-[//]: # (   | Linux            | `pakku`           |)
-
-[//]: # (   | macOS            | `pakku-macos`     |)
-
-[//]: # (   | Windows          | `pakku.exe`       |)
-
-[//]: # (   {id="exe"})
-
-[//]: # ()
-[//]: # (   > For macOS, only versions 11 and higher are supported!)
-
-[//]: # (   {style="warning"})
-
-[//]: # ()
-[//]: # (2. In your modpack folder, run Pakku from the Terminal/CMD:)
-
-[//]: # (   <tabs>)
-
-[//]: # (   <tab title="Linux">)
-
-[//]: # ()
-[//]: # (   ```)
-
-[//]: # (   ./pakku)
-
-[//]: # (   ```)
-
-[//]: # (   {prompt="$"})
-
-[//]: # ()
-[//]: # (   </tab>)
-
-[//]: # (   <tab title="macOS">)
-
-[//]: # ()
-[//]: # (   ```)
-
-[//]: # (   ./pakku-macos)
-
-[//]: # (   ```)
-
-[//]: # (   {prompt="$"})
-
-[//]: # ()
-[//]: # (   </tab>)
-
-[//]: # (   <tab title="Windows">)
-
-[//]: # ()
-[//]: # (   ```)
-
-[//]: # (   .\pakku.exe)
-
-[//]: # (   ```)
-
-[//]: # (   {prompt="$"})
-
-[//]: # ()
-[//]: # (   </tab>)
-
-[//]: # (   </tabs>)
-
-[//]: # ()
-[//]: # (</procedure>)
-
 <note>
    <p>From onward, running Pakku in CLI will be only referenced
    as <code>%pakku%</code>.</p>
 </note>
+
+<note>
+Currently, the only option to run Pakku is using Java.
+This requires Java Runtime to be installed on your computer.
+
+It is not possible to release Pakku as native executable
+because there is no library for compression for Kotlin Native.
+If this ever changes in the future, there might be release of Pakku
+as native executable.
+</note>
+
    
 [GitHub releases]: https://github.com/juraj-hrivnak/Pakku/releases/latest
