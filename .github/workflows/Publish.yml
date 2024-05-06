@@ -12,7 +12,7 @@ on:
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
       - 'gradle.properties'
-      - '*.yml'
+      - '.github/workflows/Publish.yml'
 
 jobs:
   publish-snaphot:
