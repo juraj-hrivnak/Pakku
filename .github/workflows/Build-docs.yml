@@ -3,6 +3,8 @@ run-name: "Build documentation #${{ github.run_number }}"
 
 on:
   push:
+    tags:
+      - 'v*'
     branches:
       - main
     paths:
