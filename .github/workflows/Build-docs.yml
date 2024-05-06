@@ -8,6 +8,7 @@ on:
     paths:
       - 'docs/**'
       - 'src/**'
+      - 'build.gradle.kts'
       - '.github/**'
   workflow_dispatch:
 
