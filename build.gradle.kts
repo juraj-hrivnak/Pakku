@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.8.6"
+version = "0.8.7"
 
 val nativeEnabled = false
 
@@ -140,7 +140,8 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 
 tasks.withType<Jar> {
     doFirst {
-        archiveFileName.set("pakku.jar")
+        val classifier = archiveClassifier.get().let { if (it.isNotBlank()) "-$it" else "" }
+        archiveFileName.set("pakku$classifier.jar")
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         val main by kotlin.jvm().compilations.getting
         manifest {
