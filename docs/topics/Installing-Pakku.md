@@ -1,6 +1,7 @@
 # Installing Pakku
 
-Currently, you can only install Pakku [using Scoop](#install-scoop) for Windows,
+You can only install Pakku [using Scoop](#install-scoop) for Windows,
+[using Brew](#install-brew) for macOS (or Linux)
 or [manually](#install-manually).
 
 Pakku also requires Java to be installed on your computer,
@@ -11,12 +12,29 @@ If not, install it from [here](https://www.java.com/en/download/).
 
 1. Check whether you have Scoop installed on your computer.
    If not, check the installation instructions from [here](https://scoop.sh/).
-2. In your Terminal/CMD, run this Scoop command:
+2. In your terminal/CMD, run this Scoop command:
    ```
    scoop install https://juraj-hrivnak.github.io/Pakku/install/pakku.json
    ```
    {prompt="$"}
-3. In your modpack folder, run Pakku from your Terminal/CMD:
+3. In your modpack folder, run Pakku from your terminal/CMD:
+   ```
+   pakku
+   ```
+   {prompt="$"}
+
+</procedure>
+
+<procedure title="Install Pakku using Brew for macOS (or Linux)" id="install-brew">
+
+1. Check whether you have Brew installed on your computer.
+   If not, check the installation instructions from [here](https://brew.sh/#install).
+2. In your terminal, run this Brew command:
+   ```
+   brew install juraj-hrivnak/pakku/pakku
+   ```
+   {prompt="$"}
+3. In your modpack folder, run Pakku from your terminal:
    ```
    pakku
    ```
@@ -29,7 +47,7 @@ If not, install it from [here](https://www.java.com/en/download/).
 1. Download the `pakku.jar` from [GitHub releases]
    and place it into your modpack folder.
 
-2. In your modpack folder, run Pakku locally from your Terminal/CMD:
+2. In your modpack folder, run Pakku locally from your terminal/CMD:
    ```
    java -jar pakku.jar
    ```
