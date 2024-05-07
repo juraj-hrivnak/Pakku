@@ -1,0 +1,45 @@
+name: Uppdate Tap
+run-name: "Update Tap #${{ github.run_number }}"
+
+on:
+  release:
+  workflow_dispatch:
+
+jobs:
+  update-tap:
+    name: Update Tap
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: juraj-hrivnak/homebrew-pakku
+          ref: main
+          token:  ${{ secrets.PUSH_ACCESS_TOKEN }}
+      - name: Setup Git config
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: Get Form
+        shell: bash
+        run: |
+          # Create 'New_Formula' directory
+          [ -d 'New_Formula/' ] || mkdir -p New_Formula/
+
+          # Download formula
+          curl https://juraj-hrivnak.github.io/Pakku/install/pakku.rb -o New_Formula/pakku.rb
+      - name: Make changes and commit
+        run: |
+          if cmp --silent -- "New_Formula/pakku.rb" "Formula/pakku.rb"; then
+            echo "file contents are identical"
+          else
+            echo "files differ"
+
+            rm Formula/pakku.rb
+            cp New_Formula/pakku.rb Formula/pakku.rb
+
+            git add Formula/pakku.rb
+            git commit -m 'Update formula'
+            git push origin main
+          fi
