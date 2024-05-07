@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repository: juraj-hrivnak/homebrew-pakku
+          repository: juraj-hrivnak/homebrew-tap
           ref: main
           token:  ${{ secrets.PUSH_ACCESS_TOKEN }}
       - name: Setup Git config
