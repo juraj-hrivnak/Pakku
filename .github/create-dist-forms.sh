@@ -30,7 +30,7 @@ class Pakku < Formula
   desc "Multiplatform modpack manager for Minecraft: Java Edition"
   homepage "https://juraj-hrivnak.github.io/Pakku/"
   url "$tar_url"
-  hash "$tar_hash"
+  sha256 "$tar_hash"
   license "EUPL-1.2"
 
   def install
