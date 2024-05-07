@@ -3,6 +3,7 @@ run-name: "Build documentation #${{ github.run_number }}"
 
 on:
   release:
+    types: [published]
   push:
     branches:
       - main
