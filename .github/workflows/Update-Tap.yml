@@ -3,6 +3,7 @@ run-name: "Update Tap #${{ github.run_number }}"
 
 on:
   release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
