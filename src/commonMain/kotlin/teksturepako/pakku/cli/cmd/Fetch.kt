@@ -160,8 +160,8 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
 
         var removed = false
 
-        val ignoredProjectOverrides = projectOverrides.map { projectOverride ->
-            "$workingPath/${projectOverride.fileName}"
+        val ignoredProjOverrFileNames = projectOverrides.map { projectOverride ->
+            projectOverride.fileName
         }
 
         ignored.map { (projectType, ignoredFiles) ->
@@ -171,7 +171,7 @@ class Fetch : CliktCommand("Fetch projects to your pack folder")
                 File("$workingPath/${projectType.folderName}").listFiles()
                     .filter { file ->
                         file.name !in ignoredNames
-                                && file.name !in ignoredProjectOverrides
+                                && file.name !in ignoredProjOverrFileNames
                                 && file.extension in listOf("jar", "zip")
                                 && file.parentFile.name == projectType.folderName
                     }.forEach { file ->
