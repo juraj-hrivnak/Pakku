@@ -2,6 +2,10 @@ name: Uppdate Tap
 run-name: "Update Tap #${{ github.run_number }}"
 
 on:
+  workflow_run:
+    workflows: ["Build-Docs"]
+    types:
+      - completed
   release:
     types: [published]
   workflow_dispatch:
