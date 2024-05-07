@@ -24,6 +24,9 @@
 `--debug`
 : Enable additional debug logging
 
+`--working-path=<path>`
+: Change the working path of Pakku
+
 `-h`, `--help`
 : Show help message and exit
 {id="option-help"}
