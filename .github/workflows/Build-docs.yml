@@ -2,9 +2,8 @@ name: Build documentation
 run-name: "Build documentation #${{ github.run_number }}"
 
 on:
+  release:
   push:
-    tags:
-      - 'v*'
     branches:
       - main
     paths:
