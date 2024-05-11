@@ -53,7 +53,7 @@ kotlin {
     }
 
     jvm {
-        withSourcesJar()
+        withSourcesJar(publish = false)
     }
 
     sourceSets {
@@ -240,6 +240,7 @@ publishing {
             version = getPublishVersion()
             description = """A multiplatform modpack manager for Minecraft: Java Edition.
             | Create modpacks for CurseForge, Modrinth or both simultaneously.""".trimMargin()
+            artifact(tasks["jvmSourcesJar"])
         }
     }
 }
