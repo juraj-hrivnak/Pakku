@@ -244,10 +244,6 @@ publishing {
     }
 }
 
-artifacts {
-    archives("jvmSourceJar")
-}
-
 // -- DIST --
 
 application {
