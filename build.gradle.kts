@@ -223,7 +223,7 @@ val githubProperties: Properties = Properties().apply {
     properties.onSuccess { load(it) }
 }
 
-tasks.getByName("jvmSourcesJar") {
+tasks.getByName("sourcesJar") {
     enabled = false
 }
 
