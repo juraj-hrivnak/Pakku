@@ -10,6 +10,9 @@
   <h1 align="center">Pakku</h1>
 </p>
 
+<p align="center">
+  A multiplatform modpack manager for Minecraft: Java Edition.
+</p>
 
 <p align="center">
   <a href="https://github.com/juraj-hrivnak/Pakku/actions/workflows/Build.yml">
@@ -26,18 +29,31 @@
   </a>
 </p>
 
-<p align="center">
-  A multiplatform modpack manager for Minecraft: Java Edition.
-</p>
+## About
 
-<p align="center">
-  With Pakku you can create a modpack for CurseForge, Modrinth or both simultaneously. <br>
-  To create a modpack you can either start from scratch or import an existing modpack.
-</p>
+With **Pakku**, you can create modpacks for **CurseForge**, **Modrinth** or **both simultaneously**.
 
-<p align="center">
-  Pakku includes many features to make your life easier as a modpack developer. 
-</p>
+### Multiplatform :dna: 
+
+Modpack development with the split of mod hosting platforms has become significantly harder. Pakku addresses this problem and tries to be as helpful as possible when developing a multiplatform modpack.
+
+When adding a mod, resource pack or shader (further referred to as "Project") to your modpack, Pakku has a robust way to find it across both platforms. And even If this fails, you can specify the project slug, ID, or version manually.
+
+### Optimized :abacus: 
+
+Pakku is multithreaded to ensure everything is done as quickly as possible.
+
+Pakku is also efficient with its HTTP requests, reducing them to a minimum. This ensures that data is sent quicker back to you and that you do not get rate-limited by adding or updating too many projects at once.
+
+### Configurable :nut_and_bolt: 
+
+Pakku utilises a design used by many well-known package managers like npm or Cargo, which consists of two files, the config file and the lock file.
+
+This allows you to fine-tune your modpack, while still being up-to-date. If any data retrieved from the platforms does not suit your requirements, you can simply override it in the config file.
+
+### Visit the [**Documentation**](https://juraj-hrivnak.github.io/Pakku) for installation instructions and a comprehensive guide on how to use it.
+
+Pakku includes many features to make your life easier as a modpack developer. 
 
 <p align="center">
   <a href="https://github.com/juraj-hrivnak/pakku">
@@ -48,27 +64,34 @@
   </a>
 </p>
 
-<h2 align="center">Usage</h2>
+## Quickstart
 
+- Install Pakku using Scoop for Windows
+  ```
+  scoop install https://juraj-hrivnak.github.io/Pakku/install/pakku.json
+  ```
+- Install Pakku using Brew for macOS (or Linux)
+  ```
+  brew install juraj-hrivnak/pakku/pakku
+  ```
+- Download the `pakku.jar` from [GitHub releases]
+
+### Usage
+
+```
+pakku [<options>] <command> [<args>]...
+```
+or with Java
 ```
 java -jar pakku.jar [<options>] <command> [<args>]...
 ```
 
-<h2 align="center">Documentation</h2>
+## Development
 
-<p align="center">
-  See <a href="https://juraj-hrivnak.github.io/Pakku/home.html">juraj-hrivnak.github.io/Pakku/</a>
-</p>
+To build Pakku for the JVM, run the <code>gradlew jvmJar</code>. <br>
 
-<h2 align="center">Development</h2>
+## License
 
-<p align="center">
-  To build Pakku for the JVM, run the <code>gradlew jvmJar</code>. <br>
-</p>
-
-<h2 align="center">License</h2>
-
-<p align="center">
-  Licensed under the EUPL-1.2-or-later
-</p>
-
+Licensed under the EUPL-1.2-or-later
+   
+[GitHub releases]: https://github.com/juraj-hrivnak/Pakku/releases/latest
