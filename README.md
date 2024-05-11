@@ -68,20 +68,16 @@ This allows you to fine-tune your modpack, while still being up-to-date. If any 
   ```
   scoop install https://juraj-hrivnak.github.io/Pakku/install/pakku.json
   ```
+  
 - Install Pakku using Brew for macOS (or Linux)
   ```
   brew install juraj-hrivnak/pakku/pakku
   ```
-- Download the `pakku.jar` from [GitHub releases]
-
+  
 ### Usage
 
 ```
 pakku [<options>] <command> [<args>]...
-```
-or with Java
-```
-java -jar pakku.jar [<options>] <command> [<args>]...
 ```
 
 ## Development
