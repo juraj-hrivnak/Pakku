@@ -223,14 +223,6 @@ val githubProperties: Properties = Properties().apply {
     properties.onSuccess { load(it) }
 }
 
-tasks {
-    "sourcesJar"(Jar::class) {
-        archiveClassifier = "sources"
-        from(java.sourceSets["main"].allSource)
-        dependsOn("classes")
-    }
-}
-
 publishing {
     repositories {
         maven {
@@ -248,7 +240,6 @@ publishing {
             version = getPublishVersion()
             description = """A multiplatform modpack manager for Minecraft: Java Edition.
             | Create modpacks for CurseForge, Modrinth or both simultaneously.""".trimMargin()
-            artifact(tasks["jvmSourcesJar"])
         }
     }
 }
