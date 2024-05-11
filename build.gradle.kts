@@ -29,6 +29,8 @@ private val ktorVersion: String = libs.versions.ktor.get()
 private val kotestVersion: String = libs.versions.kotest.get()
 
 kotlin {
+    withSourcesJar(publish = false)
+
     if (nativeEnabled) {
         val hostOs = System.getProperty("os.name")
         val isArm64 = System.getProperty("os.arch") == "aarch64"
@@ -52,9 +54,7 @@ kotlin {
         }
     }
 
-    jvm {
-        withSourcesJar(publish = false)
-    }
+    jvm()
 
     sourceSets {
         // -- COMMON --
@@ -221,6 +221,10 @@ fun getPublishVersion(): String {
 val githubProperties: Properties = Properties().apply {
     val properties = runCatching { FileInputStream(rootProject.file("github.properties")) }
     properties.onSuccess { load(it) }
+}
+
+tasks.getByName("jvmSourcesJar") {
+    enabled = false
 }
 
 publishing {
