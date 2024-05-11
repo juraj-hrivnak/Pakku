@@ -189,6 +189,11 @@ tasks.named("jvmSourcesJar") {
     dependsOn("generateVersion")
 }
 
+tasks.withType<Jar>().named("sourcesJar") {
+    from(sourceSets["main"].allSource)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 fun generateVersion() {
     val inputStream: InputStream = sourceFile.inputStream()
 
@@ -229,7 +234,6 @@ publishing {
                 username = githubProperties["gpr.usr"] as String? ?: System.getenv("GITHUB_ACTOR")
                 password = githubProperties["gpr.key"] as String? ?: System.getenv("GITHUB_TOKEN")
             }
-
         }
     }
     publications.withType<MavenPublication> {
