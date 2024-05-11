@@ -145,7 +145,7 @@ tasks.withType<Jar> {
         val classifier = archiveClassifier.get().let { if (it.isNotBlank()) "-$it" else "" }
 
         archiveFileName.set("pakku$classifier.jar")
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
         manifest {
             attributes(
                 "Main-Class" to "teksturepako.pakku.MainKt",
@@ -154,16 +154,10 @@ tasks.withType<Jar> {
 
         if ("sources" !in classifier)
         {
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             val main by kotlin.jvm().compilations.getting
             from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
         }
-    }
-}
-
-tasks.whenTaskAdded {
-    if (name == "sourcesJar") {
-        this as Jar
-        from(sourceSets.main.get().allSource)
     }
 }
 
@@ -240,12 +234,18 @@ publishing {
             }
         }
     }
-    publications.withType<MavenPublication> {
-        artifactId = artifactId.lowercase()
-        version = getPublishVersion()
-        description = """A multiplatform modpack manager for Minecraft: Java Edition.
+    publications {
+        withType<MavenPublication> {
+            artifactId = artifactId.lowercase()
+            version = getPublishVersion()
+            description = """A multiplatform modpack manager for Minecraft: Java Edition.
             | Create modpacks for CurseForge, Modrinth or both simultaneously.""".trimMargin()
+        }
     }
+}
+
+artifacts {
+    archives("jvmSourceJar")
 }
 
 // -- DIST --
