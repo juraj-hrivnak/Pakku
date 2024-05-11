@@ -141,6 +141,7 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 tasks.withType<Jar> {
     doFirst {
         val classifier = archiveClassifier.get().let { if (it.isNotBlank()) "-$it" else "" }
+
         archiveFileName.set("pakku$classifier.jar")
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         val main by kotlin.jvm().compilations.getting
@@ -149,7 +150,11 @@ tasks.withType<Jar> {
                 "Main-Class" to "teksturepako.pakku.MainKt",
             )
         }
-        from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
+
+        if ("sources" !in classifier)
+        {
+            from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
+        }
     }
 }
 
