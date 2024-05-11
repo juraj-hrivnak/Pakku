@@ -52,7 +52,9 @@ kotlin {
         }
     }
 
-    jvm()
+    jvm {
+        withSourcesJar()
+    }
 
     sourceSets {
         // -- COMMON --
@@ -144,7 +146,6 @@ tasks.withType<Jar> {
 
         archiveFileName.set("pakku$classifier.jar")
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        val main by kotlin.jvm().compilations.getting
         manifest {
             attributes(
                 "Main-Class" to "teksturepako.pakku.MainKt",
@@ -153,8 +154,16 @@ tasks.withType<Jar> {
 
         if ("sources" !in classifier)
         {
+            val main by kotlin.jvm().compilations.getting
             from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
         }
+    }
+}
+
+tasks.whenTaskAdded {
+    if (name == "sourcesJar") {
+        this as Jar
+        from(sourceSets.main.get().allSource)
     }
 }
 
@@ -187,11 +196,6 @@ tasks.named("compileKotlinJvm") {
 
 tasks.named("jvmSourcesJar") {
     dependsOn("generateVersion")
-}
-
-tasks.withType<Jar>().named("sourcesJar") {
-    from(sourceSets["main"].allSource)
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 fun generateVersion() {
