@@ -7,6 +7,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.arg.splitProjectArg
 
 suspend fun promptForProject(platform: Platform, terminal: Terminal, lockFile: LockFile, fileId: String? = null): Project?
 {
@@ -14,12 +15,10 @@ suspend fun promptForProject(platform: Platform, terminal: Terminal, lockFile: L
 
     if (prompt.isNullOrBlank()) return null
 
-    val splitArg = prompt.split(":")
-    val input: String = splitArg[0]
-    val fileIdArg: String? = splitArg.getOrNull(1) ?: fileId
+    val (input, fileIdArg) = splitProjectArg(prompt)
 
     return Multiplatform.requestProjectWithFiles(
-        lockFile.getMcVersions(), lockFile.getLoaders(), input, fileIdArg
+        lockFile.getMcVersions(), lockFile.getLoaders(), input, fileIdArg ?: fileId
     )
 }
 

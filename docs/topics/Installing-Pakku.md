@@ -1,6 +1,6 @@
 # Installing Pakku
 
-You can only install Pakku [using Scoop](#install-scoop) for Windows,
+You can install Pakku [using Scoop](#install-scoop) for Windows,
 [using Brew](#install-brew) for macOS (or Linux)
 or [manually](#install-manually).
 

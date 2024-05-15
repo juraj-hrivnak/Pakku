@@ -12,6 +12,6 @@ class TestExport
         val cmd = Export()
         val output = cmd.test().output
 
-        assertContains(output, "Could not read 'pakku-lock.json")
+        assertContains(output, "Could not read './pakku-lock.json")
     }
 }

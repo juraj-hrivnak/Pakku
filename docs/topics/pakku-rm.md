@@ -20,6 +20,9 @@ Remove projects.
 `-a`, `--all`
 : Remove all projects
 
+`-D`, `--no-deps`
+: Ignore resolving dependencies
+
 `-h`, `--help`
 : Show help message and exit
 {id="option-help"}

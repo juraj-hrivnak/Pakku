@@ -28,30 +28,29 @@ suspend fun Project.resolveDependencies(
     {
         if (lockFile.isProjectAdded(dependencyIn))
         {
-            /** Link project to dependency if dependency is already added */
+            // Link project to dependency if the dependency is already added
             lockFile.getProject(dependencyIn)?.pakkuId?.let { pakkuId ->
                 lockFile.addPakkuLink(pakkuId, this)
             }
         } else if (addAsProjects)
         {
-            /** Add dependency as a regular project and resolve dependencies for it too */
+            // Add dependency as a regular project and resolve dependencies for it too
             debug { terminal.info(dependencyIn.toPrettyString()) }
             dependencyIn.createAdditionRequest(
                 onError = reqHandlers.onError,
                 onRetry = reqHandlers.onRetry,
                 onSuccess = { dependency, _, depReqHandlers ->
-                    /** Add dependency */
+                    // Add dependency
                     lockFile.add(dependency)
 
-                    /** Link dependency to parent project */
+                    // Link dependency to parent project
                     lockFile.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
 
-                    /** Resolve dependencies for dependency */
+                    // Resolve dependencies for dependency
                     dependency.resolveDependencies(terminal, depReqHandlers, lockFile, projectProvider, platforms)
                     terminal.info("${dependency.slug} added")
                 },
-                lockFile,
-                platforms
+                lockFile, platforms
             )
         }
     }

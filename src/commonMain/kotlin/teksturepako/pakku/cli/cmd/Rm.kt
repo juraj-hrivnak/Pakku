@@ -15,6 +15,7 @@ class Rm : CliktCommand("Remove projects")
 {
     private val projectArgs: List<String> by argument("projects").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Remove all projects").flag()
+    private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
@@ -50,6 +51,7 @@ class Rm : CliktCommand("Remove projects")
                     }
                 },
                 onDepRemoval = { dependency, isRecommended ->
+                    if (noDepsFlag) return@createRemovalRequest
                     if (isRecommended || ynPrompt("Do you want to remove ${dependency.slug}?", terminal, false))
                     {
                         lockFile.remove(dependency)

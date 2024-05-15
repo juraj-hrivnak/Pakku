@@ -29,10 +29,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println(
-                "Error: ${this@Http::class.simpleName} " +
-                    "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
-            )
+            println("Error: ${this::class.simpleName} ${e.stackTrace}")
             null
         }
     }
@@ -51,10 +48,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println(
-                "Error: ${this@Http::class.simpleName} " +
-                        "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
-            )
+            println("Error: ${this::class.simpleName} ${e.stackTrace}")
             null
         }
     }
@@ -73,10 +67,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println(
-                "Error: ${this@Http::class.simpleName} " +
-                        "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
-            )
+            println("Error: ${this::class.simpleName} ${e.stackTrace}")
             null
         }
     }
@@ -87,7 +78,7 @@ open class Http
         {
             client.post(url) {
                 contentType(ContentType.Application.Json)
-                setBody(Json.encodeToString(bodyContent)) // Don't use pretty print
+                setBody(Json.encodeToString(bodyContent)) // Do not use pretty print
             }
                 .debug { println("${this::class.simpleName} ${it.call} ${it.request.content}") }
                 .checkLimit()
@@ -95,10 +86,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println(
-                "Error: ${this@Http::class.simpleName} " +
-                        "HTTP request failed with exception: (${e.javaClass}) ${e.message}"
-            )
+            println("Error: ${this::class.simpleName} ${e.stackTrace}")
             null
         }
     }
