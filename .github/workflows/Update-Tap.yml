@@ -1,4 +1,4 @@
-name: Uppdate Tap
+name: Update Tap
 run-name: "Update Tap #${{ github.run_number }}"
 
 on:
