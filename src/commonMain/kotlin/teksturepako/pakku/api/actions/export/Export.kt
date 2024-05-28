@@ -1,11 +1,11 @@
 package teksturepako.pakku.api.actions.export
 
-import teksturepako.pakku.api.actions.PError
+import teksturepako.pakku.api.actions.ActionError
 
 suspend fun export(
-    onError: suspend (error: PError) -> Unit,
+    onError: suspend (error: ActionError) -> Unit,
 
-)
+    )
 {
 
 }

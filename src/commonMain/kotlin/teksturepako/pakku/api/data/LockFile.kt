@@ -21,7 +21,7 @@ import teksturepako.pakku.io.writeToFile
 /**
  * A LockFile is used to define all properties of a Pakku modpack.
  *
- * @property name The name of the mod pack.
+ * @property target The targeted platform of the modpack.
  * @property mcVersions The Minecraft versions supported by the mod pack.
  * @property loaders The mod loaders used by the mod pack.
  * @property projects A list of associated projects with the mod pack.

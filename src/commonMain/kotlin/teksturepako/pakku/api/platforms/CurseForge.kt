@@ -303,4 +303,3 @@ object CurseForge : Platform(
     fun fetchAlternativeDownloadUrl(fileId: String, fileName: String): String =
         decode("https://edge.forgecdn.net/files/${fileId.substring(0, 4)}/${fileId.substring(4)}/$fileName")
 }
-

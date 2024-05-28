@@ -7,7 +7,7 @@ import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.PError
+import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.import.import
 import teksturepako.pakku.api.data.LockFile
@@ -47,7 +47,7 @@ class Import : CliktCommand("Import modpack")
             launch {
                 projectIn.createAdditionRequest(
                     onError = { error ->
-                        if (error !is PError.AlreadyAdded) terminal.danger(error.message)
+                        if (error !is ActionError.AlreadyAdded) terminal.danger(error.message)
                     },
                     onRetry = { platform, _ -> promptForProject(platform, terminal, lockFile) },
                     onSuccess = { project, _, reqHandlers ->

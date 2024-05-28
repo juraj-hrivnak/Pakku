@@ -3,8 +3,8 @@ package teksturepako.pakku.api.actions.import
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import teksturepako.pakku.api.actions.PError
-import teksturepako.pakku.api.actions.PError.FileNotFound
+import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.io.readFileOrNull
@@ -19,7 +19,7 @@ private fun String?.toMrModpackModel(): ModpackModel? =
 
 fun String.isMrModpack(): Boolean = this.endsWith(MR_EXTENSION) || this == MR_MANIFEST
 
-suspend fun importModrinth(path: String): Result<ModpackModel, PError>
+suspend fun importModrinth(path: String): Result<ModpackModel, ActionError>
 {
     val file = File(path)
 
