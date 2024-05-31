@@ -20,7 +20,7 @@ fun main(args: Array<String>)
             theme = Theme.Default, ansiLevel = AnsiLevel.TRUECOLOR, interactive = true
         )
     }.subcommands(
-        Init(), Import(), Set(), Add(), Rm(), Update(), Ls(), Fetch(), Link(), Export(), Diff()
+        Init(), Import(), Set(), Add(), Rm(), Status(), Update(), Ls(), Fetch(), Link(), Export(), Diff()
     ).main(args)
 
     // Check Modrinth's rate limit
