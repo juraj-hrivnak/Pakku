@@ -29,7 +29,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println("Error: ${this::class.simpleName} ${e.stackTrace}")
+            println("Error: ${this::class.simpleName} ${e.printStackTrace()}")
             null
         }
     }
@@ -48,7 +48,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println("Error: ${this::class.simpleName} ${e.stackTrace}")
+            println("Error: ${this::class.simpleName} ${e.printStackTrace()}")
             null
         }
     }
@@ -67,7 +67,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println("Error: ${this::class.simpleName} ${e.stackTrace}")
+            println("Error: ${this::class.simpleName} ${e.printStackTrace()}")
             null
         }
     }
@@ -86,7 +86,7 @@ open class Http
         }
         catch (e: Exception)
         {
-            println("Error: ${this::class.simpleName} ${e.stackTrace}")
+            println("Error: ${this::class.simpleName} ${e.printStackTrace()}")
             null
         }
     }

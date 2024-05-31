@@ -8,5 +8,3 @@ fun <T, V> Collection<T>.allNotEqualTo(value: V): Boolean = this.any { it != val
 
 fun <T> Collection<T>.allEmpty(): Boolean = this.all { isEmpty() }
 fun <T> Collection<T>.allNotEmpty(): Boolean = this.all { isNotEmpty() }
-
-fun <K, V> Map<K, V>.keyValuesMatch(key: K) = this.filterKeys { key in this.keys }.values.allEqual()
