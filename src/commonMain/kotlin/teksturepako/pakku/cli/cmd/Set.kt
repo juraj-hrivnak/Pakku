@@ -14,7 +14,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 
-class Set : CliktCommand("Set various properties of your pack or projects")
+class Set : CliktCommand("Set various properties of your modpack or projects")
 {
     // -- PROJECTS --
 

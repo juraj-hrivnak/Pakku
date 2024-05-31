@@ -21,9 +21,19 @@ object CurseForge : Platform(
     shortName = "cf",
     apiUrl = "https://cfproxy.bmpm.workers.dev",
     apiVersion = 1,
-    siteUrl = "https://www.curseforge.com/minecraft/mc-mods"
+    siteUrl = "https://www.curseforge.com/minecraft"
 )
 {
+    // -- URLS --
+
+    override fun getUrlForProjectType(projectType: ProjectType): String = when (projectType)
+    {
+        ProjectType.MOD             -> "${this.siteUrl}/mc-mods"
+        ProjectType.RESOURCE_PACK   -> "${this.siteUrl}/texture-packs"
+        ProjectType.WORLD           -> "${this.siteUrl}/worlds"
+        ProjectType.SHADER          -> "${this.siteUrl}/shaders"
+    }
+
     // -- API KEY --
 
     private const val API_KEY_HEADER = "x-api-key"

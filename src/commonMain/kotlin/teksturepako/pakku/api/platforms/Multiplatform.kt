@@ -14,6 +14,10 @@ object Multiplatform : IProjectProvider
         Modrinth
     )
 
+    fun getPlatform(serialName: String) = this.platforms.find {
+        it.serialName == serialName
+    }
+
     /**
      * Requests a [project][Project] from all platforms.
      *

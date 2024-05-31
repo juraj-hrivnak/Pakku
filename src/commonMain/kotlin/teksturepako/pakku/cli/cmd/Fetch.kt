@@ -19,7 +19,7 @@ import teksturepako.pakku.debug
 import teksturepako.pakku.io.createHash
 import java.io.File
 
-class Fetch : CliktCommand("Fetch projects to your pack folder")
+class Fetch : CliktCommand("Fetch projects to your modpack folder")
 {
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {

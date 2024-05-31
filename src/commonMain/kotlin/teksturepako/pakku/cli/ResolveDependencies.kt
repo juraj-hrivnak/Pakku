@@ -7,6 +7,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.debug
 import teksturepako.pakku.toPrettyString
 
@@ -32,7 +33,8 @@ suspend fun Project.resolveDependencies(
             lockFile.getProject(dependencyIn)?.pakkuId?.let { pakkuId ->
                 lockFile.addPakkuLink(pakkuId, this)
             }
-        } else if (addAsProjects)
+        }
+        else if (addAsProjects)
         {
             // Add dependency as a regular project and resolve dependencies for it too
             debug { terminal.info(dependencyIn.toPrettyString()) }
@@ -48,7 +50,7 @@ suspend fun Project.resolveDependencies(
 
                     // Resolve dependencies for dependency
                     dependency.resolveDependencies(terminal, depReqHandlers, lockFile, projectProvider, platforms)
-                    terminal.info("${dependency.slug} added")
+                    terminal.info("${dependency.getFlavoredSlug()} added")
                 },
                 lockFile, platforms
             )

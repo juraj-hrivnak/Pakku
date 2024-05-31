@@ -9,6 +9,8 @@ import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.cli.ui.ynPrompt
 
 class Rm : CliktCommand("Remove projects")
@@ -43,11 +45,11 @@ class Rm : CliktCommand("Remove projects")
             projectIn.createRemovalRequest(
                 onWarning = { warning -> terminal.warning(warning) },
                 onRemoval = { project, isRecommended ->
-                    if (ynPrompt("Do you want to remove ${project.slug}?", terminal, isRecommended))
+                    if (ynPrompt("Do you want to remove ${project.getFlavoredSlug()}?", terminal, isRecommended))
                     {
                         lockFile.remove(project)
                         lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
-                        terminal.danger("${project.slug} removed")
+                        terminal.danger(prefixed("${project.getFlavoredSlug()} removed"))
                     }
                 },
                 onDepRemoval = { dependency, isRecommended ->
@@ -56,7 +58,7 @@ class Rm : CliktCommand("Remove projects")
                     {
                         lockFile.remove(dependency)
                         lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
-                        terminal.info("${dependency.slug} removed")
+                        terminal.info(prefixed("${dependency.getFlavoredSlug()} removed"))
                     }
                 },
                 arg, lockFile

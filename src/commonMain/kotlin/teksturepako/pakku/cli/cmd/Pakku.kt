@@ -1,5 +1,6 @@
 package teksturepako.pakku.cli.cmd
 
+import com.github.ajalt.clikt.completion.completionOption
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
@@ -13,6 +14,7 @@ class Pakku : CliktCommand()
 {
     init {
         versionOption(VERSION, help = "Get pakku version")
+        completionOption(help = "Generate autocompletion scripts")
     }
 
     private val yesFlag: Boolean by option(

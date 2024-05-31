@@ -14,6 +14,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.resolveDependencies
+import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.cli.ui.promptForProject
 
 class Import : CliktCommand("Import modpack")
@@ -47,7 +48,7 @@ class Import : CliktCommand("Import modpack")
             launch {
                 projectIn.createAdditionRequest(
                     onError = { error ->
-                        if (error !is ActionError.AlreadyAdded) terminal.danger(error.message)
+                        if (error !is ActionError.AlreadyAdded) terminal.danger(processErrorMsg(error))
                     },
                     onRetry = { platform, _ -> promptForProject(platform, terminal, lockFile) },
                     onSuccess = { project, _, reqHandlers ->

@@ -2,16 +2,15 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.mordant.rendering.TextColors.*
-import com.github.ajalt.mordant.rendering.TextStyle
+import com.github.ajalt.mordant.table.grid
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.api.projects.containsProject
-import teksturepako.pakku.cli.ui.getFlavoredProjectName
+import teksturepako.pakku.cli.ui.getFlavoredName
+import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
 
 class Ls : CliktCommand("List projects")
 {
@@ -25,48 +24,30 @@ class Ls : CliktCommand("List projects")
         val projects = lockFile.getAllProjects()
         val platforms: List<Platform> = lockFile.getPlatforms().getOrDefault(listOf())
 
-        val updatedProjects = Multiplatform.updateMultipleProjectsWithFiles(
+        val newProjects = Multiplatform.updateMultipleProjectsWithFiles(
             lockFile.getMcVersions(), lockFile.getLoaders(), projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
         )
 
-        for (project in projects)
-        {
-            val upds = when (project.updateStrategy)
+        terminal.println(grid {
+            for (project in projects)
             {
-                UpdateStrategy.LATEST ->
+                val deps: String = when
                 {
-                    if (updatedProjects containsProject project)
-                    {
-                        blue(project.updateStrategy.short)
-                    }
-                    else brightGreen(project.updateStrategy.short)
+                    project.pakkuLinks.size > 1  -> "${project.pakkuLinks.size} deps"
+                    project.pakkuLinks.size == 1 -> "1 dep "
+                    else                         -> "      "
                 }
-                UpdateStrategy.NONE   -> red(project.updateStrategy.short)
-                else                  -> cyan(project.updateStrategy.short)
+
+                row(
+                    deps,
+                    project.getFlavoredSlug(),
+                    "${project.getFlavoredUpdateMsg(newProjects)}${project.getFlavoredName()}",
+                    project.type.name,
+                    project.side?.name
+                )
             }
+        })
 
-            val name: String? = project.getFlavoredProjectName()
-
-            val deps: String = when
-            {
-                project.pakkuLinks.size > 1  -> "${project.pakkuLinks.size} deps"
-                project.pakkuLinks.size == 1 -> "1 dep "
-                else                         -> "      "
-            }
-
-            val targets: String = platforms.joinToString(" ") {
-                if (project.hasFilesOnPlatform(it))
-                {
-                    TextStyle(
-                        color = brightGreen,
-                        hyperlink = "${it.siteUrl}/${project.slug[it.serialName]}"
-                    )(it.shortName)
-                }
-                else red(it.shortName)
-            }
-
-            terminal.println(" $deps | $targets | $upds$name")
-        }
         echo()
         terminal.info("Projects total: ${projects.size}")
         echo()

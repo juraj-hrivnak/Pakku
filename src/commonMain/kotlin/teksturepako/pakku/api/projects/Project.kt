@@ -5,6 +5,7 @@ package teksturepako.pakku.api.projects
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.data.*
+import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 
 /**
@@ -94,6 +95,10 @@ data class Project(
 
     /** Checks if the project is not associated with the specified [platform][Platform]. */
     fun isNotOnPlatform(platform: Platform): Boolean = !isOnPlatform(platform)
+
+    fun getPlatforms(): List<Platform> = Multiplatform.platforms.filter { platform ->
+        this.hasFilesOnPlatform(platform)
+    }
 
     /** Checks if the project has files on the specified [platform][Platform]. */
     fun hasFilesOnPlatform(platform: Platform): Boolean

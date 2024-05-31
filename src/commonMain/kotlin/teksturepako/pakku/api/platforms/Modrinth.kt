@@ -24,9 +24,21 @@ object Modrinth : Platform(
     shortName = "mr",
     apiUrl = "https://api.modrinth.com",
     apiVersion = 2,
-    siteUrl = "https://modrinth.com/mod"
+    siteUrl = "https://modrinth.com"
 )
 {
+    // -- URLS --
+
+    override fun getUrlForProjectType(projectType: ProjectType): String = when (projectType)
+    {
+        ProjectType.MOD             -> "${this.siteUrl}/mod"
+        ProjectType.RESOURCE_PACK   -> "${this.siteUrl}/resourcepack"
+        ProjectType.WORLD           -> this.siteUrl // Does not exist yet
+        ProjectType.SHADER          -> "${this.siteUrl}/shader"
+    }
+
+    // -- MRPACK LOADERS --
+
     private val exportLoaders = mapOf(
         "forge" to "forge",
         "neoforge" to "neoforge",

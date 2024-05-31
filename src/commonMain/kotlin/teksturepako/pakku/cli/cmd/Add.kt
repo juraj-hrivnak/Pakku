@@ -12,8 +12,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.arg.splitProjectArg
 import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.promptForProject
-import teksturepako.pakku.cli.ui.ynPrompt
+import teksturepako.pakku.cli.ui.*
 
 class Add : CliktCommand("Add projects")
 {
@@ -41,21 +40,23 @@ class Add : CliktCommand("Add projects")
         }
         // --
 
-        for (projectIn in projectArgs.map { arg ->
+        for ((projectIn, arg) in projectArgs.map { arg ->
             val (input, fileId) = splitProjectArg(arg)
 
-            projectProvider.requestProjectWithFiles(lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId)
+            projectProvider.requestProjectWithFiles(
+                lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId
+            ) to arg
         })
         {
             projectIn.createAdditionRequest(
-                onError = { error -> terminal.danger(error.message) },
+                onError = { error -> terminal.danger(processErrorMsg(error, arg)) },
                 onRetry = { platform, project ->
                     val fileId = project.getFilesForPlatform(platform).firstOrNull()?.id
 
                     promptForProject(platform, terminal, lockFile, fileId)
                 },
                 onSuccess = { project, isRecommended, reqHandlers ->
-                    val slugMsg = project.slug.toString()
+                    val slugMsg = project.getFlavoredSlug()
 
                     if (ynPrompt("Do you want to add $slugMsg?", terminal, isRecommended))
                     {
@@ -67,7 +68,7 @@ class Add : CliktCommand("Add projects")
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.success("$slugMsg added")
+                        terminal.success(prefixed("$slugMsg added"))
                     }
                 },
                 lockFile, platforms

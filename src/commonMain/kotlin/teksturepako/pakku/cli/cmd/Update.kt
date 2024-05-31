@@ -10,6 +10,8 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
+import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.prefixed
 
 class Update : CliktCommand("Update projects")
 {
@@ -23,7 +25,7 @@ class Update : CliktCommand("Update projects")
             return@runBlocking
         }
 
-        val oldProjects = if (allFlag)
+        val currentProjects = if (allFlag)
         {
             lockFile.getAllProjects()
         }
@@ -37,25 +39,25 @@ class Update : CliktCommand("Update projects")
         }
 
         val updatedProjects = Multiplatform.updateMultipleProjectsWithFiles(
-            lockFile.getMcVersions(), lockFile.getLoaders(), oldProjects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
+            lockFile.getMcVersions(), lockFile.getLoaders(), currentProjects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
         )
 
         for (updatedProject in updatedProjects)
         {
             lockFile.update(updatedProject)
-            terminal.success("${updatedProject.slug} updated")
+            terminal.success(prefixed("${updatedProject.getFlavoredSlug()} updated"))
         }
 
-        if (updatedProjects.isEmpty() && oldProjects.isNotEmpty())
+        if (updatedProjects.isEmpty() && currentProjects.isNotEmpty())
         {
             when
             {
-                allFlag || projectArgs.isEmpty() -> terminal.success("All projects are up to date")
-                oldProjects.size == 1            -> terminal.success("${oldProjects.first().slug} is up to date")
+                allFlag || projectArgs.isEmpty() ->
+                    terminal.success(prefixed("All projects are up to date"))
+                currentProjects.size == 1        ->
+                    terminal.success(prefixed("${currentProjects.first().getFlavoredSlug()} is up to date"))
                 else                             ->
-                {
-                    terminal.success("${oldProjects.map { it.slug }} are up to date")
-                }
+                    terminal.success(prefixed("${currentProjects.map { it.getFlavoredSlug() }} are up to date"))
             }
         }
 

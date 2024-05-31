@@ -1,8 +1,8 @@
 package teksturepako.pakku.api.projects
 
-enum class ProjectSide
+enum class ProjectSide(val prettyName: String)
 {
-    CLIENT,
-    SERVER,
-    BOTH
+    CLIENT("client"),
+    SERVER("server"),
+    BOTH("both")
 }

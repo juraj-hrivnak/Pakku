@@ -4,6 +4,7 @@ import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
+import teksturepako.pakku.api.projects.ProjectType
 
 /**
  * Platform is a site containing projects.
@@ -21,6 +22,10 @@ abstract class Platform(
     val siteUrl: String,
 ) : Http(), IProjectProvider
 {
+    override fun toString(): String = this.name
+
+    abstract fun getUrlForProjectType(projectType: ProjectType): String
+
     suspend fun requestProjectBody(input: String): String? = this.requestBody("$apiUrl/v$apiVersion/$input")
 
     suspend inline fun <reified T> requestProjectBody(input: String, bodyContent: T): String? =

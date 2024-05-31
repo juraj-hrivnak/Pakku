@@ -21,7 +21,7 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.cli.ui.getFlavoredProjectName
+import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.compat.FileDirectorData
 import teksturepako.pakku.compat.addToFileDirectorFrom
 import teksturepako.pakku.io.zipModpack
@@ -102,7 +102,7 @@ suspend fun onProjectMissing(
     if (!project.redistributable)
     {
         return onWarning(
-            "${project.getFlavoredProjectName()} could not be exported as 'project override'" +
+            "${project.getFlavoredName()} could not be exported as 'project override'" +
                     " because it is not redistributable"
         )
     }
@@ -110,7 +110,7 @@ suspend fun onProjectMissing(
     if (lockFile.getAllProjects().any { "filedirector" in it })
     {
         project.addToFileDirectorFrom(platform, fileDirector)
-        onInfo("${project.getFlavoredProjectName()} exported to file director config")
+        onInfo("${project.getFlavoredName()} exported to file director config")
     }
     else
     {
@@ -118,7 +118,7 @@ suspend fun onProjectMissing(
             projectOverrides += ProjectOverride(
                 project.type, project.toOverrideType(), file.fileName, location = REAL
             )
-            onInfo("${project.getFlavoredProjectName()} exported as 'project override'")
+            onInfo("${project.getFlavoredName()} exported as 'project override'")
         }
     }
 }
