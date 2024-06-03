@@ -49,7 +49,7 @@ class Add : CliktCommand("Add projects")
         })
         {
             projectIn.createAdditionRequest(
-                onError = { error -> terminal.danger(processErrorMsg(error, arg)) },
+                onError = { error -> terminal.println(processErrorMsg(error, arg)) },
                 onRetry = { platform, project ->
                     val fileId = project.getFilesForPlatform(platform).firstOrNull()?.id
 

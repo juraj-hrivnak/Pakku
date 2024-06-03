@@ -9,20 +9,29 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.containsProject
 
-fun Project.getFlavoredName(): String? = when
+fun Project.getFlavoredName(maxLength: Int? = null): String?
 {
-    this.redistributable ->
-    {
-        if (this.hasNoFiles()) this.name.values.firstOrNull()?.let { red(it) }
-        else this.name.values.firstOrNull()
-    }
-    else ->
-    {
-        if (this.hasNoFiles()) this.name.values.firstOrNull()?.let {
-            TextStyle(bgColor = white, color = red)("⚠$it")
+    val name = this.name.values.firstOrNull()?.let {
+        if (maxLength != null && it.length > maxLength)
+        {
+            it.take(maxLength + 1) + "..."
         }
-        else this.name.values.firstOrNull()?.let {
-            TextStyle(bgColor = white, color = black)("⚠$it")
+        else it + " ".repeat(3)
+    } ?: return null
+
+    return when
+    {
+        this.redistributable -> if (this.hasNoFiles()) red(name) else name
+        else                 ->
+        {
+            if (this.hasNoFiles())
+            {
+                TextStyle(bgColor = white, color = red)("⚠$name")
+            }
+            else
+            {
+                TextStyle(bgColor = white, color = black)("⚠$name")
+            }
         }
     }
 }

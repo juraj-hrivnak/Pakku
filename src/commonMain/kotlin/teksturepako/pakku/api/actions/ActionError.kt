@@ -5,7 +5,7 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
 @Suppress("MemberVisibilityCanBePrivate")
-sealed class ActionError(val message: String)
+sealed class ActionError(val message: String, val isWarning: Boolean = false)
 {
     // -- FILE --
 
@@ -13,11 +13,18 @@ sealed class ActionError(val message: String)
 
     class CouldNotRead(val file: String, val reason: String? = "") : ActionError("Could not read: '$file'. $reason")
 
-    // -- ADDITION --
+    // -- IMPORT --
+
+    class CouldNotImport(val file: String) :
+        ActionError("Could not import from: '$file'. It is not a proper modpack file.")
+
+    // -- PROJECT --
 
     class ProjNotFound : ActionError("Project not found")
 
-    class AlreadyAdded(val project: Project) : ActionError("Could not add ${project.slug}. It is already added.")
+    // -- ADDITION --
+
+    class AlreadyAdded(val project: Project) : ActionError("Can not add ${project.slug}. It is already added.")
 
     class NotFoundOnPlatform(val project: Project, val platform: Platform) :
         ActionError("${project.slug} was not found on ${platform.name}")
@@ -38,8 +45,8 @@ sealed class ActionError(val message: String)
             | ${project.files.map { "${it.type}: ${it.fileName}" }}
             """.trimMargin())
 
-    // -- IMPORT --
+    // -- REMOVAL --
 
-    class CouldNotImport(val file: String) :
-        ActionError("Could not import from: '$file'. It is not a proper modpack file.")
+    class ProjRequiredBy(val project: Project, val dependants: List<Project>) :
+        ActionError("${project.slug} is required by ${dependants.map { it.slug }}", isWarning = true)
 }

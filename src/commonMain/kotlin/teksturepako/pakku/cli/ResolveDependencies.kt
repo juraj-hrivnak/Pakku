@@ -8,6 +8,7 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.debug
 import teksturepako.pakku.toPrettyString
 
@@ -23,7 +24,7 @@ suspend fun Project.resolveDependencies(
     val dependencies = this.requestDependencies(projectProvider, lockFile)
     if (dependencies.isEmpty()) return
 
-    terminal.info("Resolving dependencies...")
+    terminal.info(prefixed("Resolving dependencies..."))
 
     for (dependencyIn in dependencies)
     {
@@ -50,7 +51,7 @@ suspend fun Project.resolveDependencies(
 
                     // Resolve dependencies for dependency
                     dependency.resolveDependencies(terminal, depReqHandlers, lockFile, projectProvider, platforms)
-                    terminal.info("${dependency.getFlavoredSlug()} added")
+                    terminal.info(prefixed("${dependency.getFlavoredSlug()} added"))
                 },
                 lockFile, platforms
             )

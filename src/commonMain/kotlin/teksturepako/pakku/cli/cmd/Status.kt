@@ -54,6 +54,20 @@ class Status: CliktCommand("Get status of your modpack")
                 numberOfFiles = 1
             )
 
+        fun projStatus()
+        {
+            terminal.println(grid {
+                currentProjects.filter { updatedProjects containsProject it }.map { project ->
+                    row(project.getFlavoredSlug(), project.getFlavoredName())
+
+                    val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }
+                    updatedProject?.run {
+
+                    }
+                }
+            })
+        }
+
         when
         {
             updatedProjects.isEmpty() && currentProjects.isNotEmpty() ->
@@ -63,22 +77,12 @@ class Status: CliktCommand("Get status of your modpack")
             updatedProjects.size == 1                                 ->
             {
                 terminal.info(prefixed("Following project has a new version available:"))
-
-                terminal.println(grid {
-                    currentProjects.filter { updatedProjects containsProject it }.map { project ->
-                            row(project.getFlavoredSlug(), project.getFlavoredName())
-                        }
-                })
+                projStatus()
             }
             else ->
             {
                 terminal.info(prefixed("Following projects have a new version available:"))
-
-                terminal.println(grid {
-                    currentProjects.filter { updatedProjects containsProject it }.map { project ->
-                        row(project.getFlavoredSlug(), project.getFlavoredName())
-                    }
-                })
+                projStatus()
             }
         }
 

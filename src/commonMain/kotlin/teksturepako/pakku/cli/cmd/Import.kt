@@ -14,6 +14,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.resolveDependencies
+import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.cli.ui.promptForProject
 
@@ -48,13 +49,13 @@ class Import : CliktCommand("Import modpack")
             launch {
                 projectIn.createAdditionRequest(
                     onError = { error ->
-                        if (error !is ActionError.AlreadyAdded) terminal.danger(processErrorMsg(error))
+                        if (error !is ActionError.AlreadyAdded) terminal.println(processErrorMsg(error))
                     },
                     onRetry = { platform, _ -> promptForProject(platform, terminal, lockFile) },
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)
                         project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        terminal.success("${project.slug} added")
+                        terminal.success(prefixed("${project.slug} added"))
                         Modrinth.checkRateLimit()
                     },
                     lockFile, platforms

@@ -2,18 +2,28 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.table.grid
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
-import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
 
 class Ls : CliktCommand("List projects")
 {
+    private val checkUpdatesFlag by option("-c", "--check-updates", help = "Add update info for projects").flag()
+    private val nameMaxLengthOpt by option(
+        "--name-max-length",
+        help = "Set max length for project names"
+    ).int().default(20)
+
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
@@ -22,11 +32,14 @@ class Ls : CliktCommand("List projects")
         }
 
         val projects = lockFile.getAllProjects()
-        val platforms: List<Platform> = lockFile.getPlatforms().getOrDefault(listOf())
 
-        val newProjects = Multiplatform.updateMultipleProjectsWithFiles(
-            lockFile.getMcVersions(), lockFile.getLoaders(), projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
-        )
+        val newProjects = if (checkUpdatesFlag) async {
+            Multiplatform.updateMultipleProjectsWithFiles(
+                lockFile.getMcVersions(),
+                lockFile.getLoaders(),
+                projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
+            )
+        } else null
 
         terminal.println(grid {
             for (project in projects)
@@ -38,13 +51,20 @@ class Ls : CliktCommand("List projects")
                     else                         -> "      "
                 }
 
-                row(
-                    deps,
-                    project.getFlavoredSlug(),
-                    "${project.getFlavoredUpdateMsg(newProjects)}${project.getFlavoredName()}",
-                    project.type.name,
-                    project.side?.name
-                )
+                row {
+                    cell(deps)
+                    cell(project.getFlavoredSlug())
+
+                    val name = if (newProjects != null) runBlocking {
+                        project.getFlavoredUpdateMsg(newProjects.await()) + project.getFlavoredName(nameMaxLengthOpt)
+                    }
+                    else " " + project.getFlavoredName(nameMaxLengthOpt)
+
+                    cell(name)
+
+                    cell(project.type.name)
+                    project.side?.let { cell(it.name) }
+                }
             }
         })
 

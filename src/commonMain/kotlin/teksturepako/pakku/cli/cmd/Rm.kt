@@ -7,11 +7,15 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.prefixed
+import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.cli.ui.ynPrompt
+import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand("Remove projects")
 {
@@ -26,6 +30,49 @@ class Rm : CliktCommand("Remove projects")
             return@runBlocking
         }
 
+        suspend fun remove(projectIn: Project?, arg: String)
+        {
+            projectIn.createRemovalRequest(
+                onError = { error ->
+                    terminal.println(processErrorMsg(error, arg))
+
+                    if (error is ProjNotFound)
+                    {
+                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values }
+
+                        typoSuggester(arg, slugs).firstOrNull()?.let { realArg ->
+                            if (ynPrompt("Do you mean '$realArg'?", terminal))
+                            {
+                                remove(lockFile.getProject(realArg), realArg)
+                            }
+                        }
+                    }
+                },
+                onRemoval = { project, isRecommended ->
+                    val slugMsg = project.getFlavoredSlug()
+
+                    if (ynPrompt("Do you want to remove $slugMsg?", terminal, isRecommended))
+                    {
+                        lockFile.remove(project)
+                        lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
+                        terminal.danger(prefixed("$slugMsg removed"))
+                    }
+                },
+                onDepRemoval = { dependency, isRecommended ->
+                    if (noDepsFlag) return@createRemovalRequest
+                    val slugMsg = dependency.getFlavoredSlug()
+
+                    if (isRecommended || ynPrompt("Do you want to remove $slugMsg?", terminal, false))
+                    {
+                        lockFile.remove(dependency)
+                        lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
+                        terminal.info(prefixed("$slugMsg removed"))
+                    }
+                },
+                lockFile
+            )
+        }
+
         if (allFlag)
         {
             if (ynPrompt("Do you really want to remove all projects?", terminal))
@@ -36,36 +83,14 @@ class Rm : CliktCommand("Remove projects")
                 echo()
             }
         }
-        else for (pair in projectArgs.map { arg ->
+        else for ((projectIn, arg) in projectArgs.map { arg ->
             lockFile.getProject(arg) to arg
         })
         {
-            val (projectIn, arg) = pair
-
-            projectIn.createRemovalRequest(
-                onWarning = { warning -> terminal.warning(warning) },
-                onRemoval = { project, isRecommended ->
-                    if (ynPrompt("Do you want to remove ${project.getFlavoredSlug()}?", terminal, isRecommended))
-                    {
-                        lockFile.remove(project)
-                        lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
-                        terminal.danger(prefixed("${project.getFlavoredSlug()} removed"))
-                    }
-                },
-                onDepRemoval = { dependency, isRecommended ->
-                    if (noDepsFlag) return@createRemovalRequest
-                    if (isRecommended || ynPrompt("Do you want to remove ${dependency.slug}?", terminal, false))
-                    {
-                        lockFile.remove(dependency)
-                        lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
-                        terminal.info(prefixed("${dependency.getFlavoredSlug()} removed"))
-                    }
-                },
-                arg, lockFile
-            )
-
+            remove(projectIn, arg)
             echo()
         }
+
         lockFile.write()
     }
 }

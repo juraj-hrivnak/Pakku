@@ -26,7 +26,8 @@ abstract class Platform(
 
     abstract fun getUrlForProjectType(projectType: ProjectType): String
 
-    suspend fun requestProjectBody(input: String): String? = this.requestBody("$apiUrl/v$apiVersion/$input")
+    suspend fun requestProjectBody(input: String): String? =
+        this.requestBody("$apiUrl/v$apiVersion/$input")
 
     suspend inline fun <reified T> requestProjectBody(input: String, bodyContent: T): String? =
         this.requestBody("$apiUrl/v$apiVersion/$input", bodyContent)
