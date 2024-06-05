@@ -28,6 +28,7 @@ jobs:
       - name: Get Changelog
         shell: bash
         run: |
+          set +e
           latest_tag=$(git describe --tags --abbrev=0)
           cat ${{ github.workspace }}/CHANGELOG.md | grep -Pzo "(?<=## $latest_tag)((?!\n## )[\s\S])*" >> ${{ github.workspace }}/NEW_CHANGELOG.md
 
