@@ -48,7 +48,7 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
                 {
                     return@map Result.success(project.type to (project.getFilesForPlatform(platform)
                         .takeIf { it.isNotEmpty() }
-                        ?.first() ?: break)
+                        ?.first() ?: continue)
                     )
                 }
                 return@map Result.failure(PakkuException("No files found for ${project.slug}"))
