@@ -22,12 +22,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get Changelog
         shell: bash
         run: |
-          set +e
-          
           latest_tag=$(git describe --tags --abbrev=0)
           cat ./CHANGELOG.md | grep -Pzo "(?<=## $latest_tag)((?!\n## )[\s\S])*" > ./CHANGELOG.md
 
