@@ -1,16 +1,13 @@
 # pakku rm
 
-Remove projects.
+Remove projects
 
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% rm [<options>] [<projects>]...
-```
-{prompt="$"}
-
+    <var name="cmd">rm</var>
+    <var name="help"></var>
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options
@@ -24,7 +21,6 @@ Remove projects.
 : Ignore resolving dependencies
 
 `-h`, `--help`
-: Show help message and exit
-{id="option-help"}
+: Show this message and exit
 
 </snippet>

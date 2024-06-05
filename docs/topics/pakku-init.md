@@ -1,16 +1,13 @@
 # pakku init
 
-Initialize modpack.
+Initialize modpack
 
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% init [<options>]
-```
-{prompt="$"}
-
+    <var name="cmd">init</var>
+    <var name="help"></var>
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options
@@ -18,7 +15,6 @@ Initialize modpack.
 <snippet id="snippet-options">
 
 `-h`, `--help`
-: Show help message and exit
-{id="option-help"}
+: Show this message and exit
 
 </snippet>

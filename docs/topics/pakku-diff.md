@@ -1,30 +1,26 @@
 # pakku diff
 
-Diff projects in modpack.
+Diff projects in modpack
 
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% diff [<options>] <path> <path>
-```
-{prompt="$"}
-
+    <var name="cmd">diff</var>
+    <var name="help"></var>
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options
 
 <snippet id="snippet-options">
 
-`--markdown-diff=<path>`
+`--markdown-diff`
 : Export a `.md` file formatted as a diff code block
 
-`--markdown=<path>`
+`--markdown`
 : Export a `.md` file formatted as regular markdown
 
-`-h`, `--help`                                        
-: Show help message and exit
-{id="option-help"}
+`-h`, `--help`
+: Show this message and exit
 
 </snippet>

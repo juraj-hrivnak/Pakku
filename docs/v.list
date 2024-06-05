@@ -2,5 +2,6 @@
 <!DOCTYPE vars SYSTEM "https://resources.jetbrains.com/writerside/1.0/vars.dtd">
 <vars>
     <var name="product" value="Pakku"/>
-    <var name="pakku" value="java -jar pakku.jar"/>
+    <var name="pakku" value="pakku"/>
+    <var name="pakku-jvm" value="java -jar pakku.jar"/>
 </vars>

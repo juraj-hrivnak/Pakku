@@ -1,11 +1,11 @@
-# pakku export
+# pakku status
 
-Export modpack
+Get status of your modpack
 
 ## Usage
 
 <snippet id="snippet-cmd">
-    <var name="cmd">export</var>
+    <var name="cmd">status</var>
     <var name="help"></var>
     <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
@@ -14,8 +14,8 @@ Export modpack
 
 <snippet id="snippet-options">
 
-`-s`, `--server-pack`
-: Export Server-Pack only
+`-v`, `--verbose`
+: Give the output in the verbose-format
 
 `-h`, `--help`
 : Show this message and exit

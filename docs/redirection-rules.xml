@@ -94,4 +94,8 @@
         <description>Created after removal of "Getting Informtion About Your Modpack" from Pakku</description>
         <accepts>Getting-Informtion-About-Your-Modpack.html</accepts>
     </rule>
+    <rule id="495e1a08">
+        <description>Created after removal of "pakku version" from Pakku</description>
+        <accepts>pakku-version.html</accepts>
+    </rule>
 </rules>

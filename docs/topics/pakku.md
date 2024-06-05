@@ -1,14 +1,12 @@
 # pakku
 
+<var name="cmd">pakku</var>
+<var name="help">[&lt;options&gt;] &lt;command&gt; [&lt;args&gt;]...</var>
+
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% [<options>] <command> [<args>]...
-```
-{prompt="$"}
-
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options

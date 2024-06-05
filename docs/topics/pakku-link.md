@@ -1,27 +1,20 @@
 # pakku link
 
-Link project to another project.
-
-> This command will be soon deprecated!
-{style="warning"}
+Link project to another project
 
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% link [<options>] <projectout> <projectin>
-```
-{prompt="$"}
-
+    <var name="cmd">link</var>
+    <var name="help"></var>
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options
 
 <snippet id="snippet-options">
 
-`-h`, `--help`                                        
-: Show help message and exit
-{id="option-help"}
+`-h`, `--help`
+: Show this message and exit
 
 </snippet>

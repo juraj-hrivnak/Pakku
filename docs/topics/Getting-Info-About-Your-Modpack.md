@@ -61,7 +61,7 @@ Projects total: 4
 
 ## Checking the Status
 
-Not implemented yet! Will supersede [`pakku ls`](pakku-ls.md) with its functionality.
+Not implemented yet! It Will supersede [`pakku ls`](pakku-ls.md) with its functionality.
 
 ## Differentiating Between versions
 

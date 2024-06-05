@@ -1,24 +1,20 @@
 # pakku import
 
-Import modpack.
+Import modpack
 
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% import [<options>] <path>
-```
-{prompt="$"}
-
+    <var name="cmd">import</var>
+    <var name="help"></var>
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options
 
 <snippet id="snippet-options">
 
-`-h`, `--help`                                        
-: Show help message and exit
-{id="option-help"}
+`-h`, `--help`
+: Show this message and exit
 
 </snippet>

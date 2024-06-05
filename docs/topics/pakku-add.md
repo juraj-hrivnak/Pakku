@@ -1,16 +1,13 @@
 # pakku add
 
-Add projects.
+Add projects
 
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% add [<options>] <projects>...
-```
-{prompt="$"}
-
+    <var name="cmd">add</var>
+    <var name="help"></var>
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options
@@ -21,7 +18,6 @@ Add projects.
 : Ignore resolving dependencies
 
 `-h`, `--help`
-: Show help message and exit
-{id="option-help"}
+: Show this message and exit
 
 </snippet>

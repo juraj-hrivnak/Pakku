@@ -1,16 +1,13 @@
 # pakku update
 
-Update projects.
+Update projects
 
 ## Usage
 
 <snippet id="snippet-cmd">
-
-```
-%pakku% update [<options>] [<projects>]...
-```
-{prompt="$"}
-
+    <var name="cmd">update</var>
+    <var name="help"></var>
+    <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
 ## Options
@@ -21,7 +18,6 @@ Update projects.
 : Update all projects
 
 `-h`, `--help`
-: Show help message and exit
-{id="option-help"}
+: Show this message and exit
 
 </snippet>

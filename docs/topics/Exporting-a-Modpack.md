@@ -26,7 +26,7 @@ To override a property:
 and find an object called `projects`.
 
 2. Use the project slug, name, ID or filename to create
-an object in it. For example, if we will use JEI:
+an object in it. For example, if we use JEI:
     ```JSON
     "projects": {
         "jei": {

@@ -60,7 +60,7 @@ and allows multiple projects to be removed.
 %pakku% rm jei terrafirmacraft
 ```
 
-To remove all project from the modpack, use the `--all` flag:
+To remove all projects from the modpack, use the `--all` flag:
 
 ```
 %pakku% rm -a
@@ -88,7 +88,7 @@ and allows multiple projects to be updated.
 %pakku% update jei terrafirmacraft
 ```
 
-To update all project in the modpack, use the `--all` flag:
+To update all projects in the modpack, use the `--all` flag:
 
 ```
 %pakku% update -a

@@ -9,10 +9,7 @@ To set up a modpack, you can:
 
 To create a new modpack, run the [`pakku init`](pakku-init.md) command:
 
-```
-%pakku% init
-```
-{prompt="$"}
+<include from="pakku-init.md" element-id="snippet-cmd"></include>
 
 This will ask you to enter:
 
@@ -35,10 +32,7 @@ set up before importing.
 
 To import an existing modpack, run the [`pakku import`](pakku-import.md) command with the `<path>` argument:
 
-```
-%pakku% import <path>
-```
-{prompt="$"}
+<include from="pakku-import.md" element-id="snippet-cmd"></include>
 
 <seealso style="cards">
    <category ref="related">
