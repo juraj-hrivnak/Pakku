@@ -6,10 +6,13 @@
 
 ### What's new?
 
-- Implemented `status` command.
+- Implemented new UI for most of the CLI.
+  - Slugs now contain hyperlinks. The `list` command contains type and side information for projects.
+- Implemented the `status` command as a better way to check for updates than the `ls -c` command.
+- Improved `rm` command with better "autocomplete" for slugs.
 - Improved importing - now supports importing without manually setting Minecraft
 versions and loaders.
-- Fixed issue with `fetch` command not listing trough platforms properly.
+- Fixed issue with the `fetch` command not properly listing platforms.
 
 ### Docs
 - Implemented auto generation for CLI Commands reference for docs.
