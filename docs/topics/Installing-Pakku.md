@@ -59,11 +59,6 @@ If not, install it from [here](https://www.java.com/en/download/).
 </procedure>
 
 <note>
-   <p>From onward, running Pakku in CLI will be only referenced
-   as <code>%pakku%</code>.</p>
-</note>
-
-<note>
 Currently, the only option to run Pakku is using Java.
 This requires Java Runtime to be installed on your computer.
 

@@ -1,6 +1,6 @@
 # Supporting Pakku
 
-Pakku is free and open source software 
+Pakku is free and open source software.
 
 You can support Pakku by giving it a star on
 [GitHub](https://github.com/juraj-hrivnak/Pakku) 

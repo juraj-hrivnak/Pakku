@@ -5,9 +5,11 @@ Set various properties of your modpack or projects
 ## Usage
 
 <snippet id="snippet-cmd">
-    <var name="cmd">set</var>
-    <var name="help"></var>
-    <include from="_template_cmd.md" element-id="template-cmd"/>
+
+<var name="cmd">set</var>
+<var name="help"></var>
+<include from="_template_cmd.md" element-id="template-cmd"/>
+
 </snippet>
 
 ## Options
