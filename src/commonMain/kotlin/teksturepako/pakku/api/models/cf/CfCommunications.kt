@@ -1,4 +1,4 @@
-package teksturepako.pakku.api.models
+package teksturepako.pakku.api.models.cf
 
 import kotlinx.serialization.Serializable
 
