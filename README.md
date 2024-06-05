@@ -59,11 +59,20 @@ This allows you to fine-tune your modpack, while still being up-to-date. If any 
 
 ### Visit the [**Documentation**](https://juraj-hrivnak.github.io/Pakku) for installation instructions and a comprehensive guide on how to use it.
 
+## Images
+
 <p align="center">
   <a href="https://github.com/juraj-hrivnak/pakku">
     <img
       src="docs/images/screenshot_export.png"
       alt="Exporting a Modpack"
+    />
+  </a>
+  <a href="https://github.com/juraj-hrivnak/pakku">
+    <img
+      src="docs/images/screenshot_ls.png"
+      alt="Listing Projects"
+      width="800"
     />
   </a>
 </p>
