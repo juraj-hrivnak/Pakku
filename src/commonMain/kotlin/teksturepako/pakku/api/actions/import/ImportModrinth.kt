@@ -7,6 +7,7 @@ import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
+import teksturepako.pakku.api.models.mr.MrModpackModel
 import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.unzip
 import java.io.File
@@ -15,7 +16,7 @@ private const val MR_EXTENSION = "mrpack"
 private const val MR_MANIFEST = "modrinth.index.json"
 
 private fun String?.toMrModpackModel(): ModpackModel? =
-    this?.let { json.decodeFromString<ModpackModel.MrModpackModel>(it) }
+    this?.let { json.decodeFromString<MrModpackModel>(it) }
 
 fun String.isMrModpack(): Boolean = this.endsWith(MR_EXTENSION) || this == MR_MANIFEST
 

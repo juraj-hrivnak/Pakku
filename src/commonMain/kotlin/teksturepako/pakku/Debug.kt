@@ -13,6 +13,18 @@ var debugMode = false
  * Debug scope function; Use anywhere to add code called only in debug mode.
  */
 @OptIn(ExperimentalContracts::class)
+inline fun debug(block: () -> Unit)
+{
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+    if (debugMode) block()
+}
+
+/**
+ * Debug scope function; Use anywhere to add code called only in debug mode.
+ */
+@OptIn(ExperimentalContracts::class)
 inline fun <T> T.debug(block: (T) -> Unit): T
 {
     contract {

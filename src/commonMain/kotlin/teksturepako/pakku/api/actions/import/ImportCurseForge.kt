@@ -6,6 +6,7 @@ import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.unzip
@@ -15,7 +16,7 @@ private const val CF_EXTENSION = "zip"
 private const val CF_MANIFEST = "manifest.json"
 
 private fun String?.toCfModpackModel(): ModpackModel? =
-    this?.let { json.decodeFromString<ModpackModel.CfModpackModel>(it) }
+    this?.let { json.decodeFromString<CfModpackModel>(it) }
 
 fun String.isCfModpack(): Boolean = this.endsWith(CF_EXTENSION) || this == CF_MANIFEST
 

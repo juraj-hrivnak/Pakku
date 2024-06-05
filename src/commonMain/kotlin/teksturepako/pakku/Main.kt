@@ -26,7 +26,7 @@ fun main(args: Array<String>)
     // Check Modrinth's rate limit
     Modrinth.checkRateLimit()
 
-    println("Program arguments: ${args.joinToString()}")
+    debug { println("Program arguments: ${args.joinToString()}") }
 
     // Close http client & exit program
     client.close()

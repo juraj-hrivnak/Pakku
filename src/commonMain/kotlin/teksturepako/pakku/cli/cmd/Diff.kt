@@ -13,8 +13,8 @@ class Diff : CliktCommand("Diff projects in modpack")
 {
     private val oldPathArg by argument("path")
     private val newPathArg by argument("path")
-    private val markdownDiffOpt by option("--markdown-diff", metavar = "<path>")
-    private val markdownOpt by option("--markdown", metavar = "<path>")
+    private val markdownDiffOpt by option("--markdown-diff", metavar = "<path>", help = "Export a `.md` file formatted as a diff code block")
+    private val markdownOpt by option("--markdown", metavar = "<path>", help = "Export a `.md` file formatted as regular markdown")
 
     override fun run(): Unit = runBlocking {
         val oldLockFile = LockFile.readToResultFrom(oldPathArg).getOrElse {

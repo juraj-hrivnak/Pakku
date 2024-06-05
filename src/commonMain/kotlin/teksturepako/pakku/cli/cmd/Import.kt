@@ -7,13 +7,14 @@ import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.ActionError.AlreadyAdded
 import teksturepako.pakku.api.actions.createAdditionRequest
-import teksturepako.pakku.api.actions.import.import
+import teksturepako.pakku.api.actions.import.importModpackModel
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.resolveDependencies
+import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.cli.ui.promptForProject
@@ -23,7 +24,13 @@ class Import : CliktCommand("Import modpack")
     private val pathArg: String by argument("path")
 
     override fun run() = runBlocking {
-        val lockFile = LockFile.readOrNew()
+        val modpackModel = importModpackModel(pathArg).getOrElse {
+            terminal.println(processErrorMsg(it, pathArg))
+            echo()
+            return@runBlocking
+        }
+
+        val lockFile = LockFile.readToResult().getOrNull() ?: modpackModel.toLockFile()
 
         // Configuration
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
@@ -39,23 +46,21 @@ class Import : CliktCommand("Import modpack")
         }
         // --
 
-        val importedProjects = import(pathArg, lockFile, platforms).getOrElse {
-            terminal.danger(it.message)
-            echo()
-            return@runBlocking
-        }
+        val importedProjects = modpackModel.toSetOfProjects(lockFile, platforms)
 
         importedProjects.map { projectIn ->
             launch {
                 projectIn.createAdditionRequest(
                     onError = { error ->
-                        if (error !is ActionError.AlreadyAdded) terminal.println(processErrorMsg(error))
+                        if (error !is AlreadyAdded) terminal.println(processErrorMsg(error))
                     },
-                    onRetry = { platform, _ -> promptForProject(platform, terminal, lockFile) },
+                    onRetry = { platform, _ ->
+                        promptForProject(platform, terminal, lockFile)
+                    },
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)
                         project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        terminal.success(prefixed("${project.slug} added"))
+                        terminal.success(prefixed("${project.getFlavoredSlug()} added"))
                         Modrinth.checkRateLimit()
                     },
                     lockFile, platforms

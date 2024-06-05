@@ -10,9 +10,9 @@ import kotlinx.serialization.json.JsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.encode
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.models.GetVersionsFromHashesRequest
-import teksturepako.pakku.api.models.MrProjectModel
-import teksturepako.pakku.api.models.MrVersionModel
+import teksturepako.pakku.api.models.mr.GetVersionsFromHashesRequest
+import teksturepako.pakku.api.models.mr.MrProjectModel
+import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.exitPakku

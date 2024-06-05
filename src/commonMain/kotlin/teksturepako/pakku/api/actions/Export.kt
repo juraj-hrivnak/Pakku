@@ -5,10 +5,10 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.data.jsonEncodeDefaults
-import teksturepako.pakku.api.models.ModpackModel.CfModpackModel
-import teksturepako.pakku.api.models.ModpackModel.CfModpackModel.*
-import teksturepako.pakku.api.models.ModpackModel.MrModpackModel
-import teksturepako.pakku.api.models.ModpackModel.MrModpackModel.File
+import teksturepako.pakku.api.models.cf.CfModpackModel
+import teksturepako.pakku.api.models.cf.CfModpackModel.*
+import teksturepako.pakku.api.models.mr.MrModpackModel
+import teksturepako.pakku.api.models.mr.MrModpackModel.File
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverride
