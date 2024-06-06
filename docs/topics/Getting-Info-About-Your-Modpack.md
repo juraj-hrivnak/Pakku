@@ -9,7 +9,7 @@ The basic operations to get info about your modpack include:
 
 ## Checking the Status
 
-To check the status, run the `pakku status` command:
+To check the status, run the [`pakku status`](pakku-status.md) command:
 
 <include from="pakku-status.md" element-id="snippet-cmd"/>
 
@@ -37,22 +37,31 @@ The output contains the following info:
 </tr>
 
 <tr>
-<td>Platforms</td>
-    <td><format color="LightGreen">Green color</format> 
-    indicates that project is available on the platform, 
-    <format color="Red">red color</format> indicates that it is not.
-    It is also clickable and contains a hyperlink.</td>
+    <td>Slugs</td>
+    <td>
+    Slugs are formated as <code>key=value</code> pairs,
+    where the <code>key</code> is the short form of
+    the platform name, and the <code>value</code> is the project's slug.
+    The short forms of the platform names indicate
+    that project is available on the platform.
+    These short forms are also clickable
+    and contain a link to the project's website.
+    </td>
 </tr>
 
 <tr>
-    <td>Update strategy (only with <code>-c</code>,
-    <code>--check-updates</code> flag used)</td>
-    <td><format color="Blue">Blue colored ^</format> 
+    <td>
+    Update strategy (only with <code>-c</code>,
+    <code>--check-updates</code> flag used)
+    </td>
+    <td>
+    <format color="Blue">Blue colored ^</format> 
     indicates that a new version of the project is available.
     <format color="LightGreen">Green colored ^</format> 
     indicates that the project is up-to-date.
     <format color="Red">Red colored ✖^</format>
-    indicates that the project will not be updated.</td>
+    indicates that the project will not be updated.
+    </td>
 </tr>
 
 <tr>

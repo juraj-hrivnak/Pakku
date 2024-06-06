@@ -8,7 +8,7 @@ To export a modpack, run the [`pakku export`] command:
 The `[<path>]` argument is optional.
 
 Depending on your [target](Lock-File.md#properties)
-this will export the modpack in the format of the platforms you target.
+this will export the modpack in the CurseForge's or Modrinth's format or both.
 
 <note>
 If a project is missing on one of the platforms,
@@ -27,8 +27,8 @@ directories which you want to bundle with your modpack.
 This can be, for example, the `config` directory,
 or the CraftTweaker/KubeJS script directories.
 
-An override can also be a single file.
-In the case that you want to bundle a `README` or other files with your modpack.
+An override can also be a single file -
+ in the case that you want to bundle a `README` or other files with your modpack.
 
 Overrides must be added to the [config file's](Config-File.md)
 `overrides` field for Pakku to be able to recognize them.
@@ -48,7 +48,7 @@ For example, if we want to add the `config` directory,
 it will look like this:
 ```JSON
 "overrides": [
-    "scripts"
+    "config"
 ]
 ```
 
@@ -113,7 +113,7 @@ The `[<path>]` argument is optional.
 
 This will export only:
 
-- Projects with the `BOTH` or `SERVER` side. Project with no side will be exported as `BOTH`.
+- projects with the `BOTH` or `SERVER` side. Project with no side will be exported as `BOTH`.
 - `overrides` and `server_overrides` defined in the [config file](Config-File.md) (`pakku.json`),
 - [project overrides](Pakku-Terminology.md#project-override) included in the 
 `.pakku/overrides` or `.pakku/server-overrides` directory.
