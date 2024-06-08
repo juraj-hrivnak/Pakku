@@ -1,11 +1,10 @@
 # pakku
 
-<var name="cmd">pakku</var>
-<var name="help">[&lt;options&gt;] &lt;command&gt; [&lt;args&gt;]...</var>
-
 ## Usage
 
 <snippet id="snippet-cmd">
+    <var name="cmd"></var>
+    <var name="help">[&lt;options&gt;] &lt;command&gt; [&lt;args&gt;]...</var>
     <include from="_template_cmd.md" element-id="template-cmd"/>
 </snippet>
 
