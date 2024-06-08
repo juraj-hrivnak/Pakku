@@ -3,6 +3,7 @@ package teksturepako.pakku.api.actions
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectFile
 
 @Suppress("MemberVisibilityCanBePrivate")
 sealed class ActionError(val message: String, val isWarning: Boolean = false)
@@ -12,6 +13,23 @@ sealed class ActionError(val message: String, val isWarning: Boolean = false)
     class FileNotFound(val file: String) : ActionError("File not found: '$file'")
 
     class CouldNotRead(val file: String, val reason: String? = "") : ActionError("Could not read: '$file'. $reason")
+
+    // -- PROJECT FILE --
+
+    class AlreadyExists(val projectFile: ProjectFile) : ActionError("File '${projectFile.getPath()}' already exists.")
+
+    class DownloadFailed(val projectFile: ProjectFile) : ActionError("Failed to download '${projectFile.getPath()}'.")
+
+    class NoHashes(val projectFile: ProjectFile) : ActionError("File '${projectFile.getPath()}' has no hashes.")
+
+    class HashFailed(val projectFile: ProjectFile, val originalHash: String, val newHash: String) :
+        ActionError("""Failed to math hash for file '${projectFile.getPath()}'.
+            | Original hash: $originalHash
+            | New hash: $newHash
+            |""".trimMargin())
+
+    class CouldNotSave(val projectFile: ProjectFile, val reason: String? = "") :
+        ActionError("Could not save: '${projectFile.getPath()}'. $reason")
 
     // -- IMPORT --
 

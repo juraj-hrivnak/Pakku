@@ -1,8 +1,19 @@
 package teksturepako.pakku.api.projects
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.ActionError.HashFailed
+import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.io.createHash
+import java.nio.file.Path
+import kotlin.io.path.Path
 
 @Serializable
 @SerialName("project_file")
@@ -19,3 +30,44 @@ data class ProjectFile(
     @SerialName("required_dependencies") val requiredDependencies: MutableSet<String>? = null,
     val size: Int = 0,
 )
+{
+    // -- PARENT --
+
+    fun getParentProject(lockFile: LockFile): Project? = lockFile.getProject(parentId)
+
+    // -- FILE PATH --
+
+    @Transient
+    private lateinit var path: Path
+
+    fun setPath(projectType: ProjectType)
+    {
+        this.path = Path(workingPath, projectType.folderName, fileName)
+    }
+
+    fun getPath(): Path
+    {
+        return this.path
+    }
+
+    // -- INTEGRITY --
+
+    fun checkIntegrity(bytes: ByteArray): Result<ByteArray, ActionError>
+    {
+        return if (this.hashes != null)
+        {
+            for ((hashType, originalHash) in this.hashes)
+            {
+                val newHash = createHash(hashType, bytes)
+
+                if (originalHash != newHash)
+                {
+                    return Err(HashFailed(this, originalHash, newHash))
+                }
+                else continue
+            }
+            Ok(bytes)
+        }
+        else Err(ActionError.NoHashes(this))
+    }
+}

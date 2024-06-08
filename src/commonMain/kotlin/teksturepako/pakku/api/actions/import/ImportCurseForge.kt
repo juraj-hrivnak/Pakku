@@ -6,8 +6,8 @@ import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.ModpackModel
+import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.unzip
 import java.io.File

@@ -4,20 +4,23 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.animation.progressAnimation
 import com.github.ajalt.mordant.widgets.Spinner
-import kotlinx.atomicfu.AtomicLong
-import kotlinx.atomicfu.atomic
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.*
+import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.fetch.fetch
+import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.debug
+import teksturepako.pakku.cli.ui.prefixed
+import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.io.createHash
-import java.io.File
+import kotlin.io.path.*
 
 class Fetch : CliktCommand("Fetch projects to your modpack folder")
 {
@@ -28,164 +31,84 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
             return@runBlocking
         }
 
-        var fetched = false
-        val ignored = mutableMapOf<ProjectType, List<File>>()
-        val jobs = mutableListOf<Job>()
-
-        // Progress bar
-        val progress = terminal.progressAnimation {
+        val progressBar = terminal.progressAnimation {
             text("Fetching ")
             spinner(Spinner.Dots())
             percentage()
             padding = 0
         }
 
-        val maxSize: AtomicLong = atomic(0L)
-
-        val projectFiles = lockFile.getAllProjects()
-            .map { project ->
-                for (platform in Multiplatform.platforms)
-                {
-                    return@map Result.success(project.type to (project.getFilesForPlatform(platform)
-                        .takeIf { it.isNotEmpty() }
-                        ?.first() ?: continue)
-                    )
-                }
-                return@map Result.failure(PakkuException("No files found for ${project.slug}"))
-            }.mapNotNull { result ->
-                result.getOrElse {
-                    terminal.danger(it.message)
-                    echo()
-                    null
-                }
-            }
-
-        for ((projectType, projectFile) in projectFiles)
-        {
-            val outputFile = File("$workingPath/${projectType.folderName}/${projectFile.fileName}")
-                .also { ignored[projectType] = ignored[projectType]?.let { list -> list + it } ?: listOf(it) }
-
-            val parentFolder = File("$workingPath/${projectType.folderName}")
-
-            // Skip to next if output file exists
-            if (outputFile.exists()) continue
-
-            jobs += launch(Dispatchers.IO) {
-                maxSize += projectFile.size.toLong()
-                val prevBytes: AtomicLong = atomic(0L)
-
-                // Download
-                val deferred = async {
-                    Http().requestByteArray(projectFile.url!!) { bytesSentTotal, _ ->
-                        progress.advance(bytesSentTotal - prevBytes.value)
-                        progress.updateTotal(maxSize.value)
-
-                        prevBytes.getAndSet(bytesSentTotal)
-                    } to projectFile
-                }
-
-                // Create parent folders
-                if (!parentFolder.exists()) parentFolder.mkdirs()
-
-                val (bytes, file) = deferred.await()
-
-                if (bytes != null) try
-                {
-                    if (file.hashes != null)
-                    {
-                        for ((hashType, originalHash) in file.hashes)
-                        {
-                            val newHash = createHash(hashType, bytes)
-                            debug { println("$hashType: $originalHash : $newHash") }
-
-                            if (originalHash != newHash)
-                            {
-                                terminal.danger("${outputFile.name} failed to mach hash $hashType")
-                                terminal.danger("File will not be saved")
-                                return@launch
-                            }
-                            else continue
-                        }
-                    }
-
-                    // Write to file
-                    outputFile.writeBytes(bytes)
-                    terminal.success("${outputFile.name} saved")
-
-                    fetched = true
-                } catch (e: Exception)
-                {
-                    e.printStackTrace()
-                }
+        val projectFiles = retrieveProjectFiles(lockFile, Multiplatform.platforms.first()).mapNotNull { result ->
+            result.getOrElse {
+                terminal.println(processErrorMsg(it))
+                null
             }
         }
 
-        jobs.joinAll()
-
-        if (fetched)
-        {
-            progress.clear()
-            terminal.success("Projects successfully fetched")
-            echo()
-        }
+        projectFiles.fetch(
+            onError = { error ->
+                if (error !is AlreadyExists) terminal.println(processErrorMsg(error))
+            },
+            onProgress = { advance, total ->
+                progressBar.advance(advance)
+                progressBar.updateTotal(total)
+            },
+            onSuccess = { projectFile, _ ->
+                terminal.success(prefixed("${projectFile.getPath()} saved"))
+            },
+            lockFile
+        )
 
         // -- OVERRIDES --
 
         val projectOverrides = Overrides.getProjectOverrides()
-        var synced = false
 
-        projectOverrides.map { projectOverride ->
-            launch {
-                val file = File("$workingPath/${projectOverride.projectType.folderName}/${projectOverride.fileName}")
+        val projOverrideHashes = projectOverrides.map { projectOverride ->
+            async {
+                val file = Path(workingPath, projectOverride.projectType.folderName, projectOverride.fileName)
                 if (!file.exists()) runCatching {
-                    file.parentFile.mkdir()
-                    File(
-                        "$workingPath/$PAKKU_DIR/${projectOverride.overrideType.folderName}/" +
-                                "${projectOverride.projectType.folderName}/${projectOverride.fileName}"
+                    file.createParentDirectories()
+                    Path(
+                        workingPath,
+                        PAKKU_DIR,
+                        projectOverride.overrideType.folderName,
+                        projectOverride.projectType.folderName,
+                        projectOverride.fileName
                     ).copyTo(file)
-
-                    terminal.info("${projectOverride.fileName} synced")
-                    synced = true
+                    terminal.info(prefixed("${projectOverride.fileName} synced"))
                 }
+                createHash("sha1", file.readBytes())
             }
-        }.joinAll()
-
-        if (synced)
-        {
-            terminal.info("Project overrides successfully synced")
-            echo()
-        }
+        }.awaitAll()
 
         // -- OLD FILES --
 
-        var removed = false
+        val oldFiles = ProjectType.entries
+            .filterNot { it == ProjectType.WORLD }
+            .mapNotNull { projectType ->
+                val folder = Path(workingPath, projectType.folderName)
+                if (folder.notExists()) return@mapNotNull null
+                runCatching { folder.listDirectoryEntries() }.get()
+            }.flatMap { entry ->
+                entry.filterNot { file ->
+                    val fileHash = createHash("sha1", file.readBytes())
 
-        val ignoredProjOverrFileNames = projectOverrides.map { projectOverride ->
-            projectOverride.fileName
-        }
+                    fileHash in projOverrideHashes || !projectFiles.all { projectFile ->
+                        projectFile.hashes?.get("sha1").let {
+                            if (it == null) return@let false
+                            fileHash != it
+                        }
+                    } || file.extension !in listOf("jar", "zip")
+                }
+            }
 
-        ignored.map { (projectType, ignoredFiles) ->
+        oldFiles.map {
             launch(Dispatchers.IO) {
-                val ignoredNames = ignoredFiles.map { it.name }
-
-                File("$workingPath/${projectType.folderName}").listFiles()
-                    .filter { file ->
-                        file.name !in ignoredNames
-                                && file.name !in ignoredProjOverrFileNames
-                                && file.extension in listOf("jar", "zip")
-                                && file.parentFile.name == projectType.folderName
-                    }.forEach { file ->
-                        file.delete()
-                        terminal.warning("${file.name} deleted")
-                        removed = true
-                    }
+                it.deleteIfExists()
+                terminal.danger(prefixed("${it.name} deleted"))
             }
         }.joinAll()
 
-        if (removed)
-        {
-            terminal.warning("Old project files successfully deleted")
-            echo()
-        }
+        progressBar.clear()
     }
 }

@@ -15,7 +15,8 @@ open class Http
      * @return A body [ByteArray] of a https request or null if status code is not OK.
      */
     open suspend fun requestByteArray(
-        url: String, onDownload: (bytesSentTotal: Long, contentLength: Long) -> Unit = { _: Long, _: Long ->}
+        url: String,
+        onDownload: suspend (bytesSentTotal: Long, contentLength: Long) -> Unit = { _: Long, _: Long ->}
     ): ByteArray?
     {
         return try

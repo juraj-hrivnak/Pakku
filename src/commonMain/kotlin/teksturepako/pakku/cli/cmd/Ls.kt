@@ -47,8 +47,8 @@ class Ls : CliktCommand("List projects")
                 val deps: String = when
                 {
                     project.pakkuLinks.size > 1  -> "${project.pakkuLinks.size} deps"
-                    project.pakkuLinks.size == 1 -> "1 dep "
-                    else                         -> "      "
+                    project.pakkuLinks.size == 1 -> "1 dep  "
+                    else                         -> "       "
                 }
 
                 row {
