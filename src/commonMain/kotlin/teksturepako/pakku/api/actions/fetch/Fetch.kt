@@ -22,9 +22,11 @@ import kotlin.io.path.writeBytes
 
 fun retrieveProjectFiles(
     lockFile: LockFile,
-    platform: Platform
+    platforms: List<Platform>
 ) : List<Result<ProjectFile, ActionError>> = lockFile.getAllProjects().map { project ->
-    val file = project.getFilesForPlatform(platform).firstOrNull()
+    val file = platforms.firstNotNullOfOrNull { platform ->
+        project.getFilesForPlatform(platform).firstOrNull()
+    }
 
     if (file == null)
     {

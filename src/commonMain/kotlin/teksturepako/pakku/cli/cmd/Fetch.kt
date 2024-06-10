@@ -38,7 +38,7 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
             padding = 0
         }
 
-        val projectFiles = retrieveProjectFiles(lockFile, Multiplatform.platforms.first()).mapNotNull { result ->
+        val projectFiles = retrieveProjectFiles(lockFile, Multiplatform.platforms).mapNotNull { result ->
             result.getOrElse {
                 terminal.println(processErrorMsg(it))
                 null
