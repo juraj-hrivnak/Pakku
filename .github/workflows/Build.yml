@@ -166,6 +166,7 @@ jobs:
         with:
           body_path: ./NEW_CHANGELOG.md
           prerelease: false
+          token: ${{ secrets.PUSH_ACCESS_TOKEN }}
           files: |
             jar/pakku.jar
             dist/*.zip
