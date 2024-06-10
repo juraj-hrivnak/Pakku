@@ -46,7 +46,7 @@ data class CfModModel(
     val categories: List<Category>,
     val classId: Int? = null,
     val authors: List<ModAuthor>,
-    val logo: ModAsset,
+    val logo: ModAsset? = null,
     val screenshots: List<ModAsset> = listOf(),
     val mainFileId: Int,
 
