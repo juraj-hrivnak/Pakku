@@ -4,14 +4,6 @@ run-name: "Build documentation #${{ github.run_number }}"
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-      - 'src/**'
-      - 'build.gradle.kts'
-      - '.github/**'
   workflow_dispatch:
 
 permissions:
