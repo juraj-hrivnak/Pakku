@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.11.2
+
+- Fixed error with `fetch` command.
+- Added better path info for files on `fetch`.
+
 ## v0.11.1
 
 ### What's new?
