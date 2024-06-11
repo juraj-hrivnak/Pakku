@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.11.3
+
+- Improved resolving old files on `fetch`.
+
 ## v0.11.2
 
 - Fixed error with `fetch` command.
