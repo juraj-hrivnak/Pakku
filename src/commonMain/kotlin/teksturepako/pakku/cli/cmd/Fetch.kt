@@ -66,16 +66,19 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
         val projOverrideHashes = projectOverrides.map { projectOverride ->
             async {
                 val file = Path(workingPath, projectOverride.projectType.folderName, projectOverride.fileName)
-                if (!file.exists()) runCatching {
+                if (file.notExists()) runCatching {
                     file.createParentDirectories()
-                    Path(
+
+                    val overrideFile = Path(
                         workingPath,
                         PAKKU_DIR,
                         projectOverride.overrideType.folderName,
                         projectOverride.projectType.folderName,
                         projectOverride.fileName
-                    ).copyTo(file)
-                    terminal.info(prefixed("${projectOverride.fileName} synced"))
+                    )
+                    overrideFile.copyTo(file)
+
+                    terminal.info(prefixed("$file synced"))
                 }
                 createHash("sha1", file.readBytes())
             }
@@ -106,7 +109,7 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
         oldFiles.map {
             launch(Dispatchers.IO) {
                 it.deleteIfExists()
-                terminal.danger(prefixed("${it.name} deleted"))
+                terminal.danger(prefixed("$it deleted"))
             }
         }.joinAll()
 
