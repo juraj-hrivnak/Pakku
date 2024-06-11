@@ -21,7 +21,7 @@ jobs:
         with:
           repository: juraj-hrivnak/homebrew-pakku
           ref: main
-          token:  ${{ secrets.PUSH_ACCESS_TOKEN }}
+          token: ${{ secrets.PUSH_ACCESS_TOKEN }}
       - name: Setup Git config
         run: |
           git config user.name 'github-actions[bot]'

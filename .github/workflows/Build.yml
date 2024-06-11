@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           latest_tag=$(git describe --tags --abbrev=0)
-          cat ./CHANGELOG.md | { grep -Pzo "(?<=## $latest_tag)((?!\n## )[\s\S])*" || true; } >> ./NEW_CHANGELOG.md
+          { grep --color=auto -Pzo "(?<=## $latest_tag)((?!\n## )[\s\S])*" ./CHANGELOG.md || true; } | sed 's/.$//' > ./NEW_CHANGELOG.md
 
       - name: Upload Changelog
         uses: actions/upload-artifact@v4
@@ -166,6 +166,7 @@ jobs:
         with:
           body_path: ./NEW_CHANGELOG.md
           prerelease: false
+          token: ${{ secrets.PUSH_ACCESS_TOKEN }}
           files: |
             jar/pakku.jar
             dist/*.zip

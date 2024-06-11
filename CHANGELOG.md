@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v0.11.1
+
+### What's new?
+
+- Fixed error with null icon in CurseForge projects. 
+- Fixed the `fetch` command not resolving files other than from CurseForge.
+
 ## v0.11.0
 
 - Refactored the `fetch` command to use the new fetch action API call.
