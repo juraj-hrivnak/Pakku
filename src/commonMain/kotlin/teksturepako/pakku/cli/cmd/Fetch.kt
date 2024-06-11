@@ -6,7 +6,6 @@ import com.github.ajalt.mordant.animation.progressAnimation
 import com.github.ajalt.mordant.widgets.Spinner
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
-import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
 import teksturepako.pakku.api.actions.fetch.fetch
@@ -21,6 +20,7 @@ import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.io.createHash
 import kotlin.io.path.*
+import com.github.michaelbull.result.runCatching as runCatching
 
 class Fetch : CliktCommand("Fetch projects to your modpack folder")
 {
@@ -91,7 +91,8 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
                 runCatching { folder.listDirectoryEntries() }.get()
             }.flatMap { entry ->
                 entry.filterNot { file ->
-                    val fileHash = createHash("sha1", file.readBytes())
+                    val bytes = runCatching { file.readBytes() }.get()
+                    val fileHash = bytes?.let { createHash("sha1", it) }
 
                     fileHash in projOverrideHashes || !projectFiles.all { projectFile ->
                         projectFile.hashes?.get("sha1").let {
