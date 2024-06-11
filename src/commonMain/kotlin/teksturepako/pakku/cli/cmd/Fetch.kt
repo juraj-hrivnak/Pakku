@@ -93,16 +93,22 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
                 if (folder.notExists()) return@mapNotNull null
                 runCatching { folder.listDirectoryEntries() }.get()
             }.flatMap { entry ->
-                entry.filterNot { file ->
+                entry.filter { file ->
                     val bytes = runCatching { file.readBytes() }.get()
                     val fileHash = bytes?.let { createHash("sha1", it) }
 
-                    fileHash in projOverrideHashes || !projectFiles.all { projectFile ->
-                        projectFile.hashes?.get("sha1").let {
-                            if (it == null) return@let false
-                            fileHash != it
-                        }
-                    } || file.extension !in listOf("jar", "zip")
+                    val projectFileNames = projectFiles.filter { projectFile ->
+                        projectFile.hashes?.get("sha1") == null
+                    }.map { projectFile ->
+                        projectFile.fileName
+                    }
+
+                    file.extension in listOf("jar", "zip")
+                            && fileHash !in projOverrideHashes
+                            && file.name !in projectFileNames
+                            && fileHash !in projectFiles.mapNotNull { projectFile ->
+                                projectFile.hashes?.get("sha1")
+                            }
                 }
             }
 
