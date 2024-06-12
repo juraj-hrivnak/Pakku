@@ -5,22 +5,30 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
-@Suppress("MemberVisibilityCanBePrivate")
+@Suppress("MemberVisibilityCanBePrivate", "CanBeParameter")
 sealed class ActionError(val message: String, val isWarning: Boolean = false)
 {
     // -- FILE --
 
-    class FileNotFound(val file: String) : ActionError("File not found: '$file'")
+    class FileNotFound(val file: String) :
+        ActionError("File not found: '$file'")
 
-    class CouldNotRead(val file: String, val reason: String? = "") : ActionError("Could not read: '$file'. $reason")
+    class CouldNotRead(val file: String, val reason: String? = "") :
+        ActionError("Could not read: '$file'. $reason")
+
+    class ErrorWhileReading(val file: String, val reason: String? = "") :
+        ActionError("Error occurred while reading: '$file'. $reason")
+
+    class AlreadyExists(val file: String) :
+        ActionError("File '$file' already exists.")
 
     // -- PROJECT FILE --
 
-    class AlreadyExists(val projectFile: ProjectFile) : ActionError("File '${projectFile.getPath()}' already exists.")
+    class DownloadFailed(val projectFile: ProjectFile) :
+        ActionError("Failed to download '${projectFile.getPath()}'.")
 
-    class DownloadFailed(val projectFile: ProjectFile) : ActionError("Failed to download '${projectFile.getPath()}'.")
-
-    class NoHashes(val projectFile: ProjectFile) : ActionError("File '${projectFile.getPath()}' has no hashes.")
+    class NoHashes(val projectFile: ProjectFile) :
+        ActionError("File '${projectFile.getPath()}' has no hashes.")
 
     class HashFailed(val projectFile: ProjectFile, val originalHash: String, val newHash: String) :
         ActionError("""Failed to math hash for file '${projectFile.getPath()}'.
@@ -42,7 +50,8 @@ sealed class ActionError(val message: String, val isWarning: Boolean = false)
 
     // -- ADDITION --
 
-    class AlreadyAdded(val project: Project) : ActionError("Can not add ${project.slug}. It is already added.")
+    class AlreadyAdded(val project: Project) :
+        ActionError("Can not add ${project.slug}. It is already added.")
 
     class NotFoundOnPlatform(val project: Project, val platform: Platform) :
         ActionError("${project.slug} was not found on ${platform.name}")

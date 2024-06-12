@@ -6,6 +6,7 @@ import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.FAKE
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.REAL
+import teksturepako.pakku.api.overrides.ProjectOverride.Type
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
@@ -32,7 +33,7 @@ object Overrides
     @Serializable
     data class ProjectOverride(
         @SerialName("project_type") val projectType: ProjectType,
-        @SerialName("override_type") val overrideType: OverrideType,
+        @SerialName("override_type") val overrideType: Type,
         @SerialName("file_name") val fileName: String,
         val location: ProjectOverrideLocation = FAKE
     )
@@ -42,7 +43,7 @@ object Overrides
     fun getProjectOverrides(): List<ProjectOverride>
     {
         return runCatching {
-            OverrideType.entries.flatMap { overrideType ->
+            Type.entries.flatMap { overrideType ->
                 ProjectType.entries.flatMap { projectType ->
                     File("$workingPath/$PAKKU_DIR/${overrideType.folderName}/${projectType.folderName}")
                         .walkTopDown()
@@ -54,14 +55,14 @@ object Overrides
         }.getOrDefault(mutableListOf())
     }
 
-    fun Project.toOverrideType(): OverrideType = when
+    fun Project.toOverrideType(): Type = when
     {
-        this.type == ProjectType.SHADER || this.type == ProjectType.RESOURCE_PACK -> OverrideType.CLIENT_OVERRIDE
-        this.side == ProjectSide.BOTH                                             -> OverrideType.OVERRIDE
-        this.side == ProjectSide.SERVER                                           -> OverrideType.SERVER_OVERRIDE
-        this.side == ProjectSide.CLIENT                                           -> OverrideType.CLIENT_OVERRIDE
-        this.side == null                                                         -> OverrideType.OVERRIDE
-        else                                                                      -> OverrideType.OVERRIDE
+        this.type == ProjectType.SHADER || this.type == ProjectType.RESOURCE_PACK -> Type.CLIENT_OVERRIDE
+        this.side == ProjectSide.BOTH                                             -> Type.OVERRIDE
+        this.side == ProjectSide.SERVER                                           -> Type.SERVER_OVERRIDE
+        this.side == ProjectSide.CLIENT                                           -> Type.CLIENT_OVERRIDE
+        this.side == null                                                         -> Type.OVERRIDE
+        else                                                                      -> Type.OVERRIDE
     }
 
     suspend fun List<ProjectOverride>.toExportData(

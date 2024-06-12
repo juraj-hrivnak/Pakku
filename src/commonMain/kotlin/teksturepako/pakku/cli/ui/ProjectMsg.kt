@@ -21,7 +21,7 @@ fun Project.getFlavoredName(maxLength: Int? = null): String?
 
     return when
     {
-        this.redistributable -> if (this.hasNoFiles()) red(name) else name
+        this.redistributable -> if (this.hasNoFiles()) " " + red(name) else " $name"
         else                 ->
         {
             if (this.hasNoFiles())

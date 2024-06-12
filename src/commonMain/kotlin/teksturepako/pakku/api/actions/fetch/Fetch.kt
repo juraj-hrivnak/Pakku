@@ -3,12 +3,9 @@ package teksturepako.pakku.api.actions.fetch
 import com.github.michaelbull.result.*
 import kotlinx.atomicfu.AtomicLong
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.LockFile
@@ -38,7 +35,7 @@ fun retrieveProjectFiles(
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun List<ProjectFile>.fetch(
     onError: suspend (error: ActionError) -> Unit,
-    onProgress: suspend (advance: Long, total: Long) -> Unit,
+    onProgress: suspend (advance: Long, total: Long, sent: Long) -> Unit,
     onSuccess: suspend (projectFile: ProjectFile, project: Project?) -> Unit,
     lockFile: LockFile,
 ) = coroutineScope {
@@ -50,7 +47,7 @@ suspend fun List<ProjectFile>.fetch(
             launch {
                 if (projectFile.getPath().exists())
                 {
-                    onError(AlreadyExists(projectFile))
+                    onError(AlreadyExists(projectFile.getPath().toString()))
                     return@launch
                 }
 
@@ -58,7 +55,7 @@ suspend fun List<ProjectFile>.fetch(
                 val prevBytes: AtomicLong = atomic(0L)
 
                 val bytes = Http().requestByteArray(projectFile.url!!) { bytesSentTotal, _ ->
-                    onProgress(bytesSentTotal - prevBytes.value, maxBytes.value)
+                    onProgress(bytesSentTotal - prevBytes.value, maxBytes.value, bytesSentTotal)
                     prevBytes.getAndSet(bytesSentTotal)
                 }
 

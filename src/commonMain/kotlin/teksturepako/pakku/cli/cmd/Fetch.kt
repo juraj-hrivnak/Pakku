@@ -6,21 +6,25 @@ import com.github.ajalt.mordant.animation.progressAnimation
 import com.github.ajalt.mordant.widgets.Spinner
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
-import kotlinx.coroutines.*
+import com.github.michaelbull.result.runCatching
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
+import teksturepako.pakku.api.actions.sync.getFileHashes
+import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.overrides.Overrides
-import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
+import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.io.createHash
 import kotlin.io.path.*
-import com.github.michaelbull.result.runCatching as runCatching
 
 class Fetch : CliktCommand("Fetch projects to your modpack folder")
 {
@@ -49,9 +53,15 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
             onError = { error ->
                 if (error !is AlreadyExists) terminal.println(processErrorMsg(error))
             },
-            onProgress = { advance, total ->
+            onProgress = { advance, total, sent ->
                 progressBar.advance(advance)
                 progressBar.updateTotal(total)
+
+                if (sent >= total)
+                {
+                    progressBar.clear()
+                    echo()
+                }
             },
             onSuccess = { projectFile, _ ->
                 terminal.success(prefixed("${projectFile.getPath()} saved"))
@@ -61,28 +71,16 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
 
         // -- OVERRIDES --
 
-        val projectOverrides = Overrides.getProjectOverrides()
+        val projectOverrides = readProjectOverrides()
 
-        val projOverrideHashes = projectOverrides.map { projectOverride ->
-            async {
-                val file = Path(workingPath, projectOverride.projectType.folderName, projectOverride.fileName)
-                if (file.notExists()) runCatching {
-                    file.createParentDirectories()
-
-                    val overrideFile = Path(
-                        workingPath,
-                        PAKKU_DIR,
-                        projectOverride.overrideType.folderName,
-                        projectOverride.projectType.folderName,
-                        projectOverride.fileName
-                    )
-                    overrideFile.copyTo(file)
-
-                    terminal.info(prefixed("$file synced"))
-                }
-                createHash("sha1", file.readBytes())
+        projectOverrides.sync(
+            onError = { error ->
+                if (error !is AlreadyExists) terminal.println(processErrorMsg(error))
+            },
+            onSuccess = { projectOverride ->
+                terminal.info(prefixed("${projectOverride.fullOutputPath} synced"))
             }
-        }.awaitAll()
+        ).joinAll()
 
         // -- OLD FILES --
 
@@ -104,7 +102,7 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
                     }
 
                     file.extension in listOf("jar", "zip")
-                            && fileHash !in projOverrideHashes
+                            && fileHash !in projectOverrides.getFileHashes()
                             && file.name !in projectFileNames
                             && fileHash !in projectFiles.mapNotNull { projectFile ->
                                 projectFile.hashes?.get("sha1")
@@ -118,7 +116,5 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
                 terminal.danger(prefixed("$it deleted"))
             }
         }.joinAll()
-
-        progressBar.clear()
     }
 }

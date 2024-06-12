@@ -9,12 +9,12 @@ import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.cf.CfModpackModel.*
 import teksturepako.pakku.api.models.mr.MrModpackModel
 import teksturepako.pakku.api.models.mr.MrModpackModel.File
-import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.Overrides
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverride
 import teksturepako.pakku.api.overrides.Overrides.ProjectOverrideLocation.REAL
 import teksturepako.pakku.api.overrides.Overrides.toExportData
 import teksturepako.pakku.api.overrides.Overrides.toOverrideType
+import teksturepako.pakku.api.overrides.ProjectOverride.Type
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
@@ -298,7 +298,7 @@ suspend fun exportServerPack(
     }
 
     val projectOverrides = Overrides.getProjectOverrides().filterNot {
-        it.overrideType == OverrideType.CLIENT_OVERRIDE
+        it.overrideType == Type.CLIENT_OVERRIDE
     }.toMutableList()
 
     val create: MutableList<Pair<String, Any>> = mutableListOf()
