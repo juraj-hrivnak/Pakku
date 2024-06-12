@@ -34,7 +34,6 @@
                 <title>Configuring Pakku</title>
                 <a href="Pakku-Directory.md"/>
                 <a href="Config-File.md"/>
-                <a href="Lock-File.md"/>
             </cards>
             <cards narrow="true">
                 <title>CLI Commands</title>
@@ -43,13 +42,13 @@
                 <a href="pakku-set.md"/>
                 <a href="pakku-add.md"/>
                 <a href="pakku-rm.md"/>
+                <a href="pakku-status.md"/>
                 <a href="pakku-update.md"/>
                 <a href="pakku-ls.md"/>
                 <a href="pakku-fetch.md"/>
                 <a href="pakku-link.md"/>
                 <a href="pakku-export.md"/>
                 <a href="pakku-diff.md"/>
-                <a href="pakku-version.md"/>
             </cards>
         </misc>
     </section-starting-page>
