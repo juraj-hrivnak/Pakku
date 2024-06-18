@@ -6,7 +6,7 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
 @Suppress("MemberVisibilityCanBePrivate", "CanBeParameter")
-sealed class ActionError(val message: String, val isWarning: Boolean = false)
+open class ActionError(val message: String, val isWarning: Boolean = false)
 {
     // -- FILE --
 

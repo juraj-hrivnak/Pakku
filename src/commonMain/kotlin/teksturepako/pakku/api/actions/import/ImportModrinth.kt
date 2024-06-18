@@ -12,13 +12,10 @@ import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.unzip
 import java.io.File
 
-private const val MR_EXTENSION = "mrpack"
-private const val MR_MANIFEST = "modrinth.index.json"
-
 private fun String?.toMrModpackModel(): ModpackModel? =
     this?.let { json.decodeFromString<MrModpackModel>(it) }
 
-fun String.isMrModpack(): Boolean = this.endsWith(MR_EXTENSION) || this == MR_MANIFEST
+fun String.isMrModpack(): Boolean = this.endsWith(MrModpackModel.EXTENSION) || this == MrModpackModel.MANIFEST
 
 suspend fun importModrinth(path: String): Result<ModpackModel, ActionError>
 {
@@ -26,10 +23,10 @@ suspend fun importModrinth(path: String): Result<ModpackModel, ActionError>
 
     if (!file.exists()) return Err(FileNotFound(path))
 
-    return if (file.extension == MR_EXTENSION)
+    return if (file.extension == MrModpackModel.EXTENSION)
     {
         val cfModpackModel = runCatching {
-            unzip(path)[MR_MANIFEST].readString().toMrModpackModel()
+            unzip(path)[MrModpackModel.MANIFEST].readString().toMrModpackModel()
         }.getOrNull() ?: return Err(FileNotFound(path))
 
         Ok(cfModpackModel)

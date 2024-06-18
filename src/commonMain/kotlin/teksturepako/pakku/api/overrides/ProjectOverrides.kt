@@ -4,7 +4,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.io.tryOrNull
 import kotlin.io.path.Path

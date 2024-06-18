@@ -12,13 +12,10 @@ import teksturepako.pakku.io.readFileOrNull
 import teksturepako.pakku.io.unzip
 import java.io.File
 
-private const val CF_EXTENSION = "zip"
-private const val CF_MANIFEST = "manifest.json"
-
 private fun String?.toCfModpackModel(): ModpackModel? =
     this?.let { json.decodeFromString<CfModpackModel>(it) }
 
-fun String.isCfModpack(): Boolean = this.endsWith(CF_EXTENSION) || this == CF_MANIFEST
+fun String.isCfModpack(): Boolean = this.endsWith(CfModpackModel.EXTENSION) || this == CfModpackModel.MANIFEST
 
 suspend fun importCurseForge(path: String): Result<ModpackModel, ActionError>
 {
@@ -26,10 +23,10 @@ suspend fun importCurseForge(path: String): Result<ModpackModel, ActionError>
 
     if (!file.exists()) return Err(FileNotFound(path))
 
-    return if (file.extension == CF_EXTENSION)
+    return if (file.extension == CfModpackModel.EXTENSION)
     {
         val cfModpackModel = runCatching {
-            unzip(path)[CF_MANIFEST].readString().toCfModpackModel()
+            unzip(path)[CfModpackModel.MANIFEST].readString().toCfModpackModel()
         }.getOrNull() ?: return Err(FileNotFound(path))
 
         Ok(cfModpackModel)

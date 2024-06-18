@@ -88,4 +88,10 @@ data class MrModpackModel(
         }.toMutableMap(),
         projects = mutableListOf()
     )
+
+    companion object
+    {
+        const val EXTENSION = "mrpack"
+        const val MANIFEST = "modrinth.index.json"
+    }
 }

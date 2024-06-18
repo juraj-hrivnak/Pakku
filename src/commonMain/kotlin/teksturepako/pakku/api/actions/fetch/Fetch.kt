@@ -29,7 +29,7 @@ fun retrieveProjectFiles(
     {
         Err(NoFiles(project, lockFile))
     }
-    else Ok(file.apply { setPath(project.type) })
+    else Ok(file)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,7 +45,7 @@ suspend fun List<ProjectFile>.fetch(
         for (projectFile in this@fetch)
         {
             launch {
-                if (projectFile.getPath().exists())
+                if (projectFile.getPath(lockFile)?.exists() == true)
                 {
                     onError(AlreadyExists(projectFile.getPath().toString()))
                     return@launch
@@ -77,8 +77,8 @@ suspend fun List<ProjectFile>.fetch(
         launch(Dispatchers.IO) {
             runCatching {
                 val file = projectFile.getPath()
-                file.createParentDirectories()
-                file.writeBytes(bytes)
+                file?.createParentDirectories()
+                file?.writeBytes(bytes)
             }.onSuccess {
                 onSuccess(projectFile, projectFile.getParentProject(lockFile))
             }.onFailure {

@@ -5,7 +5,7 @@ import kotlinx.coroutines.withContext
 import net.lingala.zip4j.ZipFile
 import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
+import teksturepako.pakku.api.overrides.PAKKU_DIR
 import teksturepako.pakku.debug
 import java.io.File
 
