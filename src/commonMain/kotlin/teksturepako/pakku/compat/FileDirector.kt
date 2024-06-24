@@ -1,10 +1,18 @@
 package teksturepako.pakku.compat
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.export.*
-import teksturepako.pakku.api.actions.export.Rule.Finished
+import teksturepako.pakku.api.actions.ActionError.NoFiles
+import teksturepako.pakku.api.actions.export.rules.ExportRule
+import teksturepako.pakku.api.actions.export.rules.Packaging
+import teksturepako.pakku.api.actions.export.rules.RuleContext
+import teksturepako.pakku.api.actions.export.rules.RuleContext.Finished
+import teksturepako.pakku.api.actions.export.rules.RuleContext.MissingProject
+import teksturepako.pakku.api.actions.export.rules.RuleResult
+import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.compat.FileDirectorModel.UrlEntry
@@ -29,30 +37,34 @@ data class FileDirectorModel(
 fun exportFileDirector(fileDirectorModel: FileDirectorModel = FileDirectorModel()) = ExportRule {
     when (it)
     {
-        is Finished ->
+        is MissingProject ->
+        {
+            it.addToFileDirector(fileDirectorModel, Modrinth)
+        }
+        is Finished       ->
         {
             it.createJsonFile(fileDirectorModel, "overrides/config/mod-director/.bundle.json")
         }
-        else        ->
-        {
-            it.ignore()
-        }
+        else                   -> it.ignore()
     }
 }
 
 data class CouldNotAddToFileDirector(val project: Project) :
     ActionError("${project.slug} could not be added to file director config.")
 
-fun Rule.Entry.addToFileDirector(fileDirector: FileDirectorModel, platform: Platform) =
-    RuleResult("addToFileDirector", this, PackagingAction.Action {
-        if (!project.redistributable) return@Action
+fun RuleContext.MissingProject.addToFileDirector(fileDirector: FileDirectorModel, platform: Platform) =
+    RuleResult("addToFileDirector", this, Packaging.Action {
+        if (!project.redistributable) return@Action Err(CouldNotAddToFileDirector(project))
 
-        val url = this.project.getFilesForPlatform(platform).firstOrNull()?.url
-            ?: return@Action
+        val url = project.getFilesForPlatform(platform).firstOrNull()?.url
+            ?: return@Action Err(NoFiles(project, lockFile))
 
-        fileDirector.urlBundle.add(
-            UrlEntry(
-                url = url.replace(" ", "+"), folder = this.project.type.folderName
+        Ok(
+            fileDirector.urlBundle.plusAssign(
+                UrlEntry(
+                    url = url.replace(" ", "+"),
+                    folder = this.project.type.folderName
+                )
             )
         )
-    }, project)
+    })

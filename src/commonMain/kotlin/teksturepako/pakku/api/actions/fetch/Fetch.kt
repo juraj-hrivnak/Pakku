@@ -3,9 +3,12 @@ package teksturepako.pakku.api.actions.fetch
 import com.github.michaelbull.result.*
 import kotlinx.atomicfu.AtomicLong
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.LockFile
@@ -61,7 +64,7 @@ suspend fun List<ProjectFile>.fetch(
 
                 if (bytes == null)
                 {
-                    onError(DownloadFailed(projectFile))
+                    onError(DownloadFailed(projectFile.getPath()))
                     return@launch
                 }
 
@@ -82,7 +85,7 @@ suspend fun List<ProjectFile>.fetch(
             }.onSuccess {
                 onSuccess(projectFile, projectFile.getParentProject(lockFile))
             }.onFailure {
-                onError(CouldNotSave(projectFile, it.stackTraceToString()))
+                onError(CouldNotSave(projectFile.getPath(), it.stackTraceToString()))
             }
         }
     }

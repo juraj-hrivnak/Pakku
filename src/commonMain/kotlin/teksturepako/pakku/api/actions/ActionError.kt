@@ -4,6 +4,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
+import java.nio.file.Path
 
 @Suppress("MemberVisibilityCanBePrivate", "CanBeParameter")
 open class ActionError(val message: String, val isWarning: Boolean = false)
@@ -24,8 +25,8 @@ open class ActionError(val message: String, val isWarning: Boolean = false)
 
     // -- PROJECT FILE --
 
-    class DownloadFailed(val projectFile: ProjectFile) :
-        ActionError("Failed to download '${projectFile.getPath()}'.")
+    class DownloadFailed(val path: Path?) :
+        ActionError("Failed to download '$path'.")
 
     class NoHashes(val projectFile: ProjectFile) :
         ActionError("File '${projectFile.getPath()}' has no hashes.")
@@ -36,8 +37,8 @@ open class ActionError(val message: String, val isWarning: Boolean = false)
             | New hash: $newHash
             |""".trimMargin())
 
-    class CouldNotSave(val projectFile: ProjectFile, val reason: String? = "") :
-        ActionError("Could not save: '${projectFile.getPath()}'. $reason")
+    class CouldNotSave(val path: Path?, val reason: String? = "") :
+        ActionError("Could not save: '$path'. $reason")
 
     // -- IMPORT --
 
