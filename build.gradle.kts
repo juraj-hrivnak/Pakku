@@ -120,9 +120,6 @@ kotlin {
             dependencies {
                 // Ktor
                 implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
-
-                // ZIP
-                implementation("net.lingala.zip4j:zip4j:2.11.5")
             }
         }
 
