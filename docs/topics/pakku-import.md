@@ -16,6 +16,9 @@ Import modpack
 
 <snippet id="snippet-options">
 
+`-D`, `--deps`
+: Resolve dependencies after import
+
 `-h`, `--help`
 : Show this message and exit
 
