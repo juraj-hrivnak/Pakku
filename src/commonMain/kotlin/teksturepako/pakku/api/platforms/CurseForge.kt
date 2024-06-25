@@ -11,7 +11,7 @@ import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.assignFiles
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
-import teksturepako.pakku.io.getEnv
+import teksturepako.pakku.io.getEnvOrNull
 import teksturepako.pakku.io.toMurmur2
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -41,12 +41,12 @@ object CurseForge : Platform(
 
     suspend fun getApiKey(): String?
     {
-        return if (hasValidApiKey()) getEnv("CURSEFORGE_API_KEY") else null
+        return if (hasValidApiKey()) getEnvOrNull("CURSEFORGE_API_KEY") else null
     }
 
     private suspend fun hasValidApiKey(): Boolean
     {
-        return isApiKeyValid(getEnv("CURSEFORGE_API_KEY") ?: return false)
+        return isApiKeyValid(getEnvOrNull("CURSEFORGE_API_KEY") ?: return false)
     }
 
     private suspend fun isApiKeyValid(apiKey: String): Boolean

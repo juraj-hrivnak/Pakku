@@ -15,7 +15,7 @@ import teksturepako.pakku.api.models.mr.MrProjectModel
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debugIfEmpty
-import teksturepako.pakku.io.exitPakku
+import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
 object Modrinth : Platform(
@@ -63,7 +63,7 @@ object Modrinth : Platform(
                 {
                     print("Error: ")
                     println(json.decodeFromString<JsonObject>(this.body())["description"])
-                    exitPakku(1)
+                    exitProcess(1)
                 }
                 rateLimit < 100 ->
                 {
