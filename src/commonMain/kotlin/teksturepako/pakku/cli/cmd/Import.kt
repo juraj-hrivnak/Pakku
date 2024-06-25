@@ -3,6 +3,8 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -22,6 +24,7 @@ import teksturepako.pakku.cli.ui.promptForProject
 class Import : CliktCommand("Import modpack")
 {
     private val pathArg: String by argument("path")
+    private val depsFlag: Boolean by option("-D", "--deps", help = "Resolve dependencies").flag()
 
     override fun run() = runBlocking {
         val modpackModel = importModpackModel(pathArg).getOrElse {
@@ -59,7 +62,7 @@ class Import : CliktCommand("Import modpack")
                     },
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)
-                        project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                        if (depsFlag) project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         terminal.success(prefixed("${project.getFlavoredSlug()} added"))
                         Modrinth.checkRateLimit()
                     },
