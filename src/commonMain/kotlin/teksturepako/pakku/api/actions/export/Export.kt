@@ -1,81 +1,162 @@
 package teksturepako.pakku.api.actions.export
 
+import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.export.rules.ExportRule
 import teksturepako.pakku.api.actions.export.rules.Packaging.*
 import teksturepako.pakku.api.actions.export.rules.RuleContext
+import teksturepako.pakku.api.actions.export.rules.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.rules.RuleResult
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.PAKKU_DIR
+import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.debug
+import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.tryToResult
-import java.io.BufferedOutputStream
-import java.io.FileOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.Path
-import kotlin.io.path.deleteRecursively
+import teksturepako.pakku.io.zip
+import java.nio.file.Path
+import kotlin.io.path.*
 
-@OptIn(ExperimentalPathApi::class)
-suspend inline fun export(
-    rules: List<ExportRule?>,
-    crossinline onError: (error: ActionError) -> Unit,
+suspend fun export(
+    profiles: List<ExportProfile>,
+    onError: suspend (error: ActionError) -> Unit,
+    onSuccess: suspend (profile: ExportProfile, path: Path) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile
-)
-{
-    Path(workingPath, PAKKU_DIR, "temp").tryToResult { it.deleteRecursively() }
-        .onFailure { onError(it) }
-
-    val results = rules.filterNotNull()
-        .produceRuleResults(lockFile, configFile)
-
-    results.resolveResults { onError(it) }.joinAll()
-    results.finishResults { onError(it) }.joinAll()
-
-    val inputDirectory = Path(workingPath, PAKKU_DIR, "temp").toFile()
-    val outputZipFile = Path(workingPath, PAKKU_DIR, "out.zip").toFile()
-    withContext(Dispatchers.IO) {
-        ZipOutputStream(BufferedOutputStream(FileOutputStream(outputZipFile))).use { zos ->
-            inputDirectory.walkTopDown().forEach { file ->
-                val zipFileName = file.absolutePath.removePrefix(inputDirectory.absolutePath).removePrefix("/")
-                val entry = ZipEntry("$zipFileName${(if (file.isDirectory) "/" else "")}")
-                zos.putNextEntry(entry)
-                if (file.isFile)
-                {
-                    file.inputStream().use { fis -> fis.copyTo(zos) }
-                }
-            }
+): List<Job> = coroutineScope {
+    profiles.map { profile ->
+        launch {
+            profile.export(
+                onError = { onError(it) },
+                onSuccess = { profile, path -> onSuccess(profile, path) },
+                lockFile, configFile
+            )
         }
     }
 }
 
+suspend fun ExportProfile.export(
+    onError: suspend (error: ActionError) -> Unit,
+    onSuccess: suspend (profile: ExportProfile, path: Path) -> Unit,
+    lockFile: LockFile,
+    configFile: ConfigFile
+)
+{
+    val inputDirectory = Path(workingPath, PAKKU_DIR, "temp", this.name)
+
+    val results = this.rules.filterNotNull()
+        .produceRuleResults(lockFile, configFile, this.name)
+
+    val files = results.resolveResults { onError(it) }.awaitAll().filterNotNull() +
+            results.finishResults { onError(it) }.awaitAll().filterNotNull()
+
+    val fileHashes = files
+        .filterNot { it.isDirectory() }
+        .mapNotNull { file ->
+            file.tryToResult { it.readBytes() }.onFailure { onError(it) }.get()
+        }
+        .map { createHash("sha1", it) }
+
+    val dirContentHashes = files
+        .filter { it.isDirectory() }
+        .mapNotNull { file ->
+            file.tryToResult { it.toFile().walkTopDown() }.onFailure { onError(it) }.get()
+        }
+        .flatMap { fileTreeWalk ->
+            fileTreeWalk.mapNotNull { it.toPath() }
+        }
+        .mapNotNull { it.generateSHA1FromBytes() }
+
+    val fileTreeWalk = inputDirectory
+        .tryToResult { it.toFile().walkTopDown() }
+        .onFailure { onError(it) }.get()
+
+    if (fileTreeWalk != null)
+    {
+        for (file in fileTreeWalk)
+        {
+            val path = file.toPath()
+
+            if (path.isDirectory()) continue
+
+            val hash = path.generateSHA1FromBytes() ?: continue
+
+            if (hash in fileHashes || hash in dirContentHashes) continue
+
+            val deleted = path.deleteIfExists()
+            if (deleted) debug { println("[${this.name}] CleanUp delete $path") }
+        }
+    }
+
+    val modpackName = when
+    {
+        configFile.getName().isBlank()       -> "Modpack"
+        configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
+        else -> configFile.getName()
+    }
+
+    val outputZipFile = Path(workingPath, "build", this.name, "$modpackName.${this.fileExtension}")
+    outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(it) }
+
+    zip(inputDirectory, outputZipFile)
+
+    onSuccess(this, outputZipFile)
+}
+
+private suspend fun Path.generateSHA1FromBytes() = this.tryToResult { it.readBytes() }.get()
+    ?.let { createHash("sha1", it) }
+
 suspend fun List<RuleResult>.resolveResults(
-    onError: (error: ActionError) -> Unit
-) = coroutineScope {
+    onError: suspend (error: ActionError) -> Unit
+): List<Deferred<Path?>> = coroutineScope {
     this@resolveResults.mapNotNull { ruleResult ->
         when (val packagingAction = ruleResult.packaging)
         {
-            is Ignore  -> null
-            is EmptyAction ->
+            is Error        ->
+            {
+                onError(packagingAction.error)
+                null
+            }
+            is Ignore       -> null
+            is EmptyAction  ->
             {
                 debug { println(ruleResult) }
                 null
             }
-            is Action  ->
+            is Action       ->
             {
-                if (ruleResult.ruleContext !is RuleContext.Finished)
+                if (ruleResult.ruleContext !is Finished)
                 {
-                    debug { println(ruleResult) }
-                    launch {
-                        packagingAction.action().onFailure {
+                    async {
+                        packagingAction.action()?.let {
                             onError(it)
+                        }
+                        null
+                    }.also {
+                        it.invokeOnCompletion {
+                            debug { println(ruleResult) }
+                        }
+                    }
+                }
+                else null
+            }
+            is FileAction   ->
+            {
+                if (ruleResult.ruleContext !is Finished)
+                {
+                    async(Dispatchers.IO) {
+                        packagingAction.action().let { (file, error) ->
+                            if (error != null) onError(error)
+                            file
+                        }
+                    }.also {
+                        it.invokeOnCompletion {
+                            debug { println(ruleResult) }
                         }
                     }
                 }
@@ -86,35 +167,62 @@ suspend fun List<RuleResult>.resolveResults(
 }
 
 suspend fun List<RuleResult>.finishResults(
-    onError: (error: ActionError) -> Unit
-) = coroutineScope {
+    onError: suspend (error: ActionError) -> Unit
+): List<Deferred<Path?>> = coroutineScope {
     this@finishResults.mapNotNull { ruleResult ->
-        if (ruleResult.ruleContext is RuleContext.Finished && ruleResult.packaging is Action)
+        when
         {
-            debug { println(ruleResult) }
-            launch {
-                ruleResult.packaging.action().onFailure {
-                    onError(it)
+            ruleResult.packaging is Error ->
+            {
+                onError(ruleResult.packaging.error)
+                null
+            }
+            ruleResult.ruleContext is Finished && ruleResult.packaging is Action    ->
+            {
+                async {
+                    ruleResult.packaging.action()?.let {
+                        onError(it)
+                    }
+                    null
+                }.also {
+                    it.invokeOnCompletion {
+                        debug { println(ruleResult) }
+                    }
                 }
             }
+            ruleResult.ruleContext is Finished && ruleResult.packaging is FileAction ->
+            {
+                async(Dispatchers.IO) {
+                    ruleResult.packaging.action().let { (file, error) ->
+                        if (error != null) onError(error)
+                        file
+                    }
+                }.also {
+                    it.invokeOnCompletion {
+                        debug { println(ruleResult) }
+                    }
+                }
+            }
+            else -> null
         }
-        else null
     }
 }
 
 suspend fun List<ExportRule>.produceRuleResults(
-    lockFile: LockFile, configFile: ConfigFile
+    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String
 ): List<RuleResult>
 {
     val results = this.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().map {
-            rule to RuleContext.ExportingProject(it, lockFile, configFile)
+            rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
         } + configFile.getAllOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile)
+            rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
         } + configFile.getAllServerOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile)
+            rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
         } + configFile.getAllClientOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile)
+            rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
+        } + readProjectOverrides().map {
+            rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
         }
     }.map { (rule, ruleEntry) ->
         rule.getResult(ruleEntry)
@@ -124,16 +232,13 @@ suspend fun List<ExportRule>.produceRuleResults(
         it.ruleContext is RuleContext.MissingProject
     }.flatMap { ruleResult ->
         this.map { rule ->
-            rule.getResult(
-                RuleContext.MissingProject(
-                    (ruleResult.ruleContext as RuleContext.MissingProject).project, lockFile, configFile
-                )
-            )
+            val project = (ruleResult.ruleContext as RuleContext.MissingProject).project
+            rule.getResult(RuleContext.MissingProject(project, lockFile, configFile, workingSubDir))
         }
     }
 
     val finished = this.map { rule ->
-        rule.getResult(RuleContext.Finished)
+        rule.getResult(Finished(workingSubDir))
     }
 
     return results + missing + finished

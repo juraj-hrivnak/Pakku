@@ -1,14 +1,11 @@
 package teksturepako.pakku.compat
 
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.NoFiles
 import teksturepako.pakku.api.actions.export.rules.ExportRule
 import teksturepako.pakku.api.actions.export.rules.Packaging
-import teksturepako.pakku.api.actions.export.rules.RuleContext
 import teksturepako.pakku.api.actions.export.rules.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.rules.RuleContext.MissingProject
 import teksturepako.pakku.api.actions.export.rules.RuleResult
@@ -45,26 +42,26 @@ fun exportFileDirector(fileDirectorModel: FileDirectorModel = FileDirectorModel(
         {
             it.createJsonFile(fileDirectorModel, "overrides/config/mod-director/.bundle.json")
         }
-        else                   -> it.ignore()
+        else              -> it.ignore()
     }
 }
 
 data class CouldNotAddToFileDirector(val project: Project) :
     ActionError("${project.slug} could not be added to file director config.")
 
-fun RuleContext.MissingProject.addToFileDirector(fileDirector: FileDirectorModel, platform: Platform) =
+fun MissingProject.addToFileDirector(fileDirector: FileDirectorModel, platform: Platform) =
     RuleResult("addToFileDirector", this, Packaging.Action {
-        if (!project.redistributable) return@Action Err(CouldNotAddToFileDirector(project))
+        if (!project.redistributable) return@Action CouldNotAddToFileDirector(project)
 
         val url = project.getFilesForPlatform(platform).firstOrNull()?.url
-            ?: return@Action Err(NoFiles(project, lockFile))
+            ?: return@Action NoFiles(project, lockFile)
 
-        Ok(
-            fileDirector.urlBundle.plusAssign(
-                UrlEntry(
-                    url = url.replace(" ", "+"),
-                    folder = this.project.type.folderName
-                )
+        fileDirector.urlBundle.plusAssign(
+            UrlEntry(
+                url = url.replace(" ", "+"),
+                folder = this.project.type.folderName
             )
         )
+
+        null
     })

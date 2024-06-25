@@ -1,11 +1,14 @@
 package teksturepako.pakku.api.actions.export.rules
 
-import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.ActionError
+import java.nio.file.Path
 
+/** Packaging class is used to store the action of a [rule result][RuleResult]. */
 sealed class Packaging
 {
+    data class Error(val error: ActionError) : Packaging()
     data object Ignore : Packaging()
     data object EmptyAction : Packaging()
-    data class Action(val action: suspend () -> Result<Any?, ActionError>) : Packaging()
+    data class Action(val action: suspend () -> ActionError?) : Packaging()
+    data class FileAction(val action: suspend () -> Pair<Path, ActionError?>) : Packaging()
 }

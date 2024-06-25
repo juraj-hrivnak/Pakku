@@ -2,7 +2,6 @@ package teksturepako.pakku.api.overrides
 
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.debug
 import teksturepako.pakku.io.readPathBytesOrNull
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -22,8 +21,6 @@ data class ProjectOverride(
     {
         suspend fun createOrNull(path: Path): ProjectOverride?
         {
-            debug { println(path) }
-
             if (path.notExists() && !path.isRegularFile()) return null
 
             val projectType = ProjectType.entries.firstOrNull {

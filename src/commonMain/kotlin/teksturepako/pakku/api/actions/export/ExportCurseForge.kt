@@ -1,6 +1,5 @@
 package teksturepako.pakku.api.actions.export
 
-import com.github.michaelbull.result.Ok
 import teksturepako.pakku.api.actions.export.rules.ExportRule
 import teksturepako.pakku.api.actions.export.rules.Packaging
 import teksturepako.pakku.api.actions.export.rules.RuleContext.*
@@ -12,42 +11,35 @@ import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.cf.CfModpackModel.*
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
 fun exportCurseForge(modpackModel: CfModpackModel) = ExportRule {
     when (it)
     {
-        is ExportingProject  ->
+        is ExportingProject         ->
         {
             val projectFile = it.project.getFilesForPlatform(CurseForge).firstOrNull()
+                ?: return@ExportRule it.setMissing()
 
-            if (projectFile == null)
-            {
-                it.setMissing()
-            }
-            else
-            {
-                it.addToCfModpackModel(projectFile, modpackModel)
-            }
+            it.addToCfModpackModel(projectFile, modpackModel)
         }
-        is ExportingOverride -> it.export()
-        is MissingProject    -> it.exportAsOverrideFrom(Modrinth) { bytes, fileName, _ ->
-            it.createFile(bytes, OverrideType.OVERRIDE.folderName, it.project.type.folderName, fileName)
-        }
-        is Finished          ->
+        is ExportingOverride        -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
+        is ExportingProjectOverride -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
+        is Finished                 ->
         {
             it.createJsonFile(modpackModel, CfModpackModel.MANIFEST, format = jsonEncodeDefaults)
         }
+        else -> it.ignore()
     }
 }
 
 fun ExportingProject.addToCfModpackModel(projectFile: ProjectFile, modpackModel: CfModpackModel) =
     ruleResult("addToCfModpackModel ${project.type} ${project.slug}", Packaging.Action {
-        Ok(projectFile.toCfModData(this.project)?.let { cfModData ->
+        projectFile.toCfModData(this.project)?.let { cfModData ->
             modpackModel.files.add(cfModData)
-        })
+        }
+        null // Return no error
     })
 
 fun createCfModpackModel(

@@ -7,6 +7,8 @@ data class RuleResult(
 )
 {
     override fun toString(): String = buildString {
+        append("[${ruleContext.workingSubDir}]")
+        append(" ")
         append(packaging::class.simpleName)
         append(" ")
         append(ruleContext::class.simpleName)

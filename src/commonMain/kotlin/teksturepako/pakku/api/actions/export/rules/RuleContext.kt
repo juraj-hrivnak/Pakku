@@ -1,10 +1,10 @@
 package teksturepako.pakku.api.actions.export.rules
 
-import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.getError
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.DownloadFailed
+import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
@@ -12,13 +12,25 @@ import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.PAKKU_DIR
+import teksturepako.pakku.api.overrides.ProjectOverride
+import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.io.tryToResult
 import kotlin.io.path.*
 
-sealed class RuleContext
+/**
+ * Rule Context keeps track of currently exporting content.
+ */
+sealed class RuleContext(open val workingSubDir: String)
 {
+    fun getPath(path: String, vararg subpath: String) =
+        Path(workingPath, PAKKU_DIR, "temp", workingSubDir, path, *subpath)
+
+    /** Returns an [error][ActionError]. */
+    fun error(error: ActionError) =
+        ruleResult("ignore", Packaging.Error(error))
+
     /** Ignores this [rule context][RuleContext]. */
     fun ignore() =
         ruleResult("ignore", Packaging.Ignore)
@@ -26,25 +38,29 @@ sealed class RuleContext
     /** Creates a new JSON file at the specified [path] & returns a result. */
     inline fun <reified T> createJsonFile(
         value: T, path: String, vararg subpath: String, format: StringFormat = json
-    ) = ruleResult("createJsonFile '$path'", Packaging.Action {
-        val file = Path(workingPath, PAKKU_DIR, "temp", path, *subpath)
+    ): RuleResult
+    {
+        val file = getPath(path, *subpath)
 
-        file.tryToResult {
-            it.createParentDirectories()
-            file.writeText(format.encodeToString(value))
-        }
-    })
+        return ruleResult("createJsonFile '$file'", Packaging.FileAction {
+            file to file.tryToResult {
+                it.createParentDirectories()
+                it.writeText(format.encodeToString(value))
+            }.getError()
+        })
+    }
 
     /** Creates a new file at the specified [path] & returns a result. */
+    @Suppress("unused")
     fun createFile(bytes: ByteArray, path: String, vararg subpath: String): RuleResult
     {
-        val file = Path(workingPath, PAKKU_DIR, "temp", path, *subpath)
+        val file = getPath(path, *subpath)
 
-        return ruleResult("createFile '$file'", Packaging.Action {
-            file.tryToResult {
+        return ruleResult("createFile '$file'", Packaging.FileAction {
+            file to file.tryToResult {
                 it.createParentDirectories()
-                file.writeBytes(bytes)
-            }
+                it.writeBytes(bytes)
+            }.getError()
         })
     }
 
@@ -52,93 +68,55 @@ sealed class RuleContext
      *  **Lazily** creates a new file at the specified [path]
      * if it does not already exist, and returns a result.
      */
-    suspend fun createFile(
+    fun createFile(
         bytesCallback: suspend () -> ByteArray?,
         path: String,
         vararg subpath: String
     ): RuleResult
     {
-        val file = Path(workingPath, PAKKU_DIR, "temp", path, *subpath)
+        val file = getPath(path, *subpath)
 
-        return ruleResult("createFile '$file'", Packaging.Action {
-            if (file.exists()) return@Action Err(ActionError.AlreadyExists(file.pathString))
+        return ruleResult("createFile '$file'", Packaging.FileAction {
+            if (file.exists()) return@FileAction file to AlreadyExists(file.pathString)
 
             val bytes = bytesCallback.invoke()
-                ?: return@Action Err(DownloadFailed(file))
+                ?: return@FileAction file to DownloadFailed(file)
 
-            file.tryToResult {
+            file to file.tryToResult {
                 it.createParentDirectories()
-                file.writeBytes(bytes)
-            }
+                it.writeBytes(bytes)
+            }.getError()
         })
     }
 
-    /** Rule entry representing [project][Project]. */
+    /** Rule context representing a [project][Project]. */
     data class ExportingProject(
         val project: Project,
         val lockFile: LockFile,
         val configFile: ConfigFile,
-    ) : RuleContext()
+        override val workingSubDir: String
+    ) : RuleContext(workingSubDir)
     {
         /** Sets the [project entry][RuleContext.ExportingProject] missing. */
         fun setMissing() =
-            MissingProject(project, lockFile, configFile).ruleResult(
+            MissingProject(project, lockFile, configFile, workingSubDir).ruleResult(
                 "missing ${project.slug}", Packaging.EmptyAction
             )
-    }
 
-    data class ExportingOverride(
-        val path: String,
-        val type: OverrideType,
-        val lockFile: LockFile,
-        val configFile: ConfigFile,
-    ) : RuleContext()
-    {
-        @OptIn(ExperimentalPathApi::class)
-        fun export(): RuleResult
-        {
-            val inputPath = Path(path)
-            val outputPath = Path(PAKKU_DIR, "temp", type.folderName, path)
-
-            return ruleResult("export $type '$inputPath' to '$outputPath'", Packaging.Action {
-                if (inputPath.isRegularFile())
-                {
-                    inputPath.tryToResult<Unit> {
-                        outputPath.createParentDirectories()
-                        it.copyTo(outputPath)
-                    }
-                }
-                else if (inputPath.isDirectory())
-                {
-                    inputPath.tryToResult<Unit> {
-                        outputPath.createParentDirectories()
-                        it.copyToRecursively(outputPath, followLinks = true)
-                    }
-                }
-                else Err(ActionError.CouldNotSave(inputPath))
-            })
-        }
-    }
-
-    data class MissingProject(
-        val project: Project,
-        val lockFile: LockFile,
-        val configFile: ConfigFile,
-    ) : RuleContext()
-    {
-        suspend fun exportAsOverrideFrom(
-            platform: Platform,
+        suspend fun exportAsOverride(
             onExport: suspend (
-                bytes: suspend () -> ByteArray?,
+                bytesCallback: suspend () -> ByteArray?,
                 fileName: String,
                 overridesFolder: String
             ) -> RuleResult
         ): RuleResult
         {
-            val projectFile = project.getFilesForPlatform(platform).firstOrNull()
-                ?: return ignore()
+            val projectFile = Multiplatform.platforms.firstNotNullOfOrNull { platform ->
+                project.getFilesForPlatform(platform).firstOrNull()
+            } ?: return error(NoFiles(project, lockFile))
 
             val result = onExport(
+                // Creates a callback to download the file lazily.
                 { projectFile.url?.let { url -> Http().requestByteArray(url) } },
                 projectFile.fileName,
                 OverrideType.fromProject(project).folderName
@@ -148,5 +126,113 @@ sealed class RuleContext
         }
     }
 
-    data object Finished : RuleContext()
+    /** Rule context representing an 'override'. */
+    data class ExportingOverride(
+        val path: String,
+        val type: OverrideType,
+        val lockFile: LockFile,
+        val configFile: ConfigFile,
+        override val workingSubDir: String
+    ) : RuleContext(workingSubDir)
+    {
+        @OptIn(ExperimentalPathApi::class)
+        fun export(overridesDir: String? = type.folderName): RuleResult
+        {
+            val inputPath = Path(path)
+            val outputPath = overridesDir?.let { getPath(it, path) } ?: getPath(path)
+
+            val message = "export $type '$inputPath' to '$outputPath'"
+
+            return ruleResult(message, Packaging.FileAction {
+                when
+                {
+                    inputPath.isRegularFile() ->
+                    {
+                        outputPath to inputPath.tryToResult {
+                            outputPath.createParentDirectories()
+                            it.copyTo(outputPath)
+                        }.getError()
+                    }
+                    inputPath.isDirectory()   ->
+                    {
+                        outputPath to inputPath.tryToResult {
+                            outputPath.createParentDirectories()
+                            it.copyToRecursively(outputPath, followLinks = true)
+                        }.getError()
+                    }
+                    else                      ->
+                    {
+                        outputPath to CouldNotSave(inputPath)
+                    }
+                }
+            })
+        }
+    }
+
+    /** Rule context representing a [project override][ProjectOverride]. */
+    data class ExportingProjectOverride(
+        val projectOverride: ProjectOverride,
+        val lockFile: LockFile,
+        val configFile: ConfigFile,
+        override val workingSubDir: String
+    ) : RuleContext(workingSubDir)
+    {
+        fun export(overridesDir: String? = projectOverride.type.folderName): RuleResult
+        {
+            val file = overridesDir?.let {
+                getPath(it, projectOverride.relativeOutputPath.pathString)
+            } ?: getPath(projectOverride.relativeOutputPath.pathString)
+
+            val message = "export ${projectOverride.type} '${projectOverride.path}' to '$file'"
+
+            return ruleResult(message, Packaging.FileAction {
+                if (file.exists())
+                {
+                    return@FileAction file to AlreadyExists(file.toString())
+                }
+
+                file to file.tryToResult {
+                    it.createParentDirectories()
+                    it.writeBytes(projectOverride.bytes)
+                }.getError()
+            })
+        }
+    }
+
+    /** Rule context representing a [missing project][Project]. */
+    data class MissingProject(
+        val project: Project,
+        val lockFile: LockFile,
+        val configFile: ConfigFile,
+        override val workingSubDir: String
+    ) : RuleContext(workingSubDir)
+    {
+        suspend fun exportAsOverrideFrom(
+            platform: Platform,
+            onExport: suspend (
+                bytesCallback: suspend () -> ByteArray?,
+                fileName: String,
+                overridesFolder: String
+            ) -> RuleResult
+        ): RuleResult
+        {
+            val projectFile = project.getFilesForPlatform(platform).firstOrNull()
+                ?: return ignore()
+
+            val result = onExport(
+                // Creates a callback to download the file lazily.
+                { projectFile.url?.let { url -> Http().requestByteArray(url) } },
+                projectFile.fileName,
+                OverrideType.fromProject(project).folderName
+            )
+
+            return ruleResult(
+                "exportAsOverrideFrom ${platform.name} ${result.message}",
+                result.packaging
+            )
+        }
+    }
+
+    /** Rule context indicating that all other actions has been finished. */
+    data class Finished(override val workingSubDir: String) : RuleContext(workingSubDir)
 }
