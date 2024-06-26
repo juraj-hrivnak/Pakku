@@ -8,7 +8,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.containsNotProject
-import teksturepako.pakku.api.projects.containsProject
 import java.io.File
 
 class Diff : CliktCommand("Diff projects in modpack")
@@ -59,55 +58,48 @@ class Diff : CliktCommand("Diff projects in modpack")
         removed.forEach { terminal.danger("- $it") }
 
         val updated: MutableList<String> = mutableListOf()
-        val oldFiles: MutableList<String> = mutableListOf()
-        val newFiles: MutableList<String> = mutableListOf()
+        val verboseUpdatedFiles: MutableMap<String, String> = mutableMapOf()
 
         for (oldProject in allOldProjects)
         {
             /** We only care about projects, which previously also existed **/
-            if (allNewProjects containsProject oldProject)
+            if (allNewProjects containsNotProject oldProject) continue
+
+            for (newProject in allNewProjects)
             {
-                for (newProject in allNewProjects)
+                /** Everything after this is the same project **/
+                if (!newProject.isAlmostTheSameAs(oldProject)) continue
+
+                val oldProjectFiles = oldProject.files
+                val newProjectFiles = newProject.files
+
+                /** If the project files are not identical, means that files have changed **/
+                if (oldProjectFiles == newProjectFiles) continue
+
+                /** On multiloader modpacks, the mod might have been added for another loader, causing the
+                 * files key to have changed without an actual update.
+                 **/
+                if (oldProjectFiles.firstOrNull()?.hashes?.get("sha1") == newProjectFiles.firstOrNull()?.hashes?.get("sha1")) continue
+                if (verboseOpt)
                 {
-                    /** Everything inside if-block is the same project **/
-                    if (newProject isAlmostTheSameAs oldProject)
-                    {
-                        val oldProjectFiles = oldProject.files
-                        val newProjectFiles = newProject.files
-                        /** If the project files are not identical, means that files have changed **/
-                        if (oldProjectFiles != newProjectFiles)
-                        {
-                            /** On multiloader modpacks, the mod might have been added for another loader, causing the
-                             * files key to have changed without an actual update
-                             **/
-                            if (oldProjectFiles.firstOrNull()?.hashes?.get("sha1") != newProjectFiles.firstOrNull()?.hashes?.get("sha1")                            )
-                            {
-                                if (verboseOpt)
-                                {
-                                    oldFiles.add("${oldProjectFiles.firstOrNull()?.fileName}")
-                                    newFiles.add("${newProjectFiles.firstOrNull()?.fileName}")
-                                } else
-                                {
-                                    updated.add("${oldProject.name.values.firstOrNull()}")
-                                }
-                            }
-                        }
-                    }
+                    verboseUpdatedFiles["${oldProjectFiles.firstOrNull()?.fileName}"] =
+                        "${newProjectFiles.firstOrNull()?.fileName}"
+                }
+                else
+                {
+                    updated.add("${oldProject.name.values.firstOrNull()}")
                 }
             }
         }
 
         if (verboseOpt)
         {
-            val maxOldFileLength = oldFiles.maxOfOrNull { it.length } ?: 0
-            for (i in oldFiles.indices)
+            val maxOldFileLength = verboseUpdatedFiles.keys.maxOfOrNull { it.length } ?: 0
+            for ((oldFileName, newFileName) in verboseUpdatedFiles)
             {
-                val oldFileName = oldFiles[i]
-                val newFileName = newFiles[i]
                 updated.add("${oldFileName.padEnd(maxOldFileLength)} -> $newFileName")
             }
         }
-
         updated.forEach { terminal.info("! $it") }
 
         if (markdownDiffOpt != null)
