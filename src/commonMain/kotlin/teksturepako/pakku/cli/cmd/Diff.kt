@@ -38,7 +38,8 @@ class Diff : CliktCommand("Diff projects in modpack")
             if (allOldProjects containsNotProject newProject)
             {
                 newProject
-            } else null
+            }
+            else null
         }.mapNotNull { it.name.values.firstOrNull() }
         added.forEach { terminal.success("+ $it") }
 
@@ -46,13 +47,15 @@ class Diff : CliktCommand("Diff projects in modpack")
             if (allNewProjects containsNotProject oldProject)
             {
                 oldProject
-            } else null
+            }
+            else null
         }.mapNotNull { it.name.values.firstOrNull() }
         removed.forEach { terminal.danger("- $it") }
 
         val updated: MutableList<String> = mutableListOf()
         val oldFiles: MutableList<String> = mutableListOf()
         val newFiles: MutableList<String> = mutableListOf()
+
         for (oldProject in allOldProjects)
         {
             /** We only care about projects, which previously also existed **/
@@ -137,7 +140,6 @@ class Diff : CliktCommand("Diff projects in modpack")
                 updated.forEach { file.appendText("- $it\n") }
             }
         }
-
         echo()
     }
 }
