@@ -97,16 +97,10 @@ sealed class RuleContext(open val workingSubDir: String)
     ) : RuleContext(workingSubDir)
     {
         /** Sets the [project entry][RuleContext.ExportingProject] missing. */
-        fun setMissing(): RuleResult
-        {
-            if (!project.redistributable) return error(NotRedistributable(project))
-
-            return MissingProject(project, lockFile, configFile, workingSubDir).ruleResult(
-                "missing ${project.slug}", Packaging.EmptyAction
-            )
-        }
-
-
+        fun setMissing(): RuleResult = MissingProject(
+            project, lockFile, configFile, workingSubDir
+        ).ruleResult("missing ${project.slug}", Packaging.EmptyAction)
+        
         suspend fun exportAsOverride(
             onExport: suspend (
                 bytesCallback: suspend () -> ByteArray?,
@@ -115,6 +109,8 @@ sealed class RuleContext(open val workingSubDir: String)
             ) -> RuleResult
         ): RuleResult
         {
+            if (!project.redistributable) return error(NotRedistributable(project))
+
             val projectFile = Multiplatform.platforms.firstNotNullOfOrNull { platform ->
                 project.getFilesForPlatform(platform).firstOrNull()
             } ?: return error(NoFiles(project, lockFile))
@@ -222,8 +218,10 @@ sealed class RuleContext(open val workingSubDir: String)
             ) -> RuleResult
         ): RuleResult
         {
+            if (!project.redistributable) return error(NotRedistributable(project))
+
             val projectFile = project.getFilesForPlatform(platform).firstOrNull()
-                ?: return ignore()
+                ?: return error(NoFilesOnPlatform(project, platform))
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
