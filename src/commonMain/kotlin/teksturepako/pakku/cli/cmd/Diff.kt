@@ -13,11 +13,17 @@ import java.io.File
 
 class Diff : CliktCommand("Diff projects in modpack")
 {
-    private val oldPathArg by argument("path")
-    private val newPathArg by argument("path")
-    private val markdownDiffOpt by option("--markdown-diff", metavar = "<path>", help = "Export a `.md` file formatted as a diff code block")
-    private val markdownOpt by option("--markdown", metavar = "<path>", help = "Export a `.md` file formatted as regular markdown")
-    private val detailedUpdate: Boolean by option("--detailed-update", help = "Gives detailed information on which mods were updated").flag()
+    private val oldPathArg by argument("old-lock-file")
+    private val newPathArg by argument("current-lock-file")
+    private val markdownDiffOpt by option(
+        "--markdown-diff", metavar = "<path>", help = "Export a `.md` file formatted as a diff code block"
+    )
+    private val markdownOpt by option(
+        "--markdown", metavar = "<path>", help = "Export a `.md` file formatted as regular markdown"
+    )
+    private val verboseOpt: Boolean by option(
+        "-v", "--verbose", help = "Gives detailed information on which mods were updated"
+    ).flag()
 
     override fun run(): Unit = runBlocking {
         val oldLockFile = LockFile.readToResultFrom(oldPathArg).getOrElse {
@@ -76,7 +82,7 @@ class Diff : CliktCommand("Diff projects in modpack")
                              **/
                             if (oldProjectFiles.firstOrNull()?.hashes?.get("sha1") != newProjectFiles.firstOrNull()?.hashes?.get("sha1")                            )
                             {
-                                if (detailedUpdate)
+                                if (verboseOpt)
                                 {
                                     oldFiles.add("${oldProjectFiles.firstOrNull()?.fileName}")
                                     newFiles.add("${newProjectFiles.firstOrNull()?.fileName}")
@@ -90,7 +96,8 @@ class Diff : CliktCommand("Diff projects in modpack")
                 }
             }
         }
-        if (detailedUpdate)
+
+        if (verboseOpt)
         {
             val maxOldFileLength = oldFiles.maxOfOrNull { it.length } ?: 0
             for (i in oldFiles.indices)
