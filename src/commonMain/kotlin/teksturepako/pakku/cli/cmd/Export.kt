@@ -34,12 +34,12 @@ class Export : CliktCommand("Export modpack")
                 ModrinthProfile(lockFile, configFile),
                 ServerPackProfile()
             ),
-            onError = { error ->
-                if (error !is AlreadyExists) terminal.println(processErrorMsg(error))
+            onError = { profile, error ->
+                if (error !is AlreadyExists)
+                    terminal.println(processErrorMsg(error, prefix = profile.name))
             },
             onSuccess = { profile, file ->
                 terminal.success(prefixed("${profile.name} exported to '$file'"))
-                echo()
             },
             lockFile, configFile
         )

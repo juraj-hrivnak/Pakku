@@ -21,7 +21,7 @@ import kotlin.io.path.*
 
 suspend fun export(
     profiles: List<ExportProfile>,
-    onError: suspend (error: ActionError) -> Unit,
+    onError: suspend (profile: ExportProfile, error: ActionError) -> Unit,
     onSuccess: suspend (profile: ExportProfile, path: Path) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile
@@ -29,7 +29,7 @@ suspend fun export(
     profiles.map { profile ->
         launch {
             profile.export(
-                onError = { onError(it) },
+                onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path -> onSuccess(profile, path) },
                 lockFile, configFile
             )
@@ -38,7 +38,7 @@ suspend fun export(
 }
 
 suspend fun ExportProfile.export(
-    onError: suspend (error: ActionError) -> Unit,
+    onError: suspend (profile: ExportProfile, error: ActionError) -> Unit,
     onSuccess: suspend (profile: ExportProfile, path: Path) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile
@@ -49,20 +49,20 @@ suspend fun ExportProfile.export(
     val results = this.rules.filterNotNull()
         .produceRuleResults(lockFile, configFile, this.name)
 
-    val files = results.resolveResults { onError(it) }.awaitAll().filterNotNull() +
-            results.finishResults { onError(it) }.awaitAll().filterNotNull()
+    val files = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
+            results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
 
     val fileHashes = files
         .filterNot { it.isDirectory() }
         .mapNotNull { file ->
-            file.tryToResult { it.readBytes() }.onFailure { onError(it) }.get()
+            file.tryToResult { it.readBytes() }.onFailure { onError(this, it) }.get()
         }
         .map { createHash("sha1", it) }
 
     val dirContentHashes = files
         .filter { it.isDirectory() }
         .mapNotNull { file ->
-            file.tryToResult { it.toFile().walkTopDown() }.onFailure { onError(it) }.get()
+            file.tryToResult { it.toFile().walkTopDown() }.onFailure { onError(this, it) }.get()
         }
         .flatMap { fileTreeWalk ->
             fileTreeWalk.mapNotNull { it.toPath() }
@@ -71,7 +71,7 @@ suspend fun ExportProfile.export(
 
     val fileTreeWalk = inputDirectory
         .tryToResult { it.toFile().walkTopDown() }
-        .onFailure { onError(it) }.get()
+        .onFailure { onError(this, it) }.get()
 
     if (fileTreeWalk != null)
     {
@@ -98,7 +98,7 @@ suspend fun ExportProfile.export(
     }
 
     val outputZipFile = Path(workingPath, "build", this.name, "$modpackName.${this.fileExtension}")
-    outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(it) }
+    outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(this, it) }
 
     zip(inputDirectory, outputZipFile)
 
@@ -117,6 +117,7 @@ suspend fun List<RuleResult>.resolveResults(
             is Error        ->
             {
                 onError(packagingAction.error)
+                debug { println(ruleResult) }
                 null
             }
             is Ignore       -> null
@@ -169,11 +170,6 @@ suspend fun List<RuleResult>.finishResults(
     this@finishResults.mapNotNull { ruleResult ->
         when
         {
-            ruleResult.packaging is Error ->
-            {
-                onError(ruleResult.packaging.error)
-                null
-            }
             ruleResult.ruleContext is Finished && ruleResult.packaging is Action    ->
             {
                 async {
