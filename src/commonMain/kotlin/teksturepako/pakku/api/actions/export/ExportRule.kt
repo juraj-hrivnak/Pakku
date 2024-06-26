@@ -5,7 +5,7 @@ package teksturepako.pakku.api.actions.export
  * what should happen with the content you want to export/package.
  *
  * These rules can be written in many ways and are fully extensible
- * by extending the [rule context][RuleContext].
+ * by extending the [RuleContext] class.
  *
  * To create an export rule, you simply implement the functional interface like this:
  *
