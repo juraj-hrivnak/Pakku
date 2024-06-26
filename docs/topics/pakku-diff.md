@@ -22,6 +22,9 @@ Diff projects in modpack
 `--markdown`
 : Export a `.md` file formatted as regular markdown
 
+`-v`, `--verbose`
+: Display detailed information which version of a project was updated to which version
+
 `-h`, `--help`
 : Show this message and exit
 
