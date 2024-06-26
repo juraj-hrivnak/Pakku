@@ -86,13 +86,7 @@ fun ProjectFile.toMrFile(parentProject: Project): MrFile?
 {
     if (this.type != Modrinth.serialName) return null
 
-    val client = if (parentProject.side == ProjectSide.CLIENT || parentProject.side == ProjectSide.BOTH)
-    {
-        "required"
-    }
-    else "unsupported"
-
-    val server = if (parentProject.side == ProjectSide.SERVER || parentProject.side == ProjectSide.BOTH)
+    val serverRequired = if (parentProject.side in listOf(ProjectSide.SERVER, ProjectSide.BOTH))
     {
         "required"
     }
@@ -105,8 +99,8 @@ fun ProjectFile.toMrFile(parentProject: Project): MrFile?
             sha1 = this.hashes["sha1"]!!
         ),
         env = MrFile.Env(
-            client = client,
-            server = server,
+            client = "required",
+            server = serverRequired,
         ),
         // Replace ' ' in URL with '+'
         downloads = setOf(this.url!!.replace(" ", "+")),
