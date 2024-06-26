@@ -4,12 +4,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.NoFiles
-import teksturepako.pakku.api.actions.export.rules.ExportRule
-import teksturepako.pakku.api.actions.export.rules.Packaging
-import teksturepako.pakku.api.actions.export.rules.RuleContext.Finished
-import teksturepako.pakku.api.actions.export.rules.RuleContext.MissingProject
-import teksturepako.pakku.api.actions.export.rules.RuleResult
-import teksturepako.pakku.api.platforms.Modrinth
+import teksturepako.pakku.api.actions.export.ExportRule
+import teksturepako.pakku.api.actions.export.Packaging
+import teksturepako.pakku.api.actions.export.RuleContext.Finished
+import teksturepako.pakku.api.actions.export.RuleContext.MissingProject
+import teksturepako.pakku.api.actions.export.RuleResult
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.compat.FileDirectorModel.UrlEntry
@@ -31,12 +30,15 @@ data class FileDirectorModel(
     )
 }
 
-fun exportFileDirector(fileDirectorModel: FileDirectorModel = FileDirectorModel()) = ExportRule {
+fun exportFileDirector(
+    platform: Platform,
+    fileDirectorModel: FileDirectorModel = FileDirectorModel()
+) = ExportRule {
     when (it)
     {
         is MissingProject ->
         {
-            it.addToFileDirector(fileDirectorModel, Modrinth)
+            it.addToFileDirector(fileDirectorModel, platform)
         }
         is Finished       ->
         {

@@ -37,17 +37,6 @@ object Modrinth : Platform(
         ProjectType.SHADER          -> "${this.siteUrl}/shader"
     }
 
-    // -- MRPACK LOADERS --
-
-    private val exportLoaders = mapOf(
-        "forge" to "forge",
-        "neoforge" to "neoforge",
-        "fabric" to "fabric-loader",
-        "quilt" to "quilt-loader"
-    )
-
-    fun getExportLoaderName(loader: String) = exportLoaders[loader]
-
     // -- API RATE LIMIT --
 
     private var requestsRemaining = 0

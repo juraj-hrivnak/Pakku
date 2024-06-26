@@ -1,4 +1,4 @@
-package teksturepako.pakku.api.actions.export.rules
+package teksturepako.pakku.api.actions.export
 
 import teksturepako.pakku.api.actions.ActionError
 import java.nio.file.Path

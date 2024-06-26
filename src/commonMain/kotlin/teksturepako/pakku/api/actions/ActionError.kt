@@ -49,6 +49,11 @@ open class ActionError(val message: String, val isWarning: Boolean = false)
 
     class ProjNotFound : ActionError("Project not found")
 
+    // -- EXPORT --
+
+    class NotRedistributable(val project: Project) :
+        ActionError("${project.slug} can not be exported, because it is not redistributable.")
+
     // -- ADDITION --
 
     class AlreadyAdded(val project: Project) :

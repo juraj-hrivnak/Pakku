@@ -1,4 +1,4 @@
-package teksturepako.pakku.api.actions.export.rules
+package teksturepako.pakku.api.actions.export
 
 data class RuleResult(
     val message: String,

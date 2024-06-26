@@ -1,7 +1,7 @@
-package teksturepako.pakku.api.actions.export
+package teksturepako.pakku.api.actions.export.rules
 
-import teksturepako.pakku.api.actions.export.rules.ExportRule
-import teksturepako.pakku.api.actions.export.rules.RuleContext.*
+import teksturepako.pakku.api.actions.export.ExportRule
+import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.projects.ProjectSide
 

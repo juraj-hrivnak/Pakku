@@ -1,4 +1,4 @@
-package teksturepako.pakku.api.actions.export.rules
+package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.getError
 import kotlinx.serialization.StringFormat
@@ -79,8 +79,7 @@ sealed class RuleContext(open val workingSubDir: String)
         return ruleResult("createFile '$file'", Packaging.FileAction {
             if (file.exists()) return@FileAction file to AlreadyExists(file.pathString)
 
-            val bytes = bytesCallback.invoke()
-                ?: return@FileAction file to DownloadFailed(file)
+            val bytes = bytesCallback.invoke() ?: return@FileAction file to DownloadFailed(file)
 
             file to file.tryToResult {
                 it.createParentDirectories()
@@ -98,10 +97,15 @@ sealed class RuleContext(open val workingSubDir: String)
     ) : RuleContext(workingSubDir)
     {
         /** Sets the [project entry][RuleContext.ExportingProject] missing. */
-        fun setMissing() =
-            MissingProject(project, lockFile, configFile, workingSubDir).ruleResult(
+        fun setMissing(): RuleResult
+        {
+            if (!project.redistributable) return error(NotRedistributable(project))
+
+            return MissingProject(project, lockFile, configFile, workingSubDir).ruleResult(
                 "missing ${project.slug}", Packaging.EmptyAction
             )
+        }
+
 
         suspend fun exportAsOverride(
             onExport: suspend (
@@ -153,6 +157,7 @@ sealed class RuleContext(open val workingSubDir: String)
                             it.copyTo(outputPath)
                         }.getError()
                     }
+
                     inputPath.isDirectory()   ->
                     {
                         outputPath to inputPath.tryToResult {
@@ -160,6 +165,7 @@ sealed class RuleContext(open val workingSubDir: String)
                             it.copyToRecursively(outputPath, followLinks = true)
                         }.getError()
                     }
+
                     else                      ->
                     {
                         outputPath to CouldNotSave(inputPath)
@@ -212,7 +218,7 @@ sealed class RuleContext(open val workingSubDir: String)
             onExport: suspend (
                 bytesCallback: suspend () -> ByteArray?,
                 fileName: String,
-                overridesFolder: String
+                overridesDir: String
             ) -> RuleResult
         ): RuleResult
         {

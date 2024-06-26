@@ -1,9 +1,9 @@
-package teksturepako.pakku.api.actions.export
+package teksturepako.pakku.api.actions.export.rules
 
-import teksturepako.pakku.api.actions.export.rules.ExportRule
-import teksturepako.pakku.api.actions.export.rules.Packaging
-import teksturepako.pakku.api.actions.export.rules.RuleContext.*
-import teksturepako.pakku.api.actions.export.rules.ruleResult
+import teksturepako.pakku.api.actions.export.ExportRule
+import teksturepako.pakku.api.actions.export.Packaging
+import teksturepako.pakku.api.actions.export.RuleContext.*
+import teksturepako.pakku.api.actions.export.ruleResult
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.jsonEncodeDefaults
@@ -11,10 +11,11 @@ import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.cf.CfModpackModel.*
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
-fun exportCurseForge(modpackModel: CfModpackModel) = ExportRule {
+fun ruleOfCfModpack(modpackModel: CfModpackModel) = ExportRule {
     when (it)
     {
         is ExportingProject         ->
@@ -29,6 +30,19 @@ fun exportCurseForge(modpackModel: CfModpackModel) = ExportRule {
         is Finished                 ->
         {
             it.createJsonFile(modpackModel, CfModpackModel.MANIFEST, format = jsonEncodeDefaults)
+        }
+        else -> it.ignore()
+    }
+}
+
+fun ruleOfCfMissingProjects(platform: Platform) = ExportRule {
+    when (it)
+    {
+        is MissingProject ->
+        {
+            it.exportAsOverrideFrom(platform) { bytesCallback, fileName, _ ->
+                it.createFile(bytesCallback, OverrideType.OVERRIDE.folderName, it.project.type.folderName, fileName)
+            }
         }
         else -> it.ignore()
     }
