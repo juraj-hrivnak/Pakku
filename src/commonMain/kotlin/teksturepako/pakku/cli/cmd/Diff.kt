@@ -79,11 +79,17 @@ class Diff : CliktCommand("Diff projects in modpack")
                 /** On multiloader modpacks, the mod might have been added for another loader, causing the
                  * files key to have changed without an actual update.
                  **/
-                if (oldProjectFiles.firstOrNull()?.hashes?.get("sha1") == newProjectFiles.firstOrNull()?.hashes?.get("sha1")) continue
+                val oldFileHash = oldProjectFiles.firstOrNull()?.hashes?.get("sha1")
+                val newFileHash = newProjectFiles.firstOrNull()?.hashes?.get("sha1")
+                if (oldFileHash == newFileHash) continue
+
                 if (verboseOpt)
                 {
-                    verboseUpdatedFiles["${oldProjectFiles.firstOrNull()?.fileName}"] =
-                        "${newProjectFiles.firstOrNull()?.fileName}"
+                    val oldFileName = oldProjectFiles.firstOrNull()?.fileName
+                    val newFileName = newProjectFiles.firstOrNull()?.fileName
+                    val fileNamesNotNullOrEmpty = !oldFileName.isNullOrEmpty() && !newFileName.isNullOrEmpty()
+
+                    if (fileNamesNotNullOrEmpty) verboseUpdatedFiles["$oldFileName"] = "$newFileName"
                 }
                 else
                 {
