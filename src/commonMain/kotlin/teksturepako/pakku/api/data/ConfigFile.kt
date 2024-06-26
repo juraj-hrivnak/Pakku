@@ -4,7 +4,7 @@ package teksturepako.pakku.api.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.overrides.Overrides
+import teksturepako.pakku.api.overrides.readOverrides
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.decodeOrNew
@@ -74,11 +74,9 @@ data class ConfigFile(
         this.overrides.clear()
     }
 
-    fun getAllOverrides(): List<String> = Overrides.filter(this.overrides)
-
-    fun getAllServerOverrides(): List<String> = Overrides.filter(this.serverOverrides)
-
-    fun getAllClientOverrides(): List<String> = Overrides.filter(this.clientOverrides)
+    fun getAllOverrides(): List<String> = readOverrides(this.overrides)
+    fun getAllServerOverrides(): List<String> = readOverrides(this.serverOverrides)
+    fun getAllClientOverrides(): List<String> = readOverrides(this.clientOverrides)
 
     // -- PROJECTS --
 

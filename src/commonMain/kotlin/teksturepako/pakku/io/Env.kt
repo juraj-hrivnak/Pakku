@@ -1,3 +1,3 @@
 package teksturepako.pakku.io
 
-expect fun getEnv(env: String): String?
+fun getEnvOrNull(env: String): String? = runCatching { System.getenv(env) }.getOrNull()

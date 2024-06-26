@@ -4,7 +4,7 @@ import com.github.ajalt.mordant.rendering.Theme
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 
-fun processErrorMsg(error: ActionError, arg: String = ""): String
+fun processErrorMsg(error: ActionError, arg: String = "", prefix: String = ""): String
 {
     val msg = when (error)
     {
@@ -25,5 +25,9 @@ fun processErrorMsg(error: ActionError, arg: String = ""): String
         else                  -> error.message
     }
 
-    return if (error.isWarning) Theme.Default.warning(prefixed(msg)) else Theme.Default.danger(prefixed(msg))
+    return if (error.isWarning)
+    {
+        Theme.Default.warning(prefixed("$prefix $msg"))
+    }
+    else Theme.Default.danger(prefixed("$prefix $msg"))
 }

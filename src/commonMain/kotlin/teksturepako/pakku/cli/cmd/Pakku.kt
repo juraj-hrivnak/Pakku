@@ -8,7 +8,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.versionOption
 import teksturepako.pakku.VERSION
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.overrides.Overrides.PAKKU_DIR
+import teksturepako.pakku.api.overrides.PAKKU_DIR
 import teksturepako.pakku.cli.ui.overrideYes
 import teksturepako.pakku.debugMode
 import java.io.File

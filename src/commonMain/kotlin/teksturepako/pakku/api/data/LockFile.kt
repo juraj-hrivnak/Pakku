@@ -43,6 +43,7 @@ data class LockFile(
     }
 
     fun getMcVersions() = this.mcVersions
+    fun getFirstMcVersion() = this.mcVersions.firstOrNull()
 
     // -- LOADERS --
 

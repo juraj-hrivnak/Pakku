@@ -40,15 +40,17 @@ data class ProjectFile(
     @Transient
     private lateinit var path: Path
 
-    fun setPath(projectType: ProjectType)
+    fun getPath(lockFile: LockFile): Path?
     {
-        this.path = Path(workingPath, projectType.folderName, fileName)
+        val parentProject = getParentProject(lockFile) ?: return null
+
+        val path = Path(workingPath, parentProject.type.folderName, fileName)
+        this.path = path
+
+        return path
     }
 
-    fun getPath(): Path
-    {
-        return this.path
-    }
+    fun getPath(): Path? = if (!this::path.isInitialized) null else this.path
 
     // -- INTEGRITY --
 

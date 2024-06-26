@@ -12,7 +12,6 @@ plugins {
     kotlin("plugin.serialization") version libs.versions.kotlin
     id("org.jetbrains.dokka") version libs.versions.kotlin
     id("io.ktor.plugin") version libs.versions.ktor
-//    id("io.kotest.multiplatform") version libs.versions.kotest
     id("maven-publish")
 }
 
@@ -98,7 +97,6 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-//                implementation("io.kotest:kotest-framework-engine:$kotestVersion")
             }
         }
 
@@ -122,9 +120,6 @@ kotlin {
             dependencies {
                 // Ktor
                 implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
-
-                // ZIP
-                implementation("net.lingala.zip4j:zip4j:2.11.5")
             }
         }
 
@@ -156,7 +151,9 @@ tasks.withType<Jar> {
         {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             val main by kotlin.jvm().compilations.getting
-            from(main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) })
+            from(main.runtimeDependencyFiles.files
+                .filter { it.name.endsWith("jar") }
+                .map { zipTree(it) })
         }
     }
 }

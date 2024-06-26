@@ -2,7 +2,6 @@ package teksturepako.pakku.api.overrides
 
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.debug
 import teksturepako.pakku.io.readPathBytesOrNull
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -11,34 +10,24 @@ import kotlin.io.path.name
 import kotlin.io.path.notExists
 
 data class ProjectOverride(
-    val type: Type,
+    val type: OverrideType,
     val path: Path,
     val fullOutputPath: Path,
     val relativeOutputPath: Path,
     val bytes: ByteArray
 )
 {
-    @Suppress("unused")
-    enum class Type(val prettyName: String, val folderName: String)
-    {
-        OVERRIDE("override", "overrides"),
-        SERVER_OVERRIDE("server override", "server-overrides"),
-        CLIENT_OVERRIDE("client override", "client-overrides");
-    }
-
     companion object
     {
         suspend fun createOrNull(path: Path): ProjectOverride?
         {
-            debug { println(path) }
-
             if (path.notExists() && !path.isRegularFile()) return null
 
             val projectType = ProjectType.entries.firstOrNull {
                 it.folderName == path.parent.name
             } ?: return null
 
-            val type = Type.entries.firstOrNull {
+            val type = OverrideType.entries.firstOrNull {
                 it.folderName == path.parent.parent.name
             } ?: return null
 

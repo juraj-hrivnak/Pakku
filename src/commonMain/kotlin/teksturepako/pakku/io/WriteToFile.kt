@@ -18,5 +18,6 @@ suspend inline fun <reified T> writeToFile(
     if (overrideText && file.exists()) file.delete()
 
     // Write to file
+    file.parent.mkdirs()
     file.writeString(format.encodeToString(value))
 }

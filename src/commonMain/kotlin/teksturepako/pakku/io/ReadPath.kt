@@ -9,11 +9,17 @@ import kotlinx.serialization.serializer
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.json
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
 
+private fun Throwable.toActionError(path: Path): ActionError = when (this)
+{
+    is FileAlreadyExistsException -> AlreadyExists(path.toString())
+    else -> ErrorWhileReading(path.toString(), this.stackTraceToString())
+}
 
 suspend fun <T> Path.tryOrNull(action: (path: Path) -> T): T? = coroutineScope {
     withContext(Dispatchers.IO) {
@@ -25,11 +31,12 @@ suspend fun <T> Path.tryToResult(action: (path: Path) -> T): Result<T, ActionErr
     withContext(Dispatchers.IO) {
         return@withContext runCatching { action(this@tryToResult) }.fold(
             success = { Ok(it) },
-            failure = { Err(ErrorWhileReading(this@tryToResult.toString(), it.stackTraceToString())) }
+            failure = { Err(it.toActionError(this@tryToResult)) }
         )
     }
 }
 
+@Suppress("unused")
 suspend fun readPathOrNull(path: Path): String? = coroutineScope {
     withContext(Dispatchers.IO) {
         return@withContext if (path.exists()) runCatching { path.readText() }.get() else null
@@ -52,6 +59,7 @@ suspend fun readPathToResult(path: Path): Result<String, ActionError> = coroutin
     }
 }
 
+@Suppress("unused")
 suspend fun readPathBytesToResult(path: Path): Result<ByteArray, ActionError> = coroutineScope {
     return@coroutineScope withContext(Dispatchers.IO) {
         if (path.exists()) runCatching { path.readBytes() }.fold(
@@ -62,6 +70,7 @@ suspend fun readPathBytesToResult(path: Path): Result<ByteArray, ActionError> = 
     }
 }
 
+@Suppress("unused")
 suspend inline fun <reified T> decodeToResult(path: Path, format: StringFormat = json): Result<T, ActionError>
 {
     val file = readPathToResult(path).getOrElse { return Err(it) }

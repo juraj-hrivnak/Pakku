@@ -20,12 +20,12 @@ data class MrModpackModel(
     val versionId: String = "",
     val name: String = "",
     val summary: String = "",
-    val files: Set<File> = setOf(),
+    val files: MutableSet<MrFile> = mutableSetOf(),
     val dependencies: Map<String, String> = mapOf()
 ) : ModpackModel
 {
     @Serializable
-    data class File(
+    data class MrFile(
         val path: String,
         val hashes: Hashes,
         val env: Env? = null,
@@ -88,4 +88,10 @@ data class MrModpackModel(
         }.toMutableMap(),
         projects = mutableListOf()
     )
+
+    companion object
+    {
+        const val EXTENSION = "mrpack"
+        const val MANIFEST = "modrinth.index.json"
+    }
 }

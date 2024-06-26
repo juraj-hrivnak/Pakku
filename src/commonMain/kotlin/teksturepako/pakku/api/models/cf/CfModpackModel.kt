@@ -19,7 +19,7 @@ data class CfModpackModel(
     val name: String = "",
     val version: String = "",
     val author: String = "",
-    val files: List<CfModData>,
+    val files: MutableList<CfModData>,
     val overrides: String = "overrides"
 ) : ModpackModel
 {
@@ -81,4 +81,10 @@ data class CfModpackModel(
         }.toMutableMap(),
         projects = mutableListOf()
     )
+
+    companion object
+    {
+        const val EXTENSION = "zip"
+        const val MANIFEST = "manifest.json"
+    }
 }

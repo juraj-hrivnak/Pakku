@@ -2,26 +2,20 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.arguments.optional
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.export
+import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.export.*
+import teksturepako.pakku.api.actions.export.profiles.CurseForgeProfile
+import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile
+import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Platform
-
+import teksturepako.pakku.cli.ui.prefixed
+import teksturepako.pakku.cli.ui.processErrorMsg
 
 class Export : CliktCommand("Export modpack")
 {
-    private val pathArg by argument("path").optional()
-    private val serverPackFlag: Boolean by option(
-        "-s","--server-pack",
-        help = "Export Server-Pack only"
-    ).flag()
-
-    override fun run() = runBlocking {
+    override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
@@ -34,18 +28,20 @@ class Export : CliktCommand("Export modpack")
             return@runBlocking
         }
 
-        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            terminal.danger(it.message)
-            echo()
-            return@runBlocking
-        }
-
         export(
-            onSuccess = { terminal.success(it) },
-            onError = { terminal.danger(it) },
-            onWarning = { terminal.warning(it) },
-            onInfo = { terminal.println(it) },
-            pathArg, serverPackFlag, lockFile, configFile, platforms
+            profiles = listOf(
+                CurseForgeProfile(lockFile, configFile),
+                ModrinthProfile(lockFile, configFile),
+                ServerPackProfile()
+            ),
+            onError = { profile, error ->
+                if (error !is AlreadyExists)
+                    terminal.println(processErrorMsg(error, prefix = profile.name))
+            },
+            onSuccess = { profile, file ->
+                terminal.success(prefixed("${profile.name} exported to '$file'"))
+            },
+            lockFile, configFile
         )
     }
 }
