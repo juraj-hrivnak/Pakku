@@ -4,7 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
-import teksturepako.pakku.api.actions.export.*
+import teksturepako.pakku.api.actions.export.export
 import teksturepako.pakku.api.actions.export.profiles.CurseForgeProfile
 import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile
 import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
@@ -35,8 +35,7 @@ class Export : CliktCommand("Export modpack")
                 ServerPackProfile()
             ),
             onError = { profile, error ->
-                if (error !is AlreadyExists)
-                    terminal.println(processErrorMsg(error, prefix = profile.name))
+                if (error !is AlreadyExists) terminal.println(processErrorMsg(error, prefix = profile.name))
             },
             onSuccess = { profile, file ->
                 terminal.success(prefixed("${profile.name} exported to '$file'"))
