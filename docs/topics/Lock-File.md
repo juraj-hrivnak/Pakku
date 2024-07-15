@@ -18,3 +18,6 @@ This file is not intended to be modified manually.
 
 `projects`
 : A list of projects included in the modpack.
+
+`lockfile_version`
+: The version of the LockFile.

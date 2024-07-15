@@ -26,6 +26,7 @@ import teksturepako.pakku.io.writeToFile
  * @property mcVersions The Minecraft versions supported by the mod pack.
  * @property loaders The mod loaders used by the mod pack.
  * @property projects A list of associated projects with the mod pack.
+ * @property lockFileVersion The version of the LockFile.
  */
 @Serializable
 data class LockFile(
