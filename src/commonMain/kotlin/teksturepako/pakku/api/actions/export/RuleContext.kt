@@ -32,7 +32,7 @@ sealed class RuleContext(open val workingSubDir: String)
 
     /** Returns an [error][ActionError]. */
     fun error(error: ActionError) =
-        ruleResult("error ${error.message}", Packaging.Error(error))
+        ruleResult("error ${error.rawMessage}", Packaging.Error(error))
 
     /** Ignores this [rule context][RuleContext]. */
     fun ignore() =

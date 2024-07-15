@@ -12,10 +12,13 @@ import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.cli.ui.createHyperlink
 import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.cli.ui.processErrorMsg
 import teksturepako.pakku.cli.ui.shortForm
 import teksturepako.pakku.io.toHumanReadableSize
+import teksturepako.pakku.io.tryOrNull
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.fileSize
 
 class Export : CliktCommand("Export modpack")
@@ -53,9 +56,11 @@ class Export : CliktCommand("Export modpack")
             },
             onSuccess = { profile, file, duration ->
                 val fileSize = file.fileSize().toHumanReadableSize()
+                val filePath = file.tryOrNull { it.absolutePathString() }
+                    ?.let { file.toString().createHyperlink(it) } ?: file.toString()
 
                 terminal.success(
-                    prefixed("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
+                    prefixed("[${profile.name} profile] exported to '$filePath' ($fileSize) in ${duration.shortForm()}")
                 )
             },
             lockFile, configFile, platforms

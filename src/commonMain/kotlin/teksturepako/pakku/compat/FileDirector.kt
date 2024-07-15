@@ -11,6 +11,7 @@ import teksturepako.pakku.api.actions.export.RuleContext.MissingProject
 import teksturepako.pakku.api.actions.export.ruleResult
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.compat.FileDirectorModel.UrlEntry
 
 @Serializable
@@ -50,6 +51,10 @@ fun exportFileDirector(
 
 data class CanNotAddToFileDirector(val project: Project) :
     ActionError("${project.slug} can not be added to FileDirector's config, because it is not redistributable.")
+    {
+        override fun message(arg: String) = "${project.getFlavoredSlug()} can not be added to FileDirector's config," +
+                " because it is not redistributable."
+    }
 
 fun MissingProject.addToFileDirector(fileDirector: FileDirectorModel, platform: Platform) =
     ruleResult("addToFileDirector ${project.slug}", Packaging.Action {
