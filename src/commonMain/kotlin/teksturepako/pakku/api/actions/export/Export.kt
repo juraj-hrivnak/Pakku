@@ -12,26 +12,31 @@ import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.PAKKU_DIR
 import teksturepako.pakku.api.overrides.readProjectOverrides
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.tryToResult
 import teksturepako.pakku.io.zip
 import java.nio.file.Path
 import kotlin.io.path.*
+import kotlin.time.Duration
+import kotlin.time.measureTimedValue
+
 
 suspend fun export(
     profiles: List<ExportProfile>,
     onError: suspend (profile: ExportProfile, error: ActionError) -> Unit,
-    onSuccess: suspend (profile: ExportProfile, path: Path) -> Unit,
+    onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
     lockFile: LockFile,
-    configFile: ConfigFile
+    configFile: ConfigFile,
+    platforms: List<Platform>
 ): List<Job> = coroutineScope {
     profiles.map { profile ->
         launch {
             profile.export(
                 onError = { profile, error -> onError(profile, error) },
-                onSuccess = { profile, path -> onSuccess(profile, path) },
-                lockFile, configFile
+                onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
+                lockFile, configFile, platforms
             )
         }
     }
@@ -39,70 +44,97 @@ suspend fun export(
 
 suspend fun ExportProfile.export(
     onError: suspend (profile: ExportProfile, error: ActionError) -> Unit,
-    onSuccess: suspend (profile: ExportProfile, path: Path) -> Unit,
+    onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
     lockFile: LockFile,
-    configFile: ConfigFile
+    configFile: ConfigFile,
+    platforms: List<Platform>
 )
 {
-    val inputDirectory = Path(workingPath, PAKKU_DIR, "temp", this.name)
+    if (this.dependsOn != null && this.dependsOn !in platforms) return
 
-    val results = this.rules.filterNotNull()
-        .produceRuleResults(lockFile, configFile, this.name)
+    val timedValue = measureTimedValue {
+        val inputDirectory = Path(workingPath, PAKKU_DIR, "cache", this.name)
 
-    val files = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
-            results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
+        val results = this.rules.filterNotNull().produceRuleResults(lockFile, configFile, this.name)
 
-    val fileHashes = files
-        .filterNot { it.isDirectory() }
-        .mapNotNull { file ->
-            file.tryToResult { it.readBytes() }.onFailure { onError(this, it) }.get()
-        }
-        .map { createHash("sha1", it) }
+        // -- FILES --
 
-    val dirContentHashes = files
-        .filter { it.isDirectory() }
-        .mapNotNull { file ->
-            file.tryToResult { it.toFile().walkTopDown() }.onFailure { onError(this, it) }.get()
-        }
-        .flatMap { fileTreeWalk ->
-            fileTreeWalk.mapNotNull { it.toPath() }
-        }
-        .mapNotNull { it.generateSHA1FromBytes() }
+        val cachedPaths = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
+                results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
 
-    val fileTreeWalk = inputDirectory
-        .tryToResult { it.toFile().walkTopDown() }
-        .onFailure { onError(this, it) }.get()
+        val fileHashes = cachedPaths.filterNot { it.isDirectory() }
+            .mapNotNull { file ->
+                file.tryToResult { it.readBytes() }
+                    .onFailure { onError(this, it) }
+                    .get()?.let { file to it }
+            }
+            .associate { it.first.absolute() to createHash("sha1", it.second) }
 
-    if (fileTreeWalk != null)
-    {
-        for (file in fileTreeWalk)
+        val dirContentHashes = cachedPaths.filter { it.isDirectory() }
+            .mapNotNull { directory ->
+                directory.tryToResult { it.toFile().walkTopDown() }
+                    .onFailure { onError(this, it) }.get()
+            }
+            .flatMap {
+                it.mapNotNull { file -> file.toPath() }
+            }
+            .mapNotNull { path ->
+                path.generateSHA1FromBytes()?.let {
+                    path.absolute() to it
+                }
+            }
+            .toMap()
+
+        val fileTreeWalk = inputDirectory.tryToResult { it.toFile().walkBottomUp() }
+            .onFailure { onError(this, it) }.get()
+
+        if (fileTreeWalk != null)
         {
-            val path = file.toPath()
+            for (file in fileTreeWalk)
+            {
+                val path = file.toPath()
+                if (path == inputDirectory) continue
 
-            if (path.isDirectory()) continue
+                if (path.isDirectory())
+                {
+                    val currentDirFiles = path.tryToResult { it.toFile().listFiles() }
+                        .onFailure { onError(this, it) }.get()?.mapNotNull { it.toPath() } ?: continue
 
-            val hash = path.generateSHA1FromBytes() ?: continue
+                    if (currentDirFiles.isNotEmpty()) continue
 
-            if (hash in fileHashes || hash in dirContentHashes) continue
+                    val deleted = path.deleteIfExists()
+                    if (deleted) debug { println("[${this.name}] CleanUp delete empty directory $path") }
+                }
+                else
+                {
+                    val hash = path.generateSHA1FromBytes() ?: continue
+                    if ((path.absolute() in fileHashes.keys && hash in fileHashes.values) ||
+                        (path.absolute() in dirContentHashes.keys && hash in dirContentHashes.values)) continue
 
-            val deleted = path.deleteIfExists()
-            if (deleted) debug { println("[${this.name}] CleanUp delete $path") }
+                    val deleted = path.deleteIfExists()
+                    if (deleted) debug { println("[${this.name}] CleanUp delete file $path") }
+                }
+            }
         }
+
+        // -- ZIP CREATION --
+
+        val modpackName = when
+        {
+            configFile.getName().isBlank() -> "Modpack"
+            configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
+            else -> configFile.getName()
+        }
+
+        val outputZipFile = Path(workingPath, "build", this.name, "$modpackName.${this.fileExtension}")
+        outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(this, it) }
+
+        zip(inputDirectory, outputZipFile)
+
+        outputZipFile
     }
 
-    val modpackName = when
-    {
-        configFile.getName().isBlank()       -> "Modpack"
-        configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
-        else -> configFile.getName()
-    }
-
-    val outputZipFile = Path(workingPath, "build", this.name, "$modpackName.${this.fileExtension}")
-    outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(this, it) }
-
-    zip(inputDirectory, outputZipFile)
-
-    onSuccess(this, outputZipFile)
+    onSuccess(this, timedValue.value, timedValue.duration)
 }
 
 private suspend fun Path.generateSHA1FromBytes() = this.tryToResult { it.readBytes() }.get()
@@ -130,16 +162,19 @@ suspend fun List<RuleResult>.resolveResults(
             {
                 if (ruleResult.ruleContext !is Finished)
                 {
-                    async {
-                        packagingAction.action()?.let {
-                            onError(it)
-                        }
-                        null
-                    }.also {
-                        it.invokeOnCompletion {
-                            debug { println(ruleResult) }
+                    val action = measureTimedValue {
+                        async {
+                            packagingAction.action()?.let {
+                                onError(it)
+                            }
                         }
                     }
+
+                    action.value.invokeOnCompletion {
+                        debug { println("$ruleResult in ${action.duration}") }
+                    }
+
+                    null
                 }
                 else null
             }
@@ -147,16 +182,20 @@ suspend fun List<RuleResult>.resolveResults(
             {
                 if (ruleResult.ruleContext !is Finished)
                 {
-                    async(Dispatchers.IO) {
-                        packagingAction.action().let { (file, error) ->
-                            if (error != null) onError(error)
-                            file
-                        }
-                    }.also {
-                        it.invokeOnCompletion {
-                            debug { println(ruleResult) }
+                    val action = measureTimedValue {
+                        async(Dispatchers.IO) {
+                            packagingAction.action().let { (file, error) ->
+                                if (error != null) onError(error)
+                                file
+                            }
                         }
                     }
+
+                    action.value.invokeOnCompletion {
+                        debug { println("$ruleResult in ${action.duration}") }
+                    }
+
+                    action.value
                 }
                 else null
             }
@@ -172,29 +211,36 @@ suspend fun List<RuleResult>.finishResults(
         {
             ruleResult.ruleContext is Finished && ruleResult.packaging is Action    ->
             {
-                async {
-                    ruleResult.packaging.action()?.let {
-                        onError(it)
-                    }
-                    null
-                }.also {
-                    it.invokeOnCompletion {
-                        debug { println(ruleResult) }
+                val action = measureTimedValue {
+                    async {
+                        ruleResult.packaging.action()?.let {
+                            onError(it)
+                        }
                     }
                 }
+
+                action.value.invokeOnCompletion {
+                    debug { println("$ruleResult in ${action.duration}") }
+                }
+
+                null
             }
             ruleResult.ruleContext is Finished && ruleResult.packaging is FileAction ->
             {
-                async(Dispatchers.IO) {
-                    ruleResult.packaging.action().let { (file, error) ->
-                        if (error != null) onError(error)
-                        file
-                    }
-                }.also {
-                    it.invokeOnCompletion {
-                        debug { println(ruleResult) }
+                val action = measureTimedValue {
+                    async(Dispatchers.IO) {
+                        ruleResult.packaging.action().let { (file, error) ->
+                            if (error != null) onError(error)
+                            file
+                        }
                     }
                 }
+
+                action.value.invokeOnCompletion {
+                    debug { println("$ruleResult in ${action.duration}") }
+                }
+
+                action.value
             }
             else -> null
         }
@@ -231,7 +277,7 @@ suspend fun List<ExportRule>.produceRuleResults(
     }
 
     val finished = this.map { rule ->
-        rule.getResult(Finished(workingSubDir))
+        rule.getResult(Finished(lockFile, configFile, workingSubDir))
     }
 
     return results + missing + finished

@@ -4,7 +4,7 @@ package teksturepako.pakku.api.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.overrides.readOverrides
+import teksturepako.pakku.api.overrides.filterOverrides
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.decodeOrNew
@@ -19,8 +19,7 @@ data class ConfigFile(
     private var description: String = "",
     private var author: String = "",
     private val overrides: MutableList<String> = mutableListOf(),
-    @SerialName("server_overrides")
-    private val serverOverrides: MutableList<String> = mutableListOf(),
+    @SerialName("server_overrides") private val serverOverrides: MutableList<String> = mutableListOf(),
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
     private val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
 )
@@ -74,9 +73,9 @@ data class ConfigFile(
         this.overrides.clear()
     }
 
-    fun getAllOverrides(): List<String> = readOverrides(this.overrides)
-    fun getAllServerOverrides(): List<String> = readOverrides(this.serverOverrides)
-    fun getAllClientOverrides(): List<String> = readOverrides(this.clientOverrides)
+    fun getAllOverrides(): List<String> = filterOverrides(this.overrides)
+    fun getAllServerOverrides(): List<String> = filterOverrides(this.serverOverrides)
+    fun getAllClientOverrides(): List<String> = filterOverrides(this.clientOverrides)
 
     // -- PROJECTS --
 

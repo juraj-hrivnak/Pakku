@@ -2,6 +2,7 @@ package teksturepako.pakku.api.actions.export.profiles
 
 import teksturepako.pakku.api.actions.export.ExportProfile
 import teksturepako.pakku.api.actions.export.rules.createMrModpackModel
+import teksturepako.pakku.api.actions.export.rules.replacementRule
 import teksturepako.pakku.api.actions.export.rules.ruleOfMrMissingProjects
 import teksturepako.pakku.api.actions.export.rules.ruleOfMrModpack
 import teksturepako.pakku.api.data.ConfigFile
@@ -14,16 +15,17 @@ class ModrinthProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProfil
     name = Modrinth.serialName,
     rules = listOf(
         lockFile.getFirstMcVersion()?.let {
-            createMrModpackModel(it, lockFile, configFile)
-        }?.let { ruleOfMrModpack(it) },
+            val modpackModel = createMrModpackModel(it, lockFile, configFile)
+            ruleOfMrModpack(modpackModel)
+        },
 
         if (lockFile.getAllProjects().any { "filedirector" in it })
         {
             exportFileDirector(CurseForge)
         }
-        else
-        {
-            ruleOfMrMissingProjects(CurseForge)
-        }
-    )
+        else ruleOfMrMissingProjects(CurseForge),
+
+        replacementRule()
+    ),
+    dependsOn = Modrinth
 )

@@ -8,7 +8,7 @@ import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.RuleContext.MissingProject
-import teksturepako.pakku.api.actions.export.RuleResult
+import teksturepako.pakku.api.actions.export.ruleResult
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.compat.FileDirectorModel.UrlEntry
@@ -48,12 +48,12 @@ fun exportFileDirector(
     }
 }
 
-data class CouldNotAddToFileDirector(val project: Project) :
-    ActionError("${project.slug} could not be added to file director config.")
+data class CanNotAddToFileDirector(val project: Project) :
+    ActionError("${project.slug} can not be added to FileDirector's config, because it is not redistributable.")
 
 fun MissingProject.addToFileDirector(fileDirector: FileDirectorModel, platform: Platform) =
-    RuleResult("addToFileDirector", this, Packaging.Action {
-        if (!project.redistributable) return@Action CouldNotAddToFileDirector(project)
+    ruleResult("addToFileDirector ${project.slug}", Packaging.Action {
+        if (!project.redistributable) return@Action CanNotAddToFileDirector(project)
 
         val url = project.getFilesForPlatform(platform).firstOrNull()?.url
             ?: return@Action NoFiles(project, lockFile)

@@ -79,7 +79,8 @@ data class LockFile(
         "modrinth" -> Result.success(listOf(Modrinth))
         "multiplatform" -> Result.success(Multiplatform.platforms)
         else -> Result.failure(PakkuException("Target '$target' not found"))
-    } else Result.failure(PakkuException("Target not found"))
+    }
+    else Result.failure(PakkuException("Target not found"))
 
     fun getProjectProvider(): Result<IProjectProvider> = if (target != null) when (target!!.lowercase())
     {
@@ -87,7 +88,8 @@ data class LockFile(
         "modrinth" -> Result.success(Modrinth)
         "multiplatform" -> Result.success(Multiplatform)
         else -> Result.failure(PakkuException("Target (project provider) '$target' not found"))
-    } else Result.failure(PakkuException("Target (project provider) not found"))
+    }
+    else Result.failure(PakkuException("Target (project provider) not found"))
 
     // -- PROJECTS --
 

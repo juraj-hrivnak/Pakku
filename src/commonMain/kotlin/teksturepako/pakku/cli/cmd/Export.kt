@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
 import teksturepako.pakku.api.actions.export.export
@@ -10,8 +11,12 @@ import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile
 import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.ui.prefixed
 import teksturepako.pakku.cli.ui.processErrorMsg
+import teksturepako.pakku.cli.ui.shortForm
+import teksturepako.pakku.io.toHumanReadableSize
+import kotlin.io.path.fileSize
 
 class Export : CliktCommand("Export modpack")
 {
@@ -28,6 +33,12 @@ class Export : CliktCommand("Export modpack")
             return@runBlocking
         }
 
+        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
+
         export(
             profiles = listOf(
                 CurseForgeProfile(lockFile, configFile),
@@ -35,12 +46,21 @@ class Export : CliktCommand("Export modpack")
                 ServerPackProfile()
             ),
             onError = { profile, error ->
-                if (error !is AlreadyExists) terminal.println(processErrorMsg(error, prefix = profile.name))
+                if (error !is AlreadyExists)
+                {
+                    terminal.println(processErrorMsg(error, prepend = "[${profile.name} profile]"))
+                }
             },
-            onSuccess = { profile, file ->
-                terminal.success(prefixed("${profile.name} exported to '$file'"))
+            onSuccess = { profile, file, duration ->
+                val fileSize = file.fileSize().toHumanReadableSize()
+
+                terminal.success(
+                    prefixed("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
+                )
             },
-            lockFile, configFile
-        )
+            lockFile, configFile, platforms
+        ).joinAll()
+
+        echo()
     }
 }

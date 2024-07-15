@@ -2,6 +2,7 @@ package teksturepako.pakku.api.actions.export.profiles
 
 import teksturepako.pakku.api.actions.export.ExportProfile
 import teksturepako.pakku.api.actions.export.rules.createCfModpackModel
+import teksturepako.pakku.api.actions.export.rules.replacementRule
 import teksturepako.pakku.api.actions.export.rules.ruleOfCfMissingProjects
 import teksturepako.pakku.api.actions.export.rules.ruleOfCfModpack
 import teksturepako.pakku.api.data.ConfigFile
@@ -14,16 +15,17 @@ class CurseForgeProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProf
     name = CurseForge.serialName,
     rules = listOf(
         lockFile.getFirstMcVersion()?.let {
-            createCfModpackModel(it, lockFile, configFile)
-        }?.let { ruleOfCfModpack(it) },
+            val modpackModel = createCfModpackModel(it, lockFile, configFile)
+            ruleOfCfModpack(modpackModel)
+        },
 
         if (lockFile.getAllProjects().any { "filedirector" in it })
         {
             exportFileDirector(Modrinth)
         }
-        else
-        {
-            ruleOfCfMissingProjects(Modrinth)
-        }
-    )
+        else ruleOfCfMissingProjects(Modrinth),
+
+        replacementRule()
+    ),
+    dependsOn = CurseForge
 )

@@ -1,6 +1,8 @@
 package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.getError
+import korlibs.io.async.launch
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.ActionError
@@ -25,7 +27,9 @@ import kotlin.io.path.*
 sealed class RuleContext(open val workingSubDir: String)
 {
     fun getPath(path: String, vararg subpath: String) =
-        Path(workingPath, PAKKU_DIR, "temp", workingSubDir, path, *subpath)
+        Path(workingPath, PAKKU_DIR, "cache", workingSubDir, path, *subpath)
+
+    fun getPath() = Path(workingPath, PAKKU_DIR, "cache", workingSubDir)
 
     /** Returns an [error][ActionError]. */
     fun error(error: ActionError) =
@@ -102,6 +106,7 @@ sealed class RuleContext(open val workingSubDir: String)
         ).ruleResult("missing ${project.slug}", Packaging.EmptyAction)
         
         suspend fun exportAsOverride(
+            force: Boolean = false,
             onExport: suspend (
                 bytesCallback: suspend () -> ByteArray?,
                 fileName: String,
@@ -109,7 +114,7 @@ sealed class RuleContext(open val workingSubDir: String)
             ) -> RuleResult
         ): RuleResult
         {
-            if (!project.redistributable) return error(NotRedistributable(project))
+            if (!project.redistributable && !force) return error(NotRedistributable(project))
 
             val projectFile = Multiplatform.platforms.firstNotNullOfOrNull { platform ->
                 project.getFilesForPlatform(platform).firstOrNull()
@@ -135,7 +140,6 @@ sealed class RuleContext(open val workingSubDir: String)
         override val workingSubDir: String
     ) : RuleContext(workingSubDir)
     {
-        @OptIn(ExperimentalPathApi::class)
         fun export(overridesDir: String? = type.folderName): RuleResult
         {
             val inputPath = Path(path)
@@ -150,7 +154,7 @@ sealed class RuleContext(open val workingSubDir: String)
                     {
                         outputPath to inputPath.tryToResult {
                             outputPath.createParentDirectories()
-                            it.copyTo(outputPath)
+                            it.copyTo(outputPath, overwrite = true)
                         }.getError()
                     }
 
@@ -158,7 +162,7 @@ sealed class RuleContext(open val workingSubDir: String)
                     {
                         outputPath to inputPath.tryToResult {
                             outputPath.createParentDirectories()
-                            it.copyToRecursively(outputPath, followLinks = true)
+                            it.toFile().copyRecursively(outputPath.toFile(), overwrite = true)
                         }.getError()
                     }
 
@@ -238,5 +242,34 @@ sealed class RuleContext(open val workingSubDir: String)
     }
 
     /** Rule context indicating that all other actions has been finished. */
-    data class Finished(override val workingSubDir: String) : RuleContext(workingSubDir)
+    data class Finished(
+        val lockFile: LockFile,
+        val configFile: ConfigFile,
+        override val workingSubDir: String
+    ) : RuleContext(workingSubDir)
+    {
+        suspend fun replaceText(vararg pairs: Pair<String, String>): RuleResult = coroutineScope {
+            val message = "replaceText ${pairs.joinToString(", ", "[", "]") { "'${it.first}' -> '${it.second}'" }}"
+            return@coroutineScope ruleResult(message, Packaging.Action {
+                getPath().tryToResult { path ->
+                    for (file in path.toFile().walkTopDown())
+                    {
+                        launch {
+                            if (!file.isFile || file.extension in listOf("jar", "zip")) return@launch
+
+                            val text = file.readText()
+
+                            if (pairs.map { it.first }.none { it in text }) return@launch
+
+                            val replacedText = pairs.fold(text) { acc, (variable, content) ->
+                                acc.replace(variable, content)
+                            }
+
+                            file.writeText(replacedText)
+                        }
+                    }
+                }.getError()
+            })
+        }
+    }
 }

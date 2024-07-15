@@ -10,13 +10,13 @@ fun exportServerPack() = ExportRule {
     {
         is ExportingProject         ->
         {
-            if (it.project.side !in listOf(ProjectSide.BOTH, ProjectSide.SERVER))
+            if (it.project.side != null && it.project.side !in listOf(ProjectSide.BOTH, ProjectSide.SERVER))
             {
                 it.ignore()
             }
             else
             {
-                it.exportAsOverride { bytesCallback, fileName, _ ->
+                it.exportAsOverride(force = true) { bytesCallback, fileName, _ ->
                     it.createFile(bytesCallback, it.project.type.folderName, fileName)
                 }
             }

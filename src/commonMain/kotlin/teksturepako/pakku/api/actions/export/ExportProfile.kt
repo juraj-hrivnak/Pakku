@@ -1,5 +1,7 @@
 package teksturepako.pakku.api.actions.export
 
+import teksturepako.pakku.api.platforms.Platform
+
 /**
  * An export profile is used to contain a list of [export rules][ExportRule].
  *
@@ -14,5 +16,6 @@ package teksturepako.pakku.api.actions.export
 open class ExportProfile(
     val name: String,
     val fileExtension: String = "zip",
-    val rules: List<ExportRule?>
+    val rules: List<ExportRule?>,
+    val dependsOn: Platform? = null
 )
