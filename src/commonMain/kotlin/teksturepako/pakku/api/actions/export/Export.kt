@@ -7,14 +7,15 @@ import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.export.Packaging.*
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.OverrideType
-import teksturepako.pakku.api.overrides.PAKKU_DIR
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.createHash
+import teksturepako.pakku.io.tryOrNull
 import teksturepako.pakku.io.tryToResult
 import teksturepako.pakku.io.zip
 import java.nio.file.Path
@@ -53,7 +54,13 @@ suspend fun ExportProfile.export(
     if (this.dependsOn != null && this.dependsOn !in platforms) return
 
     val timedValue = measureTimedValue {
-        val inputDirectory = Path(workingPath, PAKKU_DIR, "cache", this.name)
+
+        cacheDir.tryOrNull {
+            it.createDirectory()
+            it.setAttribute("dos:hidden", true)
+        }
+
+        val inputDirectory = Path(cacheDir.pathString, this.name)
 
         val results = this.rules.filterNotNull().produceRuleResults(lockFile, configFile, this.name)
 

@@ -8,12 +8,11 @@ import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.OverrideType
-import teksturepako.pakku.api.overrides.PAKKU_DIR
 import teksturepako.pakku.api.overrides.ProjectOverride
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
@@ -27,9 +26,9 @@ import kotlin.io.path.*
 sealed class RuleContext(open val workingSubDir: String)
 {
     fun getPath(path: String, vararg subpath: String) =
-        Path(workingPath, PAKKU_DIR, "cache", workingSubDir, path, *subpath)
+        Path(cacheDir.pathString, workingSubDir, path, *subpath)
 
-    fun getPath() = Path(workingPath, PAKKU_DIR, "cache", workingSubDir)
+    fun getPath() = Path(cacheDir.pathString, workingSubDir)
 
     /** Returns an [error][ActionError]. */
     fun error(error: ActionError) =
