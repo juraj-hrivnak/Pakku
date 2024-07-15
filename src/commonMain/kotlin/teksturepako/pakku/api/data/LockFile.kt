@@ -2,6 +2,7 @@
 
 package teksturepako.pakku.api.data
 
+import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.platforms.CurseForge
@@ -32,8 +33,14 @@ data class LockFile(
     @SerialName("mc_versions") private var mcVersions: MutableList<String> = mutableListOf(),
     private val loaders: MutableMap<String, String> = mutableMapOf(),
     private var projects: MutableList<Project> = mutableListOf(),
+    @SerialName("lockfile_version") @Required private var lockFileVersion: Int? = null,
 )
 {
+    init
+    {
+        lockFileVersion = 1
+    }
+
     // -- MC VERSIONS --
 
     fun setMcVersions(mcVersions: Collection<String>)
