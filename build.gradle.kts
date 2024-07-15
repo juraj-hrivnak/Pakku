@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.11.3"
+version = "0.12.0"
 
 val nativeEnabled = false
 

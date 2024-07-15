@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## v0.12.0
+
+- Rewritten exporting and implemented _export rules_ and _export profiles_.
+  - Exporting is now cached and asynchronous.
+  - Internally, exporting a modpack is now controlled by a list of rules which control
+    what should happen with the content you want to export/package.
+    - _Export rules_ must be part of an _export profile_ to be executed.
+    - Each _export profile_ is independent of each other and will result
+      in one exported file.
+    - This functionality can be currently only controlled using the API.
+      For more information see the pull request [#18](https://github.com/juraj-hrivnak/Pakku/pull/18).
+- Improved ZIP creation and removed zip4j.
+- Dependencies are now not resolved on import by default.
+  \- by @Wxrlds in pull request [#16](https://github.com/juraj-hrivnak/Pakku/pull/16).
+  - There now is a `-D`, `--deps` flag, which resolves dependencies like before.
+- Added "Updated" section to diff when using the `diff` command.
+  \- by @Wxrlds in pull request [#17](https://github.com/juraj-hrivnak/Pakku/pull/17).
+  - There now is a `-v`, `--verbose` which displays detailed information
+    about which version of a project was updated to which version.
+- Implemented modpack `@var@` replacements on export. `@name@`, `@version@`, `@description@` and `@author@`
+  will be respectively replaced with the correct values from the _config file_ in the exported modpack.
+- Improved some error messages and added hyperlinks to the exported modpack file path.
+- Refactored project override syncing (with the modpack directory).
+- Added initial `lockfile_version: 1` property to _lock file_.
+  _Lock file_ without this property is still treated as v1.
+
 ## v0.11.3
 
 - Improved resolving old files on `fetch`.
