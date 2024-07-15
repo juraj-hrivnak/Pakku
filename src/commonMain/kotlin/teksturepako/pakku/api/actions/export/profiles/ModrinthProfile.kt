@@ -13,6 +13,7 @@ import teksturepako.pakku.compat.exportFileDirector
 
 class ModrinthProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProfile(
     name = Modrinth.serialName,
+    fileExtension = "mrpack",
     rules = listOf(
         lockFile.getFirstMcVersion()?.let {
             val modpackModel = createMrModpackModel(it, lockFile, configFile)
