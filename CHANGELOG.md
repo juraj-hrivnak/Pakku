@@ -4,7 +4,7 @@
 
 ## v0.12.1
 
-- Fixed exceptions when writing output files on export being uncaught.
+- Fixed exceptions being uncaught when writing output files on export.
 - Pakku now detects terminal interactivity and ansiLevel by default.
 
 ## v0.12.0
