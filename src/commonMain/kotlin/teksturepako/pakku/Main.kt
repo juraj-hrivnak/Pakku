@@ -16,9 +16,7 @@ fun main(args: Array<String>)
     println()
 
     Pakku().context {
-        terminal = Terminal(
-            theme = Theme.Default, ansiLevel = AnsiLevel.TRUECOLOR, interactive = true
-        )
+        terminal = Terminal(theme = Theme.Default)
     }.subcommands(
         Init(), Import(), Set(), Add(), Rm(), Status(), Update(), Ls(), Fetch(), Link(), Export(), Diff()
     ).main(args)
