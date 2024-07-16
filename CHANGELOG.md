@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.12.1
+
+- Fixed exceptions when writing output files on export being uncaught.
+
 ## v0.12.0
 
 - Rewritten exporting and implemented _export rules_ and _export profiles_.
@@ -19,7 +23,7 @@
   - There now is a `-D`, `--deps` flag, which resolves dependencies like before.
 - Added "Updated" section to diff when using the `diff` command.
   \- by @Wxrlds in pull request [#17](https://github.com/juraj-hrivnak/Pakku/pull/17).
-  - There now is a `-v`, `--verbose` which displays detailed information
+  - There now is a `-v`, `--verbose` flag which displays detailed information
     about which version of a project was updated to which version.
 - Implemented modpack `@var@` replacements on export. `@name@`, `@version@`, `@description@` and `@author@`
   will be respectively replaced with the correct values from the _config file_ in the exported modpack.

@@ -2,8 +2,10 @@ package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.ActionError.CouldNotSave
 import teksturepako.pakku.api.actions.export.Packaging.*
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.data.ConfigFile
@@ -133,7 +135,12 @@ suspend fun ExportProfile.export(
             else -> configFile.getName()
         }
 
-        val outputZipFile = Path(workingPath, "build", this.name, "$modpackName.${this.fileExtension}")
+        val outputZipFile = runCatching {
+            Path(workingPath, "build", this.name, "$modpackName.${this.fileExtension}")
+        }
+            .onFailure { onError(this, CouldNotSave(null, it.message)) }
+            .get() ?: return
+
         outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(this, it) }
 
         zip(inputDirectory, outputZipFile)

@@ -47,7 +47,7 @@ open class ActionError(
             |""".trimMargin())
 
     class CouldNotSave(val path: Path?, val reason: String? = "") :
-        ActionError("Could not save: '$path'. $reason")
+        ActionError(if (path != null) "Could not save: '$path'. $reason" else "Could not save file. $reason")
 
     // -- IMPORT --
 
