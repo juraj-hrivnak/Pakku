@@ -18,6 +18,7 @@ import kotlin.io.path.readText
 private fun Throwable.toActionError(path: Path): ActionError = when (this)
 {
     is FileAlreadyExistsException -> AlreadyExists(path.toString())
+    is NoSuchFileException -> FileNotFound(path.toString())
     else -> ErrorWhileReading(path.toString(), this.stackTraceToString())
 }
 
