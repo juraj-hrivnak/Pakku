@@ -18,7 +18,7 @@ fun main(args: Array<String>)
     Pakku().context {
         terminal = Terminal(theme = Theme.Default)
     }.subcommands(
-        Init(), Import(), Set(), Add(), Rm(), Status(), Update(), Ls(), Fetch(), Link(), Export(), Diff()
+        Init(), Import(), Set(), Add(), Rm(), Status(), Update(), Ls(), Fetch(), Run(), Link(), Export(), Diff()
     ).main(args)
 
     // Check Modrinth's rate limit

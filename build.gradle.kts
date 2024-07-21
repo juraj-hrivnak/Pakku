@@ -85,6 +85,8 @@ kotlin {
                 // CLI
                 implementation("com.github.ajalt.clikt:clikt:4.2.1")
 
+                implementation("com.github.pgreze:kotlin-process:1.5")
+
                 // Cache
                 implementation("io.github.reactivecircus.cache4k:cache4k:0.12.0")
 
