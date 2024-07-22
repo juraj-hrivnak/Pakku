@@ -23,6 +23,7 @@
     <toc-element toc-title="Configuring Pakku">
         <toc-element topic="Config-File.md"/>
         <toc-element topic="Pakku-Directory.md"/>
+        <toc-element topic="CLI-Config.md"/>
     </toc-element>
     <toc-element toc-title="Reference">
         <toc-element toc-title="CLI Commands">
