@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.13.0
+
+- Implemented the CLI Config (`cli-config.json`), an optional file
+which can be used to modify the UI aspects of the Pakku CLI.
+  - It must be located in the [Pakku directory (`.pakku`)](https://juraj-hrivnak.github.io/Pakku/pakku-directory.html).
+  - The relative path from the `.minecraft` directory should be: `.pakku/cli-config.json`.
+  - Properties:
+    - `theme`: can be `default` or `ascii`. (Defaults to `default` 😜.)
+    - `ansi_level`: can be `none`, `ansi16`, `ansi256` or `truecolor`.
+    (By default it is automatically detected based on your terminal/CMD.)
+- `NoSuchFileException` is now wrapped as `FileNotFound` action error.
+- Errors when creating the modpack zip file now return early.
+
 ## v0.12.1
 
 - Fixed exceptions being uncaught when writing output files on export.
