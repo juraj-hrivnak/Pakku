@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.ui
 
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyle
+import com.github.ajalt.mordant.rendering.Theme
 import teksturepako.pakku.api.data.allEqual
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
@@ -9,7 +10,7 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.containsProject
 
-fun Project.getFlavoredName(maxLength: Int? = null): String?
+fun Project.getFlavoredName(theme: Theme, maxLength: Int? = null): String?
 {
     val name = this.name.values.firstOrNull()?.let {
         if (maxLength != null && it.length > maxLength)
@@ -26,29 +27,25 @@ fun Project.getFlavoredName(maxLength: Int? = null): String?
         {
             if (this.hasNoFiles())
             {
-                TextStyle(bgColor = white, color = red)("⚠$name")
+                TextStyle(bgColor = white, color = red)("${theme.string("pakku.warning_sign", "!")}$name")
             }
             else
             {
-                TextStyle(bgColor = white, color = black)("⚠$name")
+                TextStyle(bgColor = white, color = black)("${theme.string("pakku.warning_sign", "!")}$name")
             }
         }
     }
 }
 
-fun Project.getFlavoredUpdateMsg(updatedProjects: MutableSet<Project>): String = when (this.updateStrategy)
+fun Project.getFlavoredUpdateMsg(theme: Theme, updatedProjects: MutableSet<Project>): String = when (this.updateStrategy)
 {
-    UpdateStrategy.LATEST ->
+    UpdateStrategy.LATEST      ->
     {
-        if (updatedProjects containsProject this)
-        {
-            blue(this.updateStrategy.short)
-        }
-        else brightGreen(this.updateStrategy.short)
+        val symbol = theme.string("pakku.update_strategy.latest", "^")
+        if (updatedProjects containsProject this) blue(symbol) else brightGreen(symbol)
     }
-
-    UpdateStrategy.NONE   -> red(this.updateStrategy.short)
-    else                  -> cyan(this.updateStrategy.short)
+    UpdateStrategy.SAME_LATEST -> cyan(theme.string("pakku.update_strategy.same_latest", "*^"))
+    UpdateStrategy.NONE        -> red(theme.string("pakku.update_strategy.none", "x^"))
 }
 
 fun Project.getFlavoredSlug(): String

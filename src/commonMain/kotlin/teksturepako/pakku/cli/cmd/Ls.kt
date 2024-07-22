@@ -56,9 +56,10 @@ class Ls : CliktCommand("List projects")
                     cell(project.getFlavoredSlug())
 
                     val name = if (newProjects != null) runBlocking {
-                        project.getFlavoredUpdateMsg(newProjects.await()) + project.getFlavoredName(nameMaxLengthOpt)
+                        project.getFlavoredUpdateMsg(terminal.theme, newProjects.await()) +
+                                project.getFlavoredName(terminal.theme, nameMaxLengthOpt)
                     }
-                    else " " + project.getFlavoredName(nameMaxLengthOpt)
+                    else " " + project.getFlavoredName(terminal.theme, nameMaxLengthOpt)
 
                     cell(name)
 

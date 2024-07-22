@@ -52,7 +52,7 @@ class Status: CliktCommand("Get status of your modpack")
         {
             terminal.println(grid {
                 currentProjects.filter { updatedProjects containsProject it }.map { project ->
-                    row(project.getFlavoredSlug(), project.getFlavoredName())
+                    row(project.getFlavoredSlug(), project.getFlavoredName(terminal.theme))
 
                     val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }
                     updatedProject?.run {
