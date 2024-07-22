@@ -57,6 +57,19 @@ suspend fun ExportProfile.export(
 
     val timedValue = measureTimedValue {
 
+        val modpackFileName = when
+        {
+            configFile.getName().isBlank() -> "Modpack"
+            configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
+            else -> configFile.getName()
+        } + ".${this.fileExtension}\""
+
+        val outputZipFile = runCatching { Path(workingPath, "build", this.name, modpackFileName) }
+            .onFailure { onError(this, CouldNotSave(null, it.message)) }
+            .get() ?: return
+
+        // -- FILE CACHE --
+
         cacheDir.tryOrNull {
             it.createDirectory()
             it.setAttribute("dos:hidden", true)
@@ -65,8 +78,6 @@ suspend fun ExportProfile.export(
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
         val results = this.rules.filterNotNull().produceRuleResults(lockFile, configFile, this.name)
-
-        // -- FILES --
 
         val cachedPaths = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
                 results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
@@ -127,19 +138,6 @@ suspend fun ExportProfile.export(
         }
 
         // -- ZIP CREATION --
-
-        val modpackName = when
-        {
-            configFile.getName().isBlank() -> "Modpack"
-            configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
-            else -> configFile.getName()
-        }
-
-        val outputZipFile = runCatching {
-            Path(workingPath, "build", this.name, "$modpackName.${this.fileExtension}")
-        }
-            .onFailure { onError(this, CouldNotSave(null, it.message)) }
-            .get() ?: return
 
         outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(this, it) }
 
