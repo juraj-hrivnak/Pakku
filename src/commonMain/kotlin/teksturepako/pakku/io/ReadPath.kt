@@ -16,10 +16,10 @@ import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
 
-private fun Throwable.toActionError(path: Path): ActionError = when (this)
+fun Throwable.toActionError(path: Path): ActionError = when (this)
 {
     is FileAlreadyExistsException -> AlreadyExists(path.toString())
-    is NoSuchFileException -> FileNotFound(path.toString())
+    is NoSuchFileException        -> FileNotFound(path.toString())
     else -> ErrorWhileReading(path.toString(), this.stackTraceToString())
 }
 
@@ -51,9 +51,9 @@ suspend fun readPathBytesOrNull(path: Path): ByteArray? = coroutineScope {
     }
 }
 
-suspend fun readPathToResult(path: Path): Result<String, ActionError> = coroutineScope {
+suspend fun readPathToResult(path: Path): Result<Pair<Path, String>, ActionError> = coroutineScope {
     return@coroutineScope withContext(Dispatchers.IO) {
-        if (path.exists()) runCatching { path.readText() }.fold(
+        if (path.exists()) runCatching { path to path.readText() }.fold(
             success = { Ok(it) },
             failure = { Err(CouldNotRead(path.toString(), it.stackTraceToString())) }
         )
@@ -73,12 +73,12 @@ suspend fun readPathBytesToResult(path: Path): Result<ByteArray, ActionError> = 
 }
 
 @Suppress("unused")
-suspend inline fun <reified T> decodeToResult(path: Path, format: StringFormat = json): Result<T, ActionError>
+suspend inline fun <reified T> decodeToResult(inputPath: Path, format: StringFormat = json): Result<T, ActionError>
 {
-    val file = readPathToResult(path).getOrElse { return Err(it) }
+    val (file, text) = readPathToResult(inputPath).getOrElse { return Err(it) }
 
-    return runCatching<T> { format.decodeFromString(format.serializersModule.serializer(), file) }.fold(
+    return runCatching<T> { format.decodeFromString(format.serializersModule.serializer(), text) }.fold(
         success = { Ok(it) },
-        failure = { Err(ErrorWhileReading(file, it.stackTraceToString())) }
+        failure = { Err(it.toActionError(file)) }
     )
 }

@@ -33,9 +33,6 @@ fun Collection<Project>.assignFiles(projectFiles: Collection<ProjectFile>, platf
     }
 }
 
-//operator fun Collection<Project>.contains(input: String): Boolean =
-//    this.any { input in it  }
-
 infix fun Collection<Project>.containsProject(project: Project): Boolean =
     this.any { it isAlmostTheSameAs project }
 
@@ -47,6 +44,7 @@ fun MutableCollection<Project>.removeIf(predicate: (Project) -> Boolean): Boolea
     return this.removeAll(this.filter { predicate(it) }.toSet())
 }
 
+/** Combines (or zips) projects with other projects. */
 fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project>
 {
     return this.map { project ->

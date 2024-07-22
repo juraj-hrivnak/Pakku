@@ -17,8 +17,8 @@ import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFlavoredSlug
-import teksturepako.pakku.cli.ui.prefixed
-import teksturepako.pakku.cli.ui.processErrorMsg
+import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.cli.ui.promptForProject
 
 class Import : CliktCommand("Import modpack")
@@ -28,7 +28,7 @@ class Import : CliktCommand("Import modpack")
 
     override fun run() = runBlocking {
         val modpackModel = importModpackModel(pathArg).getOrElse {
-            terminal.println(processErrorMsg(it, pathArg))
+            terminal.pError(it, pathArg)
             echo()
             return@runBlocking
         }
@@ -55,7 +55,7 @@ class Import : CliktCommand("Import modpack")
             launch {
                 projectIn.createAdditionRequest(
                     onError = { error ->
-                        if (error !is AlreadyAdded) terminal.println(processErrorMsg(error))
+                        if (error !is AlreadyAdded) terminal.pError(error)
                     },
                     onRetry = { platform, _ ->
                         promptForProject(platform, terminal, lockFile)
@@ -63,7 +63,7 @@ class Import : CliktCommand("Import modpack")
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)
                         if (depsFlag) project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        terminal.success(prefixed("${project.getFlavoredSlug()} added"))
+                        terminal.pSuccess("${project.getFlavoredSlug()} added")
                         Modrinth.checkRateLimit()
                     },
                     lockFile, platforms

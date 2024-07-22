@@ -11,10 +11,7 @@ import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.ui.getFlavoredSlug
-import teksturepako.pakku.cli.ui.prefixed
-import teksturepako.pakku.cli.ui.processErrorMsg
-import teksturepako.pakku.cli.ui.ynPrompt
+import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand("Remove projects")
@@ -34,7 +31,7 @@ class Rm : CliktCommand("Remove projects")
         {
             projectIn.createRemovalRequest(
                 onError = { error ->
-                    terminal.println(processErrorMsg(error, arg))
+                    terminal.pError(error, arg)
 
                     if (error is ProjNotFound)
                     {
@@ -55,7 +52,7 @@ class Rm : CliktCommand("Remove projects")
                     {
                         lockFile.remove(project)
                         lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
-                        terminal.danger(prefixed("$slugMsg removed"))
+                        terminal.pDanger("$slugMsg removed")
                     }
                 },
                 onDepRemoval = { dependency, isRecommended ->
@@ -66,7 +63,7 @@ class Rm : CliktCommand("Remove projects")
                     {
                         lockFile.remove(dependency)
                         lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
-                        terminal.info(prefixed("$slugMsg removed"))
+                        terminal.pInfo("$slugMsg removed")
                     }
                 },
                 lockFile

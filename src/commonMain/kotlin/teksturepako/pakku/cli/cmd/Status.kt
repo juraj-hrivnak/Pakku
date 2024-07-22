@@ -10,10 +10,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.containsProject
-import teksturepako.pakku.cli.ui.getFlavoredName
-import teksturepako.pakku.cli.ui.getFlavoredSlug
-import teksturepako.pakku.cli.ui.prefixed
-import teksturepako.pakku.cli.ui.strong
+import teksturepako.pakku.cli.ui.*
 
 
 class Status: CliktCommand("Get status of your modpack")
@@ -35,12 +32,9 @@ class Status: CliktCommand("Get status of your modpack")
 
         if (configFile != null)
         {
-            terminal.println(
-                prefixed(
-                    "Managing '${strong(configFile.getName())}' modpack, " +
-                            "version '${strong(configFile.getVersion())}', " +
-                            "by '${strong(configFile.getAuthor())}'"
-                )
+            terminal.pInfo("Managing '${strong(configFile.getName())}' modpack, " +
+                    "version '${strong(configFile.getVersion())}', " +
+                    "by '${strong(configFile.getAuthor())}'"
             )
         }
 
@@ -72,16 +66,16 @@ class Status: CliktCommand("Get status of your modpack")
         {
             updatedProjects.isEmpty() && currentProjects.isNotEmpty() ->
             {
-                terminal.success(prefixed("All projects are up to date."))
+                terminal.pSuccess("All projects are up to date.")
             }
             updatedProjects.size == 1                                 ->
             {
-                terminal.info(prefixed("Following project has a new version available:"))
+                terminal.pInfo("Following project has a new version available:")
                 projStatus()
             }
             else ->
             {
-                terminal.info(prefixed("Following projects have a new version available:"))
+                terminal.pInfo("Following projects have a new version available:")
                 projStatus()
             }
         }

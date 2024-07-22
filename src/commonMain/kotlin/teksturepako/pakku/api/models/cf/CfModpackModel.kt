@@ -48,9 +48,9 @@ data class CfModpackModel(
     ): Set<Project>
     {
         val projects = CurseForge.requestMultipleProjects(this.files.map { it.projectID.toString() })
-        val projectFiles = CurseForge.requestMultipleProjectFiles(lockFile.getMcVersions(),
-            lockFile.getLoaders(),
-            this.files.map { it.fileID.toString() })
+        val projectFiles = CurseForge.requestMultipleProjectFiles(
+            lockFile.getMcVersions(), lockFile.getLoaders(), this.files.map { it.fileID.toString() }
+        )
 
         projects.assignFiles(projectFiles, CurseForge)
 

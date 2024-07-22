@@ -21,8 +21,10 @@ import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.cli.ui.prefixed
-import teksturepako.pakku.cli.ui.processErrorMsg
+import teksturepako.pakku.cli.ui.pDanger
+import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pInfo
+import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.io.createHash
 import kotlin.io.path.*
 
@@ -44,14 +46,14 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
 
         val projectFiles = retrieveProjectFiles(lockFile, Multiplatform.platforms).mapNotNull { result ->
             result.getOrElse {
-                terminal.println(processErrorMsg(it))
+                terminal.pError(it)
                 null
             }
         }
 
         projectFiles.fetch(
             onError = { error ->
-                if (error !is AlreadyExists) terminal.println(processErrorMsg(error))
+                if (error !is AlreadyExists) terminal.pError(error)
             },
             onProgress = { advance, total, sent ->
                 progressBar.advance(advance)
@@ -64,7 +66,7 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
                 }
             },
             onSuccess = { projectFile, _ ->
-                terminal.success(prefixed("${projectFile.getPath()} saved"))
+                terminal.pSuccess("${projectFile.getPath()} saved")
             },
             lockFile
         )
@@ -75,10 +77,10 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
 
         projectOverrides.sync(
             onError = { error ->
-                if (error !is AlreadyExists) terminal.println(processErrorMsg(error))
+                if (error !is AlreadyExists) terminal.pError(error)
             },
             onSuccess = { projectOverride ->
-                terminal.info(prefixed("${projectOverride.fullOutputPath} synced"))
+                terminal.pInfo("${projectOverride.fullOutputPath} synced")
             }
         ).joinAll()
 
@@ -113,7 +115,7 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
         oldFiles.map {
             launch(Dispatchers.IO) {
                 it.deleteIfExists()
-                terminal.danger(prefixed("$it deleted"))
+                terminal.pDanger("$it deleted")
             }
         }.joinAll()
     }

@@ -13,8 +13,8 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.ui.createHyperlink
-import teksturepako.pakku.cli.ui.prefixed
-import teksturepako.pakku.cli.ui.processErrorMsg
+import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.cli.ui.shortForm
 import teksturepako.pakku.io.toHumanReadableSize
 import teksturepako.pakku.io.tryOrNull
@@ -51,7 +51,7 @@ class Export : CliktCommand("Export modpack")
             onError = { profile, error ->
                 if (error !is AlreadyExists)
                 {
-                    terminal.println(processErrorMsg(error, prepend = "[${profile.name} profile]"))
+                    terminal.pError(error, prepend = "[${profile.name} profile]")
                 }
             },
             onSuccess = { profile, file, duration ->
@@ -59,9 +59,7 @@ class Export : CliktCommand("Export modpack")
                 val filePath = file.tryOrNull { it.absolutePathString() }
                     ?.let { file.toString().createHyperlink(it) } ?: file.toString()
 
-                terminal.success(
-                    prefixed("[${profile.name} profile] exported to '$filePath' ($fileSize) in ${duration.shortForm()}")
-                )
+                terminal.pSuccess("[${profile.name} profile] exported to '$filePath' ($fileSize) in ${duration.shortForm()}")
             },
             lockFile, configFile, platforms
         ).joinAll()

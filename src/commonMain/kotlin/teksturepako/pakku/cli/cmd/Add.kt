@@ -49,7 +49,7 @@ class Add : CliktCommand("Add projects")
         })
         {
             projectIn.createAdditionRequest(
-                onError = { error -> terminal.println(processErrorMsg(error, arg)) },
+                onError = { error -> terminal.pError(error, arg) },
                 onRetry = { platform, project ->
                     val fileId = project.getFilesForPlatform(platform).firstOrNull()?.id
 
@@ -68,7 +68,7 @@ class Add : CliktCommand("Add projects")
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.success(prefixed("$slugMsg added"))
+                        terminal.pSuccess("$slugMsg added")
                     }
                 },
                 lockFile, platforms

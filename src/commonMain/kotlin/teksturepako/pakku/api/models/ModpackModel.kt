@@ -6,9 +6,11 @@ import teksturepako.pakku.api.projects.Project
 
 interface ModpackModel
 {
+    /** Requests project found it this [ModpackModel]. */
     suspend fun toSetOfProjects(
         lockFile: LockFile, platforms: List<Platform>
     ): Set<Project>
 
+    /** Converts [ModpackModel] to [LockFile]. */
     suspend fun toLockFile(): LockFile
 }

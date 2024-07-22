@@ -1,17 +1,16 @@
 package teksturepako.pakku.cli.ui
 
-import com.github.ajalt.mordant.rendering.Theme
+import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.*
 
-fun processErrorMsg(error: ActionError, arg: String = "", prepend: String? = null): String
+fun Terminal.processErrorMsg(error: ActionError, arg: String = "", prepend: String? = null): String
 {
     val msg = error.message(arg)
     val prep = if (prepend == null) "" else "$prepend "
 
     return if (error.isWarning)
     {
-        Theme.Default.warning(prefixed("$prep$msg"))
+        this.theme.warning(prefixed("$prep$msg", this.theme.string("pakku.prefix", ">>>")))
     }
-    else Theme.Default.danger(prefixed("$prep$msg"))
+    else this.theme.danger(prefixed("$prep$msg", this.theme.string("pakku.prefix", ">>>")))
 }
