@@ -12,6 +12,7 @@ import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
 import teksturepako.pakku.cli.ui.CliConfig
+import teksturepako.pakku.cli.ui.CliThemes
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>)
@@ -19,10 +20,12 @@ fun main(args: Array<String>)
     println()
 
     // Read 'cli-config.json'
-    val cliConfig = runBlocking { CliConfig.readToResult().onFailure { println(it.rawMessage) }.get() }
+    val cliConfig = runBlocking { CliConfig.readToResult() }
+        .onFailure { error -> debug { println(error.rawMessage) } }
+        .get()
 
     Pakku().context {
-        terminal = cliConfig?.toTerminal() ?: Terminal(theme = Theme.Default)
+        terminal = cliConfig?.toTerminal() ?: Terminal(theme = CliThemes.Default)
     }.subcommands(
         Init(), Import(), Set(), Add(), Rm(), Status(), Update(), Ls(), Fetch(), Link(), Export(), Diff()
     ).main(args)
