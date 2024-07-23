@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.13.1
+
+- Removed unwanted `File not found: '.\.pakku\cli-config.json'` print 
+when CLI Config does not exist.
+- Set default CLI theme to Pakku's default theme instead of the _default one_.
+
 ## v0.13.0
 
 - Implemented the CLI Config (`cli-config.json`), an optional file
