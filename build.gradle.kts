@@ -73,14 +73,14 @@ kotlin {
                 // Serialization
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
+                // AtomicFU
+                implementation("org.jetbrains.kotlinx:atomicfu:0.24.0")
+
                 // URL Encoding
                 implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
 
                 // Kotlin Result
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
-
-                // File I/O
-                implementation("com.soywiz.korlibs.korio:korio:4.0.10")
 
                 // CLI
                 implementation("com.github.ajalt.clikt:clikt:4.2.1")
