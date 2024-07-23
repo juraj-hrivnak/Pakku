@@ -1,23 +1,22 @@
 package teksturepako.pakku.io
 
-import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.data.json
+import kotlin.io.path.*
 
-suspend inline fun <reified T> writeToFile(
+inline fun <reified T> writeToFile(
     value: T,
     path: String,
     overrideText: Boolean = false,
     format: StringFormat = json
-)
-{
-    val file = localCurrentDirVfs[path]
+) = runCatching {
+    val file = Path(path)
 
     // Override file text
-    if (overrideText && file.exists()) file.delete()
+    if (overrideText && file.exists()) file.deleteIfExists()
 
     // Write to file
-    file.parent.mkdirs()
-    file.writeString(format.encodeToString(value))
+    file.parent.createParentDirectories()
+    file.writeText(format.encodeToString(value))
 }

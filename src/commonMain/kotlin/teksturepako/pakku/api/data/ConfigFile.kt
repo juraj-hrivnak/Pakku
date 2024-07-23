@@ -9,7 +9,7 @@ import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.decodeOrNew
 import teksturepako.pakku.io.decodeToResult
-import teksturepako.pakku.io.readFileOrNull
+import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.writeToFile
 
 @Serializable
@@ -94,7 +94,7 @@ data class ConfigFile(
     {
         const val FILE_NAME = "pakku.json"
 
-        suspend fun exists(): Boolean = readFileOrNull("$workingPath/$FILE_NAME") != null
+        suspend fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
 
         suspend fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), "$workingPath/$FILE_NAME")
 

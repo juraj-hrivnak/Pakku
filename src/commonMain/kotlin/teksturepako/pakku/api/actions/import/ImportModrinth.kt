@@ -8,33 +8,35 @@ import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.models.mr.MrModpackModel
-import teksturepako.pakku.io.readFileOrNull
-import teksturepako.pakku.io.unzip
+import teksturepako.pakku.io.readPathTextOrNull
+import teksturepako.pakku.io.readPathTextFromZip
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 private fun String?.toMrModpackModel(): ModpackModel? =
     this?.let { json.decodeFromString<MrModpackModel>(it) }
 
-fun String.isMrModpack(): Boolean = this.endsWith(MrModpackModel.EXTENSION) || this == MrModpackModel.MANIFEST
+fun Path.isMrModpack(): Boolean = this.extension == MrModpackModel.EXTENSION || this.name == MrModpackModel.MANIFEST
 
-suspend fun importModrinth(path: String): Result<ModpackModel, ActionError>
+suspend fun importModrinth(path: Path): Result<ModpackModel, ActionError>
 {
-    val file = File(path)
+    if (!path.exists()) return Err(FileNotFound(path.pathString))
 
-    if (!file.exists()) return Err(FileNotFound(path))
-
-    return if (file.extension == MrModpackModel.EXTENSION)
+    return if (path.extension == MrModpackModel.EXTENSION)
     {
-        val cfModpackModel = runCatching {
-            unzip(path)[MrModpackModel.MANIFEST].readString().toMrModpackModel()
-        }.getOrNull() ?: return Err(FileNotFound(path))
+        val cfModpackModel = readPathTextFromZip(path, MrModpackModel.MANIFEST).toMrModpackModel()
+            ?: return Err(FileNotFound(path.pathString))
 
         Ok(cfModpackModel)
     }
     else
     {
-        val cfModpackModel = readFileOrNull(path).toMrModpackModel()
-            ?: return Err(FileNotFound(path))
+        val cfModpackModel = readPathTextOrNull(path).toMrModpackModel()
+            ?: return Err(FileNotFound(path.pathString))
 
         Ok(cfModpackModel)
     }

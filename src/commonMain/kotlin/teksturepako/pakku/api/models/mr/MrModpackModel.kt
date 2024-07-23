@@ -1,6 +1,6 @@
 package teksturepako.pakku.api.models.mr
 
-import korlibs.io.async.async
+import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable

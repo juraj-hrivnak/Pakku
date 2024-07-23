@@ -16,7 +16,7 @@ import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.decodeOrNew
 import teksturepako.pakku.io.decodeToResult
-import teksturepako.pakku.io.readFileOrNull
+import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.writeToFile
 
 /**
@@ -255,7 +255,7 @@ data class LockFile(
     {
         const val FILE_NAME = "pakku-lock.json"
 
-        suspend fun exists(): Boolean = readFileOrNull("$workingPath/$FILE_NAME") != null
+        suspend fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
         suspend fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")

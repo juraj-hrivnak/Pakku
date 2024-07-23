@@ -3,8 +3,10 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.path
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -20,15 +22,17 @@ import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.cli.ui.promptForProject
+import java.nio.file.Path
+import kotlin.io.path.pathString
 
 class Import : CliktCommand("Import modpack")
 {
-    private val pathArg: String by argument("path")
+    private val pathArg: Path by argument("path").path(mustExist = true)
     private val depsFlag: Boolean by option("-D", "--deps", help = "Resolve dependencies").flag()
 
     override fun run() = runBlocking {
         val modpackModel = importModpackModel(pathArg).getOrElse {
-            terminal.pError(it, pathArg)
+            terminal.pError(it, pathArg.pathString)
             echo()
             return@runBlocking
         }

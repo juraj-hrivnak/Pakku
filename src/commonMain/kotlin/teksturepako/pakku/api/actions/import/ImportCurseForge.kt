@@ -8,33 +8,31 @@ import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.models.cf.CfModpackModel
-import teksturepako.pakku.io.readFileOrNull
-import teksturepako.pakku.io.unzip
-import java.io.File
+import teksturepako.pakku.io.readPathTextOrNull
+import teksturepako.pakku.io.readPathTextFromZip
+import java.nio.file.Path
+import kotlin.io.path.*
 
 private fun String?.toCfModpackModel(): ModpackModel? =
     this?.let { json.decodeFromString<CfModpackModel>(it) }
 
-fun String.isCfModpack(): Boolean = this.endsWith(CfModpackModel.EXTENSION) || this == CfModpackModel.MANIFEST
+fun Path.isCfModpack(): Boolean = this.extension == CfModpackModel.EXTENSION || this.name == CfModpackModel.MANIFEST
 
-suspend fun importCurseForge(path: String): Result<ModpackModel, ActionError>
+suspend fun importCurseForge(path: Path): Result<ModpackModel, ActionError>
 {
-    val file = File(path)
+    if (!path.exists()) return Err(FileNotFound(path.pathString))
 
-    if (!file.exists()) return Err(FileNotFound(path))
-
-    return if (file.extension == CfModpackModel.EXTENSION)
+    return if (path.extension == CfModpackModel.EXTENSION)
     {
-        val cfModpackModel = runCatching {
-            unzip(path)[CfModpackModel.MANIFEST].readString().toCfModpackModel()
-        }.getOrNull() ?: return Err(FileNotFound(path))
+        val cfModpackModel = readPathTextFromZip(path, CfModpackModel.MANIFEST).toCfModpackModel()
+            ?: return Err(FileNotFound(path.pathString))
 
         Ok(cfModpackModel)
     }
     else
     {
-        val cfModpackModel = readFileOrNull(path).toCfModpackModel()
-            ?: return Err(FileNotFound(path))
+        val cfModpackModel = readPathTextOrNull(path).toCfModpackModel()
+            ?: return Err(FileNotFound(path.pathString))
 
         Ok(cfModpackModel)
     }

@@ -38,8 +38,7 @@ suspend fun <T> Path.tryToResult(action: (path: Path) -> T): Result<T, ActionErr
     }
 }
 
-@Suppress("unused")
-suspend fun readPathOrNull(path: Path): String? = coroutineScope {
+suspend fun readPathTextOrNull(path: Path): String? = coroutineScope {
     withContext(Dispatchers.IO) {
         return@withContext if (path.exists()) runCatching { path.readText() }.get() else null
     }

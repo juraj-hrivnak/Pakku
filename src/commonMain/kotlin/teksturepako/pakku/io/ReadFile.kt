@@ -1,38 +1,32 @@
 package teksturepako.pakku.io
 
-import korlibs.io.file.std.localCurrentDirVfs
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.serializer
 import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.data.json
+import kotlin.io.path.Path
+import kotlin.io.path.readBytes
+import kotlin.io.path.readText
 
-suspend fun readFileOrNull(path: String): String?
+fun readPathTextOrNull(path: String): String?
 {
-    val file = localCurrentDirVfs[path]
-
-    return if (file.exists()) {
-        runCatching { file.readString() }.getOrNull()
-    } else null
+    return runCatching { Path(path).readText() }.getOrNull()
 }
 
-suspend fun readFileBytesOrNull(path: String): ByteArray?
+fun readPathBytesOrNull(path: String): ByteArray?
 {
-    val file = localCurrentDirVfs[path]
-
-    return if (file.exists()) {
-        runCatching { file.readBytes() }.getOrNull()
-    } else null
+    return runCatching { Path(path).readBytes() }.getOrNull()
 }
 
-suspend inline fun <reified T> decodeOrNew(
+inline fun <reified T> decodeOrNew(
     value: T, path: String, format: StringFormat = json
-): T = readFileOrNull(path)?.let {
+): T = readPathTextOrNull(path)?.let {
     runCatching { format.decodeFromString<T>(format.serializersModule.serializer(), it) }.getOrElse { value }
 } ?: value
 
-suspend inline fun <reified T> decodeToResult(
+inline fun <reified T> decodeToResult(
     path: String, format: StringFormat = json
-): Result<T> = readFileOrNull(path)?.let {
+): Result<T> = readPathTextOrNull(path)?.let {
     runCatching { Result.success(format.decodeFromString<T>(format.serializersModule.serializer(), it)) }.getOrElse { exception ->
         Result.failure(PakkuException("Error occurred while reading '$path': ${exception.message}"))
     }
