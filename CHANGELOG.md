@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.14.0
+
+- Fixed import not recognizing files outside modpack folder.
+- Removed `korlibs.io` dependency and added `kotlinx.atomicfu`.
+- Unzipping files now uses `okio` under the hood.
+
 ## v0.13.1
 
 - Removed unwanted `File not found: '.\.pakku\cli-config.json'` print 
