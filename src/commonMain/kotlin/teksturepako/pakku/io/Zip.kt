@@ -1,10 +1,13 @@
 package teksturepako.pakku.io
 
-import korlibs.io.file.VfsFile
-import korlibs.io.file.std.localCurrentDirVfs
-import korlibs.io.file.std.openAsZip
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okio.FileSystem
+import okio.Path.Companion.toOkioPath
+import okio.Path.Companion.toPath
+import okio.openZip
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -12,11 +15,13 @@ import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-suspend fun unzip(path: String): VfsFile
-{
-    val file = localCurrentDirVfs[path]
-    return file.openAsZip()
-}
+fun readPathTextFromZip(zipPath: Path, filePath: Path): String? = runCatching {
+    FileSystem.SYSTEM.openZip(zipPath.toOkioPath()).read(filePath.toOkioPath()) { readUtf8() }
+}.get()
+
+fun readPathTextFromZip(zipPath: Path, filePath: String): String? = runCatching {
+    FileSystem.SYSTEM.openZip(zipPath.toOkioPath()).read(filePath.toPath()) { readUtf8() }
+}.get()
 
 suspend fun zip(inputDirectory: Path, outputZipFile: Path) = withContext(Dispatchers.IO) {
     val inputFile = inputDirectory.toFile()
