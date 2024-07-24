@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.14.1
+
+- Implemented auto generation of command parameters and arguments for docs.
+- Updated the docs with better info on importing and command references.
+- Made CLI message prefix color inverted (like it was before).
+
 ## v0.14.0
 
 - Fixed import not recognizing files outside modpack folder.
