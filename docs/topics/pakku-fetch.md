@@ -7,14 +7,14 @@ Fetch projects to your modpack folder
 <snippet id="snippet-cmd">
 
 <var name="cmd">fetch</var>
-<var name="help"></var>
+<var name="params">[&lt;options&gt;] </var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
 </snippet>
 
 ## Options
 
-<snippet id="snippet-options">
+<snippet id="snippet-options-all">
 
 `-h`, `--help`
 : Show this message and exit

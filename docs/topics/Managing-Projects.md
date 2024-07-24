@@ -18,6 +18,7 @@ and allows multiple projects to be added.
 
 Adding the latest version of a project.
 
+<var name="params"></var>
 <var name="arg">jei</var>
 <include from="pakku-add.md" element-id="snippet-cmd"/>
 
@@ -29,6 +30,7 @@ CurseForge and Modrinth ID:
 %pakku% add u6dRKJwZ
 ```
 
+<var name="params"></var>
 <var name="arg">238222</var>
 <include from="pakku-add.md" element-id="snippet-cmd"/>
 

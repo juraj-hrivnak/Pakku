@@ -7,12 +7,23 @@ Set various properties of your modpack or projects
 <snippet id="snippet-cmd">
 
 <var name="cmd">set</var>
-<var name="help"></var>
+<var name="params">[&lt;options&gt;] [&lt;projects&gt;]...</var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
 </snippet>
 
+## Arguments
+
+<snippet id="snippet-args">
+
+`[<projects>]...`
+: The `projects` argument
+
+</snippet>
+
 ## Options
+
+<snippet id="snippet-options-all">
 
 <snippet id="snippet-options">
 
@@ -33,6 +44,8 @@ Set various properties of your modpack or projects
 
 `-l`, `--loaders`
 : Change the mod loaders
+
+</snippet>
 
 `-h`, `--help`
 : Show this message and exit

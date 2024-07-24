@@ -7,12 +7,14 @@ List projects
 <snippet id="snippet-cmd">
 
 <var name="cmd">ls</var>
-<var name="help"></var>
+<var name="params">[&lt;options&gt;] </var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
 </snippet>
 
 ## Options
+
+<snippet id="snippet-options-all">
 
 <snippet id="snippet-options">
 
@@ -21,6 +23,8 @@ List projects
 
 `--name-max-length`
 : Set max length for project names
+
+</snippet>
 
 `-h`, `--help`
 : Show this message and exit

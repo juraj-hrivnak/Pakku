@@ -6,7 +6,7 @@
         <primary-color>aqua</primary-color>
         <custom-favicons>pakku.svg</custom-favicons>
         <header-logo>pakku.svg</header-logo>
-        <product-web-url>https://github.com/juraj-hrivnak/Pakku</product-web-url>
+        <product-web-url>https://juraj-hrivnak.github.io/Pakku/</product-web-url>
         <download-title>Get Pakku</download-title>
         <download-page>https://github.com/juraj-hrivnak/Pakku/releases/latest</download-page>
         <showDownloadButton>true</showDownloadButton>

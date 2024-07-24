@@ -20,12 +20,12 @@ Example output:
 ## Adding Overrides
 
 [Overrides](Pakku-Terminology.md#override) are simply
-directories which you want to bundle with your modpack.
+directories that you want to bundle with your modpack.
 This can be, for example, the `config` directory,
 or the CraftTweaker/KubeJS script directories.
 
-An override can also be a single file -
- in the case that you want to bundle a `README` or other files with your modpack.
+An override can also be a single file,
+in the case that you want to bundle a `README` or other files with your modpack.
 
 Overrides must be added to the [config file's](Config-File.md)
 `overrides` field for Pakku to be able to recognize them.

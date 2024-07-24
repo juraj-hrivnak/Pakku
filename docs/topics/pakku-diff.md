@@ -7,12 +7,26 @@ Diff projects in modpack
 <snippet id="snippet-cmd">
 
 <var name="cmd">diff</var>
-<var name="help"></var>
+<var name="params">[&lt;options&gt;] &lt;old-lock-file&gt; &lt;current-lock-file&gt;</var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
 </snippet>
 
+## Arguments
+
+<snippet id="snippet-args">
+
+`<old-lock-file>`
+: The `old-lock-file` argument
+
+`<current-lock-file>`
+: The `current-lock-file` argument
+
+</snippet>
+
 ## Options
+
+<snippet id="snippet-options-all">
 
 <snippet id="snippet-options">
 
@@ -23,7 +37,9 @@ Diff projects in modpack
 : Export a `.md` file formatted as regular markdown
 
 `-v`, `--verbose`
-: Display detailed information which version of a project was updated to which version
+: Gives detailed information on which mods were updated
+
+</snippet>
 
 `-h`, `--help`
 : Show this message and exit
