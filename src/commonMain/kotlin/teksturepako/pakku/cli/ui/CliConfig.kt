@@ -28,6 +28,7 @@ data class CliConfig(
             {
                 "default" -> CliThemes.Default
                 "ascii"   -> CliThemes.Ascii
+
                 else      -> CliThemes.Ascii
             },
             ansiLevel = this.ansiLevel?.let { AnsiLevel.valueOf(it.uppercase()) }
@@ -42,5 +43,5 @@ data class CliConfig(
         suspend fun readToResult(): Result<CliConfig, ActionError> = decodeToResult<CliConfig>(filePath)
     }
 
-    suspend fun write() = writeToFile(this, filePath.toString(), overrideText = true, format = jsonEncodeDefaults)
+    fun write() = writeToFile(this, filePath.toString(), overrideText = true, format = jsonEncodeDefaults)
 }

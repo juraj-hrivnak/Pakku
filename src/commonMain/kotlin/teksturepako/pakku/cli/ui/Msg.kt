@@ -37,7 +37,7 @@ fun Terminal.pDanger(message: String)
 
 fun prefixed(string: String, prefix: String, offset: Int = 0): String = buildString {
     repeat(offset) { append(" ".repeat(3)) }
-    append ("$prefix $string")
+    append ("${TextStyle(inverse = true)(prefix)} $string")
 }
 
 fun Duration.shortForm() = this.toString().replace("\\.\\d+".toRegex(), "")
