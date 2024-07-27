@@ -21,6 +21,12 @@
       alt="Build"
     />
   </a>
+  <a href="https://discord.com/invite/dtAyqdzTMj">
+    <img
+      alt="Discord"
+      src="https://img.shields.io/discord/1207079018193616986?label=Discord"
+    />
+  </a>
   <a href="https://github.com/juraj-hrivnak/Pakku/actions/workflows/Build.yml">
     <img
       src="https://img.shields.io/github/downloads/juraj-hrivnak/Pakku/total?color=light&label=Downloads"
