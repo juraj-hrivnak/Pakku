@@ -63,7 +63,9 @@ Pakku utilises a design used by many well-known package managers like npm or Car
 
 This allows you to fine-tune your modpack, while still being up-to-date. If any data retrieved from the platforms does not suit your requirements, you can simply override it in the config file.
 
-### Visit the [**Documentation**](https://juraj-hrivnak.github.io/Pakku) for installation instructions and a comprehensive guide on how to use it.
+## Documentation 📚
+
+Visit the [**Documentation**](https://juraj-hrivnak.github.io/Pakku) for installation instructions and a comprehensive guide on how to use it.
 
 ## Images
 
@@ -82,24 +84,6 @@ This allows you to fine-tune your modpack, while still being up-to-date. If any 
     />
   </a>
 </p>
-
-## Quickstart
-
-- Install Pakku using Scoop for Windows
-  ```
-  scoop install https://juraj-hrivnak.github.io/Pakku/install/pakku.json
-  ```
-  
-- Install Pakku using Brew for macOS (or Linux)
-  ```
-  brew install juraj-hrivnak/pakku/pakku
-  ```
-  
-### Usage
-
-```
-pakku [<options>] <command> [<args>]...
-```
 
 ## Development
 
