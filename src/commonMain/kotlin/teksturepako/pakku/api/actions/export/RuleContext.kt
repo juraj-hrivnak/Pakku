@@ -240,7 +240,7 @@ sealed class RuleContext(open val workingSubDir: String)
         }
     }
 
-    /** Rule context indicating that all other actions has been finished. */
+    /** Rule context indicating that all other actions have been finished. */
     data class Finished(
         val lockFile: LockFile,
         val configFile: ConfigFile,
