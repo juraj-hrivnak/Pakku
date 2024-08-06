@@ -62,7 +62,7 @@ suspend fun ExportProfile.export(
             configFile.getName().isBlank() -> "Modpack"
             configFile.getVersion().isNotBlank() -> "${configFile.getName()}-${configFile.getVersion()}"
             else -> configFile.getName()
-        } + ".${this.fileExtension}\""
+        } + ".${this.fileExtension}"
 
         val outputZipFile = runCatching { Path(workingPath, "build", this.name, modpackFileName) }
             .onFailure { onError(this, CouldNotSave(null, it.message)) }
