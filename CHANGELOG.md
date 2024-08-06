@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.14.2
+
+- Fixed typo in the `export` command output path.
+
 ## v0.14.1
 
 - Implemented auto generation of command parameters and arguments for docs.
