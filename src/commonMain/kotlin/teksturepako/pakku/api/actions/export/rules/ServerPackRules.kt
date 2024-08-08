@@ -3,14 +3,13 @@ package teksturepako.pakku.api.actions.export.rules
 import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.overrides.OverrideType
-import teksturepako.pakku.api.projects.ProjectSide
 
 fun exportServerPack() = ExportRule {
     when (it)
     {
         is ExportingProject         ->
         {
-            if (it.project.side != null && it.project.side !in listOf(ProjectSide.BOTH, ProjectSide.SERVER))
+            if (OverrideType.fromProject(it.project) !in listOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE))
             {
                 it.ignore()
             }

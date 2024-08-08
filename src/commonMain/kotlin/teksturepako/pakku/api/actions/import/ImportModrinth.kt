@@ -8,9 +8,8 @@ import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.models.mr.MrModpackModel
-import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.readPathTextFromZip
-import java.io.File
+import teksturepako.pakku.io.readPathTextOrNull
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.extension

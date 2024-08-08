@@ -2,7 +2,6 @@ package teksturepako.pakku
 
 import com.github.ajalt.clikt.core.context
 import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.mordant.rendering.Theme
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure

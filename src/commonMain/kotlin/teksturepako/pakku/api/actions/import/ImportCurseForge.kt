@@ -8,10 +8,13 @@ import teksturepako.pakku.api.actions.ActionError.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.models.cf.CfModpackModel
-import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.readPathTextFromZip
+import teksturepako.pakku.io.readPathTextOrNull
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 private fun String?.toCfModpackModel(): ModpackModel? =
     this?.let { json.decodeFromString<CfModpackModel>(it) }
