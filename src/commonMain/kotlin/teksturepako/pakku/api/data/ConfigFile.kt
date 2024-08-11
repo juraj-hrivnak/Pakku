@@ -94,20 +94,20 @@ data class ConfigFile(
     {
         const val FILE_NAME = "pakku.json"
 
-        suspend fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
+        fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
 
-        suspend fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), "$workingPath/$FILE_NAME")
+        fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), "$workingPath/$FILE_NAME")
 
-        suspend fun readOrNull() = decodeToResult<ConfigFile>("$workingPath/$FILE_NAME").getOrNull()
+        fun readOrNull() = decodeToResult<ConfigFile>("$workingPath/$FILE_NAME").getOrNull()
 
         /**
          * Reads [LockFile] and parses it, or returns an exception.
          * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
          */
-        suspend fun readToResult(): Result<ConfigFile> = decodeToResult("$workingPath/$FILE_NAME")
+        fun readToResult(): Result<ConfigFile> = decodeToResult("$workingPath/$FILE_NAME")
 
-        suspend fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
+        fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
     }
 
-    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonEncodeDefaults)
+    fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonEncodeDefaults)
 }

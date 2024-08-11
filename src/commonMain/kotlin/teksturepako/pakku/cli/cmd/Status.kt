@@ -9,14 +9,13 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.containsProject
 import teksturepako.pakku.cli.ui.*
 
 
 class Status: CliktCommand("Get status of your modpack")
 {
-    private val verboseFlag by option("-v", "--verbose", help = "Give the output in the verbose-format").flag()
-
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
@@ -30,13 +29,39 @@ class Status: CliktCommand("Get status of your modpack")
             null
         }
 
+        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
+
         if (configFile != null)
         {
-            terminal.pInfo("Managing '${strong(configFile.getName())}' modpack, " +
-                    "version '${strong(configFile.getVersion())}', " +
-                    "by '${strong(configFile.getAuthor())}'"
-            )
+            val msg = buildString {
+                append("Managing '${strong(configFile.getName())}' modpack")
+
+                if (configFile.getVersion().isNotBlank())
+                {
+                    append("; version '${strong(configFile.getVersion())}'")
+                }
+
+                if (configFile.getAuthor().isNotBlank())
+                {
+                    append("; by '${strong(configFile.getAuthor())}'")
+                }
+            }
+
+            terminal.pInfo(msg)
         }
+
+        terminal.pInfo(buildString {
+            val mcVer = lockFile.getMcVersions()
+            val loaders = lockFile.getLoadersWithVersions()
+
+            append("On Minecraft " + (if (mcVer.size > 1) "versions" else "version") + " ${strong(mcVer)}; ")
+            append((if (loaders.size > 1) "loaders" else "loader") + " ${strong(loaders)}; ")
+            append("targeting " + (if (platforms.size > 1) "platforms" else "platform") + " ${strong(platforms)}")
+        })
 
         val currentProjects = lockFile.getAllProjects()
         val updatedProjects =

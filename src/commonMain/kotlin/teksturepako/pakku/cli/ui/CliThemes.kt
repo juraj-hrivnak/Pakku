@@ -4,6 +4,7 @@ import com.github.ajalt.mordant.rendering.Theme
 
 object CliThemes
 {
+    /** Default theme for Pakku that extends the Mordant default theme. */
     val Default: Theme = Theme(Theme.Default) {
         strings["pakku.prefix"] = "❯❯❯"
         strings["pakku.warning_sign"] = "⚠"
@@ -13,6 +14,10 @@ object CliThemes
         strings["pakku.update_strategy.none"] = "✖^"
     }
 
+    /**
+     *  ASCII theme for Pakku that replaces UTF-8 characters
+     *  from the Pakku default theme with respective ASCII characters.
+     */
     val Ascii: Theme = Theme(this.Default) {
         strings["pakku.prefix"] = ">>>"
         strings["pakku.warning_sign"] = "!"

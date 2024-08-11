@@ -10,6 +10,7 @@ fun dim(string: String): String = TextStyle(color = TextColors.gray)(string)
 fun String.addDim(string: String): String = this + TextStyle(color = TextColors.gray)(string)
 
 fun strong(string: String): String = TextStyle(bold = true, underline = true)(string)
+fun strong(text: Any): String = TextStyle(bold = true, underline = true)(text.toString())
 fun String.addStrong(string: String): String = this + TextStyle(bold = true, underline = true)(string)
 
 fun String.createHyperlink(hyperlink: String): String = TextStyle(hyperlink = hyperlink)(this)

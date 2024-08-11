@@ -21,19 +21,16 @@ data class CliConfig(
     @SerialName("ansi_level") val ansiLevel: String? = null
 )
 {
-    fun toTerminal(): Terminal
-    {
-        return Terminal(
-            theme = when (theme?.lowercase())
-            {
-                "default" -> CliThemes.Default
-                "ascii"   -> CliThemes.Ascii
+    fun toTerminal(): Terminal = Terminal(
+        theme = when (theme?.lowercase())
+        {
+            "default" -> CliThemes.Default
+            "ascii"   -> CliThemes.Ascii
 
-                else      -> CliThemes.Ascii
-            },
-            ansiLevel = this.ansiLevel?.let { AnsiLevel.valueOf(it.uppercase()) }
-        )
-    }
+            else      -> CliThemes.Ascii
+        },
+        ansiLevel = this.ansiLevel?.let { AnsiLevel.valueOf(it.uppercase()) }
+    )
 
     companion object
     {
