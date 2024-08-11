@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.14.3
+
+- Fixed that resource and shader packs were exported to the server pack when their project side was missing.
+
 ## v0.14.2
 
 - Fixed typo in the `export` command output path.
