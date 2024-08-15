@@ -2,8 +2,6 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.table.grid
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
