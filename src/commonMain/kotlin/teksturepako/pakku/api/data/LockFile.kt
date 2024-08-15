@@ -81,7 +81,7 @@ data class LockFile(
     }
 
     fun getLoaders() = this.loaders.keys.toList().map { it.lowercase() }
-    fun getLoadersWithVersions() = this.loaders.toList().map { it.first.lowercase() }
+    fun getLoadersWithVersions() = this.loaders.toList().map { it.first.lowercase() to it.second }
 
     // -- TARGET --
 
