@@ -85,9 +85,6 @@ kotlin {
                 // CLI
                 implementation("com.github.ajalt.clikt:clikt:4.2.1")
 
-                // Cache
-                implementation("io.github.reactivecircus.cache4k:cache4k:0.12.0")
-
                 // Logging
                 implementation("org.slf4j:slf4j-api:2.0.7")
                 implementation("org.slf4j:slf4j-simple:2.0.7")
