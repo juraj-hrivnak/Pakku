@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.15.1
+
+- Fixed modpack `@var@` replacements not working.
+- URLs in FileDirector's config are now encoded. This is a workaround for
+[FileDirector#19](https://github.com/TerraFirmaCraft-The-Final-Frontier/FileDirector/issues/19).
+
 ## v0.15.0
 
 - Refactored deleting old files in `fetch` command. (Improved performance.)
