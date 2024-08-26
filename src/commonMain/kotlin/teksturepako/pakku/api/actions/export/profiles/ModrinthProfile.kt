@@ -19,13 +19,8 @@ class ModrinthProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProfil
             val modpackModel = createMrModpackModel(it, lockFile, configFile)
             ruleOfMrModpack(modpackModel)
         },
-
-        if (lockFile.getAllProjects().any { "filedirector" in it })
-        {
-            exportFileDirector(CurseForge)
-        }
+        if (lockFile.getAllProjects().any { "filedirector" in it }) exportFileDirector(CurseForge)
         else ruleOfMrMissingProjects(CurseForge),
-
         replacementRule()
     ),
     dependsOn = Modrinth

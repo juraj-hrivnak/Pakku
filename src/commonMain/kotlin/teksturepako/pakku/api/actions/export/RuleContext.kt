@@ -1,8 +1,6 @@
 package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.getError
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.ActionError
@@ -247,25 +245,24 @@ sealed class RuleContext(open val workingSubDir: String)
         override val workingSubDir: String
     ) : RuleContext(workingSubDir)
     {
-        suspend fun replaceText(vararg pairs: Pair<String, String>): RuleResult = coroutineScope {
+        fun replaceText(vararg pairs: Pair<String, String>): RuleResult
+        {
             val message = "replaceText ${pairs.joinToString(", ", "[", "]") { "'${it.first}' -> '${it.second}'" }}"
-            return@coroutineScope ruleResult(message, Packaging.Action {
+            return ruleResult(message, Packaging.Action {
                 getPath().tryToResult { path ->
                     for (file in path.toFile().walkTopDown())
                     {
-                        launch {
-                            if (!file.isFile || file.extension in listOf("jar", "zip")) return@launch
+                        if (!file.isFile || file.extension in listOf("jar", "zip")) continue
 
-                            val text = file.readText()
+                        val text = file.readText()
 
-                            if (pairs.map { it.first }.none { it in text }) return@launch
+                        if (pairs.map { it.first }.none { it in text }) continue
 
-                            val replacedText = pairs.fold(text) { acc, (variable, content) ->
-                                acc.replace(variable, content)
-                            }
-
-                            file.writeText(replacedText)
+                        val replacedText = pairs.fold(text) { acc, (variable, content) ->
+                            acc.replace(variable, content)
                         }
+
+                        file.writeText(replacedText)
                     }
                 }.getError()
             })
