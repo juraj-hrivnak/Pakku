@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.15.0
+
+- Refactored deleting old files in `fetch` command. (Improved performance.)
+- The `status` command now also shows you the Minecraft version, loaders and author.
+- Removed `cache4k` dependency.
+
 ## v0.14.3
 
 - Fixed that resource and shader packs were exported to the server pack when their project side was missing.
