@@ -114,11 +114,11 @@ class Diff : CliktCommand("Diff projects in modpack")
 
             file.createNewFile()
             file.outputStream().close()
-            file.appendText("```diff${File.separator}")
-            added.forEach { file.appendText("+ $it${File.separator}") }
-            removed.forEach { file.appendText("- $it${File.separator}") }
-            updated.forEach { file.appendText("! $it${File.separator}") }
-            file.appendText("```${File.separator}")
+            file.appendText("```diff\n")
+            added.forEach { file.appendText("+ $it\n") }
+            removed.forEach { file.appendText("- $it\n") }
+            updated.forEach { file.appendText("! $it\n") }
+            file.appendText("```\n")
         }
 
         if (markdownOpt != null)
@@ -129,20 +129,20 @@ class Diff : CliktCommand("Diff projects in modpack")
             file.outputStream().close()
             if (added.isNotEmpty())
             {
-                file.appendText("### Added${File.separator}")
-                added.forEach { file.appendText("- $it${File.separator}") }
-                if (removed.isNotEmpty()) file.appendText(File.separator)
+                file.appendText("### Added\n")
+                added.forEach { file.appendText("- $it\n") }
+                if (removed.isNotEmpty()) file.appendText("\n")
             }
             if (removed.isNotEmpty())
             {
-                file.appendText("### Removed${File.separator}")
-                removed.forEach { file.appendText("- $it${File.separator}") }
-                if (updated.isNotEmpty()) file.appendText(File.separator)
+                file.appendText("### Removed\n")
+                removed.forEach { file.appendText("- $it\n") }
+                if (updated.isNotEmpty()) file.appendText("\n")
             }
             if (updated.isNotEmpty())
             {
-                file.appendText("### Updated${File.separator}")
-                updated.forEach { file.appendText("- $it${File.separator}") }
+                file.appendText("### Updated\n")
+                updated.forEach { file.appendText("- $it\n") }
             }
         }
         echo()

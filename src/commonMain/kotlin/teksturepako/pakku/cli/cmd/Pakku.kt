@@ -13,14 +13,12 @@ import teksturepako.pakku.cli.ui.overrideYes
 import teksturepako.pakku.cli.ui.pInfo
 import teksturepako.pakku.debugMode
 import teksturepako.pakku.io.tryOrNull
-import java.io.File
 import kotlin.io.path.*
 import kotlin.system.exitProcess
 
 class Pakku : CliktCommand()
 {
-    init
-    {
+    init {
         versionOption(VERSION, help = "Get pakku version")
         completionOption(help = "Generate autocompletion scripts")
         eagerOption(
@@ -31,13 +29,16 @@ class Pakku : CliktCommand()
     }
 
     private val yesFlag: Boolean by option(
-        "-y", "--yes", help = "Overwrite every prompt to 'yes' without asking"
+        "-y", "--yes",
+        help = "Overwrite every prompt to 'yes' without asking"
     ).flag()
 
     private val debugFlag: Boolean by option("--debug", help = "Enable additional debug logging").flag()
 
     private val workingPathOpt: String? by option(
-        "--working-path", help = "Change the working path of Pakku", metavar = "<path>"
+        "--working-path",
+        help = "Change the working path of Pakku",
+        metavar = "<path>"
     )
 
     override fun run()
@@ -82,26 +83,26 @@ suspend fun CliktCommand.generateDocs(context: OptionTransformContext)
         val helpOpt = subcmd.registeredOptions().find { "--help" in it.names }
 
         val text = buildString {
-            append("# pakku $cmdName${File.separator}")
-            append(File.separator)
-            append("$cmdHelp${File.separator}")
-            append(File.separator)
-            append("## Usage${File.separator}")
-            append(File.separator)
-            append("<snippet id=\"snippet-cmd\">${File.separator}")
-            append(File.separator)
-            append("<var name=\"cmd\">$cmdName</var>${File.separator}")
-            append("<var name=\"params\">$cmdParams</var>${File.separator}")
-            append("<include from=\"_template_cmd.md\" element-id=\"template-cmd\"/>${File.separator}")
-            append(File.separator)
-            append("</snippet>${File.separator}")
-            append(File.separator)
+            append("# pakku $cmdName\n")
+            append("\n")
+            append("$cmdHelp\n")
+            append("\n")
+            append("## Usage\n")
+            append("\n")
+            append("<snippet id=\"snippet-cmd\">\n")
+            append("\n")
+            append("<var name=\"cmd\">$cmdName</var>\n")
+            append("<var name=\"params\">$cmdParams</var>\n")
+            append("<include from=\"_template_cmd.md\" element-id=\"template-cmd\"/>\n")
+            append("\n")
+            append("</snippet>\n")
+            append("\n")
             if (args.isNotEmpty())
             {
-                append("## Arguments${File.separator}")
-                append(File.separator)
-                append("<snippet id=\"snippet-args\">${File.separator}")
-                append(File.separator)
+                append("## Arguments\n")
+                append("\n")
+                append("<snippet id=\"snippet-args\">\n")
+                append("\n")
                 for (arg in args)
                 {
                     val argName = buildString {
@@ -114,42 +115,42 @@ suspend fun CliktCommand.generateDocs(context: OptionTransformContext)
                     }
                     val argHelp = arg.help.ifBlank { "The `${arg.name.lowercase()}` argument" }
 
-                    append("$argName${File.separator}")
-                    append(": $argHelp${File.separator}")
-                    append(File.separator)
+                    append("$argName\n")
+                    append(": $argHelp\n")
+                    append("\n")
                 }
-                append("</snippet>${File.separator}")
-                append(File.separator)
+                append("</snippet>\n")
+                append("\n")
             }
-            append("## Options${File.separator}")
-            append(File.separator)
-            append("<snippet id=\"snippet-options-all\">${File.separator}")
-            append(File.separator)
+            append("## Options\n")
+            append("\n")
+            append("<snippet id=\"snippet-options-all\">\n")
+            append("\n")
             if (opts.isNotEmpty())
             {
-                append("<snippet id=\"snippet-options\">${File.separator}")
-                append(File.separator)
+                append("<snippet id=\"snippet-options\">\n")
+                append("\n")
                 for (opt in opts)
                 {
                     val optName = opt.names.joinToString { "`$it`" }
                     val optHelp = opt.optionHelp(context.context)
 
-                    append("$optName${File.separator}")
-                    append(": $optHelp${File.separator}")
-                    append(File.separator)
+                    append("$optName\n")
+                    append(": $optHelp\n")
+                    append("\n")
                 }
-                append("</snippet>${File.separator}")
-                append(File.separator)
+                append("</snippet>\n")
+                append("\n")
             }
             helpOpt?.let { opt ->
                 val optName = opt.names.joinToString { "`$it`" }
                 val optHelp = opt.optionHelp(context.context)
 
-                append("$optName${File.separator}")
-                append(": $optHelp${File.separator}")
-                append(File.separator)
+                append("$optName\n")
+                append(": $optHelp\n")
+                append("\n")
             }
-            File("</snippet>${File.separator}")
+            append("</snippet>\n")
             append("")
         }
 
