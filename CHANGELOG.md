@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-## v0.15.2
-
-- Replaced `\n` with `File.separator` in output files.
-
 ## v0.15.1
 
 - Fixed modpack `@var@` replacements not working.
