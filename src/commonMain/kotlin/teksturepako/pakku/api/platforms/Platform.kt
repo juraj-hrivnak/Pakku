@@ -14,7 +14,7 @@ import teksturepako.pakku.api.projects.ProjectType
  * @param apiVersion Version of the API.
  */
 abstract class Platform(
-    val name: String,
+    override val name: String,
     val serialName: String,
     val shortName: String,
     val apiUrl: String,
@@ -31,9 +31,6 @@ abstract class Platform(
 
     suspend inline fun <reified T> requestProjectBody(input: String, bodyContent: T): String? =
         this.requestBody("$apiUrl/v$apiVersion/$input", bodyContent)
-
-    /** Requests a [project][Project] based on either its ID or slug. */
-    abstract override suspend fun requestProject(input: String): Project?
 
     /** Requests a [project][Project] using its [ID][id]. */
     abstract suspend fun requestProjectFromId(id: String): Project?

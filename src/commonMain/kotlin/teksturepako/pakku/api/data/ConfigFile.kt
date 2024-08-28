@@ -109,5 +109,5 @@ data class ConfigFile(
         fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
     }
 
-    fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonEncodeDefaults)
+    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonEncodeDefaults)
 }

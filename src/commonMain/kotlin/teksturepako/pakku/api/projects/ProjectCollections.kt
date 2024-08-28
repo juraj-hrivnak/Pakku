@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.projects
 
+import com.github.michaelbull.result.get
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.platforms.Platform
 
@@ -49,7 +50,7 @@ fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Pro
 {
     return this.map { project ->
         otherProjects.find { project isAlmostTheSameAs it }?.let {
-            if (project.type == it.type) project + it else project
+            if (project.type == it.type) (project + it).get() else project
         } ?: project
     }.toSet()
 }

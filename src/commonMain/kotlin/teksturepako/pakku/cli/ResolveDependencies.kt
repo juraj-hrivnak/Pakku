@@ -41,7 +41,6 @@ suspend fun Project.resolveDependencies(
             debug { terminal.info(dependencyIn.toPrettyString()) }
             dependencyIn.createAdditionRequest(
                 onError = reqHandlers.onError,
-                onRetry = reqHandlers.onRetry,
                 onSuccess = { dependency, _, depReqHandlers ->
                     // Add dependency
                     lockFile.add(dependency)

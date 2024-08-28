@@ -20,7 +20,6 @@ import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
-import teksturepako.pakku.cli.ui.promptForProject
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
@@ -59,9 +58,6 @@ class Import : CliktCommand("Import modpack")
                 projectIn.createAdditionRequest(
                     onError = { error ->
                         if (error !is AlreadyAdded) terminal.pError(error)
-                    },
-                    onRetry = { platform, _ ->
-                        promptForProject(platform, terminal, lockFile)
                     },
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)

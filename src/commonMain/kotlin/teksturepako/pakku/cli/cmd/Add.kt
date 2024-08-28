@@ -6,10 +6,14 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.michaelbull.result.fold
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.ActionError.NotFoundOnPlatform
+import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.splitProjectArg
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*
@@ -19,14 +23,13 @@ class Add : CliktCommand("Add projects")
     private val projectArgs: List<String> by argument("projects").multiple(required = true)
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
-    override fun run() = runBlocking {
+    override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
         }
 
-        // Configuration
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
@@ -38,27 +41,36 @@ class Add : CliktCommand("Add projects")
             echo()
             return@runBlocking
         }
-        // --
 
-        for ((projectIn, arg) in projectArgs.map { arg ->
-            val (input, fileId) = splitProjectArg(arg)
-
-            projectProvider.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId
-            ) to arg
-        })
+        suspend fun add(projectIn: Project?, args: Triple<String, String, String?>, strict: Boolean = true)
         {
-            projectIn.createAdditionRequest(
-                onError = { error -> terminal.pError(error, arg) },
-                onRetry = { platform, project ->
-                    val fileId = project.getFilesForPlatform(platform).firstOrNull()?.id
+            suspend fun handleMissingProject(error: NotFoundOnPlatform, args: Triple<String, String, String?>)
+            {
+                val prompt = promptForProject(error.platform, terminal, lockFile, args.third)
+                    ?: return add(projectIn, args, strict = false)
 
-                    promptForProject(platform, terminal, lockFile, fileId)
+                val (promptedProject, promptedArgs) = prompt
+                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArgs.first)
+
+                (error.project + promptedProject).fold( // Combine projects
+                    failure = { terminal.pError(it) },
+                    success = { add(it, promptedArgs) }
+                )
+            }
+
+            projectIn.createAdditionRequest(
+                onError = { error ->
+                    terminal.pError(error, arg = args.first)
+
+                    if (error is NotFoundOnPlatform && strict)
+                    {
+                        handleMissingProject(error, args)
+                    }
                 },
                 onSuccess = { project, isRecommended, reqHandlers ->
                     val slugMsg = project.getFlavoredSlug()
 
-                    if (ynPrompt("Do you want to add $slugMsg?", terminal, isRecommended))
+                    if (ynPrompt("Do you want to add ${dim(project.type)} $slugMsg?", terminal, isRecommended))
                     {
                         lockFile.add(project)
                         lockFile.linkProjectToDependents(project)
@@ -68,15 +80,25 @@ class Add : CliktCommand("Add projects")
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.pSuccess("$slugMsg added")
+                        terminal.pSuccess("${dim(project.type)} $slugMsg added")
                     }
                 },
-                lockFile, platforms
+                lockFile, platforms, strict
             )
+        }
 
+        for ((projectIn, args) in projectArgs.map { arg ->
+            val (input, fileId) = splitProjectArg(arg)
+
+            projectProvider.requestProjectWithFiles(
+                lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId
+            ) to Triple(arg, input, fileId)
+        })
+        {
+            add(projectIn, args)
             echo()
         }
 
-        lockFile.write()
+        lockFile.write()?.let { terminal.pError(it) }
     }
 }

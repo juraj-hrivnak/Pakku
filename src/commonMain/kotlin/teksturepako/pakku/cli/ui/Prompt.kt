@@ -4,22 +4,23 @@ import com.github.ajalt.mordant.terminal.StringPrompt
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Multiplatform
-import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.splitProjectArg
 
-suspend fun promptForProject(platform: Platform, terminal: Terminal, lockFile: LockFile, fileId: String? = null): Project?
+suspend fun promptForProject(
+    provider: IProjectProvider, terminal: Terminal, lockFile: LockFile, fileId: String? = null
+): Pair<Project?, Triple<String, String, String?>>?
 {
-    val prompt = StringPrompt("Specify ${platform.name}", terminal).ask()
+    val prompt = StringPrompt("Specify ${provider.name}", terminal).ask()
 
     if (prompt.isNullOrBlank()) return null
 
     val (input, fileIdArg) = splitProjectArg(prompt)
 
-    return Multiplatform.requestProjectWithFiles(
+    return provider.requestProjectWithFiles(
         lockFile.getMcVersions(), lockFile.getLoaders(), input, fileIdArg ?: fileId
-    )
+    ) to Triple(prompt, input, fileIdArg)
 }
 
 var overrideYes = false

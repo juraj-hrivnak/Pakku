@@ -6,7 +6,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.pakku.api.actions.ActionError
 import kotlin.time.Duration
 
-fun dim(string: String): String = TextStyle(color = TextColors.gray)(string)
+fun dim(text: Any): String = TextStyle(color = TextColors.gray)(text.toString())
 fun String.addDim(string: String): String = this + TextStyle(color = TextColors.gray)(string)
 
 fun strong(string: String): String = TextStyle(bold = true, underline = true)(string)
@@ -16,24 +16,24 @@ fun String.addStrong(string: String): String = this + TextStyle(bold = true, und
 fun String.createHyperlink(hyperlink: String): String = TextStyle(hyperlink = hyperlink)(this)
 
 
-fun Terminal.pSuccess(message: String)
+fun Terminal.pSuccess(message: String, offset: Int = 0)
 {
-    this.success(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>")))
+    this.success(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>"), offset))
 }
 
-fun Terminal.pError(error: ActionError, arg: String = "", prepend: String? = null)
+fun Terminal.pError(error: ActionError, arg: String = "", prepend: String? = null, offset: Int = 0)
 {
-    this.println(processErrorMsg(error, arg, prepend))
+    this.println(processErrorMsg(error, arg, prepend, offset))
 }
 
-fun Terminal.pInfo(message: String)
+fun Terminal.pInfo(message: String, offset: Int = 0)
 {
-    this.info(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>")))
+    this.info(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>"), offset))
 }
 
-fun Terminal.pDanger(message: String)
+fun Terminal.pDanger(message: String, offset: Int = 0)
 {
-    this.danger(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>")))
+    this.danger(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>"), offset))
 }
 
 fun prefixed(string: String, prefix: String, offset: Int = 0): String = buildString {

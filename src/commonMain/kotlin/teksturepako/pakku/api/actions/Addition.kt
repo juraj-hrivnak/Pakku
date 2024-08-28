@@ -4,25 +4,22 @@ import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.debug
-import teksturepako.pakku.toPrettyString
 
 data class RequestHandlers(
     val onError: suspend (error: ActionError) -> Unit,
-    val onRetry: suspend (platform: Platform, project: Project) -> Project?,
     val onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit
 )
 
 suspend fun Project?.createAdditionRequest(
     onError: suspend (error: ActionError) -> Unit,
-    onRetry: suspend (platform: Platform, project: Project) -> Project?,
     onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit,
     lockFile: LockFile,
-    platforms: List<Platform>
+    platforms: List<Platform>,
+    strict: Boolean = false
 )
 {
     // Exist
-    var project = this ?: return onError(ProjNotFound())
+    val project = this ?: return onError(ProjNotFound())
     var isRecommended = true
 
     // Already added
@@ -36,15 +33,12 @@ suspend fun Project?.createAdditionRequest(
         // Check if project is on each platform
         if (project.isNotOnPlatform(platform))
         {
-            onError(NotFoundOnPlatform(project, platform))
-
-            debug { println(project.toPrettyString()) }
-
-            // Retry
-            val project2 = onRetry(platform, project)
-            if (project2 != null && project2.hasFilesOnPlatform(platform)) project += project2
-            debug { println(project2?.toPrettyString()) }
-            continue
+            if (!strict) continue
+            else
+            {
+                onError(NotFoundOnPlatform(project, platform))
+                return
+            }
         }
 
         // Check if project has files on each platform
@@ -58,8 +52,7 @@ suspend fun Project?.createAdditionRequest(
     // Check if project has any files at all
     if (project.hasNoFiles())
     {
-        onError(NoFiles(project, lockFile))
-        isRecommended = false
+        return onError(NoFiles(project, lockFile))
     }
 
     // Check if project files match across platforms
@@ -69,5 +62,5 @@ suspend fun Project?.createAdditionRequest(
         isRecommended = false
     }
 
-    onSuccess(project, isRecommended, RequestHandlers(onError, onRetry, onSuccess))
+    onSuccess(project, isRecommended, RequestHandlers(onError, onSuccess))
 }

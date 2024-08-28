@@ -2,8 +2,14 @@
 
 package teksturepako.pakku.api.projects
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
+import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
 import teksturepako.pakku.api.data.*
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
@@ -43,28 +49,35 @@ data class Project(
      * @return A new [Project] object created by combining the data from the current and the provided project.
      * @throws PakkuException if projects have different types or pakku links.
      */
-    operator fun plus(other: Project): Project
+    operator fun plus(other: Project): Result<Project, ActionError>
     {
         if (this.type != other.type)
-            throw PakkuException("Can not combine two projects of different type! $this ${this.type} + $other ${other.type}")
+            return Err(ProjDiffTypes(this, other))
+
         if (other.pakkuLinks.isNotEmpty() && this.pakkuLinks != other.pakkuLinks)
-            throw Exception("Can not combine two projects with different pakku links! $this ${this.type} + $other ${other.type}")
+            return Err(ProjDiffPLinks(this, other))
 
-        return Project(
-            pakkuId = this.pakkuId,
-            pakkuLinks = this.pakkuLinks,
-            type = this.type,
-            side = if (this.side != null) this.side else if (other.side != null) other.side else null,
-            // TODO: Maybe different approach to sides would be better
+        return Ok(
+            Project(
+                pakkuId = this.pakkuId,
+                pakkuLinks = this.pakkuLinks,
+                type = this.type,
+                side = when
+                {
+                    this.side != null  -> this.side
+                    other.side != null -> other.side
+                    else               -> null
+                },
 
-            name = (this.name + other.name).toMutableMap(),
-            slug = (this.slug + other.slug).toMutableMap(),
-            id = (this.id + other.id).toMutableMap(),
+                name = (this.name + other.name).toMutableMap(),
+                slug = (this.slug + other.slug).toMutableMap(),
+                id = (this.id + other.id).toMutableMap(),
 
-            updateStrategy = this.updateStrategy,
-            redistributable = this.redistributable && other.redistributable,
+                updateStrategy = this.updateStrategy,
+                redistributable = this.redistributable && other.redistributable,
 
-            files = (this.files + other.files).toMutableSet(),
+                files = (this.files + other.files).toMutableSet(),
+            )
         )
     }
 

@@ -2,12 +2,9 @@ package teksturepako.pakku.api.projects
 
 interface IProjectProvider
 {
-    /**
-     * Requests a project based on the provided input.
-     *
-     * @param input The input string used to identify the project.
-     * @return A [Project] object, or null if no data is found.
-     */
+    val name: String
+
+    /** Requests a [project][Project] based on either its ID or slug. */
     suspend fun requestProject(input: String): Project?
 
     /**

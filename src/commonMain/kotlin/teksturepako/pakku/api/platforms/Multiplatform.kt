@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.platforms
 
+import com.github.michaelbull.result.get
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
@@ -8,6 +9,8 @@ import teksturepako.pakku.api.projects.inheritPropertiesFrom
 
 object Multiplatform : IProjectProvider
 {
+    override val name = "Multiplatform"
+
     /** List of registered platforms. */
     val platforms = listOf(
         CurseForge,
@@ -47,7 +50,7 @@ object Multiplatform : IProjectProvider
         // Combine projects or return just one of them.
         return cf?.let { c ->
             mr?.let { m ->
-                c + m // Combine projects if project is available from both platforms.
+                (c + m).get() // Combine projects if project is available from both platforms.
             } ?: c // Return the CurseForge project if Modrinth project is missing.
         } ?: mr // Return the Modrinth project if CurseForge project is missing.
     }
@@ -150,8 +153,11 @@ object Multiplatform : IProjectProvider
                     acc.find { accProject ->
                         accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
                     }?.let { accProject ->
-                        acc -= accProject
-                        acc += accProject + newProject
+                        (accProject + newProject).get()?.let x@ { combinedProject ->
+                            if (combinedProject.hasNoFiles()) return@x // Do not update project is files are missing
+                            acc -= accProject
+                            acc += combinedProject // Combine projects
+                        }
                     }
                 }
 

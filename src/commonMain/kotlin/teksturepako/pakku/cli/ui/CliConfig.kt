@@ -40,5 +40,5 @@ data class CliConfig(
         suspend fun readToResult(): Result<CliConfig, ActionError> = decodeToResult<CliConfig>(filePath)
     }
 
-    fun write() = writeToFile(this, filePath.toString(), overrideText = true, format = jsonEncodeDefaults)
+    suspend fun write() = writeToFile(this, filePath.toString(), overrideText = true, format = jsonEncodeDefaults)
 }
