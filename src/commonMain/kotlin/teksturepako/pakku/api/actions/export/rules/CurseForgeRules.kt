@@ -67,7 +67,7 @@ fun createCfModpackModel(
 
         CfModLoaderData(
             id = "$loaderName-$loaderVersion",
-            primary = lockFile.getLoadersWithVersions().firstOrNull()!! == loader
+            primary = lockFile.getLoadersWithVersions().firstOrNull() == loader
         )
     }
 

@@ -18,13 +18,8 @@ class CurseForgeProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProf
             val modpackModel = createCfModpackModel(it, lockFile, configFile)
             ruleOfCfModpack(modpackModel)
         },
-
-        if (lockFile.getAllProjects().any { "filedirector" in it })
-        {
-            exportFileDirector(Modrinth)
-        }
+        if (lockFile.getAllProjects().any { "filedirector" in it }) exportFileDirector(Modrinth)
         else ruleOfCfMissingProjects(Modrinth),
-
         replacementRule()
     ),
     dependsOn = CurseForge

@@ -20,20 +20,29 @@ import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.writeToFile
 
 /**
- * A LockFile is used to define all properties of a Pakku modpack.
+ * A lock file (`pakku-lock.json`) is an automatically generated file used by Pakku
+ * to define all properties of a modpack needed for its development.
  *
- * @property target The targeted platform of the modpack.
- * @property mcVersions The Minecraft versions supported by the mod pack.
- * @property loaders The mod loaders used by the mod pack.
- * @property projects A list of associated projects with the mod pack.
- * @property lockFileVersion The version of the LockFile.
+ * This file is not intended to be modified manually.
  */
 @Serializable
 data class LockFile(
+    /** Targeted platform of the modpack. */
     private var target: String? = null,
+
+    /** Minecraft versions supported by the modpack. */
     @SerialName("mc_versions") private var mcVersions: MutableList<String> = mutableListOf(),
+
+    /**
+     *  Mutable map of _loader names_ to _loader versions_ supported by the modpack.
+     *  _loader names_ will always be formated to lowercase.
+     */
     private val loaders: MutableMap<String, String> = mutableMapOf(),
+
+    /** List of projects included in the modpack. */
     private var projects: MutableList<Project> = mutableListOf(),
+
+    /** The version of the LockFile. */
     @SerialName("lockfile_version") @Required private var lockFileVersion: Int? = null,
 )
 {
@@ -71,8 +80,8 @@ data class LockFile(
         this.loaders.putAll(loaders)
     }
 
-    fun getLoaders() = this.loaders.keys.toList()
-    fun getLoadersWithVersions() = this.loaders.toList()
+    fun getLoaders() = this.loaders.keys.toList().map { it.lowercase() }
+    fun getLoadersWithVersions() = this.loaders.toList().map { it.first.lowercase() to it.second }
 
     // -- TARGET --
 
@@ -255,7 +264,7 @@ data class LockFile(
     {
         const val FILE_NAME = "pakku-lock.json"
 
-        suspend fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
+        fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
         suspend fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
@@ -272,5 +281,5 @@ data class LockFile(
             .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
     }
 
-    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true)
+    fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true)
 }

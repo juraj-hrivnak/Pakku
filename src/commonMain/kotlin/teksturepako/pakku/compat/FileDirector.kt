@@ -2,6 +2,7 @@ package teksturepako.pakku.compat
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.NoFiles
 import teksturepako.pakku.api.actions.export.ExportRule
@@ -60,12 +61,13 @@ fun MissingProject.addToFileDirector(fileDirector: FileDirectorModel, platform: 
     ruleResult("addToFileDirector ${project.slug}", Packaging.Action {
         if (!project.redistributable) return@Action CanNotAddToFileDirector(project)
 
-        val url = project.getFilesForPlatform(platform).firstOrNull()?.url
-            ?: return@Action NoFiles(project, lockFile)
+        val url = project.getFilesForPlatform(platform).firstOrNull()?.url?.let {
+                UrlEncoderUtil.encode(it, ":/") // Encode the URL due to bug in FileDirector.
+            } ?: return@Action NoFiles(project, lockFile)
 
         fileDirector.urlBundle.plusAssign(
             UrlEntry(
-                url = url.replace(" ", "+"),
+                url = url,
                 folder = this.project.type.folderName
             )
         )

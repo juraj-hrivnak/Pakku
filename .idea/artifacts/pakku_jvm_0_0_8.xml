@@ -2,7 +2,7 @@
   <artifact type="jar" name="pakku-jvm-0.0.8">
     <output-path>$PROJECT_DIR$/build/libs</output-path>
     <root id="archive" name="pakku-jvm-0.0.8.jar">
-      <element id="module-output" name="pakku.jvmMain" />
+      <element id="module-output" name="Pakku.jvmMain" />
     </root>
   </artifact>
 </component>

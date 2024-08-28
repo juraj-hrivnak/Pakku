@@ -260,8 +260,6 @@ object CurseForge : Platform(
 
         val murmurs = bytes.map { it.toMurmur2() }
 
-        debug { println(murmurs) }
-
         val response = json.decodeFromString<GetFingerprintsMatchesResponse>(
             this.requestProjectBody("fingerprints/432", GetFingerprintsMatches(murmurs))
                 ?: return mutableSetOf()
@@ -286,8 +284,6 @@ object CurseForge : Platform(
         }
 
         val murmurs = bytes.map { it.toMurmur2() }
-
-        debug { println(murmurs) }
 
         return json.decodeFromString<GetFingerprintsMatchesResponse>(
             this.requestProjectBody("fingerprints/432", GetFingerprintsMatches(murmurs))

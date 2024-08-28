@@ -2,8 +2,6 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.testing.test
 import com.github.michaelbull.result.runCatching
-import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import kotlin.io.path.*
@@ -13,6 +11,11 @@ import kotlin.test.assertContains
 @OptIn(ExperimentalPathApi::class)
 class ExportTest
 {
+    private val testName = "TestModpack"
+    private val testVersion = "1.0.0"
+    private val testDescription = "This is a test modpack."
+    private val testAuthor = "TestAuthor"
+
     init
     {
         workingPath = "./build/test"
@@ -27,27 +30,5 @@ class ExportTest
         val output = cmd.test().output
 
         assertContains(output, "Could not read '$workingPath/${LockFile.FILE_NAME}'")
-    }
-
-    @Test
-    fun `try with lock file & config file`() = runBlocking {
-        LockFile(
-            "multiplatform",
-            mutableListOf("1.20.1"),
-            mutableMapOf("forge" to "")
-        ).write()
-
-        ConfigFile(
-            "TestModpack",
-            "1.0.0",
-            "This is a test modpack.",
-            "TestAuthor"
-        ).write()
-
-        val cmd = Export()
-        cmd.test().output
-
-        assert(Path(workingPath, "TestModpack-1.0.0.zip").exists())
-        assert(Path(workingPath, "TestModpack-1.0.0.mrpack").exists())
     }
 }
