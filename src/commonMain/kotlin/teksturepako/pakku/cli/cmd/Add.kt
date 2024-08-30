@@ -68,9 +68,9 @@ class Add : CliktCommand("Add projects")
                     }
                 },
                 onSuccess = { project, isRecommended, reqHandlers ->
-                    val slugMsg = project.getFlavoredSlug()
+                    val projMsg = project.getFullMsg()
 
-                    if (ynPrompt("Do you want to add ${dim(project.type)} $slugMsg?", terminal, isRecommended))
+                    if (ynPrompt("Do you want to add $projMsg?", terminal, isRecommended))
                     {
                         lockFile.add(project)
                         lockFile.linkProjectToDependents(project)
@@ -80,7 +80,7 @@ class Add : CliktCommand("Add projects")
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.pSuccess("${dim(project.type)} $slugMsg added")
+                        terminal.pSuccess("$projMsg added")
                     }
                 },
                 lockFile, platforms, strict

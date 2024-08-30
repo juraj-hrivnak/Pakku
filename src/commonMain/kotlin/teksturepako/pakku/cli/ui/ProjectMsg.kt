@@ -78,6 +78,8 @@ fun Project.getFlavoredSlug(): String
     } + dim("}")
 }
 
+fun Project.getFullMsg(): String = "${dim(this.type)} ${this.getFlavoredSlug()}"
+
 fun Project.getFlavoredTargets(platforms: List<Platform>): String
 {
     return platforms.joinToString(" ") {

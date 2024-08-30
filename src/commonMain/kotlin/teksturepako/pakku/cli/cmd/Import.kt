@@ -17,7 +17,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 import java.nio.file.Path
@@ -62,7 +62,7 @@ class Import : CliktCommand("Import modpack")
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)
                         if (depsFlag) project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        terminal.pSuccess("${project.getFlavoredSlug()} added")
+                        terminal.pSuccess("${project.getFullMsg()} added")
                         Modrinth.checkRateLimit()
                     },
                     lockFile, platforms

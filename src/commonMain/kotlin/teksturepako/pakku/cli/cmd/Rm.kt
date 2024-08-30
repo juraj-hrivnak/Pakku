@@ -46,24 +46,24 @@ class Rm : CliktCommand("Remove projects")
                     }
                 },
                 onRemoval = { project, isRecommended ->
-                    val slugMsg = project.getFlavoredSlug()
+                    val projMsg = project.getFullMsg()
 
-                    if (ynPrompt("Do you want to remove $slugMsg?", terminal, isRecommended))
+                    if (ynPrompt("Do you want to remove $projMsg?", terminal, isRecommended))
                     {
                         lockFile.remove(project)
                         lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
-                        terminal.pDanger("$slugMsg removed")
+                        terminal.pDanger("$projMsg removed")
                     }
                 },
                 onDepRemoval = { dependency, isRecommended ->
                     if (noDepsFlag) return@createRemovalRequest
-                    val slugMsg = dependency.getFlavoredSlug()
+                    val projMsg = dependency.getFullMsg()
 
-                    if (isRecommended || ynPrompt("Do you want to remove $slugMsg?", terminal, false))
+                    if (isRecommended || ynPrompt("Do you want to remove $projMsg?", terminal, false))
                     {
                         lockFile.remove(dependency)
                         lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
-                        terminal.pInfo("$slugMsg removed")
+                        terminal.pInfo("$projMsg removed")
                     }
                 },
                 lockFile

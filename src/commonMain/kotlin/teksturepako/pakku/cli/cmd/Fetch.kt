@@ -78,6 +78,8 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
             )
         }
 
+        fetchJob.join()
+
         // -- OLD FILES --
 
         val oldFilesJob = launch {
@@ -89,7 +91,6 @@ class Fetch : CliktCommand("Fetch projects to your modpack folder")
             )
         }
 
-        fetchJob.join()
         syncJob.join()
         oldFilesJob.join()
 

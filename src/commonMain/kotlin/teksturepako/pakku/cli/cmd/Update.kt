@@ -10,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Multiplatform
-import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pSuccess
 
 class Update : CliktCommand("Update projects")
@@ -45,7 +45,7 @@ class Update : CliktCommand("Update projects")
         for (updatedProject in updatedProjects)
         {
             lockFile.update(updatedProject)
-            terminal.pSuccess("${updatedProject.getFlavoredSlug()} updated")
+            terminal.pSuccess("${updatedProject.getFullMsg()} updated")
         }
 
         if (updatedProjects.isEmpty() && currentProjects.isNotEmpty())
@@ -54,9 +54,9 @@ class Update : CliktCommand("Update projects")
             {
                 allFlag || projectArgs.isEmpty() -> terminal.pSuccess("All projects are up to date")
                 currentProjects.size == 1        ->
-                    terminal.pSuccess("${currentProjects.first().getFlavoredSlug()} is up to date")
+                    terminal.pSuccess("${currentProjects.first().getFullMsg()} is up to date")
                 else                             ->
-                    terminal.pSuccess("${currentProjects.map { it.getFlavoredSlug() }} are up to date")
+                    terminal.pSuccess("${currentProjects.map { it.getFullMsg() }} are up to date")
             }
         }
 
