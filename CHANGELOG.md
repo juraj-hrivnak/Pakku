@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.16.0
+
+- When adding projects, slugs are now more robustly resolved.
+  - Project additions are now stricter. Pakku now doesn't allow you to add projects without any files.
+  - Fixed [#15](https://github.com/juraj-hrivnak/Pakku/issues/15).
+- Added backup handling when writing to files.
+  When an error occurs during writing to a file a backup is restored.
+- Pakku now shows you the project type alongside the slugs in all messages.
+
 ## v0.15.1
 
 - Fixed modpack `@var@` replacements not working.
