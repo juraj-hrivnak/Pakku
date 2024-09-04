@@ -15,7 +15,7 @@ import teksturepako.pakku.cli.ui.pSuccess
 
 class Update : CliktCommand("Update projects")
 {
-    private val projectArgs: List<String> by argument("projects").multiple()
+    private val projectArgs: List<String> by argument("projects", help = "Projects to update").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
     override fun run() = runBlocking {

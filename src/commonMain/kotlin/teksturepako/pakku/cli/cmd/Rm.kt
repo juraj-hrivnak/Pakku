@@ -16,7 +16,7 @@ import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand("Remove projects")
 {
-    private val projectArgs: List<String> by argument("projects").multiple()
+    private val projectArgs: List<String> by argument("projects", help = "Projects to remove").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Remove all projects").flag()
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 

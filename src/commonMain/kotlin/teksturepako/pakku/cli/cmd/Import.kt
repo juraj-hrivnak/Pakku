@@ -25,7 +25,7 @@ import kotlin.io.path.pathString
 
 class Import : CliktCommand("Import modpack")
 {
-    private val pathArg: Path by argument("path").path(mustExist = true)
+    private val pathArg: Path by argument("path", help = "The path to the modpack file").path(mustExist = true)
     private val depsFlag: Boolean by option("-D", "--deps", help = "Resolve dependencies").flag()
 
     override fun run() = runBlocking {
