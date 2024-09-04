@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.16.0"
+version = "0.17.0"
 
 val nativeEnabled = false
 
@@ -83,7 +83,7 @@ kotlin {
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
                 // CLI
-                implementation("com.github.ajalt.clikt:clikt:4.2.1")
+                implementation("com.github.ajalt.clikt:clikt:4.4.0")
 
                 // Logging
                 implementation("org.slf4j:slf4j-api:2.0.7")
