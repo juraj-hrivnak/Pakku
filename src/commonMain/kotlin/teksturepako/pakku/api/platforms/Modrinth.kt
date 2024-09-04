@@ -199,7 +199,7 @@ object Modrinth : Platform(
     override suspend fun requestMultipleProjectFiles(
         mcVersions: List<String>, loaders: List<String>, ids: List<String>
     ): MutableSet<ProjectFile> = coroutineScope {
-        /* Chunk requests if there are too many ids; Also do this in parallel */
+        // Chunk requests if there are too many ids; Also do this in parallel
         return@coroutineScope ids.chunked(1_000).map { list ->
             async {
                 val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")

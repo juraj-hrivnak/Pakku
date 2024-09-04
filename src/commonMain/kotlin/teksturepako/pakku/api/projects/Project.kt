@@ -46,8 +46,7 @@ data class Project(
      * Combines two projects of the same type into a new project.
      *
      * @param other The project to be combined with the current project.
-     * @return A new [Project] object created by combining the data from the current and the provided project.
-     * @throws PakkuException if projects have different types or pakku links.
+     * @return A new [Project] created by combining the data from the current and the provided project.
      */
     operator fun plus(other: Project): Result<Project, ActionError>
     {

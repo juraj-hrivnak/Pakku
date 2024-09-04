@@ -82,17 +82,13 @@ object Multiplatform : IProjectProvider
         {
             if (project.isOnPlatform(CurseForge))
             {
-                val cfFile =
-                    CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId)
-                        .firstOrNull()
+                val cfFile = CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId).firstOrNull()
 
                 val hash = cfFile?.hashes?.get("sha1")
 
                 if (hash != null)
                 {
-                    val mrFile =
-                        Modrinth.requestMultipleProjectFilesFromHashes(listOf(hash), "sha1")
-                            .firstOrNull()
+                    val mrFile = Modrinth.requestMultipleProjectFilesFromHashes(listOf(hash), "sha1").firstOrNull()
 
                     if (mrFile != null)
                     {
@@ -105,17 +101,13 @@ object Multiplatform : IProjectProvider
 
             if (project.isOnPlatform(Modrinth))
             {
-                val mrFile =
-                    Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId)
-                        .firstOrNull()
+                val mrFile = Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId).firstOrNull()
 
                 val bytes = mrFile?.url?.let { Modrinth.requestByteArray(it) }
 
                 if (bytes != null)
                 {
-                    val cfFile =
-                        CurseForge.requestMultipleProjectFilesFromBytes(mcVersions, listOf(bytes))
-                            .firstOrNull()
+                    val cfFile = CurseForge.requestMultipleProjectFilesFromBytes(mcVersions, listOf(bytes)).firstOrNull()
 
                     if (cfFile != null)
                     {
