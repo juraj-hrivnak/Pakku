@@ -1,38 +1,31 @@
-package teksturepako.pakku.cli.cmd
+package teksturepako.pakku.cli.cmd.subcmd
 
 import com.github.ajalt.clikt.core.*
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.arguments.multiple
-import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.michaelbull.result.fold
+import com.github.michaelbull.result.get
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.NotFoundOnPlatform
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.splitProjectArg
-import teksturepako.pakku.cli.cmd.subcmd.Prj
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*
 
-class Add : CliktCommand("Add projects", allowMultipleSubcommands = true)
+class Prj : CliktCommand("Specify the project precisely")
 {
-    private val projectArgs: List<String> by argument("projects", help = "Projects to add").multiple()
-    private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
+    private val cfOpt by option("--cf", "--curseforge")
+    private val mrOpt by option("--mr", "--modrinth")
 
-    private val flags by findOrSetObject { mutableMapOf<String, Boolean>() }
-
-    init
-    {
-        this.subcommands(Prj())
-    }
+    private val flags by requireObject<Map<String, Boolean>>()
 
     override fun run(): Unit = runBlocking {
-        // Pass flags to the context
-        flags["noDepsFlag"] = noDepsFlag
+        val noDepsFlag = flags.getOrElse("noDepsFlag") { false }
 
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
@@ -52,29 +45,29 @@ class Add : CliktCommand("Add projects", allowMultipleSubcommands = true)
             return@runBlocking
         }
 
-        suspend fun add(projectIn: Project?, args: Triple<String, String, String?>, strict: Boolean = true)
+        suspend fun add(projectIn: Project?, strict: Boolean = true)
         {
-            suspend fun handleMissingProject(error: NotFoundOnPlatform, args: Triple<String, String, String?>)
+            suspend fun handleMissingProject(error: NotFoundOnPlatform)
             {
-                val prompt = promptForProject(error.platform, terminal, lockFile, args.third)
-                    ?: return add(projectIn, args, strict = false)
+                val prompt = promptForProject(error.platform, terminal, lockFile)
+                    ?: return add(projectIn, strict = false)
 
                 val (promptedProject, promptedArgs) = prompt
                 if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArgs.first)
 
                 (error.project + promptedProject).fold( // Combine projects
                     failure = { terminal.pError(it) },
-                    success = { add(it, promptedArgs) }
+                    success = { add(it) }
                 )
             }
 
             projectIn.createAdditionRequest(
                 onError = { error ->
-                    terminal.pError(error, arg = args.first)
+                    terminal.pError(error)
 
                     if (error is NotFoundOnPlatform && strict)
                     {
-                        handleMissingProject(error, args)
+                        handleMissingProject(error)
                     }
                 },
                 onSuccess = { project, isRecommended, reqHandlers ->
@@ -97,17 +90,31 @@ class Add : CliktCommand("Add projects", allowMultipleSubcommands = true)
             )
         }
 
-        for ((projectIn, args) in projectArgs.map { arg ->
-            val (input, fileId) = splitProjectArg(arg)
+        val cf = cfOpt?.let {
+            val (input, fileId) = splitProjectArg(it)
 
-            projectProvider.requestProjectWithFiles(
+            CurseForge.requestProjectWithFiles(
                 lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId
-            ) to Triple(arg, input, fileId)
-        })
-        {
-            add(projectIn, args)
-            echo()
+            )
         }
+
+        val mr = mrOpt?.let {
+            val (input, fileId) = splitProjectArg(it)
+
+            Modrinth.requestProjectWithFiles(
+                lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId
+            )
+        }
+
+        // Combine projects or return just one of them.
+        val comb = cf?.let { c ->
+            mr?.let { m ->
+                (c + m).get() // Combine projects if project is available from both platforms.
+            } ?: c // Return the CurseForge project if Modrinth project is missing.
+        } ?: mr // Return the Modrinth project if CurseForge project is missing.
+
+        add(comb)
+        echo()
 
         lockFile.write()?.let { terminal.pError(it) }
     }
