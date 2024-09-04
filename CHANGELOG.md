@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v0.17.0
+
+- Added the `prj` subcommand for the `add` command.
+  - With this subcommand you can specify the project
+  you want to add precisely, using the `--cf` and/or `--mr` options.
+  - This subcommand can be used multiple times.
+  - Example usage: `pakku add prj --mr iris --cf irisshaders`
+  - Note that the `add` command functionality remains the same.
+- Added descriptions to command arguments.
+
 ## v0.16.0
 
 - When adding projects, slugs are now more robustly resolved.
