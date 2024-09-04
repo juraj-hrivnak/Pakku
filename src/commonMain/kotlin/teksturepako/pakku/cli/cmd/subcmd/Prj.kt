@@ -19,8 +19,12 @@ import teksturepako.pakku.cli.ui.*
 
 class Prj : CliktCommand("Specify the project precisely")
 {
-    private val cfOpt by option("--cf", "--curseforge")
-    private val mrOpt by option("--mr", "--modrinth")
+    private val cfOpt by option(
+        "--cf", "--curseforge", help = "CurseForge project slug or ID"
+    )
+    private val mrOpt by option(
+        "--mr", "--modrinth", help = "Modrinth project slug or ID"
+    )
 
     private val flags by requireObject<Map<String, Boolean>>()
 

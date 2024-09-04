@@ -17,7 +17,7 @@ Import modpack
 <snippet id="snippet-args">
 
 `<path>`
-: The `path` argument
+: The path to the modpack file
 
 </snippet>
 

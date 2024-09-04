@@ -17,7 +17,7 @@ Remove projects
 <snippet id="snippet-args">
 
 `[<projects>]...`
-: The `projects` argument
+: Projects to remove
 
 </snippet>
 

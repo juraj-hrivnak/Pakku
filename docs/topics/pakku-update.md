@@ -17,7 +17,7 @@ Update projects
 <snippet id="snippet-args">
 
 `[<projects>]...`
-: The `projects` argument
+: Projects to update
 
 </snippet>
 

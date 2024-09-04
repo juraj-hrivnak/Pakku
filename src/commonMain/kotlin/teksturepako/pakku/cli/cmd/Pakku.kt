@@ -62,13 +62,19 @@ suspend fun CliktCommand.generateDocs(context: OptionTransformContext)
 
     terminal.pInfo("Generating docs:")
 
-    this.registeredSubcommands().forEach { subcmd ->
-        val cmdFileName = "${this.commandName}-${subcmd.commandName}.md"
+    val commands = this.registeredSubcommands().fold(listOf<CliktCommand>()) { acc, cmd ->
+        val subcmds = cmd.registeredSubcommands()
 
-        val cmdName = subcmd.commandName
-        val cmdHelp = subcmd.commandHelp(context.context)
+        acc + cmd + subcmds
+    }
 
-        val args: List<Argument> = subcmd.allHelpParams().filterIsInstance<Argument>()
+    commands.forEach { cmd ->
+        val cmdFileName = "${this.commandName}-${cmd.commandName}.md"
+
+        val cmdName = cmd.commandName
+        val cmdHelp = cmd.commandHelp(context.context)
+
+        val args: List<Argument> = cmd.allHelpParams().filterIsInstance<Argument>()
 
         val cmdParams = "[&lt;options&gt;] " + args.joinToString(" ") { arg ->
             buildString {
@@ -79,8 +85,8 @@ suspend fun CliktCommand.generateDocs(context: OptionTransformContext)
             }
         }
 
-        val opts = subcmd.registeredOptions().filter { "--help" !in it.names }
-        val helpOpt = subcmd.registeredOptions().find { "--help" in it.names }
+        val opts = cmd.registeredOptions().filter { "--help" !in it.names }
+        val helpOpt = cmd.registeredOptions().find { "--help" in it.names }
 
         val text = buildString {
             append("# pakku $cmdName\n")
