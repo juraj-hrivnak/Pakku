@@ -7,11 +7,11 @@ import teksturepako.pakku.api.actions.ActionError
 import kotlin.time.Duration
 
 fun dim(text: Any): String = TextStyle(color = TextColors.gray)(text.toString())
-fun String.addDim(string: String): String = this + TextStyle(color = TextColors.gray)(string)
+fun String.plusDim(string: String): String = this + TextStyle(color = TextColors.gray)(string)
 
 fun strong(string: String): String = TextStyle(bold = true, underline = true)(string)
 fun strong(text: Any): String = TextStyle(bold = true, underline = true)(text.toString())
-fun String.addStrong(string: String): String = this + TextStyle(bold = true, underline = true)(string)
+fun String.plusStrong(string: String): String = this + TextStyle(bold = true, underline = true)(string)
 
 fun String.createHyperlink(hyperlink: String): String = TextStyle(hyperlink = hyperlink)(this)
 

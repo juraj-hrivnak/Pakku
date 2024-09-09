@@ -21,7 +21,7 @@ data class CliConfig(
     @SerialName("ansi_level") val ansiLevel: String? = null
 )
 {
-    fun toTerminal(): Terminal = Terminal(
+    fun toTerminal() = Terminal(
         theme = when (theme?.lowercase())
         {
             "default" -> CliThemes.Default

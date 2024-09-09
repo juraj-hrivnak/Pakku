@@ -48,35 +48,46 @@ fun Project.getFlavoredUpdateMsg(theme: Theme, updatedProjects: MutableSet<Proje
     UpdateStrategy.NONE        -> red(theme.string("pakku.update_strategy.none", "x^"))
 }
 
-fun Project.getFlavoredSlug(): String
+fun Project.getFlavoredSlug(): String = dim("{") + if (this.slug.values.allEqual() && this.slug.values.size > 1)
 {
-    return dim("{") + if (this.slug.values.allEqual() && this.slug.values.size > 1)
-    {
-        this.slug
-            .map { (platform, _) ->
-                Multiplatform.getPlatform(platform)?.let {
-                    val hyperlink = "${it.getUrlForProjectType(this.type)}/${this.slug[it.serialName]}"
+    this.slug
+        .map { (platform, _) ->
+            Multiplatform.getPlatform(platform)?.let {
+                val hyperlink = "${it.getUrlForProjectType(this.type)}/${this.slug[it.serialName]}"
+
+                if (this.hasFilesOnPlatform(it))
+                {
                     dim(it.shortName).createHyperlink(hyperlink)
                 }
-            }
-            .joinToString(dim(", "), dim("["), dim("]"))
-            .addDim("=")
-            .addStrong(this.slug.values.first())
-    }
-    else
-    {
-        this.slug
-            .map { (platform, slug) ->
-                Multiplatform.getPlatform(platform)?.let {
-                    val hyperlink = "${it.getUrlForProjectType(this.type)}/${this.slug[it.serialName]}"
-                    dim(it.shortName).createHyperlink(hyperlink)
+                else
+                {
+                    red(it.shortName).createHyperlink(hyperlink)
                 }
-                    ?.addDim("=")
-                    ?.addStrong(slug)
             }
-            .joinToString(dim(", "))
-    } + dim("}")
+        }
+        .joinToString(dim(", "), dim("["), dim("]"))
+        .plusDim("=")
+        .plusStrong(this.slug.values.first())
 }
+else
+{
+    this.slug
+        .map { (platform, slug) ->
+            Multiplatform.getPlatform(platform)?.let {
+                val hyperlink = "${it.getUrlForProjectType(this.type)}/${this.slug[it.serialName]}"
+
+                if (this.hasFilesOnPlatform(it))
+                {
+                    dim(it.shortName).createHyperlink(hyperlink)
+                }
+                else
+                {
+                    red(it.shortName).createHyperlink(hyperlink)
+                }
+            }?.plusDim("=")?.plusStrong(slug)
+        }
+        .joinToString(dim(", "))
+} + dim("}")
 
 fun Project.getFullMsg(): String = "${dim(this.type)} ${this.getFlavoredSlug()}"
 
