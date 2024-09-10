@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.17.1
+
+- Fixed `add` command not being invoked without a subcommand. ([#22](https://github.com/juraj-hrivnak/Pakku/issues/22))
+- Updated to the latest snapshot of the Clikt library.
 ## v0.17.0
 
 - Added the `prj` subcommand for the `add` command.
