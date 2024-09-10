@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
@@ -10,8 +11,10 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.containsNotProject
 import java.io.File
 
-class Diff : CliktCommand("Diff projects in modpack")
+class Diff : CliktCommand()
 {
+    override fun help(context: Context) = "Diff projects in modpack"
+
     private val oldPathArg by argument("old-lock-file")
     private val newPathArg by argument("current-lock-file")
     private val markdownDiffOpt by option(

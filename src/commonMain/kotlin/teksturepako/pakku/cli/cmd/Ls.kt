@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
@@ -16,8 +17,10 @@ import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
 
-class Ls : CliktCommand("List projects")
+class Ls : CliktCommand()
 {
+    override fun help(context: Context) = "List projects"
+
     private val checkUpdatesFlag by option("-c", "--check-updates", help = "Add update info for projects").flag()
     private val nameMaxLengthOpt by option(
         "--name-max-length",

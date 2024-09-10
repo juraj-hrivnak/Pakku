@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
@@ -21,8 +22,10 @@ import teksturepako.pakku.io.tryOrNull
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.fileSize
 
-class Export : CliktCommand("Export modpack")
+class Export : CliktCommand()
 {
+    override fun help(context: Context) = "Export modpack"
+
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)

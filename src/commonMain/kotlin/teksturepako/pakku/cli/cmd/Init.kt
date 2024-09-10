@@ -1,13 +1,16 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 
-class Init : CliktCommand("Initialize modpack")
+class Init : CliktCommand()
 {
+    override fun help(context: Context) = "Initialize modpack"
+
     override fun run() = runBlocking {
         if (LockFile.exists())
         {

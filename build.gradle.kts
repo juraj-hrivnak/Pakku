@@ -21,6 +21,9 @@ version = "0.17.0"
 val nativeEnabled = false
 
 repositories {
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+    }
     mavenCentral()
 }
 
@@ -83,7 +86,7 @@ kotlin {
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
                 // CLI
-                implementation("com.github.ajalt.clikt:clikt:4.4.0")
+                implementation("com.github.ajalt.clikt:clikt:4.4.0.41-SNAPSHOT")
 
                 // Logging
                 implementation("org.slf4j:slf4j-api:2.0.7")

@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
@@ -23,8 +24,10 @@ import teksturepako.pakku.cli.ui.pSuccess
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-class Import : CliktCommand("Import modpack")
+class Import : CliktCommand()
 {
+    override fun help(context: Context) = "Import modpack"
+
     private val pathArg: Path by argument("path", help = "The path to the modpack file").path(mustExist = true)
     private val depsFlag: Boolean by option("-D", "--deps", help = "Resolve dependencies").flag()
 

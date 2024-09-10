@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -13,8 +14,10 @@ import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pSuccess
 
-class Update : CliktCommand("Update projects")
+class Update : CliktCommand()
 {
+    override fun help(context: Context) = "Update projects"
+
     private val projectArgs: List<String> by argument("projects", help = "Projects to update").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Update all projects").flag()
 

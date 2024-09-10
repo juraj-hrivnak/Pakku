@@ -17,8 +17,10 @@ import teksturepako.pakku.cli.arg.splitProjectArg
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*
 
-class Prj : CliktCommand("Specify the project precisely")
+class Prj : CliktCommand()
 {
+    override fun help(context: Context) = "Specify the project precisely"
+
     private val cfOpt by option(
         "--cf", "--curseforge", help = "CurseForge project slug or ID"
     )

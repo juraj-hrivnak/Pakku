@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.animation.progressAnimation
 import com.github.ajalt.mordant.widgets.Spinner
@@ -20,8 +21,10 @@ import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pInfo
 import teksturepako.pakku.cli.ui.pSuccess
 
-class Fetch : CliktCommand("Fetch projects to your modpack folder")
+class Fetch : CliktCommand()
 {
+    override fun help(context: Context) = "Fetch projects to your modpack folder"
+
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)

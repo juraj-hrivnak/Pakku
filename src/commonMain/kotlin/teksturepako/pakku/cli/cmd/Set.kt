@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -14,8 +15,10 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 
-class Set : CliktCommand("Set various properties of your modpack or projects")
+class Set : CliktCommand()
 {
+    override fun help(context: Context) = "Set various properties of your modpack or projects"
+
     // -- PROJECTS --
 
     private val projectArgs: List<String> by argument("projects").multiple()

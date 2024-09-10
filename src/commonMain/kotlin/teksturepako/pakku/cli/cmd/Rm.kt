@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -14,8 +15,10 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.typoSuggester
 
-class Rm : CliktCommand("Remove projects")
+class Rm : CliktCommand()
 {
+    override fun help(context: Context) = "Remove projects"
+
     private val projectArgs: List<String> by argument("projects", help = "Projects to remove").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Remove all projects").flag()
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()

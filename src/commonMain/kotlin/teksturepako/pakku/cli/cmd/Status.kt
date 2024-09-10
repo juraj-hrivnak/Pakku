@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.table.grid
 import kotlinx.coroutines.runBlocking
@@ -12,8 +13,10 @@ import teksturepako.pakku.api.projects.containsProject
 import teksturepako.pakku.cli.ui.*
 
 
-class Status: CliktCommand("Get status of your modpack")
+class Status: CliktCommand()
 {
+    override fun help(context: Context) = "Get status of your modpack"
+
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)

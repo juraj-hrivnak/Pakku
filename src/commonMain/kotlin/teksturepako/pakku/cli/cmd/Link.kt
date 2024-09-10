@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import kotlinx.coroutines.runBlocking
@@ -9,8 +10,10 @@ import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pDanger
 import teksturepako.pakku.cli.ui.pSuccess
 
-class Link : CliktCommand("Link project to another project")
+class Link : CliktCommand()
 {
+    override fun help(context: Context) = "Link project to another project"
+
     private val projectOut: String by argument()
     private val projectIn: String by argument()
 

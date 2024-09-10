@@ -1,6 +1,7 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.completion.completionOption
+import com.github.ajalt.clikt.core.BaseCliktCommand
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.output.HelpFormatter.ParameterHelp.Argument
@@ -62,7 +63,7 @@ suspend fun CliktCommand.generateDocs(context: OptionTransformContext)
 
     terminal.pInfo("Generating docs:")
 
-    val commands = this.registeredSubcommands().fold(listOf<CliktCommand>()) { acc, cmd ->
+    val commands = this.registeredSubcommands().fold(listOf<BaseCliktCommand<*>>()) { acc, cmd ->
         val subcmds = cmd.registeredSubcommands()
 
         acc + cmd + subcmds
