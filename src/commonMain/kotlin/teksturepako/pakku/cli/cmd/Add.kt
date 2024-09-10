@@ -18,8 +18,10 @@ import teksturepako.pakku.cli.cmd.subcmd.Prj
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*
 
-class Add : CliktCommand("Add projects", allowMultipleSubcommands = true)
+class Add : CliktCommand()
 {
+    override fun help(context: Context) = "Add projects"
+
     private val projectArgs: List<String> by argument("projects", help = "Projects to add").multiple()
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
@@ -29,6 +31,9 @@ class Add : CliktCommand("Add projects", allowMultipleSubcommands = true)
     {
         this.subcommands(Prj())
     }
+
+    override val invokeWithoutSubcommand = true
+    override val allowMultipleSubcommands = true
 
     override fun run(): Unit = runBlocking {
         // Pass flags to the context
