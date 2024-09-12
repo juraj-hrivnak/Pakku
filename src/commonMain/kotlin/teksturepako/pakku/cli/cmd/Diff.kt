@@ -132,19 +132,19 @@ class Diff : CliktCommand()
             file.outputStream().close()
             if (added.isNotEmpty())
             {
-                file.appendText("### Added\n")
+                file.appendText("### Added\n\n")
                 added.forEach { file.appendText("- $it\n") }
-                if (removed.isNotEmpty()) file.appendText("\n")
+                if (removed.isNotEmpty() || updated.isNotEmpty()) file.appendText("\n")
             }
             if (removed.isNotEmpty())
             {
-                file.appendText("### Removed\n")
+                file.appendText("### Removed\n\n")
                 removed.forEach { file.appendText("- $it\n") }
                 if (updated.isNotEmpty()) file.appendText("\n")
             }
             if (updated.isNotEmpty())
             {
-                file.appendText("### Updated\n")
+                file.appendText("### Updated\n\n")
                 updated.forEach { file.appendText("- $it\n") }
             }
         }
