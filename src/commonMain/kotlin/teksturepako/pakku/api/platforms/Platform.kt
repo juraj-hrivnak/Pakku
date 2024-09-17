@@ -15,8 +15,8 @@ import teksturepako.pakku.api.projects.ProjectType
  */
 abstract class Platform(
     override val name: String,
-    val serialName: String,
-    val shortName: String,
+    override val serialName: String,
+    override val shortName: String,
     val apiUrl: String,
     val apiVersion: Int,
     val siteUrl: String,

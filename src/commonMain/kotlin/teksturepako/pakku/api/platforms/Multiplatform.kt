@@ -10,6 +10,8 @@ import teksturepako.pakku.api.projects.inheritPropertiesFrom
 object Multiplatform : IProjectProvider
 {
     override val name = "Multiplatform"
+    override val serialName = "multiplatform"
+    override val shortName = "mp"
 
     /** List of registered platforms. */
     val platforms = listOf(

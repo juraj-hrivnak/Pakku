@@ -56,20 +56,19 @@ data class ProjectFile(
 
     fun checkIntegrity(bytes: ByteArray): Result<ByteArray, ActionError>
     {
-        return if (this.hashes != null)
-        {
-            for ((hashType, originalHash) in this.hashes)
-            {
-                val newHash = createHash(hashType, bytes)
+        if (this.hashes == null) return Err(ActionError.NoHashes(this))
 
-                if (originalHash != newHash)
-                {
-                    return Err(HashFailed(this, originalHash, newHash))
-                }
-                else continue
+        for ((hashType, originalHash) in this.hashes)
+        {
+            val newHash = createHash(hashType, bytes)
+
+            if (originalHash != newHash)
+            {
+                return Err(HashFailed(this, originalHash, newHash))
             }
-            Ok(bytes)
+            else continue
         }
-        else Err(ActionError.NoHashes(this))
+
+        return Ok(bytes)
     }
 }

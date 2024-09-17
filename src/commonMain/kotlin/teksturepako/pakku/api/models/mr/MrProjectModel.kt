@@ -76,7 +76,8 @@ data class MrProjectModel(
     @SerialName("game_versions") val gameVersions: List<String> = listOf(),
     val loaders: List<String> = listOf(),
     val gallery: List<GalleryImage>? = null
-) {
+)
+{
     /**
      * @property id The ID of the donation platform
      * @property platform The donation platform this link is associated with
@@ -84,9 +85,7 @@ data class MrProjectModel(
      */
     @Serializable
     data class DonationUrl(
-        val id: String,
-        val platform: String,
-        val url: String
+        val id: String, val platform: String, val url: String
     )
 
     /**
@@ -96,9 +95,7 @@ data class MrProjectModel(
      */
     @Serializable
     data class License(
-        val id: String,
-        val name: String,
-        val url: String? = null
+        val id: String, val name: String, val url: String? = null
     )
 
     /**

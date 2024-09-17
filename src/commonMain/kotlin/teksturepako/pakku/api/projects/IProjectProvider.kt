@@ -4,6 +4,10 @@ interface IProjectProvider
 {
     val name: String
 
+    val serialName: String
+
+    val shortName: String
+
     /** Requests a [project][Project] based on either its ID or slug. */
     suspend fun requestProject(input: String): Project?
 
