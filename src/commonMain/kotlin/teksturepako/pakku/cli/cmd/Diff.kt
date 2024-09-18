@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.containsNotProject
 import java.io.File
+import kotlin.collections.Set
 
 class Diff : CliktCommand()
 {
@@ -41,6 +42,73 @@ class Diff : CliktCommand()
             return@runBlocking
         }
         val allNewProjects = newLockFile.getAllProjects()
+
+        val allOldModLoadersAndVersions = oldLockFile.getLoadersWithVersions().toSet()
+        val allNewModLoadersAndVersions = newLockFile.getLoadersWithVersions().toSet()
+
+        // Only compute difference if the modloaders actually changed
+        val didModLoaderUpdate = allOldModLoadersAndVersions != allNewModLoadersAndVersions
+        var addedModLoaders: Set<String>
+        var removedModLoaders: Set<String>
+        var updatedModLoaders: List<String>
+        if (didModLoaderUpdate)
+        {
+            // Extract modloaders (first element of the pair) for both old and new versions
+            val oldModLoaders = allOldModLoadersAndVersions.map { it.first }.toSet()
+            val newModLoaders = allNewModLoadersAndVersions.map { it.first }.toSet()
+
+            // Added modloaders: Present in new but not in old
+            addedModLoaders = newModLoaders - oldModLoaders
+            // .capitalize() is deprecated ...
+            addedModLoaders = addedModLoaders.map { loader -> loader.replaceFirstChar { it.titlecase() } }.toSet()
+            addedModLoaders.forEach { terminal.success("+ $it") }
+
+            // Removed modloaders: Present in old but not in new
+            removedModLoaders = oldModLoaders - newModLoaders
+            removedModLoaders = removedModLoaders.map { loader -> loader.replaceFirstChar { it.titlecase() } }.toSet()
+            removedModLoaders.forEach { terminal.danger("- $it") }
+
+            if (verboseOpt)
+            {
+                updatedModLoaders = allNewModLoadersAndVersions.filter { newModLoader ->
+                    allOldModLoadersAndVersions.any { oldModLoader ->
+                        oldModLoader.first == newModLoader.first && oldModLoader.second != newModLoader.second
+                    }
+                }.map { newMod ->
+                    // Find the corresponding old version
+                    val oldVersion = allOldModLoadersAndVersions.find { it.first == newMod.first }?.second
+                    val newVersion = newMod.second
+
+                    val modLoaderName = newMod.first.replaceFirstChar { it.uppercase() }
+
+                    val oldLoadersAndVersion = "$modLoaderName $oldVersion"
+                    val newLoadersAndVersion = "$modLoaderName $newVersion"
+                    // Format the output
+                    oldLoadersAndVersion to newLoadersAndVersion
+                }.let {
+                    val maxOldModLoaderLength = it.maxOf { it.first.length }
+                    it.map { (oldEntry, newEntry) ->
+                        "${oldEntry.padEnd(maxOldModLoaderLength)} -> $newEntry"
+                    }
+                }
+            }
+            else
+            {
+                // Updated modloaders: Same modloader in both sets but with different versions
+                updatedModLoaders = allNewModLoadersAndVersions.filter { newModLoader ->
+                    allOldModLoadersAndVersions.any { oldModLoader ->
+                        oldModLoader.first == newModLoader.first && oldModLoader.second != newModLoader.second
+                    }
+                }.map { loader -> loader.first.replaceFirstChar { it.uppercase() } }
+            }
+            updatedModLoaders.forEach { terminal.info("! $it") }
+        }
+        else
+        {
+            addedModLoaders = emptySet()
+            removedModLoaders = emptySet()
+            updatedModLoaders = emptyList()
+        }
 
         val added = allNewProjects.mapNotNull { newProject ->
             if (allOldProjects containsNotProject newProject)
@@ -118,6 +186,13 @@ class Diff : CliktCommand()
             file.createNewFile()
             file.outputStream().close()
             file.appendText("```diff\n")
+            addedModLoaders.forEach { file.appendText("+ $it\n") }
+            removedModLoaders.forEach { file.appendText("- $it\n") }
+            updatedModLoaders.forEach { file.appendText("! $it\n") }
+            if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty())
+            {
+                file.appendText("\n")
+            }
             added.forEach { file.appendText("+ $it\n") }
             removed.forEach { file.appendText("- $it\n") }
             updated.forEach { file.appendText("! $it\n") }
@@ -130,22 +205,53 @@ class Diff : CliktCommand()
 
             file.createNewFile()
             file.outputStream().close()
-            if (added.isNotEmpty())
+            if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty())
             {
-                file.appendText("### Added\n\n")
-                added.forEach { file.appendText("- $it\n") }
-                if (removed.isNotEmpty() || updated.isNotEmpty()) file.appendText("\n")
+                file.appendText("## Loaders\n\n")
+
+                if (addedModLoaders.isNotEmpty())
+                {
+                    file.appendText("### Added\n\n")
+                    addedModLoaders.forEach { file.appendText("- $it\n") }
+                    if (removed.isNotEmpty() || updated.isNotEmpty()) file.appendText("\n")
+                }
+
+                if (removedModLoaders.isNotEmpty())
+                {
+                    file.appendText("### Removed\n\n")
+                    removedModLoaders.forEach { file.appendText("- $it\n") }
+                    if (updated.isNotEmpty()) file.appendText("\n")
+                }
+
+                if (updated.isNotEmpty())
+                {
+                    file.appendText("### Updated\n\n")
+                    updatedModLoaders.forEach { file.appendText("- $it\n") }
+                }
+                if (updatedModLoaders.isNotEmpty() || removed.isNotEmpty() || updated.isNotEmpty()) file.appendText("\n")
             }
-            if (removed.isNotEmpty())
+
+            if (added.isNotEmpty() || removed.isNotEmpty() || updated.isNotEmpty())
             {
-                file.appendText("### Removed\n\n")
-                removed.forEach { file.appendText("- $it\n") }
-                if (updated.isNotEmpty()) file.appendText("\n")
-            }
-            if (updated.isNotEmpty())
-            {
-                file.appendText("### Updated\n\n")
-                updated.forEach { file.appendText("- $it\n") }
+                file.appendText("## Projects\n\n")
+
+                if (added.isNotEmpty())
+                {
+                    file.appendText("### Added\n\n")
+                    added.forEach { file.appendText("- $it\n") }
+                    if (removed.isNotEmpty() || updated.isNotEmpty()) file.appendText("\n")
+                }
+                if (removed.isNotEmpty())
+                {
+                    file.appendText("### Removed\n\n")
+                    removed.forEach { file.appendText("- $it\n") }
+                    if (updated.isNotEmpty()) file.appendText("\n")
+                }
+                if (updated.isNotEmpty())
+                {
+                    file.appendText("### Updated\n\n")
+                    updated.forEach { file.appendText("- $it\n") }
+                }
             }
         }
         echo()
