@@ -17,7 +17,7 @@ class Gh : CliktCommand()
         projectArgs.mapNotNull x@ { arg ->
             val (owner, repo) = splitGitHubProjectArg(arg) ?: return@x null
 
-            val prj = GitHub.requestProject("$owner/$repo") ?: return@x null
+            val prj = GitHub.requestProjectWithFiles(listOf(), listOf(),"$owner/$repo") ?: return@x null
 
             terminal.println(prj.toPrettyString())
         }

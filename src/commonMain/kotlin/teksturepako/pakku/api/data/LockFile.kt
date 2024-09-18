@@ -43,14 +43,9 @@ data class LockFile(
     private var projects: MutableList<Project> = mutableListOf(),
 
     /** The version of the LockFile. */
-    @SerialName("lockfile_version") @Required private var lockFileVersion: Int? = null,
+    @SerialName("lockfile_version") @Required private val lockFileVersion: Int = 1,
 )
 {
-    init
-    {
-        lockFileVersion = 1
-    }
-
     // -- MC VERSIONS --
 
     fun setMcVersions(mcVersions: Collection<String>)

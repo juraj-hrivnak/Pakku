@@ -77,9 +77,7 @@ data class MrModpackModel(
     override suspend fun toLockFile() = LockFile(
         target = Modrinth.serialName,
         mcVersions = mutableListOf(this.dependencies["minecraft"] ?: ""),
-        loaders = this.dependencies.filterNot {
-            it.key == "minecraft"
-        }.toMutableMap(),
+        loaders = this.dependencies.filterNot { it.key == "minecraft" }.toMutableMap(),
         projects = mutableListOf()
     )
 
