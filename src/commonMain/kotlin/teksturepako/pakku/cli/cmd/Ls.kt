@@ -10,9 +10,9 @@ import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.table.grid
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
@@ -37,7 +37,7 @@ class Ls : CliktCommand()
         val projects = lockFile.getAllProjects()
 
         val newProjects = if (checkUpdatesFlag) async {
-            Multiplatform.updateMultipleProjectsWithFiles(
+            updateMultipleProjectsWithFiles(
                 lockFile.getMcVersions(),
                 lockFile.getLoaders(),
                 projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
