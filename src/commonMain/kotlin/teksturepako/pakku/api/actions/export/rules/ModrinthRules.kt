@@ -7,20 +7,24 @@ import teksturepako.pakku.api.actions.export.ruleResult
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.jsonEncodeDefaults
+import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.models.mr.MrModpackModel
 import teksturepako.pakku.api.models.mr.MrModpackModel.MrFile
+import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
-import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectSide
+import teksturepako.pakku.io.createHash
+import teksturepako.pakku.io.readPathBytesOrNull
+import kotlin.io.path.Path
 
 fun ruleOfMrModpack(modpackModel: MrModpackModel) = ExportRule {
     when (it)
     {
         is ExportingProject         ->
         {
-            val projectFile = it.project.getFilesForPlatform(Modrinth).firstOrNull()
+            val projectFile = it.project.getFilesForProviders(Modrinth, GitHub).firstOrNull()
                 ?: return@ExportRule it.setMissing()
 
             it.addToMrModpackModel(projectFile, modpackModel)
@@ -35,12 +39,12 @@ fun ruleOfMrModpack(modpackModel: MrModpackModel) = ExportRule {
     }
 }
 
-fun ruleOfMrMissingProjects(platform: Platform) = ExportRule {
+fun ruleOfMrMissingProjects() = ExportRule {
     when (it)
     {
         is MissingProject ->
         {
-            it.exportAsOverrideFrom(platform) { bytesCallback, fileName, overridesDir ->
+            it.exportAsOverride(excludedProviders = setOf(Modrinth, GitHub)) { bytesCallback, fileName, overridesDir ->
                 it.createFile(bytesCallback, overridesDir, it.project.type.folderName, fileName)
             }
         }
@@ -82,11 +86,11 @@ fun createMrModpackModel(
     )
 }
 
-fun ProjectFile.toMrFile(parentProject: Project): MrFile?
+suspend fun ProjectFile.toMrFile(parentProject: Project): MrFile?
 {
-    if (this.type != Modrinth.serialName) return null
+    if (this.type !in listOf(Modrinth.serialName, GitHub.serialName)) return null
 
-    val serverRequired = if (parentProject.side in listOf(ProjectSide.SERVER, ProjectSide.BOTH))
+    val serverSide = if (parentProject.side in listOf(ProjectSide.SERVER, ProjectSide.BOTH) || parentProject.side == null)
     {
         "required"
     }
@@ -95,12 +99,18 @@ fun ProjectFile.toMrFile(parentProject: Project): MrFile?
     return MrFile(
         path = "${parentProject.type.folderName}/${this.fileName}",
         hashes = MrFile.Hashes(
-            sha512 = this.hashes?.get("sha512")!!,
-            sha1 = this.hashes["sha1"]!!
+            sha512 = this.hashes?.get("sha512")
+                ?: readPathBytesOrNull(Path(workingPath, parentProject.type.folderName, fileName))?.let { bytes ->
+                    createHash("sha512", bytes)
+                } ?: return null,
+            sha1 = this.hashes?.get("sha1")
+                ?: readPathBytesOrNull(Path(workingPath, parentProject.type.folderName, fileName))?.let { bytes ->
+                    createHash("sha1", bytes)
+                } ?: return null,
         ),
         env = MrFile.Env(
             client = "required",
-            server = serverRequired,
+            server = serverSide,
         ),
         // Replace ' ' in URL with '+'
         downloads = setOf(this.url!!.replace(" ", "+")),

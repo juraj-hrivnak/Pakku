@@ -1,14 +1,12 @@
 package teksturepako.pakku.api.projects
 
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.Result
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.HashFailed
+import teksturepako.pakku.api.actions.ActionError.NoHashes
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.io.createHash
@@ -54,9 +52,9 @@ data class ProjectFile(
 
     // -- INTEGRITY --
 
-    fun checkIntegrity(bytes: ByteArray): Result<ByteArray, ActionError>
+    fun checkIntegrity(bytes: ByteArray): ActionError?
     {
-        if (this.hashes == null) return Err(ActionError.NoHashes(this))
+        if (this.hashes == null) return NoHashes(this)
 
         for ((hashType, originalHash) in this.hashes)
         {
@@ -64,11 +62,11 @@ data class ProjectFile(
 
             if (originalHash != newHash)
             {
-                return Err(HashFailed(this, originalHash, newHash))
+                return HashFailed(this, originalHash, newHash)
             }
             else continue
         }
 
-        return Ok(bytes)
+        return null
     }
 }

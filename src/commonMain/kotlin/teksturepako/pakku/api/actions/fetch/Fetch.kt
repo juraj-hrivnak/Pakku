@@ -13,7 +13,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.ProjectOverride
-import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -23,10 +23,10 @@ import kotlin.io.path.*
 
 fun retrieveProjectFiles(
     lockFile: LockFile,
-    platforms: List<Platform>
+    providers: List<IProjectProvider>
 ) : List<Result<ProjectFile, ActionError>> = lockFile.getAllProjects().map { project ->
-    val file = platforms.firstNotNullOfOrNull { platform ->
-        project.getFilesForPlatform(platform).firstOrNull()
+    val file = providers.firstNotNullOfOrNull { provider ->
+        project.getFilesForProvider(provider).firstOrNull()
     }
 
     if (file == null) Err(NoFiles(project, lockFile)) else Ok(file)
@@ -65,9 +65,13 @@ suspend fun List<ProjectFile>.fetch(
                     return@launch
                 }
 
-                projectFile.checkIntegrity(bytes).getOrElse {
+                projectFile.checkIntegrity(bytes)?.let {
+                    if (it !is NoHashes)
+                    {
+                        return@launch
+                    }
+
                     onError(it)
-                    return@launch
                 }
 
                 send(projectFile to bytes)

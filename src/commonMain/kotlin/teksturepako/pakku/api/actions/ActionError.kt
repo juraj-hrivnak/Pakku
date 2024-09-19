@@ -1,7 +1,7 @@
 package teksturepako.pakku.api.actions
 
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.cli.ui.dim
@@ -39,7 +39,7 @@ open class ActionError(
         ActionError("Failed to download '$path'.")
 
     class NoHashes(val projectFile: ProjectFile) :
-        ActionError("File '${projectFile.getPath()}' has no hashes.")
+        ActionError("File '${projectFile.getPath()}' has no hashes.", isWarning = true)
 
     class HashFailed(val projectFile: ProjectFile, val originalHash: String, val newHash: String) :
         ActionError("""Failed to math hash for file '${projectFile.getPath()}'.
@@ -99,18 +99,18 @@ open class ActionError(
                 "Could not add ${dim(project.type)} ${project.getFlavoredSlug()}. It is already added."
         }
 
-    class NotFoundOnPlatform(val project: Project, val platform: Platform) :
-        ActionError("${project.type} ${project.slug} was not found on ${platform.name}")
+    class NotFoundOn(val project: Project, val provider: IProjectProvider) :
+        ActionError("${project.type} ${project.slug} was not found on ${provider.name}")
         {
             override fun message(arg: String): String =
-                "${dim(project.type)} ${project.getFlavoredSlug()} was not found on ${platform.name}."
+                "${dim(project.type)} ${project.getFlavoredSlug()} was not found on ${provider.name}."
         }
 
-    class NoFilesOnPlatform(val project: Project, val platform: Platform) :
-        ActionError("No files for ${project.type} ${project.slug} found on ${platform.name}.")
+    class NoFilesOn(val project: Project, val provider: IProjectProvider) :
+        ActionError("No files for ${project.type} ${project.slug} found on ${provider.name}.")
         {
             override fun message(arg: String) =
-                "No files for ${dim(project.type)} ${project.getFlavoredSlug()} found on ${platform.name}."
+                "No files for ${dim(project.type)} ${project.getFlavoredSlug()} found on ${provider.name}."
         }
 
     class NoFiles(val project: Project, val lockFile: LockFile) :

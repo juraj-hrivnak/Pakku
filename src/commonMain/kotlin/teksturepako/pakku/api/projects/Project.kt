@@ -11,6 +11,7 @@ import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
 import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
 import teksturepako.pakku.api.data.*
+import teksturepako.pakku.api.platforms.IProjectProvider
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 
@@ -121,6 +122,15 @@ data class Project(
     /** Checks if the project has no files on the specified [platform][Platform]. */
     fun hasNoFilesOnPlatform(platform: Platform): Boolean = !hasFilesOnPlatform(platform)
 
+    /** Checks if the project has files on the specified [provider]. */
+    fun hasFilesOn(provider: IProjectProvider): Boolean
+    {
+        return provider.serialName in this.files.map { it.type }
+    }
+
+    /** Checks if the project has no files on the specified [provider]. */
+    fun hasNoFilesOn(provider: IProjectProvider) = !hasFilesOn(provider)
+
     /** Checks if file names match across specified [platforms][platforms]. */
     fun fileNamesMatchAcrossPlatforms(platforms: List<Platform>): Boolean
     {
@@ -139,6 +149,17 @@ data class Project(
     {
         return this.files.filter { platform.serialName == it.type }
     }
+
+    fun getFilesForProvider(provider: IProjectProvider): List<ProjectFile>
+    {
+        return this.files.filter { provider.serialName == it.type }
+    }
+
+    fun getFilesForProviders(vararg providers: IProjectProvider): List<ProjectFile>
+    {
+        return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
+    }
+
 
     /**
      * Requests [projects with files][IProjectProvider.requestProjectWithFiles] for all dependencies of this project.

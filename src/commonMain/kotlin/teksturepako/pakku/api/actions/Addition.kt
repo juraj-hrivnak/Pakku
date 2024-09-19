@@ -2,6 +2,7 @@ package teksturepako.pakku.api.actions
 
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 
@@ -28,26 +29,31 @@ suspend fun Project?.createAdditionRequest(
         return onError(AlreadyAdded(project))
     }
 
-    for (platform in platforms)
+    // We do not have to check platform for GitHub only project
+    if (project.slug.keys.size > 1 || project.slug.keys.firstOrNull() != GitHub.serialName)
     {
-        // Check if project is on each platform
-        if (project.isNotOnPlatform(platform))
+        for (platform in platforms)
         {
-            if (!strict) continue
-            else
+            // Check if project is on each platform
+            if (project.isNotOnPlatform(platform))
             {
-                onError(NotFoundOnPlatform(project, platform))
-                return
+                if (!strict) continue
+                else
+                {
+                    onError(NotFoundOn(project, platform))
+                    return
+                }
+            }
+
+            // Check if project has files on each platform
+            if (project.hasNoFilesOnPlatform(platform))
+            {
+                onError(NoFilesOn(project, platform))
+                isRecommended = false
             }
         }
-
-        // Check if project has files on each platform
-        if (project.hasNoFilesOnPlatform(platform))
-        {
-            onError(NoFilesOnPlatform(project, platform))
-            isRecommended = false
-        }
     }
+
 
     // Check if project has any files at all
     if (project.hasNoFiles())

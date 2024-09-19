@@ -5,7 +5,6 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.models.gh.GhReleaseModel
 import teksturepako.pakku.api.models.gh.GhRepoModel
-import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -15,6 +14,7 @@ object GitHub : Http(), IProjectProvider
     override val name = "GitHub"
     override val serialName = "github"
     override val shortName = "gh"
+    override val siteUrl = "https://github.com"
 
     private fun GhRepoModel.toProject(): Project
     {
