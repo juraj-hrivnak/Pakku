@@ -3,17 +3,23 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.*
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.michaelbull.result.fold
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.NotFoundOnPlatform
+import teksturepako.pakku.api.actions.ActionError.NotFoundOn
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.splitProjectArg
+import teksturepako.pakku.cli.arg.EmptyArg
+import teksturepako.pakku.cli.arg.ProjectArg
+import teksturepako.pakku.cli.arg.mapProjectArg
 import teksturepako.pakku.cli.cmd.subcmd.Prj
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*
@@ -22,7 +28,15 @@ class Add : CliktCommand()
 {
     override fun help(context: Context) = "Add projects"
 
-    private val projectArgs: List<String> by argument("projects", help = "Projects to add").multiple()
+    private val projectArgs: List<ProjectArg> by argument("projects", help = "Projects to add").multiple().transformAll {
+        it.mapNotNull x@ { input ->
+            mapProjectArg(input).getOrElse { err ->
+                terminal.pError(err)
+                null
+            }
+        }
+    }
+
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
     private val flags by findOrSetObject { mutableMapOf<String, Boolean>() }
@@ -57,29 +71,33 @@ class Add : CliktCommand()
             return@runBlocking
         }
 
-        suspend fun add(projectIn: Project?, args: Triple<String, String, String?>, strict: Boolean = true)
+        suspend fun add(projectIn: Project?, arg: ProjectArg, strict: Boolean = true)
         {
-            suspend fun handleMissingProject(error: NotFoundOnPlatform, args: Triple<String, String, String?>)
+            suspend fun handleMissingProject(error: NotFoundOn, arg: ProjectArg)
             {
-                val prompt = promptForProject(error.platform, terminal, lockFile, args.third)
-                    ?: return add(projectIn, args, strict = false)
+                val prompt = promptForProject(error.provider, terminal, lockFile, arg.rawArg).onFailure {
+                    if (it is EmptyArg) return add(projectIn, arg, strict = false)
+                }.getOrElse {
+                    return terminal.pError(it)
+                }
 
-                val (promptedProject, promptedArgs) = prompt
-                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArgs.first)
+                val (promptedProject, promptedArg) = prompt
+
+                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArg.rawArg)
 
                 (error.project + promptedProject).fold( // Combine projects
                     failure = { terminal.pError(it) },
-                    success = { add(it, promptedArgs) }
+                    success = { add(it, promptedArg) }
                 )
             }
 
             projectIn.createAdditionRequest(
                 onError = { error ->
-                    terminal.pError(error, arg = args.first)
+                    terminal.pError(error, arg = arg.rawArg)
 
-                    if (error is NotFoundOnPlatform && strict)
+                    if (error is NotFoundOn && strict)
                     {
-                        handleMissingProject(error, args)
+                        handleMissingProject(error, arg)
                     }
                 },
                 onSuccess = { project, isRecommended, reqHandlers ->
@@ -103,11 +121,18 @@ class Add : CliktCommand()
         }
 
         for ((projectIn, args) in projectArgs.map { arg ->
-            val (input, fileId) = splitProjectArg(arg)
-
-            projectProvider.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId
-            ) to Triple(arg, input, fileId)
+            arg.fold(
+                arg = {
+                    projectProvider.requestProjectWithFiles(
+                        lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId
+                    ) to it
+                },
+                gitHubArg = {
+                    GitHub.requestProjectWithFiles(
+                        listOf(), listOf(), "${it.owner}/${it.repo}"
+                    ) to it
+                }
+            )
         })
         {
             add(projectIn, args)
