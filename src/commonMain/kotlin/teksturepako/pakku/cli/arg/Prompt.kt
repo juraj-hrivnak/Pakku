@@ -1,4 +1,4 @@
-package teksturepako.pakku.cli.ui
+package teksturepako.pakku.cli.arg
 
 import com.github.ajalt.mordant.terminal.StringPrompt
 import com.github.ajalt.mordant.terminal.Terminal
@@ -12,9 +12,6 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.IProjectProvider
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.EmptyArg
-import teksturepako.pakku.cli.arg.ProjectArg
-import teksturepako.pakku.cli.arg.mapProjectArg
 
 suspend fun promptForProject(
     provider: IProjectProvider, terminal: Terminal, lockFile: LockFile, fileId: String? = null

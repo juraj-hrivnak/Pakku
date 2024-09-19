@@ -12,6 +12,7 @@ import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.typoSuggester
 

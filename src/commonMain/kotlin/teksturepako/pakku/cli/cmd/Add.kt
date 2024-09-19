@@ -17,9 +17,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.EmptyArg
-import teksturepako.pakku.cli.arg.ProjectArg
-import teksturepako.pakku.cli.arg.mapProjectArg
+import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.cmd.subcmd.Prj
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*

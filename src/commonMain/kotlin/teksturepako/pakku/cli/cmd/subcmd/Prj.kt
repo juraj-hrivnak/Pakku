@@ -19,10 +19,7 @@ import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.EmptyArg
-import teksturepako.pakku.cli.arg.ProjectArg
-import teksturepako.pakku.cli.arg.splitGitHubProjectArg
-import teksturepako.pakku.cli.arg.splitProjectArg
+import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*
 import kotlin.collections.fold
