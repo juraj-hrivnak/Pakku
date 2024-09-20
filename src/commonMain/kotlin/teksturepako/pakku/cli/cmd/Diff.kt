@@ -35,6 +35,7 @@ class Diff : CliktCommand()
             return@runBlocking
         }
         val allOldProjects = oldLockFile.getAllProjects()
+        val allOldMCVersions = oldLockFile.getMcVersions().toSet()
 
         val newLockFile = LockFile.readToResultFrom(newPathArg).getOrElse {
             terminal.danger(it.message)
@@ -42,6 +43,13 @@ class Diff : CliktCommand()
             return@runBlocking
         }
         val allNewProjects = newLockFile.getAllProjects()
+        val allNewMCVersions = newLockFile.getMcVersions().toSet()
+
+        val addedMCVersions = allNewMCVersions - allOldMCVersions
+        val removedMCVersions = allOldMCVersions - allNewMCVersions
+
+        addedMCVersions.forEach { terminal.success("+ $it") }
+        removedMCVersions.forEach { terminal.danger("- $it") }
 
         val allOldModLoadersAndVersions = oldLockFile.getLoadersWithVersions().toSet()
         val allNewModLoadersAndVersions = newLockFile.getLoadersWithVersions().toSet()
@@ -186,13 +194,13 @@ class Diff : CliktCommand()
             file.createNewFile()
             file.outputStream().close()
             file.appendText("```diff\n")
+            addedMCVersions.forEach { file.appendText("+ $it\n") }
+            removedMCVersions.forEach { file.appendText("- $it\n") }
+            if (addedMCVersions.isNotEmpty() || removedMCVersions.isNotEmpty()) file.appendText("\n")
             addedModLoaders.forEach { file.appendText("+ $it\n") }
             removedModLoaders.forEach { file.appendText("- $it\n") }
             updatedModLoaders.forEach { file.appendText("! $it\n") }
-            if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty())
-            {
-                file.appendText("\n")
-            }
+            if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty()) file.appendText("\n")
             added.forEach { file.appendText("+ $it\n") }
             removed.forEach { file.appendText("- $it\n") }
             updated.forEach { file.appendText("! $it\n") }
@@ -205,6 +213,22 @@ class Diff : CliktCommand()
 
             file.createNewFile()
             file.outputStream().close()
+            if (addedMCVersions.isNotEmpty() || removedMCVersions.isNotEmpty()) {
+                file.appendText("## Minecraft\n\n")
+
+                if (addedMCVersions.isNotEmpty()) {
+                    file.appendText("### Added\n\n")
+                    addedMCVersions.forEach {file.appendText("- $it\n")}
+                    if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty() || removedMCVersions.isNotEmpty()) file.appendText("\n")
+                }
+
+                if (removedMCVersions.isNotEmpty()) {
+                    file.appendText("### Removed\n\n")
+                    removedMCVersions.forEach {file.appendText("- $it\n")}
+                    if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty()) file.appendText("\n")
+                }
+            }
+
             if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty())
             {
                 file.appendText("## Loaders\n\n")
