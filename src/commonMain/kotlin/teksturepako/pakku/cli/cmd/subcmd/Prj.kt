@@ -32,19 +32,19 @@ class Prj : CliktCommand()
 {
     override fun help(context: Context) = "Specify the project precisely"
 
-    private val cfOpt: ProjectArg.Arg? by option(
+    private val cfOpt: ProjectArg.CommonArg? by option(
         "--cf", "--curseforge", help = "CurseForge project slug or ID"
     ).convert {
-        splitProjectArg(it).getOrElse { err ->
+        splitCommonArg(it).getOrElse { err ->
             terminal.pError(err)
             exitProcess(1)
         }
     }
 
-    private val mrOpt: ProjectArg.Arg? by option(
+    private val mrOpt: ProjectArg.CommonArg? by option(
         "--mr", "--modrinth", help = "Modrinth project slug or ID"
     ).convert {
-        splitProjectArg(it).getOrElse { err ->
+        splitCommonArg(it).getOrElse { err ->
             terminal.pError(err)
             exitProcess(1)
         }
@@ -53,7 +53,7 @@ class Prj : CliktCommand()
     private val ghOpt: ProjectArg.GitHubArg? by option(
         "--gh", "--github", help = "GitHub repository URL or `{owner}/{repo}`"
     ).convert {
-        splitGitHubProjectArg(it).getOrElse { err ->
+        splitGitHubArg(it).getOrElse { err ->
             terminal.pError(err)
             exitProcess(1)
         }

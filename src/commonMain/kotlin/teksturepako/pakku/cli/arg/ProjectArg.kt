@@ -10,23 +10,23 @@ import kotlin.contracts.contract
 
 sealed class ProjectArg(open val rawArg: String)
 {
-    data class Arg(val input: String, val fileId: String?, override val rawArg: String) : ProjectArg(rawArg)
+    data class CommonArg(val input: String, val fileId: String?, override val rawArg: String) : ProjectArg(rawArg)
     data class GitHubArg(val owner: String, val repo: String, override val rawArg: String) : ProjectArg(rawArg)
 
     @OptIn(ExperimentalContracts::class)
     inline fun <T> fold(
-        arg: (Arg) -> T,
+        commonArg: (CommonArg) -> T,
         gitHubArg: (GitHubArg) -> T,
     ): T
     {
         contract {
-            callsInPlace(arg, InvocationKind.AT_MOST_ONCE)
+            callsInPlace(commonArg, InvocationKind.AT_MOST_ONCE)
             callsInPlace(gitHubArg, InvocationKind.AT_MOST_ONCE)
         }
 
         return when (this)
         {
-            is Arg       -> arg(this)
+            is CommonArg -> commonArg(this)
             is GitHubArg -> gitHubArg(this)
         }
     }
@@ -37,14 +37,14 @@ data class ArgFailed(val arg: String, val argType: String) :
 
 data class EmptyArg(val argType: String) : ActionError("$argType arg is empty")
 
-fun splitProjectArg(arg: String): Result<ProjectArg.Arg, ActionError>
+fun splitCommonArg(arg: String): Result<ProjectArg.CommonArg, ActionError>
 {
     val splitArg = arg.split(":")
     val input = splitArg.getOrNull(0) ?: return Err(EmptyArg("project"))
-    return Ok(ProjectArg.Arg(input, splitArg.getOrNull(1), rawArg = arg))
+    return Ok(ProjectArg.CommonArg(input, splitArg.getOrNull(1), rawArg = arg))
 }
 
-fun splitGitHubProjectArg(arg: String): Result<ProjectArg.GitHubArg, ActionError>
+fun splitGitHubArg(arg: String): Result<ProjectArg.GitHubArg, ActionError>
 {
     val splitArg = arg.replace(".*github.com/".toRegex(), "").split("/")
 
@@ -56,7 +56,7 @@ fun splitGitHubProjectArg(arg: String): Result<ProjectArg.GitHubArg, ActionError
 
 fun mapProjectArg(arg: String): Result<ProjectArg, ActionError>
 {
-    return if ("/" in arg) splitGitHubProjectArg(arg)
-    else splitProjectArg(arg)
+    return if ("/" in arg) splitGitHubArg(arg)
+    else splitCommonArg(arg)
 }
 

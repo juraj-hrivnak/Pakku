@@ -24,7 +24,7 @@ suspend fun promptForProject(
     val arg: ProjectArg = mapProjectArg(prompt).getOrElse { return Err(it) }
 
     return arg.fold(
-        arg = {
+        commonArg = {
             Ok(provider.requestProjectWithFiles(
                 lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId ?: fileId
             ) to it)

@@ -120,7 +120,7 @@ class Add : CliktCommand()
 
         for ((projectIn, args) in projectArgs.map { arg ->
             arg.fold(
-                arg = {
+                commonArg = {
                     projectProvider.requestProjectWithFiles(
                         lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId
                     ) to it
