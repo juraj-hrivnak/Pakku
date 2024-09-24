@@ -39,7 +39,7 @@ class Rm : CliktCommand()
 
                     if (error is ProjNotFound)
                     {
-                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values }
+                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values + it.name.values }
 
                         typoSuggester(arg, slugs).firstOrNull()?.let { realArg ->
                             if (ynPrompt("Do you mean '$realArg'?", terminal))
