@@ -68,8 +68,7 @@ suspend fun ExportProfile.export(
             .onFailure { onError(this, CouldNotSave(null, it.message)) }
             .get() ?: return
 
-        // -- FILE CACHE --
-
+        // Create parent directory
         cacheDir.tryOrNull {
             it.createDirectory()
             it.setAttribute("dos:hidden", true)
@@ -77,12 +76,16 @@ suspend fun ExportProfile.export(
 
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
-        val results = this.rules.filterNotNull().produceRuleResults(lockFile, configFile, this.name)
+        val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(lockFile, configFile, this.name)
 
-        val cachedPaths = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
+        // Run export rules
+        val cachedPaths: List<Path> = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
                 results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
 
-        val fileHashes = cachedPaths.filterNot { it.isDirectory() }
+        // -- FILE CACHE --
+
+        /** Map of _absolute paths_ to their _hashes_ for every path not in a directory */
+        val fileHashes: Map<Path, String> = cachedPaths.filterNot { it.isDirectory() }
             .mapNotNull { file ->
                 file.tryToResult { it.readBytes() }
                     .onFailure { onError(this, it) }
@@ -90,7 +93,8 @@ suspend fun ExportProfile.export(
             }
             .associate { it.first.absolute() to createHash("sha1", it.second) }
 
-        val dirContentHashes = cachedPaths.filter { it.isDirectory() }
+        /** Map of _absolute paths_ to their _hashes_ for every path in a directory */
+        val dirContentHashes: Map<Path, String> = cachedPaths.filter { it.isDirectory() }
             .mapNotNull { directory ->
                 directory.tryToResult { it.toFile().walkTopDown() }
                     .onFailure { onError(this, it) }.get()
@@ -259,6 +263,12 @@ suspend fun List<RuleResult>.finishResults(
     }
 }
 
+/**
+ * Runs through a list of [ExportRules][ExportRule],
+ * applies data to their [RuleContexts][RuleContext] and transforms them into [RuleResults][RuleResult].
+ *
+ * [RuleContext.MissingProject] and [RuleContext.Finished] are applied last.
+ */
 suspend fun List<ExportRule>.produceRuleResults(
     lockFile: LockFile, configFile: ConfigFile, workingSubDir: String
 ): List<RuleResult>
@@ -275,8 +285,8 @@ suspend fun List<ExportRule>.produceRuleResults(
         } + readProjectOverrides().map {
             rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
         }
-    }.map { (rule, ruleEntry) ->
-        rule.getResult(ruleEntry)
+    }.map { (exportRule, ruleContext) ->
+        exportRule.getResult(ruleContext)
     }
 
     val missing = results.filter {

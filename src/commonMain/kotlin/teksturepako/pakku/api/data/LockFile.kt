@@ -5,11 +5,7 @@ package teksturepako.pakku.api.data
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Modrinth
-import teksturepako.pakku.api.platforms.Multiplatform
-import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.projects.IProjectProvider
+import teksturepako.pakku.api.platforms.*
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.containsProject
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
@@ -43,14 +39,9 @@ data class LockFile(
     private var projects: MutableList<Project> = mutableListOf(),
 
     /** The version of the LockFile. */
-    @SerialName("lockfile_version") @Required private var lockFileVersion: Int? = null,
+    @SerialName("lockfile_version") @Required private val lockFileVersion: Int = 1,
 )
 {
-    init
-    {
-        lockFileVersion = 1
-    }
-
     // -- MC VERSIONS --
 
     fun setMcVersions(mcVersions: Collection<String>)
@@ -123,8 +114,8 @@ data class LockFile(
             this.projects.add(project)
             true
         }
-        // Sort alphabetically
-        this.projects.sortBy { it.slug.values.first() }
+        // Sort alphabetically by name
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return added
     }
@@ -135,7 +126,7 @@ data class LockFile(
         this.projects.addAll(projects).also {
             added = it
         }
-        this.projects.sortBy { it.slug.values.first() }
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return added
     }
@@ -162,7 +153,7 @@ data class LockFile(
             }
         }
         // Sort alphabetically
-        this.projects.sortBy { it.slug.values.first() }
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return updated
     }
@@ -176,7 +167,7 @@ data class LockFile(
         this.projects.addAll(projects).also {
             updated = it
         }
-        this.projects.sortBy { it.slug.values.first() }
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return updated
     }
@@ -267,7 +258,7 @@ data class LockFile(
         fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
-         fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
+        fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
             .also { it.inheritConfig(ConfigFile.readOrNull()) }
 
         /**

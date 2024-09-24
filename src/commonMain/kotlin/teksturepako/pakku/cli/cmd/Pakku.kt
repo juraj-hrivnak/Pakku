@@ -10,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.VERSION
 import teksturepako.pakku.api.data.Dirs.PAKKU_DIR
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.cli.ui.overrideYes
+import teksturepako.pakku.cli.arg.overrideYes
 import teksturepako.pakku.cli.ui.pInfo
 import teksturepako.pakku.debugMode
 import teksturepako.pakku.io.tryOrNull

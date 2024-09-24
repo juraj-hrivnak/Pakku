@@ -1,7 +1,6 @@
 package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.http.Http
-import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -15,11 +14,11 @@ import teksturepako.pakku.api.projects.ProjectType
  */
 abstract class Platform(
     override val name: String,
-    val serialName: String,
-    val shortName: String,
+    override val serialName: String,
+    override val shortName: String,
     val apiUrl: String,
     val apiVersion: Int,
-    val siteUrl: String,
+    override val siteUrl: String,
 ) : Http(), IProjectProvider
 {
     override fun toString(): String = this.name

@@ -12,6 +12,7 @@ import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.typoSuggester
 
@@ -38,7 +39,7 @@ class Rm : CliktCommand()
 
                     if (error is ProjNotFound)
                     {
-                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values }
+                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values + it.name.values }
 
                         typoSuggester(arg, slugs).firstOrNull()?.let { realArg ->
                             if (ynPrompt("Do you mean '$realArg'?", terminal))

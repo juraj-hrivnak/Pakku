@@ -5,9 +5,9 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.table.grid
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.containsProject
 import teksturepako.pakku.cli.ui.*
@@ -66,7 +66,7 @@ class Status: CliktCommand()
 
         val currentProjects = lockFile.getAllProjects()
         val updatedProjects =
-            Multiplatform.updateMultipleProjectsWithFiles(
+            updateMultipleProjectsWithFiles(
                 lockFile.getMcVersions(),
                 lockFile.getLoaders(),
                 currentProjects.toMutableSet(),
