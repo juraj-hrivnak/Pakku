@@ -8,15 +8,8 @@ fun Collection<Project>.inheritPropertiesFrom(configFile: ConfigFile?): MutableL
 {
     if (configFile == null) return this.toMutableList()
 
-    configFile.getProjects().forEach { (input, config) ->
-        this.forEach { project ->
-            if (input in project || project.files.any { input in it.fileName })
-            {
-                project.side = config.side
-                config.updateStrategy?.let { project.updateStrategy = it }
-                config.redistributable?.let { project.redistributable = it }
-            }
-        }
+    this.forEach { project ->
+        project.inheritPropertiesFrom(configFile)
     }
 
     return this.toMutableList()
@@ -46,12 +39,11 @@ fun MutableCollection<Project>.removeIf(predicate: (Project) -> Boolean): Boolea
 }
 
 /** Combines (or zips) projects with other projects. */
-fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project>
-{
-    return this.map { project ->
+fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project> = this
+    .map { project ->
         otherProjects.find { project isAlmostTheSameAs it }?.let {
             if (project.type == it.type) (project + it).get() else project
         } ?: project
-    }.toSet()
-}
+    }
+    .toSet()
 

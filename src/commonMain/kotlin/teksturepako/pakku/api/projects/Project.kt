@@ -30,7 +30,7 @@ import teksturepako.pakku.api.platforms.Platform
 data class Project(
     @SerialName("pakku_id") var pakkuId: String? = null,
     @SerialName("pakku_links") val pakkuLinks: MutableSet<String> = mutableSetOf(),
-    val type: ProjectType,
+    var type: ProjectType,
     var side: ProjectSide? = null,
 
     val slug: MutableMap<String, String>,
@@ -172,6 +172,21 @@ data class Project(
             .mapNotNull {
                 projectProvider.requestProjectWithFiles(lockFile.getMcVersions(), lockFile.getLoaders(), it)
             }
+    }
+
+    fun inheritPropertiesFrom(configFile: ConfigFile?): Project
+    {
+        configFile?.getProjects()?.forEach { (input, config) ->
+            if (input in this || this.files.any { input in it.fileName })
+            {
+                config.type?.let { this.type = it }
+                this.side = config.side
+                config.updateStrategy?.let { this.updateStrategy = it }
+                config.redistributable?.let { this.redistributable = it }
+            }
+        }
+
+        return this
     }
 
     init

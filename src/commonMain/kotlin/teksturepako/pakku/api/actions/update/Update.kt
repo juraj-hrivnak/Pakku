@@ -22,26 +22,29 @@ suspend fun updateMultipleProjectsWithFiles(
     numberOfFiles: Int
 ): MutableSet<Project>
 {
-    val ghProjects = projects.filter { project ->
-        GitHub.serialName in project.slug.keys
-    }.map { oldProject ->
-        val newProject = GitHub.requestProjectWithFiles(listOf(), listOf(), oldProject.slug[GitHub.serialName]!!)
-            ?: return@map oldProject
+    val ghProjects = projects
+        .filter { project ->
+            GitHub.serialName in project.slug.keys
+        }
+        .map { oldProject ->
+            val newProject = GitHub.requestProjectWithFiles(listOf(), listOf(), oldProject.slug[GitHub.serialName]!!)
+                ?.inheritPropertiesFrom(configFile) ?: return@map oldProject
 
-        if (newProject.hasNoFiles()) oldProject else newProject // Do not update project if files are missing
-    }
+            if (newProject.hasNoFiles()) oldProject else newProject // Do not update project if files are missing
+        }
 
     return platforms.fold(projects.map { it.copy(files = mutableSetOf()) }.toMutableSet()) { acc, platform ->
 
         val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
 
         platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles)
-            .inheritPropertiesFrom(configFile).forEach { newProject ->
+            .inheritPropertiesFrom(configFile)
+            .forEach { newProject ->
                 acc.find { accProject ->
                     accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
                 }?.let { accProject ->
                     // Combine projects
-                    (accProject + newProject).get()?.let x@{ combinedProject ->
+                    (accProject + newProject).get()?.let x@ { combinedProject ->
                         if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
                         acc -= accProject
                         acc += combinedProject

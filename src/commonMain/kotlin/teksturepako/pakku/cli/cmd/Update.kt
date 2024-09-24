@@ -12,6 +12,7 @@ import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.ui.pDanger
 import teksturepako.pakku.cli.ui.pSuccess
 
 class Update : CliktCommand()
@@ -23,7 +24,7 @@ class Update : CliktCommand()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            it.message?.let { it1 -> terminal.pDanger(it1) }
             echo()
             return@runBlocking
         }
@@ -36,7 +37,7 @@ class Update : CliktCommand()
         {
             projectArgs.mapNotNull { projectArg ->
                 lockFile.getProject(projectArg).also {
-                    if (it == null) terminal.danger("$projectArg not found")
+                    if (it == null) terminal.pDanger("$projectArg not found")
                 }
             }
         }

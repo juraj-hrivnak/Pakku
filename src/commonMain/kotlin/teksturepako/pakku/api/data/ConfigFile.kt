@@ -6,6 +6,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.overrides.filterOverrides
 import teksturepako.pakku.api.projects.ProjectSide
+import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.decodeOrNew
 import teksturepako.pakku.io.decodeToResult
@@ -83,6 +84,7 @@ data class ConfigFile(
 
     @Serializable
     data class ProjectConfig(
+        var type: ProjectType?,
         var side: ProjectSide?,
         @SerialName("update_strategy") var updateStrategy: UpdateStrategy?,
         @SerialName("redistributable") var redistributable: Boolean?
