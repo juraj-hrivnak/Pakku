@@ -5,9 +5,7 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
-import com.github.ajalt.clikt.parameters.options.associate
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.varargValues
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.choice
 import kotlinx.coroutines.runBlocking
@@ -23,20 +21,19 @@ class Set : CliktCommand()
 
     private val projectArgs: List<String> by argument("projects").multiple()
 
-    private val sideOpt: String? by option(
-        "-s", "--side",
-        help = "Change the side of a project"
-    ).choice("client", "server", "both", ignoreCase = true)
+    private val sideOpt: String? by option("-s", "--side")
+        .help("Change the side of a project")
+        .choice("client", "server", "both", ignoreCase = true)
+        .deprecated("Use the config file (pakku.json) instead.")
 
-    private val updateStrategyOpt: String? by option(
-        "-u", "--update-strategy",
-        help = "Change the update strategy of a project"
-    ).choice("latest", "none", ignoreCase = true)
+    private val updateStrategyOpt: String? by option("-u", "--update-strategy")
+        .help("Change the update strategy of a project")
+        .choice("latest", "none", ignoreCase = true)
 
-    private val redistributableOpt: Boolean? by option(
-        "-r", "--redistributable",
-        help = "Change whether the project can be redistributed"
-    ).boolean()
+    private val redistributableOpt: Boolean? by option("-r", "--redistributable")
+        .help("Change whether the project can be redistributed")
+        .boolean()
+        .deprecated("Use the config file (pakku.json) instead.")
 
     // -- PACK --
 
