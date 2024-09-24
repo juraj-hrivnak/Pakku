@@ -66,11 +66,21 @@ object GitHub : Http(), IProjectProvider
     {
         val project = requestProject(input) ?: return null
 
-        val projectFiles = json.decodeFromString<List<GhReleaseModel>>(
-        this.requestBody("https://api.github.com/repos/$input/releases") ?: return null
-        )
-            .flatMap { it.toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles) }
-            .take(numberOfFiles)
+        val projectFiles = if (fileId == null)
+        {
+            json.decodeFromString<List<GhReleaseModel>>(
+                this.requestBody("https://api.github.com/repos/$input/releases") ?: return null
+            )
+                .flatMap { it.toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles) }
+                .take(numberOfFiles)
+        }
+        else
+        {
+            json.decodeFromString<GhReleaseModel>(
+                this.requestBody("https://api.github.com/repos/$input/releases/tags/$fileId") ?: return null
+            )
+                .toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles)
+        }
 
         return project.apply { files.addAll(projectFiles) }
     }

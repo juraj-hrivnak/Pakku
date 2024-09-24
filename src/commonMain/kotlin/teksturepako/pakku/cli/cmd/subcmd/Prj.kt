@@ -103,29 +103,31 @@ class Prj : CliktCommand()
                 )
             }
 
-            projectIn.createAdditionRequest(onError = { error ->
-                terminal.pError(error)
+            projectIn.createAdditionRequest(
+                onError = { error ->
+                    terminal.pError(error)
 
-                if (error is NotFoundOn && strict)
-                {
-                    handleMissingProject(error)
-                }
-            }, onSuccess = { project, isRecommended, reqHandlers ->
-                val projMsg = project.getFullMsg()
-
-                if (ynPrompt("Do you want to add $projMsg?", terminal, isRecommended))
-                {
-                    lockFile.add(project)
-                    lockFile.linkProjectToDependents(project)
-
-                    if (!noDepsFlag)
+                    if (error is NotFoundOn && strict)
                     {
-                        project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                        handleMissingProject(error)
                     }
+                },
+                onSuccess = { project, isRecommended, reqHandlers ->
+                    val projMsg = project.getFullMsg()
 
-                    terminal.pSuccess("$projMsg added")
-                }
-            }, lockFile, platforms, strict
+                    if (ynPrompt("Do you want to add $projMsg?", terminal, isRecommended))
+                    {
+                        lockFile.add(project)
+                        lockFile.linkProjectToDependents(project)
+
+                        if (!noDepsFlag)
+                        {
+                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                        }
+
+                        terminal.pSuccess("$projMsg added")
+                    }
+                }, lockFile, platforms, strict
             )
         }
 
@@ -143,7 +145,7 @@ class Prj : CliktCommand()
 
         val gh = ghOpt?.let {
             GitHub.requestProjectWithFiles(
-                listOf(), listOf(), "${it.owner}/${it.repo}"
+                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag
             )
         }
 

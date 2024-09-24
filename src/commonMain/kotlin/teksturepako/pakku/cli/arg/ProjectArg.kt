@@ -11,12 +11,12 @@ import kotlin.contracts.contract
 sealed class ProjectArg(open val rawArg: String)
 {
     data class CommonArg(val input: String, val fileId: String?, override val rawArg: String) : ProjectArg(rawArg)
-    data class GitHubArg(val owner: String, val repo: String, override val rawArg: String) : ProjectArg(rawArg)
+    data class GitHubArg(val owner: String, val repo: String, val tag: String?, override val rawArg: String) : ProjectArg(rawArg)
 
     @OptIn(ExperimentalContracts::class)
     inline fun <T> fold(
         commonArg: (CommonArg) -> T,
-        gitHubArg: (GitHubArg) -> T,
+        gitHubArg: (GitHubArg) -> T
     ): T
     {
         contract {
@@ -40,18 +40,25 @@ data class EmptyArg(val argType: String) : ActionError("$argType arg is empty")
 fun splitCommonArg(arg: String): Result<ProjectArg.CommonArg, ActionError>
 {
     val splitArg = arg.split(":")
+
     val input = splitArg.getOrNull(0) ?: return Err(EmptyArg("project"))
+
     return Ok(ProjectArg.CommonArg(input, splitArg.getOrNull(1), rawArg = arg))
 }
 
 fun splitGitHubArg(arg: String): Result<ProjectArg.GitHubArg, ActionError>
 {
-    val splitArg = arg.replace(".*github.com/".toRegex(), "").split("/")
+    val splitArg = arg.replace(".*github.com/".toRegex(), "").split("/", "@")
 
     val owner = splitArg.getOrNull(0) ?: return Err(EmptyArg("GitHub project"))
     val repo = splitArg.getOrNull(1) ?: return Err(ArgFailed(arg, "GitHub project"))
 
-    return Ok(ProjectArg.GitHubArg(owner, repo, rawArg = arg))
+    val tag = if ("@" in arg) arg.substringAfter("@") else
+    {
+        arg.replace(".*(tag|tree)/".toRegex(), "").split("/").getOrNull(0)
+    }
+
+    return Ok(ProjectArg.GitHubArg(owner, repo, tag, rawArg = arg))
 }
 
 fun mapProjectArg(arg: String): Result<ProjectArg, ActionError>

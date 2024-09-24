@@ -31,7 +31,7 @@ suspend fun promptForProject(
         },
         gitHubArg = {
             Ok(GitHub.requestProjectWithFiles(
-                listOf(), listOf(), "${it.owner}/${it.repo}", fileId
+                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag ?: fileId
             ) to it)
         }
     )

@@ -73,7 +73,7 @@ class Add : CliktCommand()
         {
             suspend fun handleMissingProject(error: NotFoundOn, arg: ProjectArg)
             {
-                val prompt = promptForProject(error.provider, terminal, lockFile, arg.rawArg).onFailure {
+                val prompt = promptForProject(error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag})).onFailure {
                     if (it is EmptyArg) return add(projectIn, arg, strict = false)
                 }.getOrElse {
                     return terminal.pError(it)
@@ -118,7 +118,7 @@ class Add : CliktCommand()
             )
         }
 
-        for ((projectIn, args) in projectArgs.map { arg ->
+        for ((projectIn, arg) in projectArgs.map { arg ->
             arg.fold(
                 commonArg = {
                     projectProvider.requestProjectWithFiles(
@@ -127,13 +127,13 @@ class Add : CliktCommand()
                 },
                 gitHubArg = {
                     GitHub.requestProjectWithFiles(
-                        listOf(), listOf(), "${it.owner}/${it.repo}"
+                        listOf(), listOf(), "${it.owner}/${it.repo}", it.tag
                     ) to it
                 }
             )
         })
         {
-            add(projectIn, args)
+            add(projectIn, arg)
             echo()
         }
 
