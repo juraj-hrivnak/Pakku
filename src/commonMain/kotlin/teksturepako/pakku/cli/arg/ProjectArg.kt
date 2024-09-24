@@ -17,13 +17,15 @@ sealed class ProjectArg(open val rawArg: String)
     inline fun <T> fold(
         arg: (Arg) -> T,
         gitHubArg: (GitHubArg) -> T,
-    ): T {
+    ): T
+    {
         contract {
             callsInPlace(arg, InvocationKind.AT_MOST_ONCE)
             callsInPlace(gitHubArg, InvocationKind.AT_MOST_ONCE)
         }
 
-        return when (this) {
+        return when (this)
+        {
             is Arg       -> arg(this)
             is GitHubArg -> gitHubArg(this)
         }

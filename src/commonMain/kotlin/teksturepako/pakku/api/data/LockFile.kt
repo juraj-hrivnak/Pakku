@@ -258,7 +258,7 @@ data class LockFile(
         fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
-         fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
+        fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
             .also { it.inheritConfig(ConfigFile.readOrNull()) }
 
         /**

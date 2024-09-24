@@ -21,7 +21,9 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.*
+import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pSuccess
 import kotlin.collections.fold
 import kotlin.system.exitProcess
 import com.github.michaelbull.result.fold as resultFold
