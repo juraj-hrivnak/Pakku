@@ -2,10 +2,66 @@
 
 ## Unreleased
 
+## v0.18.0
+
+### Highlights
+
+Pakku now fully supports GitHub.
+
+#### Adding GitHub projects
+
+GitHub repositories with releases can be added as projects.
+To add a GitHub project, run `pakku add {owner}/{repo}` or `pakku add https://github.com/{owner}/{repo}`.
+
+You can also use the `prj` subcommand: `pakku add prj --gh {owner}/{repo}` or `pakku add prj --gh https://github.com/{owner}/{repo}`
+
+Combining projects is also possible: `pakku add prj --mr greenery --gh juraj-hrivnak/Greenery`
+
+To add a specific version (tag) of a GitHub project, run `pakku add {owner}/{repo}@{tag}`, `pakku add https://github.com/{owner}/{repo}/releases/tag/{tag}` or `pakku add https://github.com/{owner}/{repo}/tree/{tag}`.
+
+#### Updating
+
+GitHub projects can be updated using the `pakku update` command.
+They are also recognized in other commands as expected.
+
+#### Exporting
+
+For CurseForge, GitHub projects are added to the `overrides`.
+For Modrinth, GitHub projects are added to the `modrinth.index.json` also with generated `sha512` and `sha1` hashes.
+
+The project side of GitHub projects defaults to `BOTH.` If you need to change this, do so in `pakku.json`.
+Pakku determines whether the GitHub project is redistributable based on its licence's spdx code. No licence means `ARR`.
+
+#### UI
+
+GitHub projects are displayed in the format: `gh={owner}/{repo}`
+
+![gh_support](https://github.com/user-attachments/assets/3d3e81c0-f764-4679-bdf8-71cc4107a643)
+
+### Other Changes
+
+- Project types can now be overridden in the config file (`pakku.json`).
+- Deprecated `set` command's `-s`,` --side` and `-r`, `--redistributable` options. Use the config file (`pakku.json`) instead.
+
+### Technical Notes
+
+- Many functions now support `IProjectProvider`s instead of `Platform`s only.
+- The lock file is now sorted by project names instead of slugs.
+- Implemented the `ProjectArg` monad to better handle project additions.
+  - Its `fold()` function can be used to map the possible arg types:
+    ```kt
+    arg.fold(
+        commonArg = { },
+        gitHubArg = { }
+    )
+    ```
+- Integrity checking will now allow projects without hashes (GitHub) and will warn the user instead.
+
 ## v0.17.1
 
 - Fixed `add` command not being invoked without a subcommand. ([#22](https://github.com/juraj-hrivnak/Pakku/issues/22))
 - Updated to the latest snapshot of the Clikt library.
+
 ## v0.17.0
 
 - Added the `prj` subcommand for the `add` command.
