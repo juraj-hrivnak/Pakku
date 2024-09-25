@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.18.1
+
+- Fixed tag parsing in GitHub project arguments.
+
 ## v0.18.0
 
 ### Highlights
