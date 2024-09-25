@@ -41,7 +41,7 @@ open class ActionError(
     class NoHashes(val projectFile: ProjectFile) :
         ActionError("File '${projectFile.getPath()}' has no hashes.", isWarning = true)
 
-    class HashFailed(val projectFile: ProjectFile, val originalHash: String, val newHash: String) :
+    class HashMismatch(val projectFile: ProjectFile, val originalHash: String, val newHash: String) :
         ActionError("""Failed to math hash for file '${projectFile.getPath()}'.
             | Original hash: $originalHash
             | New hash: $newHash
