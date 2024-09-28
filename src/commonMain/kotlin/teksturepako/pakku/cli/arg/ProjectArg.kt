@@ -53,9 +53,17 @@ fun splitGitHubArg(arg: String): Result<ProjectArg.GitHubArg, ActionError>
     val owner = splitArg.getOrNull(0) ?: return Err(EmptyArg("GitHub project"))
     val repo = splitArg.getOrNull(1) ?: return Err(ArgFailed(arg, "GitHub project"))
 
-    val tag = if ("@" in arg) arg.substringAfter("@") else
+    val tag = when
     {
-        arg.replace(".*(tag|tree)/".toRegex(), "").split("/").getOrNull(0)
+        "@" in arg ->
+        {
+            arg.substringAfter("@")
+        }
+        ".*github.com/".toRegex() in arg && ".*(tag|tree)/".toRegex() in arg ->
+        {
+            arg.replace(".*(tag|tree)/".toRegex(), "").split("/").getOrNull(0)
+        }
+        else -> null
     }
 
     return Ok(ProjectArg.GitHubArg(owner, repo, tag, rawArg = arg))

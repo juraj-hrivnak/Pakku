@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.HashFailed
+import teksturepako.pakku.api.actions.ActionError.HashMismatch
 import teksturepako.pakku.api.actions.ActionError.NoHashes
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
@@ -62,7 +62,7 @@ data class ProjectFile(
 
             if (originalHash != newHash)
             {
-                return HashFailed(this, originalHash, newHash)
+                return HashMismatch(this, originalHash, newHash)
             }
             else continue
         }

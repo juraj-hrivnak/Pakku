@@ -65,13 +65,10 @@ suspend fun List<ProjectFile>.fetch(
                     return@launch
                 }
 
-                projectFile.checkIntegrity(bytes)?.let {
-                    if (it !is NoHashes)
-                    {
-                        return@launch
-                    }
+                projectFile.checkIntegrity(bytes)?.let { err ->
+                    onError(err)
 
-                    onError(it)
+                    if (err is HashMismatch) return@launch
                 }
 
                 send(projectFile to bytes)
@@ -114,7 +111,9 @@ suspend fun deleteOldFiles(
                 val folder = Path(workingPath, projectType.folderName)
                 if (folder.notExists()) return@mapNotNull null
                 runCatching { folder.listDirectoryEntries() }.get()
-            }.flatten().forEach { file ->
+            }
+            .flatten()
+            .forEach { file ->
                 launch {
                     val bytes = runCatching { file.readBytes() }.get()
                     val fileHash = bytes?.let { createHash("sha1", it) }

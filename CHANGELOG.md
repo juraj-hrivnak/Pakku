@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.18.2
+
+- Fixed error when GitHub license URL is `null`.
+
+## v0.18.1
+
+- Fixed tag parsing in GitHub project arguments.
+
 ## v0.18.0
 
 ### Highlights

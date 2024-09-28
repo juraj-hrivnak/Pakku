@@ -191,8 +191,8 @@ data class GhRepoModel(
     data class License(
         val key: String,
         val name: String,
+        val url: String? = null,
         @SerialName("spdx_id") val spdxId: String? = null,
-        val url: String,
-        @SerialName("node_id") val nodeId: String
+        @SerialName("node_id") val nodeId: String,
     )
 }
