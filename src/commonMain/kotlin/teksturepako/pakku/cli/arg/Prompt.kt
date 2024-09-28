@@ -10,11 +10,11 @@ import com.github.michaelbull.result.getOrElse
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
-import teksturepako.pakku.api.platforms.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 
 suspend fun promptForProject(
-    provider: IProjectProvider, terminal: Terminal, lockFile: LockFile, fileId: String? = null
+    provider: Provider, terminal: Terminal, lockFile: LockFile, fileId: String? = null
 ): Result<Pair<Project?, ProjectArg>, ActionError>
 {
     val prompt: String? = StringPrompt("Specify ${provider.name}", terminal).ask()

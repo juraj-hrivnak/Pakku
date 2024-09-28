@@ -9,7 +9,7 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
 
-object GitHub : Http(), IProjectProvider
+object GitHub : Http(), Provider
 {
     override val name = "GitHub"
     override val serialName = "github"

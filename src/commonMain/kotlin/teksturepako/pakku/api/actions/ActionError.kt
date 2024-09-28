@@ -1,7 +1,7 @@
 package teksturepako.pakku.api.actions
 
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.cli.ui.dim
@@ -99,14 +99,14 @@ open class ActionError(
                 "Could not add ${dim(project.type)} ${project.getFlavoredSlug()}. It is already added."
         }
 
-    class NotFoundOn(val project: Project, val provider: IProjectProvider) :
+    class NotFoundOn(val project: Project, val provider: Provider) :
         ActionError("${project.type} ${project.slug} was not found on ${provider.name}")
         {
             override fun message(arg: String): String =
                 "${dim(project.type)} ${project.getFlavoredSlug()} was not found on ${provider.name}."
         }
 
-    class NoFilesOn(val project: Project, val provider: IProjectProvider) :
+    class NoFilesOn(val project: Project, val provider: Provider) :
         ActionError("No files for ${project.type} ${project.slug} found on ${provider.name}.")
         {
             override fun message(arg: String) =

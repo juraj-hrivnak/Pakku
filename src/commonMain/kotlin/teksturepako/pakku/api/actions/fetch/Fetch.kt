@@ -13,7 +13,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.ProjectOverride
-import teksturepako.pakku.api.platforms.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -23,7 +23,7 @@ import kotlin.io.path.*
 
 fun retrieveProjectFiles(
     lockFile: LockFile,
-    providers: List<IProjectProvider>
+    providers: List<Provider>
 ) : List<Result<ProjectFile, ActionError>> = lockFile.getAllProjects().map { project ->
     val file = providers.firstNotNullOfOrNull { provider ->
         project.getFilesForProvider(provider).firstOrNull()

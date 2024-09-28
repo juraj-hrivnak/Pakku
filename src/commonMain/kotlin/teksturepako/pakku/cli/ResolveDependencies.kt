@@ -4,7 +4,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.pakku.api.actions.RequestHandlers
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
@@ -16,7 +16,7 @@ suspend fun Project.resolveDependencies(
     terminal: Terminal,
     reqHandlers: RequestHandlers,
     lockFile: LockFile,
-    projectProvider: IProjectProvider,
+    projectProvider: Provider,
     platforms: List<Platform>,
     addAsProjects: Boolean = true
 )

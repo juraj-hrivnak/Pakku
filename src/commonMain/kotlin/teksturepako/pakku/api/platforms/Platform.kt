@@ -19,7 +19,7 @@ abstract class Platform(
     val apiUrl: String,
     val apiVersion: Int,
     override val siteUrl: String,
-) : Http(), IProjectProvider
+) : Http(), Provider
 {
     override fun toString(): String = this.name
 

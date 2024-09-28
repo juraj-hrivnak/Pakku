@@ -2,7 +2,7 @@ package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.projects.Project
 
-interface IProjectProvider
+interface Provider
 {
     companion object
     {

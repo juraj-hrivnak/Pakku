@@ -4,7 +4,7 @@ import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.rendering.Theme
 import teksturepako.pakku.api.data.allEqual
-import teksturepako.pakku.api.platforms.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
@@ -56,10 +56,10 @@ fun Project.getFlavoredSlug(): String = buildString {
 
     if (slugs.values.allEqual() && slugs.values.size > 1)
     {
-        val providers: List<IProjectProvider> = slugs
+        val providers: List<Provider> = slugs
             .map { (platform, _) -> platform }
             .mapNotNull { provider ->
-                IProjectProvider.getProvider(provider)
+                Provider.getProvider(provider)
             }
 
         val resultText = providers
@@ -85,9 +85,9 @@ fun Project.getFlavoredSlug(): String = buildString {
     }
     else
     {
-        val providers: List<Pair<IProjectProvider, String>> = slugs
+        val providers: List<Pair<Provider, String>> = slugs
             .mapNotNull { (platform, slug) ->
-                val provider = IProjectProvider.getProvider(platform) ?: return@mapNotNull null
+                val provider = Provider.getProvider(platform) ?: return@mapNotNull null
                 provider to slug
             }
 

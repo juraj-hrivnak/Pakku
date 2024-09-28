@@ -15,7 +15,7 @@ import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
 import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.readProjectOverrides
-import teksturepako.pakku.api.platforms.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.pDanger
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pInfo
@@ -39,7 +39,7 @@ class Fetch : CliktCommand()
             padding = 0
         }
 
-        val projectFiles = retrieveProjectFiles(lockFile, IProjectProvider.providers).mapNotNull { result ->
+        val projectFiles = retrieveProjectFiles(lockFile, Provider.providers).mapNotNull { result ->
             result.getOrElse {
                 terminal.pError(it)
                 null

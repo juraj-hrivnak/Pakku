@@ -90,7 +90,7 @@ data class LockFile(
     }
     else Result.failure(PakkuException("Target not found"))
 
-    fun getProjectProvider(): Result<IProjectProvider> = if (target != null) when (target!!.lowercase())
+    fun getProjectProvider(): Result<Provider> = if (target != null) when (target!!.lowercase())
     {
         "curseforge" -> Result.success(CurseForge)
         "modrinth" -> Result.success(Modrinth)

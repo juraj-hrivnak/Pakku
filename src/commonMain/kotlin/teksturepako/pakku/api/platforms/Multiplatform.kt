@@ -3,7 +3,7 @@ package teksturepako.pakku.api.platforms
 import com.github.michaelbull.result.get
 import teksturepako.pakku.api.projects.Project
 
-object Multiplatform : IProjectProvider
+object Multiplatform : Provider
 {
     override val name = "Multiplatform"
     override val serialName = "multiplatform"

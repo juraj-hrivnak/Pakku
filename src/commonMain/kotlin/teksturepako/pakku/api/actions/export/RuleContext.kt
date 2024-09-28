@@ -12,7 +12,7 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.ProjectOverride
-import teksturepako.pakku.api.platforms.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.io.tryToResult
 import kotlin.io.path.*
@@ -112,7 +112,7 @@ sealed class RuleContext(open val workingSubDir: String)
         {
             if (!project.redistributable && !force) return error(NotRedistributable(project))
 
-            val projectFile = IProjectProvider.providers.firstNotNullOfOrNull { provider ->
+            val projectFile = Provider.providers.firstNotNullOfOrNull { provider ->
                 project.getFilesForProvider(provider).firstOrNull()
             } ?: return error(NoFiles(project, lockFile))
 
@@ -210,7 +210,7 @@ sealed class RuleContext(open val workingSubDir: String)
     ) : RuleContext(workingSubDir)
     {
         suspend fun exportAsOverrideFrom(
-            provider: IProjectProvider,
+            provider: Provider,
             onExport: suspend (
                 bytesCallback: suspend () -> ByteArray?,
                 fileName: String,
@@ -238,7 +238,7 @@ sealed class RuleContext(open val workingSubDir: String)
 
         suspend fun exportAsOverride(
             force: Boolean = false,
-            excludedProviders: Set<IProjectProvider> = setOf(),
+            excludedProviders: Set<Provider> = setOf(),
             onExport: suspend (
                 bytesCallback: suspend () -> ByteArray?,
                 fileName: String,
@@ -248,7 +248,7 @@ sealed class RuleContext(open val workingSubDir: String)
         {
             if (!project.redistributable && !force) return error(NotRedistributable(project))
 
-            val projectFile = (IProjectProvider.providers - excludedProviders).firstNotNullOfOrNull { provider ->
+            val projectFile = (Provider.providers - excludedProviders).firstNotNullOfOrNull { provider ->
                 project.getFilesForProvider(provider).firstOrNull()
             } ?: return error(NoFiles(project, lockFile))
 
