@@ -40,7 +40,6 @@ class Import : CliktCommand()
 
         val lockFile = LockFile.readToResult().getOrNull() ?: modpackModel.toLockFile()
 
-        // Configuration
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
@@ -52,7 +51,6 @@ class Import : CliktCommand()
             echo()
             return@runBlocking
         }
-        // --
 
         val importedProjects = modpackModel.toSetOfProjects(lockFile, platforms)
 
@@ -64,7 +62,13 @@ class Import : CliktCommand()
                     },
                     onSuccess = { project, _, reqHandlers ->
                         lockFile.add(project)
-                        if (depsFlag) project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                        lockFile.linkProjectToDependents(project)
+
+                        if (depsFlag)
+                        {
+                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                        }
+
                         terminal.pSuccess("${project.getFullMsg()} added")
                         Modrinth.checkRateLimit()
                     },

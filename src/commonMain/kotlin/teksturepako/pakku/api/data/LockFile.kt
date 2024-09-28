@@ -229,14 +229,14 @@ data class LockFile(
 
     fun linkProjectToDependents(project: Project)
     {
-        for (dependent in this.projects)
+        for (dependentProject in this.projects)
         {
-            x@ for (file in dependent.files)
+            x@ for (file in dependentProject.files)
             {
-                val deps = file.requiredDependencies ?: continue@x
-                if (project.id.values.any { it in deps } && project.pakkuId !in dependent.pakkuLinks)
+                val dependencyIds = file.requiredDependencies ?: continue@x
+                if (project.id.values.any { id -> id in dependencyIds } && project.pakkuId !in dependentProject.pakkuLinks)
                 {
-                    dependent.pakkuLinks.add(project.pakkuId!!)
+                    dependentProject.pakkuLinks.add(project.pakkuId!!)
                 }
             }
         }
