@@ -2,6 +2,60 @@
 
 ## Unreleased
 
+## v0.19.0
+
+### Highlights
+
+- Implemented configurable subpaths for projects and configurable paths for project types.
+- Added support for data packs.
+
+#### Configurable Subpaths
+
+There is now a new `subpath` property for projects that you can set using the [config file].
+
+Usage:
+
+```json
+{
+  "projects": {
+    "<project>": {
+      "subpath": "<path>"
+    }
+  }
+}
+```
+
+Example:
+
+```json
+{
+  "projects": {
+    "sodium-extras": {
+      "subpath": "optimize.client"
+    },
+    "iris": {
+      "subpath": "decoration.client"
+    }
+  }
+}
+```
+
+#### Configurable Paths for Project Types
+
+There is now a variable for each project type that can be changed in the [config file].
+
+Usage:
+
+```json
+{
+  "mods_path": "<path>",
+  "resource_packs_path": "<path>",
+  "data_packs_path": "<path>",
+  "worlds_path": "<path>",
+  "shaders_path": "<path>"
+}
+```
+
 ## v0.18.2
 
 - Fixed error when GitHub license URL is `null`.
@@ -49,7 +103,7 @@ GitHub projects are displayed in the format: `gh={owner}/{repo}`
 ### Other Changes
 
 - Project types can now be overridden in the config file (`pakku.json`).
-- Deprecated `set` command's `-s`,` --side` and `-r`, `--redistributable` options. Use the config file (`pakku.json`) instead.
+- Deprecated `set` command's `-s`,`--side` and `-r`, `--redistributable` options. Use the config file (`pakku.json`) instead.
 
 ### Technical Notes
 
@@ -57,12 +111,14 @@ GitHub projects are displayed in the format: `gh={owner}/{repo}`
 - The lock file is now sorted by project names instead of slugs.
 - Implemented the `ProjectArg` monad to better handle project additions.
   - Its `fold()` function can be used to map the possible arg types:
+
     ```kt
     arg.fold(
         commonArg = { },
         gitHubArg = { }
     )
     ```
+
 - Integrity checking will now allow projects without hashes (GitHub) and will warn the user instead.
 
 ## v0.17.1
@@ -123,7 +179,7 @@ GitHub projects are displayed in the format: `gh={owner}/{repo}`
 
 ## v0.13.1
 
-- Removed unwanted `File not found: '.\.pakku\cli-config.json'` print 
+- Removed unwanted `File not found: '.\.pakku\cli-config.json'` print
 when CLI Config does not exist.
 - Set default CLI theme to Pakku's default theme instead of the _default one_.
 
@@ -184,7 +240,7 @@ which can be used to modify the UI aspects of the Pakku CLI.
 
 ### What's new?
 
-- Fixed error with null icon in CurseForge projects. 
+- Fixed error with null icon in CurseForge projects.
 - Fixed the `fetch` command not resolving files other than from CurseForge.
 
 ## v0.11.0
@@ -211,8 +267,12 @@ versions and loaders.
 - Fixed issue with the `fetch` command not properly listing platforms.
 
 ### Docs
+
 - Implemented auto generation for CLI Commands reference for docs.
 - Added option to switch between Java and PATH examples in docs.
 
 ### API
+
 - Refactored models
+
+[config file]: https://juraj-hrivnak.github.io/Pakku/
