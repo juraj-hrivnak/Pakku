@@ -3,10 +3,10 @@ package teksturepako.pakku.api.projects
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.HashMismatch
 import teksturepako.pakku.api.actions.ActionError.NoHashes
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.io.createHash
@@ -35,26 +35,23 @@ data class ProjectFile(
 
     // -- FILE PATH --
 
-    @Transient
-    private lateinit var path: Path
-
-    fun getPath(lockFile: LockFile): Path?
+    fun getPath(parentProject: Project, configFile: ConfigFile?): Path
     {
-        val parentProject = getParentProject(lockFile) ?: return null
-
-        val path = Path(workingPath, parentProject.type.folderName, fileName)
-        this.path = path
-
-        return path
+        val parentPathString = parentProject.getPathStringWithSubpath(configFile)
+        return Path(workingPath, parentPathString, fileName)
     }
 
-    fun getPath(): Path? = if (!this::path.isInitialized) null else this.path
+    fun getRelativePathString(parentProject: Project, configFile: ConfigFile?, separator: Char = '/'): String
+    {
+        val parentPathString = parentProject.getPathStringWithSubpath(configFile, separator)
+        return "$parentPathString$separator$fileName"
+    }
 
     // -- INTEGRITY --
 
-    fun checkIntegrity(bytes: ByteArray): ActionError?
+    fun checkIntegrity(bytes: ByteArray, path: Path): ActionError?
     {
-        if (this.hashes == null) return NoHashes(this)
+        if (this.hashes == null) return NoHashes(path)
 
         for ((hashType, originalHash) in this.hashes)
         {
@@ -62,7 +59,7 @@ data class ProjectFile(
 
             if (originalHash != newHash)
             {
-                return HashMismatch(this, originalHash, newHash)
+                return HashMismatch(path, originalHash, newHash)
             }
             else continue
         }

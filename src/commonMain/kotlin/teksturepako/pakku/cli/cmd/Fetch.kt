@@ -13,6 +13,7 @@ import teksturepako.pakku.api.actions.fetch.deleteOldFiles
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
 import teksturepako.pakku.api.actions.sync.sync
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Provider
@@ -31,6 +32,16 @@ class Fetch : CliktCommand()
             echo()
             return@runBlocking
         }
+
+        val configFile = if (ConfigFile.exists())
+        {
+            ConfigFile.readToResult().getOrElse {
+                terminal.danger(it.message)
+                echo()
+                return@runBlocking
+            }
+        }
+        else null
 
         val progressBar = terminal.progressAnimation {
             text("Fetching ")
@@ -55,10 +66,10 @@ class Fetch : CliktCommand()
                     progressBar.advance(advance)
                     progressBar.updateTotal(total)
                 },
-                onSuccess = { projectFile, _ ->
-                    terminal.pSuccess("${projectFile.getPath()} saved")
+                onSuccess = { path, _ ->
+                    terminal.pSuccess("$path saved")
                 },
-                lockFile
+                lockFile, configFile
             )
         }
 
@@ -68,7 +79,7 @@ class Fetch : CliktCommand()
 
         // -- OVERRIDES --
 
-        val projectOverrides = readProjectOverrides()
+        val projectOverrides = readProjectOverrides(configFile)
 
         val syncJob = launch {
             projectOverrides.sync(
@@ -90,7 +101,7 @@ class Fetch : CliktCommand()
                 onSuccess = { file ->
                     terminal.pDanger("$file deleted")
                 },
-                projectFiles, projectOverrides
+                projectFiles, projectOverrides, configFile
             )
         }
 

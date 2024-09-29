@@ -33,6 +33,7 @@ object Modrinth : Platform(
     {
         ProjectType.MOD             -> "${this.siteUrl}/mod"
         ProjectType.RESOURCE_PACK   -> "${this.siteUrl}/resourcepack"
+        ProjectType.DATA_PACK       -> "${this.siteUrl}/datapack"
         ProjectType.WORLD           -> this.siteUrl // Does not exist yet
         ProjectType.SHADER          -> "${this.siteUrl}/shader"
     }
@@ -88,6 +89,7 @@ object Modrinth : Platform(
             {
                 "mod"          -> ProjectType.MOD
                 "resourcepack" -> ProjectType.RESOURCE_PACK
+                "datapack"     -> ProjectType.DATA_PACK
                 "shader"       -> ProjectType.SHADER
 
                 else           -> return null.also { println("Project type $projectType not found!") }

@@ -5,15 +5,17 @@ package teksturepako.pakku.api.projects
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
 import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
 import teksturepako.pakku.api.data.*
-import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
+import teksturepako.pakku.io.filterPath
 
 /**
  * Represents a project. (E.g. a mod, resource pack, shader, etc.)
@@ -39,6 +41,8 @@ data class Project(
 
     @SerialName("update_strategy") var updateStrategy: UpdateStrategy = UpdateStrategy.LATEST,
     @SerialName("redistributable") var redistributable: Boolean = true,
+
+    private var subpath: String? = null,
 
     var files: MutableSet<ProjectFile>
 )
@@ -160,6 +164,7 @@ data class Project(
         return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
     }
 
+    // -- DEPENDENCIES --
 
     /**
      * Requests [projects with files][Provider.requestProjectWithFiles] for all dependencies of this project.
@@ -174,6 +179,8 @@ data class Project(
             }
     }
 
+    // -- CONFIG INHERITANCE --
+
     fun inheritPropertiesFrom(configFile: ConfigFile?): Project
     {
         configFile?.getProjects()?.forEach { (input, config) ->
@@ -183,10 +190,31 @@ data class Project(
                 this.side = config.side
                 config.updateStrategy?.let { this.updateStrategy = it }
                 config.redistributable?.let { this.redistributable = it }
+                config.subpath?.let { this.subpath = it }
             }
         }
 
         return this
+    }
+
+    // -- SUBPATH --
+
+    fun setSubpath(subpath: String)
+    {
+        filterPath(subpath).get()?.let { this.subpath = it }
+    }
+
+    fun getSubpath(): Result<String, ActionError>? = subpath?.let { subpath ->
+        filterPath(subpath)
+    }
+
+    fun getSubpathOrNull(): String? = subpath?.let { subpath ->
+        filterPath(subpath).get()
+    }
+
+    fun getPathStringWithSubpath(configFile: ConfigFile?, separator: Char = '/') = buildString {
+        append(type.getPathString(configFile))
+        if (subpath != null) append("$separator$subpath")
     }
 
     init

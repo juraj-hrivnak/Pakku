@@ -40,7 +40,12 @@ fun ruleOfCfMissingProjects() = ExportRule {
         is MissingProject ->
         {
             it.exportAsOverride(excludedProviders = setOf(CurseForge)) { bytesCallback, fileName, _ ->
-                it.createFile(bytesCallback, OverrideType.OVERRIDE.folderName, it.project.type.folderName, fileName)
+                it.createFile(
+                    bytesCallback,
+                    OverrideType.OVERRIDE.folderName,
+                    it.project.getPathStringWithSubpath(it.configFile),
+                    fileName
+                )
             }
         }
         else -> it.ignore()

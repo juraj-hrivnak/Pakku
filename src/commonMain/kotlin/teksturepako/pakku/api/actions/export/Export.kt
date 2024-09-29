@@ -282,7 +282,7 @@ suspend fun List<ExportRule>.produceRuleResults(
             rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
         } + configFile.getAllClientOverrides().map {
             rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
-        } + readProjectOverrides().map {
+        } + readProjectOverrides(configFile).map {
             rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
         }
     }.map { (exportRule, ruleContext) ->

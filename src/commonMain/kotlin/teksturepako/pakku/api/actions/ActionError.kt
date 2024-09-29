@@ -3,7 +3,6 @@ package teksturepako.pakku.api.actions
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.cli.ui.dim
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import java.nio.file.Path
@@ -38,11 +37,11 @@ open class ActionError(
     class DownloadFailed(val path: Path?) :
         ActionError("Failed to download '$path'.")
 
-    class NoHashes(val projectFile: ProjectFile) :
-        ActionError("File '${projectFile.getPath()}' has no hashes.", isWarning = true)
+    class NoHashes(val path: Path?) :
+        ActionError("File '$path' has no hashes.", isWarning = true)
 
-    class HashMismatch(val projectFile: ProjectFile, val originalHash: String, val newHash: String) :
-        ActionError("""Failed to math hash for file '${projectFile.getPath()}'.
+    class HashMismatch(val path: Path?, val originalHash: String, val newHash: String) :
+        ActionError("""Failed to math hash for file '$path'.
             | Original hash: $originalHash
             | New hash: $newHash
             """.trimMargin())

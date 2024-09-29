@@ -19,9 +19,17 @@ data class ConfigFile(
     private var version: String = "",
     private var description: String = "",
     private var author: String = "",
+
     private val overrides: MutableList<String> = mutableListOf(),
     @SerialName("server_overrides") private val serverOverrides: MutableList<String> = mutableListOf(),
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
+
+    @SerialName("mods_path") val modsPath: String? = null,
+    @SerialName("resource_packs_path") val resourcePacksPath: String? = null,
+    @SerialName("data_packs_path") val dataPacksPath: String? = null,
+    @SerialName("worlds_path") val worldsPath: String? = null,
+    @SerialName("shaders_path") val shadersPath: String? = null,
+
     private val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
 )
 {
@@ -59,7 +67,12 @@ data class ConfigFile(
         this.overrides.add(override)
     }
 
-    fun addAllOverrides(overrides: Collection<String>)
+    fun addOverrides(vararg overrides: String)
+    {
+        this.overrides.addAll(overrides)
+    }
+
+    fun addOverrides(overrides: Collection<String>)
     {
         this.overrides.addAll(overrides)
     }
@@ -87,7 +100,8 @@ data class ConfigFile(
         var type: ProjectType?,
         var side: ProjectSide?,
         @SerialName("update_strategy") var updateStrategy: UpdateStrategy?,
-        @SerialName("redistributable") var redistributable: Boolean?
+        @SerialName("redistributable") var redistributable: Boolean?,
+        var subpath: String?
     )
 
     // -- FILE I/O --

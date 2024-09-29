@@ -9,12 +9,12 @@ import kotlinx.coroutines.channels.produce
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.actions.sync.getFileHashes
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.ProjectOverride
 import teksturepako.pakku.api.platforms.Provider
-import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.io.createHash
@@ -36,8 +36,8 @@ fun retrieveProjectFiles(
 suspend fun List<ProjectFile>.fetch(
     onError: suspend (error: ActionError) -> Unit,
     onProgress: suspend (advance: Long, total: Long) -> Unit,
-    onSuccess: suspend (projectFile: ProjectFile, project: Project?) -> Unit,
-    lockFile: LockFile,
+    onSuccess: suspend (path: Path, projectFile: ProjectFile) -> Unit,
+    lockFile: LockFile, configFile: ConfigFile?
 ) = coroutineScope {
     val maxBytes: AtomicLong = atomic(0L)
 
@@ -45,9 +45,13 @@ suspend fun List<ProjectFile>.fetch(
         for (projectFile in this@fetch)
         {
             launch {
-                if (projectFile.getPath(lockFile)?.exists() == true)
+                val parentProject = projectFile.getParentProject(lockFile)?: return@launch
+
+                val path = projectFile.getPath(parentProject, configFile)
+
+                if (path.exists())
                 {
-                    onError(AlreadyExists(projectFile.getPath().toString()))
+                    onError(AlreadyExists(path.toString()))
                     return@launch
                 }
 
@@ -61,31 +65,30 @@ suspend fun List<ProjectFile>.fetch(
 
                 if (bytes == null)
                 {
-                    onError(DownloadFailed(projectFile.getPath()))
+                    onError(DownloadFailed(path))
                     return@launch
                 }
 
-                projectFile.checkIntegrity(bytes)?.let { err ->
+                projectFile.checkIntegrity(bytes, path)?.let { err ->
                     onError(err)
 
                     if (err is HashMismatch) return@launch
                 }
 
-                send(projectFile to bytes)
+                send(Triple(path, projectFile, bytes))
             }
         }
     }
 
-    channel.consumeEach { (projectFile, bytes) ->
+    channel.consumeEach { (path, projectFile, bytes) ->
         launch(Dispatchers.IO) {
             runCatching {
-                val file = projectFile.getPath()
-                file?.createParentDirectories()
-                file?.writeBytes(bytes)
+                path.createParentDirectories()
+                path.writeBytes(bytes)
             }.onSuccess {
-                onSuccess(projectFile, projectFile.getParentProject(lockFile))
+                onSuccess(path, projectFile)
             }.onFailure {
-                onError(CouldNotSave(projectFile.getPath(), it.stackTraceToString()))
+                onError(CouldNotSave(path, it.stackTraceToString()))
             }
         }
     }
@@ -99,7 +102,8 @@ suspend fun List<ProjectFile>.fetch(
 suspend fun deleteOldFiles(
     onSuccess: suspend (file: Path) -> Unit,
     projectFiles: List<ProjectFile>,
-    projectOverrides: Set<ProjectOverride>
+    projectOverrides: Set<ProjectOverride>,
+    configFile: ConfigFile?
 ) = coroutineScope {
     val projectFileNames = projectFiles.filter { it.hashes?.get("sha1") == null }.map { it.fileName }
     val projectFileHashes = projectFiles.mapNotNull { projectFile -> projectFile.hashes?.get("sha1") }
@@ -108,22 +112,22 @@ suspend fun deleteOldFiles(
         ProjectType.entries
             .filterNot { it == ProjectType.WORLD }
             .mapNotNull { projectType ->
-                val folder = Path(workingPath, projectType.folderName)
+                val folder = Path(workingPath, projectType.getPathString(configFile))
                 if (folder.notExists()) return@mapNotNull null
                 runCatching { folder.listDirectoryEntries() }.get()
             }
             .flatten()
-            .forEach { file ->
+            .forEach { path ->
                 launch {
-                    val bytes = runCatching { file.readBytes() }.get()
-                    val fileHash = bytes?.let { createHash("sha1", it) }
+                    val pathBytes = runCatching { path.readBytes() }.get()
+                    val pathHash = pathBytes?.let { createHash("sha1", it) }
 
-                    if (file.extension in listOf("jar", "zip")
-                        && fileHash !in projectOverrides.getFileHashes()
-                        && file.name !in projectFileNames
-                        && fileHash !in projectFileHashes)
+                    if (path.extension in listOf("jar", "zip")
+                        && pathHash !in projectOverrides.getFileHashes()
+                        && path.name !in projectFileNames
+                        && pathHash !in projectFileHashes)
                     {
-                        send(file)
+                        send(path)
                     }
                 }
             }

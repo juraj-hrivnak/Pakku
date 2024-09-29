@@ -30,6 +30,7 @@ object CurseForge : Platform(
     {
         ProjectType.MOD             -> "${this.siteUrl}/mc-mods"
         ProjectType.RESOURCE_PACK   -> "${this.siteUrl}/texture-packs"
+        ProjectType.DATA_PACK       -> "${this.siteUrl}/data-packs"
         ProjectType.WORLD           -> "${this.siteUrl}/worlds"
         ProjectType.SHADER          -> "${this.siteUrl}/shaders"
     }
@@ -78,6 +79,7 @@ object CurseForge : Platform(
                 12   -> ProjectType.RESOURCE_PACK
                 17   -> ProjectType.WORLD
                 6552 -> ProjectType.SHADER
+                6945 -> ProjectType.DATA_PACK
 
                 else -> return null.also { println("Project type $classId not found!") }
             },

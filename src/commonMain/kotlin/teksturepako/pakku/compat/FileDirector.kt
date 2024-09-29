@@ -23,12 +23,12 @@ data class FileDirectorModel(
 {
     @Serializable
     data class UrlEntry(
-        val url: String, val folder: String
+        val url: String, val folder: String, val fileName: String
     )
 
     @Serializable
     data class CurseEntry(
-        val addonId: String, val fileId: String, val folder: String
+        val addonId: String, val fileId: String, val folder: String, val fileName: String
     )
 }
 
@@ -60,20 +60,23 @@ data class CanNotAddToFileDirector(val project: Project) :
 fun MissingProject.addToFileDirector(
     fileDirector: FileDirectorModel, excludedProviders: Set<Provider> = setOf()
 ) = ruleResult("addToFileDirector ${project.slug}", Packaging.Action {
-        if (!project.redistributable) return@Action CanNotAddToFileDirector(project)
+    if (!project.redistributable) return@Action CanNotAddToFileDirector(project)
 
-        val url = (Provider.providers - excludedProviders).firstNotNullOfOrNull { provider ->
-            project.getFilesForProvider(provider).firstOrNull()?.url?.let {
-                UrlEncoderUtil.encode(it, ":/") // Encode the URL due to bug in FileDirector.
-            }
-        } ?: return@Action NoFiles(project, lockFile)
+    val (projectFile, url) = (Provider.providers - excludedProviders).firstNotNullOfOrNull { provider ->
+        val projectFile = project.getFilesForProvider(provider).firstOrNull()
 
-        fileDirector.urlBundle.plusAssign(
-            UrlEntry(
-                url = url,
-                folder = this.project.type.folderName
-            )
+        projectFile?.url?.let {
+            projectFile to UrlEncoderUtil.encode(it, ":/") // Encode the URL due to bug in FileDirector.
+        }
+    } ?: return@Action NoFiles(project, lockFile)
+
+    fileDirector.urlBundle.plusAssign(
+        UrlEntry(
+            url = url,
+            folder = this.project.getPathStringWithSubpath(this.configFile),
+            fileName = projectFile.fileName
         )
+    )
 
-        null
-    })
+    null
+})
