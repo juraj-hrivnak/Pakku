@@ -4,7 +4,7 @@ To export a modpack, run the [`pakku export`] command:
 
 <include from="pakku-export.md" element-id="snippet-cmd"></include>
 
-Depending on your [target](Lock-File.md#properties)
+Depending on your [target](Lock-File.md#properties),
 this will export the modpack in the CurseForge's or Modrinth's format or both.
 
 <note>
@@ -44,9 +44,11 @@ Add the directory (or file) name to the `overrides` field.
 For example, if we want to add the `config` directory,
 it will look like this:
 ```JSON
-"overrides": [
+{
+  "overrides": [
     "config"
-]
+  ]
+}
 ```
 
 </step>
@@ -74,10 +76,11 @@ a new field in it.
 For example, if we use the JEI mod,
 it will look like this:
 ```JSON
-"projects": {
+{
+  "projects": {
     "jei": {
-       
     }
+  }
 }
 ```
 
@@ -88,42 +91,17 @@ And finally, add the property with the value you want to override.
 
 In our example, we will override JEI's project side to `CLIENT`:
 ```JSON
-"projects": {
+{
+  "projects": {
     "jei": {
-        "side": "CLIENT"
+      "side": "CLIENT"
     }
+  }
 }
 ```
 
 </step>
 </procedure>
-
-[//]: # (## Exporting a Server Pack)
-
-[//]: # ()
-[//]: # (To export a server pack, run the [`pakku export`] command)
-
-[//]: # (with the [`-s`] or [`--server-pack`] flag:)
-
-[//]: # ()
-[//]: # (<var name="arg" value="[<path>] --server-pack"/>)
-
-[//]: # (<include from="pakku-export.md" element-id="snippet-cmd"></include>)
-
-[//]: # ()
-[//]: # (The `[<path>]` argument is optional.)
-
-[//]: # ()
-[//]: # (This will export only:)
-
-[//]: # ()
-[//]: # (- projects with the `BOTH` or `SERVER` side. Project with no side will be exported as `BOTH`.)
-
-[//]: # (- `overrides` and `server_overrides` defined in the [config file]&#40;Config-File.md&#41; &#40;`pakku.json`&#41;,)
-
-[//]: # (- [project overrides]&#40;Pakku-Terminology.md#project-override&#41; included in the )
-
-[//]: # (`.pakku/overrides` or `.pakku/server-overrides` directory.)
 
 ## File Director Integration
 
