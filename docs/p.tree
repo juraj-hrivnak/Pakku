@@ -30,12 +30,12 @@
             <toc-element topic="pakku.md"/>
             <toc-element topic="pakku-init.md"/>
             <toc-element topic="pakku-import.md"/>
+            <toc-element topic="pakku-add.md"/>
+            <toc-element topic="pakku-add-prj.md"/>
             <toc-element topic="pakku-set.md"/>
             <toc-element topic="pakku-cfg.md"/>
-            <toc-element topic="pakku-add.md">
-                <toc-element topic="pakku-add-prj.md"/>
-            </toc-element>
             <toc-element topic="pakku-rm.md"/>
+            <toc-element topic="pakku-cfg-prj.md"/>
             <toc-element topic="pakku-status.md"/>
             <toc-element topic="pakku-update.md"/>
             <toc-element topic="pakku-ls.md"/>

@@ -1,12 +1,12 @@
-# pakku rm
+# pakku cfg prj
 
-Remove projects
+Configure projects
 
 ## Usage
 
 <snippet id="snippet-cmd">
 
-<var name="cmd">rm</var>
+<var name="cmd">cfg prj</var>
 <var name="params">[&lt;options&gt;] [&lt;projects&gt;]...</var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
@@ -17,7 +17,7 @@ Remove projects
 <snippet id="snippet-args">
 
 `[<projects>]...`
-: Projects to remove
+: Projects to configure
 
 </snippet>
 
@@ -27,11 +27,20 @@ Remove projects
 
 <snippet id="snippet-options">
 
-`-a`, `--all`
-: Remove all projects
+`-t`, `--type`
+: Change the type of a project
 
-`-D`, `--no-deps`
-: Ignore resolving dependencies
+`-s`, `--side`
+: Change the side of a project
+
+`-u`, `--update-strategy`
+: Change the update strategy of a project
+
+`-r`, `--redistributable`
+: Change whether the project can be redistributed
+
+`-p`, `--subpath`
+: Change the subpath of the project
 
 </snippet>
 

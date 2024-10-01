@@ -7,10 +7,16 @@ Add projects
 <snippet id="snippet-cmd">
 
 <var name="cmd">add</var>
-<var name="params">[&lt;options&gt;] [&lt;projects&gt;]... &lt;command&gt; [&lt;args&gt;]...</var>
+<var name="params">[&lt;options&gt;] [&lt;projects&gt;]...</var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
 </snippet>
+
+
+## Subcommands
+
+[`prj`](pakku-add-prj.md)
+: Specify the project precisely
 
 ## Arguments
 
@@ -24,21 +30,15 @@ Add projects
 ## Options
 
 <snippet id="snippet-options-all">
+
 <snippet id="snippet-options">
-    <deflist>
-    <def>
-    <title><code>-D</code>, <code>--no-deps</code></title><p>Ignore resolving dependencies</p>
-    </def>
-    </deflist>
-</snippet>
-    <deflist>
-    <def>
-    <title><code>-h</code>, <code>--help</code></title><p>Show this message and exit</p>
-    </def>
-    </deflist>
+
+`-D`, `--no-deps`
+: Ignore resolving dependencies
+
 </snippet>
 
-## Subcommands
+`-h`, `--help`
+: Show the help message and exit
 
-[`prj`](pakku-add-prj.md)
-: Specify the project precisely
+</snippet>

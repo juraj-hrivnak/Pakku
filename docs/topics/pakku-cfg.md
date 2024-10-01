@@ -1,25 +1,22 @@
 # pakku cfg
 
-Configure various options of your modpack or projects
+Configure properties of the config file
 
 ## Usage
 
 <snippet id="snippet-cmd">
 
 <var name="cmd">cfg</var>
-<var name="params">[&lt;options&gt;] [&lt;projects&gt;]...</var>
+<var name="params">[&lt;options&gt;] </var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
 </snippet>
 
-## Arguments
 
-<snippet id="snippet-args">
+## Subcommands
 
-`[<projects>]...`
-: The `projects` argument.
-
-</snippet>
+[`prj`](pakku-cfg-prj.md)
+: Configure projects
 
 ## Options
 
@@ -27,24 +24,36 @@ Configure various options of your modpack or projects
 
 <snippet id="snippet-options">
 
-`-t`, `--type`
-: Change the type of the project.
+`-n`, `--name`
+: Change the name of the modpack
 
-`-s`, `--side`
-: Change the side of the project. 
+`-v`, `--version`
+: Change the version of the modpack
 
-`-u`, `--update-strategy`
-: Change the update strategy of the project. 
+`-d`, `--description`
+: Change the description of the modpack
 
-`-r`, `--redistributable`
-: Change whether the project can be redistributed. 
+`-a`, `--author`
+: Change the author of the modpack
 
-`-p`, `--subpath`
-: Change the subpath of the project.
+`--mods-path`
+: Change the path for the `MOD` project type
+
+`--resource-packs-path`
+: Change the path for the `RESOURCE_PACK` project type
+
+`--data-packs-path`
+: Change the path for the `DATA_PACK` project type
+
+`--worlds-path`
+: Change the path for the `WORLD` project type
+
+`--shaders-path`
+: Change the path for the `SHADER` project type
 
 </snippet>
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

@@ -56,7 +56,7 @@ class CfgTest
         val output = cmd.test("test -p test -s both -u latest -r true")
         assertEquals("", output.stderr, "Command failed to execute")
         assertNotNull(ConfigFile.readOrNull(), "Config file should be created")
-        val config = ConfigFile.readOrNull()!!.getProjects()["test"]
+        val config = ConfigFile.readOrNull()!!.projects["test"]
         assertNotNull(config, "Project config should be created")
         assertEquals(UpdateStrategy.LATEST, config.updateStrategy)
         assertEquals(true, config.redistributable)

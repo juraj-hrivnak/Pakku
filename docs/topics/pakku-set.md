@@ -1,6 +1,6 @@
 # pakku set
 
-Set various properties of your modpack or projects
+Set properties of the lock file
 
 ## Usage
 
@@ -17,7 +17,7 @@ Set various properties of your modpack or projects
 <snippet id="snippet-args">
 
 `[<projects>]...`
-: The `projects` argument. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
+: Use the config file (pakku.json) or 'cfg' command instead.
 
 </snippet>
 
@@ -28,13 +28,13 @@ Set various properties of your modpack or projects
 <snippet id="snippet-options">
 
 `-s`, `--side`
-: Change the side of a project. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
+: Change the side of a project
 
 `-u`, `--update-strategy`
-: Change the update strategy of a project. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
+: Change the update strategy of a project
 
 `-r`, `--redistributable`
-: Change whether the project can be redistributed. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
+: Change whether the project can be redistributed
 
 `-t`, `--target`
 : Change the target of the pack
@@ -48,6 +48,6 @@ Set various properties of your modpack or projects
 </snippet>
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>
