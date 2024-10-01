@@ -1,4 +1,4 @@
-# pakku set
+# pakku cfg
 
 Configure various options of your modpack or projects
 
