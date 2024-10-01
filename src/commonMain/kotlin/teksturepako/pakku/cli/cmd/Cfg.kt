@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -16,6 +17,8 @@ import teksturepako.pakku.api.projects.UpdateStrategy
 
 class Cfg : CliktCommand()
 {
+    override val printHelpOnEmptyArgs = true
+
     override fun help(context: Context) = "Configure various options of your modpack or projects"
 
     // -- PROJECTS --

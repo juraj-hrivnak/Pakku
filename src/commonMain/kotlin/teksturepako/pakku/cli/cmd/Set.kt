@@ -15,6 +15,8 @@ import teksturepako.pakku.api.projects.UpdateStrategy
 
 class Set : CliktCommand()
 {
+    override val printHelpOnEmptyArgs = true
+
     override fun help(context: Context) = "Set various properties of your modpack or projects"
 
     // -- PROJECTS --
