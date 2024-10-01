@@ -2,7 +2,6 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
-import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -10,10 +9,12 @@ import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.choice
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
+import teksturepako.pakku.cli.ui.pError
 
 class Cfg : CliktCommand()
 {
@@ -41,25 +42,29 @@ class Cfg : CliktCommand()
         .help("Change the subpath of the project")
 
     override fun run() = runBlocking {
-        val lockFile = LockFile.readOrNew()
-        val config = ConfigFile.readOrNew()
+        val lockFile = LockFile.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
+        val configFile = ConfigFile.readOrNew()
 
         // -- PROJECTS --
 
         if (projectArgs.isNotEmpty())
         {
-            val projects = config.getProjects()
+            val projects = configFile.getProjects()
 
             for (arg in projectArgs)
             {
                 val project = lockFile.getProject(arg)
                 if (project == null)
                 {
-                    terminal.warning("Can't find project '$arg'")
+                    terminal.pError(ActionError.ProjNotFound(), arg)
                     continue
                 }
                 val projectConfig = projects.getOrPut(arg) {
-                    ConfigFile.ProjectConfig(null, null, null, null, null)
+                    ConfigFile.ProjectConfig()
                 }
 
                 projectConfig.apply {
@@ -91,7 +96,7 @@ class Cfg : CliktCommand()
         }
 
         lockFile.write()
-        config.write()
+        configFile.write()
         echo()
     }
 }
