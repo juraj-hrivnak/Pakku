@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.enum
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.ConfigFile
@@ -24,15 +25,15 @@ class Cfg : CliktCommand()
 
     // -- PROJECTS --
 
-    private val projectArgs: List<String> by argument("projects").multiple()
+    private val projectArgs: List<String> by argument("projects", help = "Projects to configure").multiple()
 
-    private val sideOpt: String? by option("-s", "--side")
+    private val sideOpt: ProjectSide? by option("-s", "--side")
         .help("Change the side of a project")
-        .choice("client", "server", "both", ignoreCase = true)
+        .enum<ProjectSide>(true)
 
-    private val updateStrategyOpt: String? by option("-u", "--update-strategy")
+    private val updateStrategyOpt: UpdateStrategy? by option("-u", "--update-strategy")
         .help("Change the update strategy of a project")
-        .choice("latest", "none", ignoreCase = true)
+        .enum<UpdateStrategy>(true)
 
     private val redistributableOpt: Boolean? by option("-r", "--redistributable")
         .help("Change whether the project can be redistributed")
@@ -68,16 +69,12 @@ class Cfg : CliktCommand()
                 }
 
                 projectConfig.apply {
-                    sideOpt?.let { opt ->
-                        ProjectSide.valueOf(opt.uppercase())
-                    }?.let {
+                    sideOpt?.let {
                         side = it
                         terminal.success("'side' set to '$it' for $arg")
                     }
 
-                    updateStrategyOpt?.let { opt ->
-                        UpdateStrategy.valueOf(opt.uppercase())
-                    }?.let {
+                    updateStrategyOpt?.let {
                         updateStrategy = it
                         terminal.success("'update_strategy' set to '$it' for $arg")
                     }
