@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.enum
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
@@ -15,25 +16,31 @@ import teksturepako.pakku.api.projects.UpdateStrategy
 
 class Set : CliktCommand()
 {
+    override val printHelpOnEmptyArgs = true
+
     override fun help(context: Context) = "Set various properties of your modpack or projects"
 
     // -- PROJECTS --
 
-    private val projectArgs: List<String> by argument("projects").multiple()
+    private val projectArgs: List<String> by argument(
+        "projects",
+        help = "Use the config file (pakku.json) or 'cfg' command instead."
+    ).multiple()
 
-    private val sideOpt: String? by option("-s", "--side")
+    private val sideOpt: ProjectSide? by option("-s", "--side")
         .help("Change the side of a project")
-        .choice("client", "server", "both", ignoreCase = true)
-        .deprecated("Use the config file (pakku.json) instead.")
+        .enum<ProjectSide>(true)
+        .deprecated("Use the config file (pakku.json) or 'cfg' command instead.")
 
-    private val updateStrategyOpt: String? by option("-u", "--update-strategy")
+    private val updateStrategyOpt: UpdateStrategy? by option("-u", "--update-strategy")
         .help("Change the update strategy of a project")
-        .choice("latest", "none", ignoreCase = true)
+        .enum<UpdateStrategy>(true)
+        .deprecated("Use the config file (pakku.json) or 'cfg' command instead.")
 
     private val redistributableOpt: Boolean? by option("-r", "--redistributable")
         .help("Change whether the project can be redistributed")
         .boolean()
-        .deprecated("Use the config file (pakku.json) instead.")
+        .deprecated("Use the config file (pakku.json) or 'cfg' command instead.")
 
     // -- PACK --
 
@@ -65,16 +72,12 @@ class Set : CliktCommand()
                 val project = lockFile.getProject(arg) ?: continue
 
                 project.apply {
-                    sideOpt?.let { opt ->
-                        ProjectSide.valueOf(opt.uppercase())
-                    }?.let {
+                    sideOpt?.let {
                         side = it
                         terminal.success("'side' set to '$it' for ${this.slug}")
                     }
 
-                    updateStrategyOpt?.let { opt ->
-                        UpdateStrategy.valueOf(opt.uppercase())
-                    }?.let {
+                    updateStrategyOpt?.let {
                         updateStrategy = it
                         terminal.success("'update_strategy' set to '$it' for ${this.slug}")
                     }
