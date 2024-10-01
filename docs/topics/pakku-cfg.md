@@ -27,11 +27,14 @@ Configure various options of your modpack or projects
 
 <snippet id="snippet-options">
 
+`-t`, `--type`
+: Change the type of the project.
+
 `-s`, `--side`
-: Change the side of a project. 
+: Change the side of the project. 
 
 `-u`, `--update-strategy`
-: Change the update strategy of a project. 
+: Change the update strategy of the project. 
 
 `-r`, `--redistributable`
 : Change whether the project can be redistributed. 
