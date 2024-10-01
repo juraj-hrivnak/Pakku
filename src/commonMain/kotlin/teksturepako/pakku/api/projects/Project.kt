@@ -214,6 +214,7 @@ data class Project(
 
     fun getPathStringWithSubpath(configFile: ConfigFile?, separator: Char = '/') = buildString {
         append(type.getPathString(configFile))
+        val subpath = getSubpathOrNull()
         if (subpath != null) append("$separator$subpath")
     }
 

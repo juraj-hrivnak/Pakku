@@ -32,7 +32,7 @@ class CfgTest
         val cmd = Cfg()
         val output = cmd.test("test -p test").output
 
-        assertContains(output, "Can't find project 'test'")
+        assertContains(output, "Could not read '$workingPath/${LockFile.FILE_NAME}'")
     }
 
     @Test
