@@ -102,8 +102,11 @@ class Cfg : CliktCommand()
             }
         }
 
-        lockFile.write()
-        configFile.write()
+        configFile.write()?.let {
+            terminal.pError(it, ConfigFile.FILE_NAME)
+            echo()
+            return@runBlocking
+        }
         echo()
     }
 }
