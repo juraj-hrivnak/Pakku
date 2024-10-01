@@ -17,7 +17,7 @@ Set various properties of your modpack or projects
 <snippet id="snippet-args">
 
 `[<projects>]...`
-: The `projects` argument
+: The `projects` argument. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
 
 </snippet>
 
@@ -28,13 +28,13 @@ Set various properties of your modpack or projects
 <snippet id="snippet-options">
 
 `-s`, `--side`
-: Change the side of a project
+: Change the side of a project. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
 
 `-u`, `--update-strategy`
-: Change the update strategy of a project
+: Change the update strategy of a project. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
 
 `-r`, `--redistributable`
-: Change whether the project can be redistributed
+: Change whether the project can be redistributed. **Deprecated, use [cfg](pakku-cfg.md) command or config file instead**
 
 `-t`, `--target`
 : Change the target of the pack

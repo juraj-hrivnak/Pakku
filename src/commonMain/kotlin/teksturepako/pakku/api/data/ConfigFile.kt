@@ -97,11 +97,11 @@ data class ConfigFile(
 
     @Serializable
     data class ProjectConfig(
-        var type: ProjectType?,
-        var side: ProjectSide?,
-        @SerialName("update_strategy") var updateStrategy: UpdateStrategy?,
-        @SerialName("redistributable") var redistributable: Boolean?,
-        var subpath: String?
+        var type: ProjectType? = null,
+        var side: ProjectSide? = null,
+        @SerialName("update_strategy") var updateStrategy: UpdateStrategy? = null,
+        @SerialName("redistributable") var redistributable: Boolean? = null,
+        var subpath: String? = null
     )
 
     // -- FILE I/O --

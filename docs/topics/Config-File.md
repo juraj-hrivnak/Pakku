@@ -28,4 +28,5 @@ modpack export.
 
 `projects`
 : A list of project slugs, names, IDs or filenames from the [lock file](Lock-File.md)
-with properties you want to change.
+with properties you want to change. 
+You can use [cfg](pakku-cfg.md) command to change the properties as well.
