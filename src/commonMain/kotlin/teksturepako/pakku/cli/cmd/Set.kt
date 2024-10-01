@@ -19,21 +19,25 @@ class Set : CliktCommand()
 
     // -- PROJECTS --
 
-    private val projectArgs: List<String> by argument("projects").multiple()
+    private val projectArgs: List<String> by argument(
+        "projects",
+        help = "Use the config file (pakku.json) or 'cfg' command instead."
+    ).multiple()
 
     private val sideOpt: String? by option("-s", "--side")
         .help("Change the side of a project")
         .choice("client", "server", "both", ignoreCase = true)
-        .deprecated("Use the config file (pakku.json) instead.")
+        .deprecated("Use the config file (pakku.json) or 'cfg' command instead.")
 
     private val updateStrategyOpt: String? by option("-u", "--update-strategy")
         .help("Change the update strategy of a project")
         .choice("latest", "none", ignoreCase = true)
+        .deprecated("Use the config file (pakku.json) or 'cfg' command instead.")
 
     private val redistributableOpt: Boolean? by option("-r", "--redistributable")
         .help("Change whether the project can be redistributed")
         .boolean()
-        .deprecated("Use the config file (pakku.json) instead.")
+        .deprecated("Use the config file (pakku.json) or 'cfg' command instead.")
 
     // -- PACK --
 
