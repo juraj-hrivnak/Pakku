@@ -14,6 +14,7 @@ import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
+import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.cli.ui.pError
 
@@ -27,13 +28,17 @@ class Cfg : CliktCommand()
 
     private val projectArgs: List<String> by argument("projects", help = "Projects to configure").multiple()
 
+    private val typeOpt: ProjectType? by option("-t", "--type")
+        .help("Change the type of a project")
+        .enum<ProjectType>()
+
     private val sideOpt: ProjectSide? by option("-s", "--side")
         .help("Change the side of a project")
-        .enum<ProjectSide>(true)
+        .enum<ProjectSide>()
 
     private val updateStrategyOpt: UpdateStrategy? by option("-u", "--update-strategy")
         .help("Change the update strategy of a project")
-        .enum<UpdateStrategy>(true)
+        .enum<UpdateStrategy>()
 
     private val redistributableOpt: Boolean? by option("-r", "--redistributable")
         .help("Change whether the project can be redistributed")
@@ -69,6 +74,11 @@ class Cfg : CliktCommand()
                 }
 
                 projectConfig.apply {
+                    typeOpt?.let {
+                        type = it
+                        terminal.success("'type' set to '$it' for $arg")
+                    }
+
                     sideOpt?.let {
                         side = it
                         terminal.success("'side' set to '$it' for $arg")
