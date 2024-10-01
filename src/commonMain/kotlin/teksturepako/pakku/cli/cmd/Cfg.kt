@@ -2,108 +2,105 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.arguments.multiple
-import com.github.ajalt.clikt.parameters.options.*
-import com.github.ajalt.clikt.parameters.types.boolean
-import com.github.ajalt.clikt.parameters.types.choice
-import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.clikt.parameters.options.help
+import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.cli.ui.pError
 
 class Cfg : CliktCommand()
 {
+    override fun help(context: Context) = "Configure properties of the config file"
+
+    init
+    {
+        this.subcommands(CfgPrj())
+    }
+
     override val printHelpOnEmptyArgs = true
+    override val invokeWithoutSubcommand = true
+    override val allowMultipleSubcommands = true
 
-    override fun help(context: Context) = "Configure various options of your modpack or projects"
+    // -- MODPACK --
 
-    // -- PROJECTS --
+    private val nameOpt by option("-n", "--name")
+        .help("Change the name of the modpack")
 
-    private val projectArgs: List<String> by argument("projects", help = "Projects to configure").multiple()
+    private val versionOpt by option("-v", "--version")
+        .help("Change the version of the modpack")
 
-    private val typeOpt: ProjectType? by option("-t", "--type")
-        .help("Change the type of a project")
-        .enum<ProjectType>()
+    private val descriptionOpt by option("-d", "--description")
+        .help("Change the description of the modpack")
 
-    private val sideOpt: ProjectSide? by option("-s", "--side")
-        .help("Change the side of a project")
-        .enum<ProjectSide>()
+    private val authorOpt by option("-a", "--author")
+        .help("Change the author of the modpack")
 
-    private val updateStrategyOpt: UpdateStrategy? by option("-u", "--update-strategy")
-        .help("Change the update strategy of a project")
-        .enum<UpdateStrategy>()
+    // -- PROJECT TYPE PATHS --
 
-    private val redistributableOpt: Boolean? by option("-r", "--redistributable")
-        .help("Change whether the project can be redistributed")
-        .boolean()
+    private val modsPathOpt by option("--mods-path", metavar = "path")
+        .help("Change the path for the `${ProjectType.MOD}` project type")
 
-    private val subpathOpt: String? by option("-p", "--subpath")
-        .help("Change the subpath of the project")
+    private val resourcePacksPathOpt by option("--resource-packs-path", metavar = "path")
+        .help("Change the path for the `${ProjectType.RESOURCE_PACK}` project type")
 
-    override fun run() = runBlocking {
-        val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
-            echo()
-            return@runBlocking
-        }
+    private val dataPacksPathOpt by option("--data-packs-path", metavar = "path")
+        .help("Change the path for the `${ProjectType.DATA_PACK}` project type")
+
+    private val worldsPathOpt by option("--worlds-path", metavar = "path")
+        .help("Change the path for the `${ProjectType.WORLD}` project type")
+
+    private val shadersPathOpt by option("--shaders-path", metavar = "path")
+        .help("Change the path for the `${ProjectType.SHADER}` project type")
+
+    override fun run(): Unit = runBlocking {
+
         val configFile = ConfigFile.readOrNew()
 
-        // -- PROJECTS --
+        // -- MODPACK --
 
-        if (projectArgs.isNotEmpty())
-        {
-            val projects = configFile.getProjects()
+        nameOpt?.let { opt ->
+            configFile.setName(opt)
+        }
 
-            for (arg in projectArgs)
-            {
-                val project = lockFile.getProject(arg)
-                if (project == null)
-                {
-                    terminal.pError(ActionError.ProjNotFound(), arg)
-                    continue
-                }
-                val projectConfig = projects.getOrPut(arg) {
-                    ConfigFile.ProjectConfig()
-                }
+        versionOpt?.let { opt ->
+            configFile.setVersion(opt)
+        }
 
-                projectConfig.apply {
-                    typeOpt?.let {
-                        type = it
-                        terminal.success("'type' set to '$it' for $arg")
-                    }
+        descriptionOpt?.let { opt ->
+            configFile.setDescription(opt)
+        }
 
-                    sideOpt?.let {
-                        side = it
-                        terminal.success("'side' set to '$it' for $arg")
-                    }
+        authorOpt?.let { opt ->
+            configFile.setAuthor(opt)
+        }
 
-                    updateStrategyOpt?.let {
-                        updateStrategy = it
-                        terminal.success("'update_strategy' set to '$it' for $arg")
-                    }
+        // -- PROJECT TYPE PATHS --
 
-                    redistributableOpt?.let { opt ->
-                        redistributable = opt
-                        terminal.success("'redistributable' set to '$opt' for $arg")
-                    }
+        modsPathOpt?.let { opt ->
+            configFile.modsPath = opt
+        }
 
-                    subpathOpt?.let { opt ->
-                        subpath = opt
-                        terminal.success("'subpath' set to '$opt' for $arg")
-                    }
-                }
-            }
+        resourcePacksPathOpt?.let { opt ->
+            configFile.resourcePacksPath = opt
+        }
+
+        dataPacksPathOpt?.let { opt ->
+            configFile.dataPacksPath = opt
+        }
+
+        worldsPathOpt?.let { opt ->
+            configFile.worldsPath = opt
+        }
+
+        shadersPathOpt?.let { opt ->
+            configFile.shadersPath = opt
         }
 
         configFile.write()?.let {
-            terminal.pError(it, ConfigFile.FILE_NAME)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

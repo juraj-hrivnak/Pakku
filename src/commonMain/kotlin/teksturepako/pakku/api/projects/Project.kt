@@ -183,7 +183,7 @@ data class Project(
 
     fun inheritPropertiesFrom(configFile: ConfigFile?): Project
     {
-        configFile?.getProjects()?.forEach { (input, config) ->
+        configFile?.projects?.forEach { (input, config) ->
             if (input in this || this.files.any { input in it.fileName })
             {
                 config.type?.let { this.type = it }

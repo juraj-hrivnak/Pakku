@@ -18,7 +18,7 @@ class Set : CliktCommand()
 {
     override val printHelpOnEmptyArgs = true
 
-    override fun help(context: Context) = "Set various properties of your modpack or projects"
+    override fun help(context: Context) = "Set properties of the lock file"
 
     // -- PROJECTS --
 
@@ -65,27 +65,24 @@ class Set : CliktCommand()
 
         // -- PROJECTS --
 
-        if (projectArgs.isNotEmpty())
+        for (arg in projectArgs)
         {
-            for (arg in projectArgs)
-            {
-                val project = lockFile.getProject(arg) ?: continue
+            val project = lockFile.getProject(arg) ?: continue
 
-                project.apply {
-                    sideOpt?.let {
-                        side = it
-                        terminal.success("'side' set to '$it' for ${this.slug}")
-                    }
+            project.apply {
+                sideOpt?.let {
+                    side = it
+                    terminal.success("'side' set to '$it' for ${this.slug}")
+                }
 
-                    updateStrategyOpt?.let {
-                        updateStrategy = it
-                        terminal.success("'update_strategy' set to '$it' for ${this.slug}")
-                    }
+                updateStrategyOpt?.let {
+                    updateStrategy = it
+                    terminal.success("'update_strategy' set to '$it' for ${this.slug}")
+                }
 
-                    redistributableOpt?.let { opt ->
-                        redistributable = opt
-                        terminal.success("'redistributable' set to '$opt' for ${this.slug}")
-                    }
+                redistributableOpt?.let { opt ->
+                    redistributable = opt
+                    terminal.success("'redistributable' set to '$opt' for ${this.slug}")
                 }
             }
         }

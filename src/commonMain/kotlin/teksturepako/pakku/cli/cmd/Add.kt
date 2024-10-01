@@ -18,7 +18,6 @@ import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.*
-import teksturepako.pakku.cli.cmd.subcmd.Prj
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.*
 
@@ -41,7 +40,7 @@ class Add : CliktCommand()
 
     init
     {
-        this.subcommands(Prj())
+        this.subcommands(AddPrj())
     }
 
     override val invokeWithoutSubcommand = true

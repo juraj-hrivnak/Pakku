@@ -1,4 +1,4 @@
-package teksturepako.pakku.cli.cmd.subcmd
+package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
@@ -28,9 +28,13 @@ import kotlin.collections.fold
 import kotlin.system.exitProcess
 import com.github.michaelbull.result.fold as resultFold
 
-class Prj : CliktCommand()
+class AddPrj : CliktCommand("prj")
 {
     override fun help(context: Context) = "Specify the project precisely"
+
+    override fun aliases(): Map<String, List<String>> = mapOf(
+        "project" to listOf()
+    )
 
     private val cfOpt: ProjectArg.CommonArg? by option(
         "--cf", "--curseforge", help = "CurseForge project slug or ID"

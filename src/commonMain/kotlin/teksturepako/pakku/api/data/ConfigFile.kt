@@ -13,24 +13,40 @@ import teksturepako.pakku.io.decodeToResult
 import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.writeToFile
 
+/**
+ * A config file (`pakku.json`) is a file used by the user to configure properties needed for modpack export.
+ */
 @Serializable
 data class ConfigFile(
+    /** The name of the modpack. */
     private var name: String = "",
+
+    /** The version of the modpack. */
     private var version: String = "",
+
+    /** The description of the modpack. */
     private var description: String = "",
+
+    /** The author of the modpack. */
     private var author: String = "",
 
+    /** A mutable list of overrides packed up with the modpack. */
     private val overrides: MutableList<String> = mutableListOf(),
+
+    /** A mutable list of server overrides packed up with the modpack. */
     @SerialName("server_overrides") private val serverOverrides: MutableList<String> = mutableListOf(),
+
+    /** A mutable list of client overrides packed up with the modpack. */
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
 
-    @SerialName("mods_path") val modsPath: String? = null,
-    @SerialName("resource_packs_path") val resourcePacksPath: String? = null,
-    @SerialName("data_packs_path") val dataPacksPath: String? = null,
-    @SerialName("worlds_path") val worldsPath: String? = null,
-    @SerialName("shaders_path") val shadersPath: String? = null,
+    @SerialName("mods_path") var modsPath: String? = null,
+    @SerialName("resource_packs_path") var resourcePacksPath: String? = null,
+    @SerialName("data_packs_path") var dataPacksPath: String? = null,
+    @SerialName("worlds_path") var worldsPath: String? = null,
+    @SerialName("shaders_path") var shadersPath: String? = null,
 
-    private val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
+    /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
+    val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
 )
 {
     // -- PACK --
@@ -93,8 +109,6 @@ data class ConfigFile(
 
     // -- PROJECTS --
 
-    fun getProjects() = this.projects
-
     @Serializable
     data class ProjectConfig(
         var type: ProjectType? = null,
@@ -125,5 +139,5 @@ data class ConfigFile(
         fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
     }
 
-    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonEncodeDefaults)
+    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = json)
 }
