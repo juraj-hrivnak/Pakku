@@ -127,7 +127,7 @@ suspend fun deleteOldFiles(
         }
         .plus(
             projectOverrides.associate { projectOverride ->
-                projectOverride.path.absolute() to createHash("sha1", projectOverride.bytes)
+                projectOverride.fullOutputPath.absolute() to createHash("sha1", projectOverride.bytes)
             }
         )
 
@@ -153,15 +153,17 @@ suspend fun deleteOldFiles(
                     }
                 }
             }
-            .flatMap { pathSequence ->
-                pathSequence.toSet().map { path ->
+            .forEach { pathSequence ->
+                pathSequence.toSet().mapNotNull x@ { path ->
                     val hash = path.readAndCreateSha1FromBytes()
 
-                    if (path.extension in listOf("jar", "zip") &&
-                        path.absolute() !in fileHashes.keys || hash !in fileHashes.values)
+                    if (path.extension !in listOf("jar", "zip")) return@x null
+
+                    if (path.absolute() !in fileHashes.keys || hash !in fileHashes.values)
                     {
                         send(path)
                     }
+                    else null
                 }
             }
     }
@@ -180,7 +182,7 @@ suspend fun deleteOldFiles(
             this.cancel()
         }
 
-        ProjectType.entries.map { projectType ->
+        ProjectType.entries.filterNot { it == ProjectType.WORLD }.map { projectType ->
             fetchHistory.paths[projectType.serialName] = projectType.getPathString(configFile)
         }
 
