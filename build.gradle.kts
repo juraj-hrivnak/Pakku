@@ -87,6 +87,7 @@ kotlin {
 
                 // CLI
                 implementation("com.github.ajalt.clikt:clikt:4.4.0.41-SNAPSHOT")
+                implementation("com.github.ajalt.mordant:mordant-coroutines:2.6.0")
 
                 // Logging
                 implementation("org.slf4j:slf4j-api:2.0.7")

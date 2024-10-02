@@ -3,8 +3,13 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.mordant.animation.progressAnimation
+import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
+import com.github.ajalt.mordant.animation.progress.advance
 import com.github.ajalt.mordant.widgets.Spinner
+import com.github.ajalt.mordant.widgets.progress.percentage
+import com.github.ajalt.mordant.widgets.progress.progressBarLayout
+import com.github.ajalt.mordant.widgets.progress.spinner
+import com.github.ajalt.mordant.widgets.progress.text
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -43,12 +48,13 @@ class Fetch : CliktCommand()
         }
         else null
 
-        val progressBar = terminal.progressAnimation {
+        val progressBar = progressBarLayout(spacing = 0) {
             text("Fetching ")
             spinner(Spinner.Dots())
             percentage()
-            padding = 0
-        }
+        }.animateInCoroutine(terminal)
+
+        launch { progressBar.execute() }
 
         val projectFiles = retrieveProjectFiles(lockFile, Provider.providers).mapNotNull { result ->
             result.getOrElse {
@@ -64,7 +70,7 @@ class Fetch : CliktCommand()
                 },
                 onProgress = { advance, total ->
                     progressBar.advance(advance)
-                    progressBar.updateTotal(total)
+                    progressBar.update { this.total = total }
                 },
                 onSuccess = { path, _ ->
                     terminal.pSuccess("$path saved")
@@ -74,7 +80,7 @@ class Fetch : CliktCommand()
         }
 
         fetchJob.invokeOnCompletion {
-            progressBar.stop()
+            launch { progressBar.clear() }
         }
 
         // -- OVERRIDES --
