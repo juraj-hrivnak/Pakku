@@ -6,12 +6,21 @@
 
 ### Highlights
 
+- Added the `cfg` command for configuring properties of the config file, by @SettingDust in [#29](https://github.com/juraj-hrivnak/Pakku/pull/29).
+  - With this change, `pakku set [<projects>]` was deprecated. Use the config file (`pakku.json`) or the `cfg prj` subcommand instead.
+  - The removal of this argument is scheduled for the `1.0.0` release.
 - Implemented configurable subpaths for projects and configurable paths for project types.
 - Added support for data packs.
+- Rewritten `fetch` command's deleting algorithm to account for recursion.
+  - Implemented fetch history file (`.pakku/fetch-history.json`) for handling changes to paths for project types.
+
+### Fixes 
+
+- Fixed ConcurrentModificationException on running `fetch` command in some cases.
 
 #### Configurable Subpaths
 
-There is now a new `subpath` property for projects that you can set using the [config file].
+There is now a new `subpath` property for projects that you configure using the [config file] or the `cfg prj` subcommand.
 
 Usage:
 
@@ -42,19 +51,26 @@ Example:
 
 #### Configurable Paths for Project Types
 
-There is now a variable for each project type that can be changed in the [config file].
+There is now a variable for each project type that you configure using the [config file] or the `cfg` command.
 
 Usage:
 
 ```json
 {
-  "mods_path": "<path>",
-  "resource_packs_path": "<path>",
-  "data_packs_path": "<path>",
-  "worlds_path": "<path>",
-  "shaders_path": "<path>"
+  "paths": {
+    "mods": "<path>",
+    "resource_packs": "<path>",
+    "data_packs": "<path>",
+    "worlds": "<path>",
+    "shaders": "<path>"
+  }
 }
 ```
+
+### API
+
+- Updated Clikt to `5.0.0` & Mordant to `3.0.0`.
+- Improved docs generation with better subcommand support.
 
 ## v0.18.2
 
