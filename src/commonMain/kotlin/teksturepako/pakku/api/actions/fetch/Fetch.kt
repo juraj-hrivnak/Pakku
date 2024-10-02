@@ -157,7 +157,7 @@ suspend fun deleteOldFiles(
                 pathSequence.toSet().mapNotNull x@ { path ->
                     val hash = path.readAndCreateSha1FromBytes()
 
-                    if (path.extension !in listOf("jar", "zip")) return@x null
+                    if (!path.isDirectory() && path.extension !in listOf("jar", "zip")) return@x null
 
                     if (path.absolute() !in fileHashes.keys || hash !in fileHashes.values)
                     {
