@@ -8,6 +8,8 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.table.grid
+import com.github.ajalt.mordant.terminal.danger
+import com.github.ajalt.mordant.terminal.info
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles

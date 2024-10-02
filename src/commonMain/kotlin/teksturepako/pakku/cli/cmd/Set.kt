@@ -9,6 +9,8 @@ import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.mordant.terminal.danger
+import com.github.ajalt.mordant.terminal.success
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide

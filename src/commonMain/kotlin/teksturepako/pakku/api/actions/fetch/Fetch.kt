@@ -35,7 +35,7 @@ fun retrieveProjectFiles(
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun List<ProjectFile>.fetch(
     onError: suspend (error: ActionError) -> Unit,
-    onProgress: (advance: Long, total: Long) -> Unit,
+    onProgress: suspend (advance: Long, total: Long) -> Unit,
     onSuccess: suspend (path: Path, projectFile: ProjectFile) -> Unit,
     lockFile: LockFile, configFile: ConfigFile?
 ) = coroutineScope {

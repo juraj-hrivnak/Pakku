@@ -5,11 +5,9 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
+import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.widgets.Spinner
-import com.github.ajalt.mordant.widgets.progress.percentage
-import com.github.ajalt.mordant.widgets.progress.progressBarLayout
-import com.github.ajalt.mordant.widgets.progress.spinner
-import com.github.ajalt.mordant.widgets.progress.text
+import com.github.ajalt.mordant.widgets.progress.*
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -48,11 +46,11 @@ class Fetch : CliktCommand()
         }
         else null
 
-        val progressBar = progressBarLayout(spacing = 0) {
-            text("Fetching ")
+        val progressBar = progressBarContextLayout(spacing = 0) {
+            text { context.toString() }
             spinner(Spinner.Dots())
             percentage()
-        }.animateInCoroutine(terminal)
+        }.animateInCoroutine(terminal, "Fetching ")
 
         launch { progressBar.execute() }
 
@@ -80,7 +78,12 @@ class Fetch : CliktCommand()
         }
 
         fetchJob.invokeOnCompletion {
-            launch { progressBar.clear() }
+            progressBar.update {
+                context = "Fetched "
+            }
+            launch {
+                progressBar.stop()
+            }
         }
 
         // -- OVERRIDES --

@@ -3,6 +3,9 @@ package teksturepako.pakku.cli.ui
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.terminal.Terminal
+import com.github.ajalt.mordant.terminal.danger
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.success
 import teksturepako.pakku.api.actions.ActionError
 import kotlin.time.Duration
 

@@ -3,6 +3,7 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.terminal.danger
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists

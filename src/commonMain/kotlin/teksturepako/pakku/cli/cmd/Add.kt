@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.onFailure
@@ -19,7 +20,9 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.*
+import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pSuccess
 
 class Add : CliktCommand()
 {

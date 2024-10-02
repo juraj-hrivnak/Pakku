@@ -1,11 +1,12 @@
 package teksturepako.pakku.cli
 
 import com.github.ajalt.mordant.terminal.Terminal
+import com.github.ajalt.mordant.terminal.info
 import teksturepako.pakku.api.actions.RequestHandlers
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.pInfo
