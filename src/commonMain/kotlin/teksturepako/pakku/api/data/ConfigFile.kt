@@ -39,11 +39,8 @@ data class ConfigFile(
     /** A mutable list of client overrides packed up with the modpack. */
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
 
-    @SerialName("mods_path") var modsPath: String? = null,
-    @SerialName("resource_packs_path") var resourcePacksPath: String? = null,
-    @SerialName("data_packs_path") var dataPacksPath: String? = null,
-    @SerialName("worlds_path") var worldsPath: String? = null,
-    @SerialName("shaders_path") var shadersPath: String? = null,
+    /**  A map of project types to their respective paths. */
+    val paths: MutableMap<ProjectType, String> = ProjectType.entries.associateWith { it.defaultPath }.toMutableMap(),
 
     /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
     val projects: MutableMap<String, ProjectConfig> = mutableMapOf()

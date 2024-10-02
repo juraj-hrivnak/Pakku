@@ -4,20 +4,20 @@ import teksturepako.pakku.api.data.ConfigFile
 import kotlin.reflect.KProperty1
 
 enum class ProjectType(
-    val prettyName: String, private val defaultPath: String, private val pathConfig: KProperty1<ConfigFile, String?>
+    val prettyName: String, val defaultPath: String
 )
 {
-    MOD("mod", "mods", ConfigFile::modsPath),
-    RESOURCE_PACK("resource pack", "resourcepacks", ConfigFile::resourcePacksPath),
-    DATA_PACK("data pack", "datapacks", ConfigFile::dataPacksPath),
-    WORLD("world", "saves", ConfigFile::worldsPath),
-    SHADER("shader pack", "shaderpacks", ConfigFile::shadersPath);
+    MOD("mod", "mods"),
+    RESOURCE_PACK("resource pack", "resourcepacks"),
+    DATA_PACK("data pack", "datapacks"),
+    WORLD("world", "saves"),
+    SHADER("shader pack", "shaderpacks");
 
     fun getPathString(configFile: ConfigFile?): String
     {
         return if (configFile == null) return defaultPath else
         {
-            pathConfig.get(configFile) ?: defaultPath
+            configFile.paths.getOrDefault(this, defaultPath)
         }
     }
 }
