@@ -7,7 +7,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.platforms.*
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.containsProject
+import teksturepako.pakku.api.projects.containProject
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.decodeOrNew
@@ -103,7 +103,7 @@ data class LockFile(
 
     fun add(project: Project): Boolean?
     {
-        val added: Boolean? = if (projects containsProject project)
+        val added: Boolean? = if (projects containProject project)
         {
             debug { println("Could not add ${project.name}") }
             null

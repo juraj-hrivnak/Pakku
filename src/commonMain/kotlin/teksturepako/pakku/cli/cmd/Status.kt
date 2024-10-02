@@ -10,7 +10,7 @@ import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.projects.containsProject
+import teksturepako.pakku.api.projects.containProject
 import teksturepako.pakku.cli.ui.*
 
 
@@ -78,7 +78,7 @@ class Status: CliktCommand()
         fun projStatus()
         {
             terminal.println(grid {
-                currentProjects.filter { updatedProjects containsProject it }.map { project ->
+                currentProjects.filter { updatedProjects containProject it }.map { project ->
                     row(project.getFlavoredSlug(), project.getFlavoredName(terminal.theme))
 
                     val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }

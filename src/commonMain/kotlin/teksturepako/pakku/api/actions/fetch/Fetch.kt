@@ -80,8 +80,10 @@ suspend fun List<ProjectFile>.fetch(
         }
     }
 
+    val jobs = mutableListOf<Job>()
+
     channel.consumeEach { (path, projectFile, bytes) ->
-        launch(Dispatchers.IO) {
+        jobs += launch(Dispatchers.IO) {
             runCatching {
                 path.createParentDirectories()
                 path.writeBytes(bytes)
@@ -93,9 +95,8 @@ suspend fun List<ProjectFile>.fetch(
         }
     }
 
-    launch {
-        if (channel.isEmpty) this.cancel()
-    }
+    jobs.joinAll()
+    this.cancel()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

@@ -11,15 +11,19 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.terminal.danger
-import com.github.ajalt.mordant.terminal.success
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pSuccess
 
 class CfgPrj : CliktCommand("prj")
 {
@@ -54,7 +58,7 @@ class CfgPrj : CliktCommand("prj")
     private val subpathOpt: String? by option("-p", "--subpath", metavar = "path")
         .help("Change the subpath of the project")
 
-    override fun run() = runBlocking {
+    override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
@@ -63,50 +67,44 @@ class CfgPrj : CliktCommand("prj")
 
         val configFile = ConfigFile.readOrNew()
 
-        // -- PROJECTS --
+        projectArgs.map { arg ->
+            if (lockFile.getProject(arg) != null) Ok(arg) else Err(ProjNotFound())
+        }.mapNotNull { result ->
+            result.onFailure { terminal.pError(it) }.get()
+        }.forEach { arg ->
+            val projectConfig = configFile.projects.getOrPut(arg) {
+                ConfigFile.ProjectConfig()
+            }
 
-        if (projectArgs.isNotEmpty())
-        {
-            val projects = configFile.projects
-
-            for (arg in projectArgs)
-            {
-                val project = lockFile.getProject(arg)
-                if (project == null)
-                {
-                    terminal.pError(ActionError.ProjNotFound(), arg)
-                    continue
+            projectConfig.apply {
+                typeOpt?.let {
+                    type = it
+                    terminal.pSuccess("'projects.$arg.type' set to '$it'.")
+                    echo()
                 }
 
-                val projectConfig = projects.getOrPut(arg) {
-                    ConfigFile.ProjectConfig()
+                sideOpt?.let {
+                    side = it
+                    terminal.pSuccess("'projects.$arg.side' set to '$it'.")
+                    echo()
                 }
 
-                projectConfig.apply {
-                    typeOpt?.let {
-                        type = it
-                        terminal.success("'type' set to '$it' for $arg")
-                    }
+                updateStrategyOpt?.let {
+                    updateStrategy = it
+                    terminal.pSuccess("'projects.$arg.update_strategy' set to '$it'.")
+                    echo()
+                }
 
-                    sideOpt?.let {
-                        side = it
-                        terminal.success("'side' set to '$it' for $arg")
-                    }
+                redistributableOpt?.let { opt ->
+                    redistributable = opt
+                    terminal.pSuccess("'projects.$arg.redistributable' set to '$opt'.")
+                    echo()
+                }
 
-                    updateStrategyOpt?.let {
-                        updateStrategy = it
-                        terminal.success("'update_strategy' set to '$it' for $arg")
-                    }
-
-                    redistributableOpt?.let { opt ->
-                        redistributable = opt
-                        terminal.success("'redistributable' set to '$opt' for $arg")
-                    }
-
-                    subpathOpt?.let { opt ->
-                        subpath = opt
-                        terminal.success("'subpath' set to '$opt' for $arg")
-                    }
+                subpathOpt?.let { opt ->
+                    subpath = opt
+                    terminal.pSuccess("'projects.$arg.subpath' set to '$opt'.")
+                    echo()
                 }
             }
         }
@@ -116,6 +114,5 @@ class CfgPrj : CliktCommand("prj")
             echo()
             return@runBlocking
         }
-        echo()
     }
 }

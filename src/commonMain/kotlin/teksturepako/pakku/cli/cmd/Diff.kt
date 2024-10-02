@@ -11,7 +11,7 @@ import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.terminal.success
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.projects.containsNotProject
+import teksturepako.pakku.api.projects.containNotProject
 import java.io.File
 
 class Diff : CliktCommand()
@@ -46,7 +46,7 @@ class Diff : CliktCommand()
         val allNewProjects = newLockFile.getAllProjects()
 
         val added = allNewProjects.mapNotNull { newProject ->
-            if (allOldProjects containsNotProject newProject)
+            if (allOldProjects containNotProject newProject)
             {
                 newProject
             }
@@ -55,7 +55,7 @@ class Diff : CliktCommand()
         added.forEach { terminal.success("+ $it") }
 
         val removed = allOldProjects.mapNotNull { oldProject ->
-            if (allNewProjects containsNotProject oldProject)
+            if (allNewProjects containNotProject oldProject)
             {
                 oldProject
             }
@@ -69,7 +69,7 @@ class Diff : CliktCommand()
         for (oldProject in allOldProjects)
         {
             /** We only care about projects, which previously also existed **/
-            if (allNewProjects containsNotProject oldProject) continue
+            if (allNewProjects containNotProject oldProject) continue
 
             for (newProject in allNewProjects)
             {

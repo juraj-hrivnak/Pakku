@@ -4,11 +4,11 @@ import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.rendering.Theme
 import teksturepako.pakku.api.data.allEqual
-import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.api.projects.containsProject
+import teksturepako.pakku.api.projects.containProject
 
 fun Project.getFlavoredName(theme: Theme, maxLength: Int? = null): String?
 {
@@ -42,7 +42,7 @@ fun Project.getFlavoredUpdateMsg(theme: Theme, updatedProjects: MutableSet<Proje
     UpdateStrategy.LATEST      ->
     {
         val symbol = theme.string("pakku.update_strategy.latest", "^")
-        if (updatedProjects containsProject this) blue(symbol) else brightGreen(symbol)
+        if (updatedProjects containProject this) blue(symbol) else brightGreen(symbol)
     }
 //    UpdateStrategy.SAME_LATEST -> cyan(theme.string("pakku.update_strategy.same_latest", "*^"))
     UpdateStrategy.NONE        -> red(theme.string("pakku.update_strategy.none", "x^"))

@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pSuccess
 
 class Cfg : CliktCommand()
 {
@@ -63,40 +64,68 @@ class Cfg : CliktCommand()
 
         nameOpt?.let { opt ->
             configFile.setName(opt)
+            terminal.pSuccess("'name' set to '$opt'.")
+            echo()
         }
 
         versionOpt?.let { opt ->
             configFile.setVersion(opt)
+            terminal.pSuccess("'version' set to '$opt'.")
+            echo()
         }
 
         descriptionOpt?.let { opt ->
             configFile.setDescription(opt)
+            terminal.pSuccess("'description' set to '$opt'.")
+            echo()
         }
 
         authorOpt?.let { opt ->
             configFile.setAuthor(opt)
+            terminal.pSuccess("'author' set to '$opt'.")
+            echo()
         }
 
         // -- PROJECT TYPE PATHS --
 
         modsPathOpt?.let { opt ->
-            configFile.paths[ProjectType.MOD.serialName] = opt
+            val serialName = ProjectType.MOD.serialName
+
+            configFile.paths[serialName] = opt
+            terminal.pSuccess("'paths.$serialName' set to '$opt'.")
+            echo()
         }
 
         resourcePacksPathOpt?.let { opt ->
-            configFile.paths[ProjectType.RESOURCE_PACK.serialName] = opt
+            val serialName = ProjectType.RESOURCE_PACK.serialName
+
+            configFile.paths[serialName] = opt
+            terminal.pSuccess("'paths.$serialName' set to '$opt'.")
+            echo()
         }
 
         dataPacksPathOpt?.let { opt ->
-            configFile.paths[ProjectType.DATA_PACK.serialName] = opt
+            val serialName = ProjectType.DATA_PACK.serialName
+
+            configFile.paths[serialName] = opt
+            terminal.pSuccess("'paths.$serialName' set to '$opt'.")
+            echo()
         }
 
         worldsPathOpt?.let { opt ->
-            configFile.paths[ProjectType.WORLD.serialName] = opt
+            val serialName = ProjectType.WORLD.serialName
+
+            configFile.paths[serialName] = opt
+            terminal.pSuccess("'paths.$serialName' set to '$opt'.")
+            echo()
         }
 
         shadersPathOpt?.let { opt ->
-            configFile.paths[ProjectType.SHADER.serialName] = opt
+            val serialName = ProjectType.SHADER.serialName
+
+            configFile.paths[serialName] = opt
+            terminal.pSuccess("'paths.$serialName' set to '$opt'.")
+            echo()
         }
 
         configFile.write()?.let {
@@ -104,6 +133,5 @@ class Cfg : CliktCommand()
             echo()
             return@runBlocking
         }
-        echo()
     }
 }

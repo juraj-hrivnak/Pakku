@@ -27,11 +27,11 @@ fun Collection<Project>.assignFiles(projectFiles: Collection<ProjectFile>, platf
     }
 }
 
-infix fun Collection<Project>.containsProject(project: Project): Boolean =
+infix fun Collection<Project>.containProject(project: Project): Boolean =
     this.any { it isAlmostTheSameAs project }
 
-infix fun Collection<Project>.containsNotProject(project: Project): Boolean =
-    !this.containsProject(project)
+infix fun Collection<Project>.containNotProject(project: Project): Boolean =
+    !this.containProject(project)
 
 fun MutableCollection<Project>.removeIf(predicate: (Project) -> Boolean): Boolean
 {
