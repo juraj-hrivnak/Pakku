@@ -1,6 +1,8 @@
 package teksturepako.pakku.api.projects
 
+import com.github.michaelbull.result.get
 import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.io.filterPath
 
 enum class ProjectType(
     val serialName: String, val prettyName: String, private val defaultPath: String
@@ -14,6 +16,9 @@ enum class ProjectType(
 
     fun getPathString(configFile: ConfigFile?): String
     {
-        return configFile?.paths?.getOrDefault(this.serialName, defaultPath) ?: return defaultPath
+        return if (configFile == null) return defaultPath else
+        {
+            filterPath(configFile.paths.getOrDefault(this.serialName, defaultPath)).get() ?: defaultPath
+        }
     }
 }
