@@ -11,14 +11,11 @@ val json = Json {
     ignoreUnknownKeys = true
     classDiscriminator = "_internal"
     explicitNulls = false
-    namingStrategy = JsonNamingStrategy.SnakeCase
 }
 
-@OptIn(ExperimentalSerializationApi::class)
 val jsonEncodeDefaults = Json {
     prettyPrint = true
     classDiscriminator = "_internal"
     encodeDefaults = true
-    namingStrategy = JsonNamingStrategy.SnakeCase
 }
 

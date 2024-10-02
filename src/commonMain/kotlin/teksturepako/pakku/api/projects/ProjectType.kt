@@ -1,10 +1,11 @@
 package teksturepako.pakku.api.projects
 
+import kotlinx.serialization.json.JsonNames
 import teksturepako.pakku.api.data.ConfigFile
 import kotlin.reflect.KProperty1
 
 enum class ProjectType(
-    val prettyName: String, val defaultPath: String
+    val prettyName: String, private val defaultPath: String
 )
 {
     MOD("mod", "mods"),
