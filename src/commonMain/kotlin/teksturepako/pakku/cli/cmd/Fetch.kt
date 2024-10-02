@@ -110,10 +110,13 @@ class Fetch : CliktCommand()
 
         val oldFilesJob = launch {
             deleteOldFiles(
+                onError = { error ->
+                    terminal.pError(error)
+                },
                 onSuccess = { file ->
                     terminal.pDanger("$file deleted")
                 },
-                projectFiles, projectOverrides, configFile
+                projectFiles, projectOverrides, lockFile, configFile
             )
         }
 

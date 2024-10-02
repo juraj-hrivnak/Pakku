@@ -71,6 +71,9 @@ suspend fun readPathBytesToResult(path: Path): Result<ByteArray, ActionError> = 
     }
 }
 
+suspend fun Path.readAndCreateSha1FromBytes() = this.tryToResult { it.readBytes() }.get()
+    ?.let { createHash("sha1", it) }
+
 @Suppress("unused")
 suspend inline fun <reified T> decodeToResult(inputPath: Path, format: StringFormat = json): Result<T, ActionError>
 {

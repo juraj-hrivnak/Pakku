@@ -16,10 +16,7 @@ import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
-import teksturepako.pakku.io.createHash
-import teksturepako.pakku.io.tryOrNull
-import teksturepako.pakku.io.tryToResult
-import teksturepako.pakku.io.zip
+import teksturepako.pakku.io.*
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.time.Duration
@@ -103,7 +100,7 @@ suspend fun ExportProfile.export(
                 it.mapNotNull { file -> file.toPath() }
             }
             .mapNotNull { path ->
-                path.generateSHA1FromBytes()?.let {
+                path.readAndCreateSha1FromBytes()?.let {
                     path.absolute() to it
                 }
             }
@@ -131,7 +128,7 @@ suspend fun ExportProfile.export(
                 }
                 else
                 {
-                    val hash = path.generateSHA1FromBytes() ?: continue
+                    val hash = path.readAndCreateSha1FromBytes() ?: continue
                     if ((path.absolute() in fileHashes.keys && hash in fileHashes.values) ||
                         (path.absolute() in dirContentHashes.keys && hash in dirContentHashes.values)) continue
 
@@ -152,9 +149,6 @@ suspend fun ExportProfile.export(
 
     onSuccess(this, timedValue.value, timedValue.duration)
 }
-
-private suspend fun Path.generateSHA1FromBytes() = this.tryToResult { it.readBytes() }.get()
-    ?.let { createHash("sha1", it) }
 
 suspend fun List<RuleResult>.resolveResults(
     onError: suspend (error: ActionError) -> Unit

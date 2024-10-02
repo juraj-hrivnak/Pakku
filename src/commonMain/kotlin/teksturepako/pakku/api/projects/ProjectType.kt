@@ -14,9 +14,6 @@ enum class ProjectType(
 
     fun getPathString(configFile: ConfigFile?): String
     {
-        return if (configFile == null) return defaultPath else
-        {
-            configFile.paths.getOrDefault(this.serialName, defaultPath)
-        }
+        return configFile?.paths?.getOrDefault(this.serialName, defaultPath) ?: return defaultPath
     }
 }
