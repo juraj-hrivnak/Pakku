@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.testing.test
 import com.github.michaelbull.result.runCatching
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.api.projects.ProjectType
 import kotlin.io.path.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,10 +33,10 @@ class CfgTest
         assertEquals("1.20.1", config.getVersion())
         assertEquals("bar", config.getDescription())
         assertEquals("test", config.getAuthor())
-        assertEquals("./dummy-mods", config.modsPath)
-        assertEquals("./dummy-resourcepacks", config.resourcePacksPath)
-        assertEquals("./datapacks", config.dataPacksPath)
-        assertEquals("./worlds", config.worldsPath)
-        assertEquals("./shaders", config.shadersPath)
+        assertEquals("./dummy-mods", config.paths[ProjectType.MOD.serialName])
+        assertEquals("./dummy-resourcepacks", config.paths[ProjectType.RESOURCE_PACK.serialName])
+        assertEquals("./datapacks", config.paths[ProjectType.DATA_PACK.serialName])
+        assertEquals("./worlds", config.paths[ProjectType.WORLD.serialName])
+        assertEquals("./shaders", config.paths[ProjectType.SHADER.serialName])
     }
 }
