@@ -80,23 +80,23 @@ class Cfg : CliktCommand()
         // -- PROJECT TYPE PATHS --
 
         modsPathOpt?.let { opt ->
-            configFile.modsPath = opt
+            configFile.paths[ProjectType.MOD.serialName] = opt
         }
 
         resourcePacksPathOpt?.let { opt ->
-            configFile.resourcePacksPath = opt
+            configFile.paths[ProjectType.RESOURCE_PACK.serialName] = opt
         }
 
         dataPacksPathOpt?.let { opt ->
-            configFile.dataPacksPath = opt
+            configFile.paths[ProjectType.DATA_PACK.serialName] = opt
         }
 
         worldsPathOpt?.let { opt ->
-            configFile.worldsPath = opt
+            configFile.paths[ProjectType.WORLD.serialName] = opt
         }
 
         shadersPathOpt?.let { opt ->
-            configFile.shadersPath = opt
+            configFile.paths[ProjectType.SHADER.serialName] = opt
         }
 
         configFile.write()?.let {

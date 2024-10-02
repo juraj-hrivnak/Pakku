@@ -2,17 +2,11 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.testing.test
 import com.github.michaelbull.result.runCatching
-import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.api.projects.UpdateStrategy
 import kotlin.io.path.*
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -27,40 +21,22 @@ class CfgTest
     }
 
     @Test
-    fun `should fail without lock file`()
+    fun `should success with options`()
     {
         val cmd = Cfg()
-        val output = cmd.test("test -p test").output
-
-        assertContains(output, "Could not read '$workingPath/${LockFile.FILE_NAME}'")
-    }
-
-    @Test
-    fun `should success with lock file & project`()
-    {
-        runBlocking {
-            val lockFile = LockFile.readOrNew()
-            lockFile.add(
-                Project(
-                    type = ProjectType.MOD,
-                    slug = mutableMapOf("modrinth" to "test"),
-                    name = mutableMapOf("modrinth" to "Test"),
-                    id = mutableMapOf("modrinth" to "test"),
-                    files = mutableSetOf()
-                )
-            )
-            lockFile.write()
-        }
-
-        val cmd = Cfg()
-        val output = cmd.test("test -p test -s both -u latest -r true")
+        val output =
+            cmd.test("-n foo -v 1.20.1 -d bar -a test --mods-path ./dummy-mods --resource-packs-path ./dummy-resourcepacks --data-packs-path ./datapacks --worlds-path ./worlds --shaders-path ./shaders")
         assertEquals("", output.stderr, "Command failed to execute")
-        assertNotNull(ConfigFile.readOrNull(), "Config file should be created")
-        val config = ConfigFile.readOrNull()!!.projects["test"]
-        assertNotNull(config, "Project config should be created")
-        assertEquals(UpdateStrategy.LATEST, config.updateStrategy)
-        assertEquals(true, config.redistributable)
-        assertEquals("test", config.subpath)
-        assertEquals(ProjectSide.BOTH, config.side)
+        val config = ConfigFile.readOrNull()
+        assertNotNull(config, "Config file should be created")
+        assertEquals("foo", config.getName())
+        assertEquals("1.20.1", config.getVersion())
+        assertEquals("bar", config.getDescription())
+        assertEquals("test", config.getAuthor())
+        assertEquals("./dummy-mods", config.paths[ProjectType.MOD.serialName])
+        assertEquals("./dummy-resourcepacks", config.paths[ProjectType.RESOURCE_PACK.serialName])
+        assertEquals("./datapacks", config.paths[ProjectType.DATA_PACK.serialName])
+        assertEquals("./worlds", config.paths[ProjectType.WORLD.serialName])
+        assertEquals("./shaders", config.paths[ProjectType.SHADER.serialName])
     }
 }
