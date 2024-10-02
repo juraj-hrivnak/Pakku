@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalPathApi::class)
-class CfgTest
+class CfgPrjTest
 {
     init
     {
@@ -29,7 +29,7 @@ class CfgTest
     @Test
     fun `should fail without lock file`()
     {
-        val cmd = Cfg()
+        val cmd = CfgPrj()
         val output = cmd.test("test -p test").output
 
         assertContains(output, "Could not read '$workingPath/${LockFile.FILE_NAME}'")
@@ -52,7 +52,7 @@ class CfgTest
             lockFile.write()
         }
 
-        val cmd = Cfg()
+        val cmd = CfgPrj()
         val output = cmd.test("test -p test -s both -u latest -r true")
         assertEquals("", output.stderr, "Command failed to execute")
         assertNotNull(ConfigFile.readOrNull(), "Config file should be created")
