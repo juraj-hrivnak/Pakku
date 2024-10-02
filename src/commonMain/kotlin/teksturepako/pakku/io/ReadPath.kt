@@ -9,6 +9,7 @@ import kotlinx.serialization.serializer
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.json
+import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -20,7 +21,8 @@ fun Throwable.toActionError(path: Path): ActionError = when (this)
 {
     is FileAlreadyExistsException -> AlreadyExists(path.toString())
     is NoSuchFileException        -> FileNotFound(path.toString())
-    else -> ErrorWhileReading(path.toString(), this.stackTraceToString())
+    is DirectoryNotEmptyException -> DirectoryNotEmpty(path.toString())
+    else                          -> ErrorWhileReading(path.toString(), this.stackTraceToString())
 }
 
 suspend fun <T> Path.tryOrNull(action: (path: Path) -> T): T? = coroutineScope {

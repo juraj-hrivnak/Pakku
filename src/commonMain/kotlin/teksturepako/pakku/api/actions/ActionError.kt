@@ -18,10 +18,9 @@ open class ActionError(
 
     // -- FILE --
 
-    class FileNotFound(val file: String) : ActionError("File not found: '$file'")
-    {
-        override fun message(arg: String): String = "Project '$arg' not found."
-    }
+    class DirectoryNotEmpty(val file: String) : ActionError("Directory '$file' is not empty.")
+
+    class FileNotFound(val file: String) : ActionError("File '$file' not found.")
 
     class CouldNotRead(val file: String, val reason: String? = "") :
         ActionError("Could not read: '$file'. $reason")

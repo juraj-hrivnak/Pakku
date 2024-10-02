@@ -112,16 +112,20 @@ suspend fun deleteOldFiles(
 
     val fetchHistory = FetchHistoryFile.readOrNew()
 
-    val fileHashes: Map<Path, String> = projectFiles
-        .mapNotNull { projectFile ->
-            val parentProject = projectFile.getParentProject(lockFile) ?: return@mapNotNull null
+    val fileHashes = async { projectFiles
+        .map { projectFile ->
+            async x@ {
+                val parentProject = projectFile.getParentProject(lockFile) ?: return@x null
 
-            val path = projectFile.getPath(parentProject, configFile)
+                val path = projectFile.getPath(parentProject, configFile)
 
-            path.tryToResult { it.readBytes() }
-                .onFailure { onError(it) }
-                .get()?.let { path to it }
+                path.tryToResult { it.readBytes() }
+                    .onFailure { onError(it) }
+                    .get()?.let { path to it }
+            }
         }
+        .awaitAll()
+        .filterNotNull()
         .associate { (path, bytes) ->
             path.absolute() to createHash("sha1", bytes)
         }
@@ -130,48 +134,51 @@ suspend fun deleteOldFiles(
                 projectOverride.fullOutputPath.absolute() to createHash("sha1", projectOverride.bytes)
             }
         )
+    }
 
     @Suppress("ConvertCallChainIntoSequence")
-    val channel = produce {
-        ProjectType.entries
-            .filterNot { it == ProjectType.WORLD }
-            .mapNotNull { projectType ->
-                val prjTypeDir = Path(workingPath, projectType.getPathString(configFile))
-                if (prjTypeDir.notExists()) return@mapNotNull null
+    val channel = produce { ProjectType.entries
+        .filterNot { it == ProjectType.WORLD }
+        .mapNotNull { projectType ->
+            val prjTypeDir = Path(workingPath, projectType.getPathString(configFile))
+            if (prjTypeDir.notExists()) return@mapNotNull null
 
-                prjTypeDir
+            prjTypeDir
+        }
+        .plus(
+            fetchHistory.paths.mapNotNull { (_, path) ->
+                Path(workingPath, filterPath(path).get() ?: return@mapNotNull null)
             }
-            .plus(
-                fetchHistory.paths.mapNotNull { (_, path) ->
-                    Path(workingPath, filterPath(path).get() ?: return@mapNotNull null)
-                }
-            )
-            .mapNotNull { dir ->
-                dir.tryOrNull {
-                    it.toFile().walkBottomUp().map { file: File ->
-                        file.toPath()
-                    }
+        )
+        .mapNotNull { dir ->
+            dir.tryOrNull { path ->
+                path.toFile().walkBottomUp().mapNotNull { file: File ->
+                    file.toPath().takeIf { it != dir }
                 }
             }
-            .forEach { pathSequence ->
-                pathSequence.toSet().mapNotNull x@ { path ->
+        }
+        .forEach { pathSequence ->
+            pathSequence.toSet().forEach { path ->
+                launch {
                     val hash = path.readAndCreateSha1FromBytes()
 
-                    if (!path.isDirectory() && path.extension !in listOf("jar", "zip")) return@x null
+                    if (!path.isDirectory() && path.extension !in listOf("jar", "zip")) return@launch
 
-                    if (path.absolute() !in fileHashes.keys || hash !in fileHashes.values)
+                    if (path.absolute() !in fileHashes.await().keys || hash !in fileHashes.await().values)
                     {
                         send(path)
                     }
-                    else null
                 }
             }
+        }
     }
 
     channel.consumeEach { path ->
         launch(Dispatchers.IO) {
             path.tryToResult { it.deleteIfExists() }.onSuccess {
                 onSuccess(path)
+            }.onFailure {
+                onError(it)
             }
         }
     }
