@@ -3,11 +3,17 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.colormath.Color
+import com.github.ajalt.colormath.model.RGB
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
+import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.widgets.Spinner
-import com.github.ajalt.mordant.widgets.progress.*
+import com.github.ajalt.mordant.widgets.progress.percentage
+import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
+import com.github.ajalt.mordant.widgets.progress.spinner
+import com.github.ajalt.mordant.widgets.progress.text
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -20,10 +26,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Provider
-import teksturepako.pakku.cli.ui.pDanger
-import teksturepako.pakku.cli.ui.pError
-import teksturepako.pakku.cli.ui.pInfo
-import teksturepako.pakku.cli.ui.pSuccess
+import teksturepako.pakku.cli.ui.*
 
 class Fetch : CliktCommand()
 {
@@ -46,20 +49,24 @@ class Fetch : CliktCommand()
         }
         else null
 
-        val progressBar = progressBarContextLayout(spacing = 0) {
-            text { context.toString() }
-            spinner(Spinner.Dots())
-            percentage()
-        }.animateInCoroutine(terminal, "Fetching ")
-
-        launch { progressBar.execute() }
-
         val projectFiles = retrieveProjectFiles(lockFile, Provider.providers).mapNotNull { result ->
             result.getOrElse {
                 terminal.pError(it)
                 null
             }
         }
+
+        fun fetchMsg(text: String, color: Color? = null) = TextStyle(color = color)(
+            prefixed(text, prefix = terminal.theme.string("pakku.prefix", ">>>"))
+        )
+
+        val progressBar = progressBarContextLayout(spacing = 2) {
+            text { context.toString() }
+            spinner(Spinner.Dots())
+            percentage()
+        }.animateInCoroutine(terminal, fetchMsg("Fetching"))
+
+        launch { progressBar.execute() }
 
         val fetchJob = launch {
             projectFiles.fetch(
@@ -75,15 +82,6 @@ class Fetch : CliktCommand()
                 },
                 lockFile, configFile
             )
-        }
-
-        fetchJob.invokeOnCompletion {
-            progressBar.update {
-                context = "Fetched "
-            }
-            launch {
-                progressBar.stop()
-            }
         }
 
         // -- OVERRIDES --
@@ -103,6 +101,11 @@ class Fetch : CliktCommand()
 
         fetchJob.join()
 
+        progressBar.update {
+            context = fetchMsg("Fetched", RGB("#98c379"))
+            paused = true
+        }
+
         // -- OLD FILES --
 
         val oldFilesJob = launch {
@@ -116,6 +119,10 @@ class Fetch : CliktCommand()
 
         syncJob.join()
         oldFilesJob.join()
+
+        launch {
+            progressBar.stop()
+        }
 
         echo()
     }
