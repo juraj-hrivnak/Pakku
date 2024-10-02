@@ -1,24 +1,22 @@
 package teksturepako.pakku.api.projects
 
-import kotlinx.serialization.json.JsonNames
 import teksturepako.pakku.api.data.ConfigFile
-import kotlin.reflect.KProperty1
 
 enum class ProjectType(
-    val prettyName: String, private val defaultPath: String
+    val serialName: String, val prettyName: String, private val defaultPath: String
 )
 {
-    MOD("mod", "mods"),
-    RESOURCE_PACK("resource pack", "resourcepacks"),
-    DATA_PACK("data pack", "datapacks"),
-    WORLD("world", "saves"),
-    SHADER("shader pack", "shaderpacks");
+    MOD("mods", "mod", "mods"),
+    RESOURCE_PACK("resource_packs", "resource pack", "resourcepacks"),
+    DATA_PACK("data_packs", "data pack", "datapacks"),
+    WORLD("worlds", "world", "saves"),
+    SHADER("shader_packs", "shader pack", "shaderpacks");
 
     fun getPathString(configFile: ConfigFile?): String
     {
         return if (configFile == null) return defaultPath else
         {
-            configFile.paths.getOrDefault(this, defaultPath)
+            configFile.paths.getOrDefault(this.serialName, defaultPath)
         }
     }
 }

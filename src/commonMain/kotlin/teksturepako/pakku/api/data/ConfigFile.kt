@@ -40,7 +40,7 @@ data class ConfigFile(
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
 
     /**  A map of project types to their respective paths. */
-    val paths: MutableMap<ProjectType, String> = mutableMapOf(),
+    val paths: MutableMap<String, String> = mutableMapOf(),
 
     /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
     val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
