@@ -3,6 +3,7 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.completion.completionOption
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.CoreCliktCommand
+import com.github.ajalt.clikt.core.installMordantMarkdown
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.output.HelpFormatter.ParameterHelp.Argument
 import com.github.ajalt.clikt.parameters.options.*
@@ -25,6 +26,7 @@ import kotlin.system.exitProcess
 class Pakku : CliktCommand()
 {
     init {
+        installMordantMarkdown()
         versionOption(VERSION, help = "Get pakku version")
         completionOption(help = "Generate autocompletion scripts")
         eagerOption("--generate-docs", help = "Generate docs for CLI commands") {

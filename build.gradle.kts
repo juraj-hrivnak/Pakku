@@ -87,6 +87,7 @@ kotlin {
 
                 // CLI
                 implementation("com.github.ajalt.clikt:clikt:5.0.0")
+                implementation("com.github.ajalt.clikt:clikt-markdown:5.0.0")
                 implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.0")
 
                 // Logging
