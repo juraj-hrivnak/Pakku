@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.associate
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
@@ -55,6 +56,12 @@ class Cfg : CliktCommand()
 
     private val shadersPathOpt by option("--shaders-path", metavar = "path")
         .help("Change the path for the `${ProjectType.SHADER}` project type")
+
+    private val projectAliasesOpts: Map<String, String>? by option(
+        "-pa", "--project-alias",
+        help = "Add alias for project",
+        metavar = "<alias>=<project>"
+    ).associate()
 
     override fun run(): Unit = runBlocking {
 
@@ -126,6 +133,15 @@ class Cfg : CliktCommand()
             configFile.paths[serialName] = opt
             terminal.pSuccess("'paths.$serialName' set to '$opt'.")
             echo()
+        }
+
+        projectAliasesOpts?.let { opt ->
+            for ((alias, project) in opt)
+            {
+                configFile.projectAliases[alias] = project
+                terminal.pSuccess("'project_aliases.$alias' set to '$project'.")
+                echo()
+            }
         }
 
         configFile.write()?.let {
