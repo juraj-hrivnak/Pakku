@@ -205,8 +205,9 @@ data class LockFile(
         return removed
     }
 
-    fun getProject(input: String): Project? = this.projects
-        .find { project -> input in project || project.files.any { input in it.fileName } }
+    fun getProject(input: String): Project? = (ConfigFile.readOrNull()?.projectAliases?.get(input) ?: input).let { transformedInput ->
+        this.projects.find { project -> transformedInput in project || project.files.any { transformedInput in it.fileName } }
+    }
 
     fun getProject(project: Project): Project? = this.projects.find { it isAlmostTheSameAs project }
 

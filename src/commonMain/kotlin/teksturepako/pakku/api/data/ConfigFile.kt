@@ -2,9 +2,9 @@
 
 package teksturepako.pakku.api.data
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.overrides.filterOverrides
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
@@ -34,16 +34,19 @@ data class ConfigFile(
     private val overrides: MutableList<String> = mutableListOf(),
 
     /** A mutable list of server overrides packed up with the modpack. */
-    @SerialName("server_overrides") private val serverOverrides: MutableList<String> = mutableListOf(),
+    private val serverOverrides: MutableList<String> = mutableListOf(),
 
     /** A mutable list of client overrides packed up with the modpack. */
-    @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
+    private val clientOverrides: MutableList<String> = mutableListOf(),
 
     /**  A map of project types to their respective paths. */
     val paths: MutableMap<String, String> = mutableMapOf(),
 
     /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
-    val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
+    val projects: MutableMap<String, ProjectConfig> = mutableMapOf(),
+
+    /** A mutable map of project aliases to their respective project slugs. */
+    val projectAliases: MutableMap<String, String> = mutableMapOf()
 )
 {
     // -- PACK --
@@ -110,8 +113,8 @@ data class ConfigFile(
     data class ProjectConfig(
         var type: ProjectType? = null,
         var side: ProjectSide? = null,
-        @SerialName("update_strategy") var updateStrategy: UpdateStrategy? = null,
-        @SerialName("redistributable") var redistributable: Boolean? = null,
+        var updateStrategy: UpdateStrategy? = null,
+        var redistributable: Boolean? = null,
         var subpath: String? = null
     )
 
@@ -136,5 +139,5 @@ data class ConfigFile(
         fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
     }
 
-    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = json)
+    suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = jsonSnakeCase)
 }

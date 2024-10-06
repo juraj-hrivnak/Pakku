@@ -2,6 +2,7 @@ package teksturepako.pakku.api.data
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
 
 @OptIn(ExperimentalSerializationApi::class)
 val json = Json {
@@ -16,5 +17,10 @@ val jsonEncodeDefaults = Json {
     prettyPrint = true
     classDiscriminator = "_internal"
     encodeDefaults = true
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+val jsonSnakeCase = Json(json) {
+    namingStrategy = JsonNamingStrategy.SnakeCase
 }
 
