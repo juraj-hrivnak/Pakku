@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.NotFoundOn
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
@@ -54,6 +55,12 @@ class Add : CliktCommand()
         flags["noDepsFlag"] = noDepsFlag
 
         val lockFile = LockFile.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
+
+        val configFile = ConfigFile.readToResult().getOrElse {
             terminal.danger(it.message)
             echo()
             return@runBlocking
@@ -110,7 +117,14 @@ class Add : CliktCommand()
 
                         if (!noDepsFlag)
                         {
-                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                            project.resolveDependencies(
+                                terminal,
+                                reqHandlers,
+                                lockFile,
+                                configFile,
+                                projectProvider,
+                                platforms
+                            )
                         }
 
                         terminal.pSuccess("$projMsg added")

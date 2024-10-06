@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyAdded
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.import.importModpackModel
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
@@ -40,6 +41,12 @@ class Import : CliktCommand()
         }
 
         val lockFile = LockFile.readToResult().getOrNull() ?: modpackModel.toLockFile()
+
+        val configFile = ConfigFile.readToResult().getOrElse {
+            terminal.danger(it.message)
+            echo()
+            return@runBlocking
+        }
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
@@ -67,7 +74,14 @@ class Import : CliktCommand()
 
                         if (depsFlag)
                         {
-                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                            project.resolveDependencies(
+                                terminal,
+                                reqHandlers,
+                                lockFile,
+                                configFile,
+                                projectProvider,
+                                platforms
+                            )
                         }
 
                         terminal.pSuccess("${project.getFullMsg()} added")

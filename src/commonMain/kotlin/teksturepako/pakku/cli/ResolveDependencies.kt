@@ -4,6 +4,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.info
 import teksturepako.pakku.api.actions.RequestHandlers
 import teksturepako.pakku.api.actions.createAdditionRequest
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
@@ -17,6 +18,7 @@ suspend fun Project.resolveDependencies(
     terminal: Terminal,
     reqHandlers: RequestHandlers,
     lockFile: LockFile,
+    configFile: ConfigFile,
     projectProvider: Provider,
     platforms: List<Platform>,
     addAsProjects: Boolean = true
@@ -29,10 +31,13 @@ suspend fun Project.resolveDependencies(
 
     for (dependencyIn in dependencies)
     {
-        if (lockFile.isProjectAdded(dependencyIn))
+        val alias = configFile.projectAliases.keys.find { it in dependencyIn }
+
+        if (lockFile.isProjectAdded(dependencyIn) || alias != null)
         {
             // Link project to dependency if the dependency is already added
-            lockFile.getProject(dependencyIn)?.pakkuId?.let { pakkuId ->
+            val project = if (alias != null) lockFile.getProject(alias) else lockFile.getProject(dependencyIn)
+            project?.pakkuId?.let { pakkuId ->
                 lockFile.addPakkuLink(pakkuId, this)
             }
         }
@@ -50,7 +55,7 @@ suspend fun Project.resolveDependencies(
                     lockFile.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
 
                     // Resolve dependencies for dependency
-                    dependency.resolveDependencies(terminal, depReqHandlers, lockFile, projectProvider, platforms)
+                    dependency.resolveDependencies(terminal, depReqHandlers, lockFile, configFile, projectProvider, platforms)
                     terminal.pInfo("${dependency.getFlavoredSlug()} added")
                 },
                 lockFile, platforms
