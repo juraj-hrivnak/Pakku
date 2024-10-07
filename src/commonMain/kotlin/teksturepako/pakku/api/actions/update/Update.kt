@@ -10,6 +10,7 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.combineWith
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
+import java.time.Instant
 
 /**
  * Requests new data for provided [projects] from all platforms and updates them based on platform-specific slugs,
@@ -44,7 +45,9 @@ suspend fun updateMultipleProjectsWithFiles(
                     accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
                 }?.also { accProject ->
                     // Combine projects
-                    newProject.files.removeIf { newFile -> newFile.type == platform.serialName && newFile.dataPublished >= accProject.files.find { it.type == platform.serialName }?.dataPublished }
+                    val currentPublished = accProject.files.find { it.type == platform.serialName }?.dataPublished
+                    if (currentPublished != null && currentPublished != Instant.MIN)
+                        newProject.files.removeIf { it.type == platform.serialName && it.dataPublished < currentPublished }
                     (accProject + newProject).get()?.copy(files = newProject.files.take(numberOfFiles).toMutableSet())
                         ?.let x@{ combinedProject ->
                             acc -= accProject
