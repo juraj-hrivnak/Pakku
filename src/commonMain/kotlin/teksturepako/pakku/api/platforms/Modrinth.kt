@@ -139,8 +139,11 @@ object Modrinth : Platform(
             version.gameVersions.any { it in mcVersions } && version.loaders
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.lowercase() }?.any {
-                    loaders.any { loader -> loader == it } || it in validLoaders // Check default valid loaders
+                    it in loaders || it in validLoaders // Check default valid loaders
                 } ?: true // If no loaders found, accept model
+        }
+        .sortedWith { a, b ->
+            loaders.indexOfFirst { it in a.loaders } - loaders.indexOfFirst { it in b.loaders }
         }
 
     private fun MrVersionModel.toProjectFiles(): List<ProjectFile>

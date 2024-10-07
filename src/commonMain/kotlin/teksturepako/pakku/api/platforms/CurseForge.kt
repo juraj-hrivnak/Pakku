@@ -124,8 +124,14 @@ object CurseForge : Platform(
                 .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID } // Filter to loader only
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.gameVersionName.lowercase() }?.any {
-                    loaders.any { loader -> loader == it } || it in validLoaders // Check default valid loaders
+                    it in loaders || it in validLoaders // Check default valid loaders
                 } ?: true // If no loaders found, accept model
+        }.sortedWith { a, b ->
+            val aVersions = a.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
+                .map { it.gameVersionName.lowercase() }
+            val bVersions = b.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
+                .map { it.gameVersionName.lowercase() }
+            loaders.indexOfFirst { it in aVersions } - loaders.indexOfFirst { it in bVersions }
         }
 
     private fun CfModModel.File.toProjectFile(gameVersionTypeIds: List<Int>): ProjectFile
