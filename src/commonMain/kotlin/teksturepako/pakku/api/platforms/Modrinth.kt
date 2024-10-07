@@ -15,6 +15,7 @@ import teksturepako.pakku.api.models.mr.MrProjectModel
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debugIfEmpty
+import java.time.Instant
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
@@ -167,6 +168,7 @@ object Modrinth : Platform(
                     .filter { "required" in it.dependencyType }
                     .mapNotNull { it.projectId }.toMutableSet(),
                 size = versionFile.size,
+                dataPublished = Instant.parse(this.datePublished)
             )
         }.asReversed() // Reverse to make non source files first
     }

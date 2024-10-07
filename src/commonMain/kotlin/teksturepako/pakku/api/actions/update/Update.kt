@@ -34,22 +34,27 @@ suspend fun updateMultipleProjectsWithFiles(
             }
     }
 
-    return@coroutineScope platforms.fold(projects.map { it.copy(files = mutableSetOf()) }.toMutableSet()) { acc, platform ->
+    return@coroutineScope platforms.fold(projects) { acc, platform ->
 
         val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
 
-        platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles)
-            .inheritPropertiesFrom(configFile)
-            .forEach { newProject ->
+        platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, Int.MAX_VALUE)
+            .inheritPropertiesFrom(configFile).forEach { newProject ->
                 acc.find { accProject ->
                     accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
-                }?.let { accProject ->
+                }?.also { accProject ->
                     // Combine projects
-                    (accProject + newProject).get()?.let x@ { combinedProject ->
-                        if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
-                        acc -= accProject
-                        acc += combinedProject
-                    }
+                    newProject.files.removeIf { newFile -> newFile.type == platform.serialName && newFile.dataPublished >= accProject.files.find { it.type == platform.serialName }?.dataPublished }
+                    (accProject + newProject).get()?.copy(files = newProject.files.take(numberOfFiles).toMutableSet())
+                        ?.let x@{ combinedProject ->
+                            acc -= accProject
+                            if (combinedProject.hasNoFiles())
+                            {
+                                acc += accProject.copy(files = mutableSetOf())
+                                return@x // Do not update project if files are missing
+                            }
+                            acc += combinedProject
+                        }
                 }
             }
 

@@ -10,6 +10,7 @@ import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.containProject
 import teksturepako.pakku.cli.ui.*
 
@@ -79,11 +80,14 @@ class Status: CliktCommand()
         {
             terminal.println(grid {
                 currentProjects.filter { updatedProjects containProject it }.map { project ->
-                    row(project.getFlavoredSlug(), project.getFlavoredName(terminal.theme))
-
-                    val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }
-                    updatedProject?.run {
-
+                    row(project.getFlavoredSlug(), project.getFlavoredName(terminal.theme)) {
+                        val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }
+                        updatedProject?.run {
+                            for (file in files)
+                            {
+                                cell("${Provider.getProvider(file.type)?.shortName ?: file.type}: ${file.fileName}")
+                            }
+                        }
                     }
                 }
             })

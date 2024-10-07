@@ -13,6 +13,7 @@ import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.getEnvOrNull
 import teksturepako.pakku.io.toMurmur2
+import java.time.Instant
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform(
@@ -162,6 +163,7 @@ object CurseForge : Platform(
                 .filter { it.relationType == 3 }
                 .map { it.modId.toString() }.toMutableSet(),
             size = this.fileLength,
+            dataPublished = Instant.parse(fileDate)
         ).fetchAlternativeDownloadUrl()
     }
 
