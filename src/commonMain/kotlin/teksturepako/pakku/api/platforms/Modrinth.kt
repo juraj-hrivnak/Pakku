@@ -14,6 +14,7 @@ import teksturepako.pakku.api.models.mr.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.mr.MrProjectModel
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.projects.*
+import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -142,9 +143,10 @@ object Modrinth : Platform(
                     it in loaders || it in validLoaders // Check default valid loaders
                 } ?: true // If no loaders found, accept model
         }
-        .sortedWith { a, b ->
-            loaders.indexOfFirst { it in a.loaders } - loaders.indexOfFirst { it in b.loaders }
-        }
+
+    private fun List<MrVersionModel>.sortByLoaders(loaders: List<String>) = this.sortedWith { a, b ->
+        loaders.indexOfFirst { it in a.loaders } - loaders.indexOfFirst { it in b.loaders }
+    }
 
     private fun MrVersionModel.toProjectFiles(): List<ProjectFile>
     {
@@ -185,6 +187,7 @@ object Modrinth : Platform(
                 this.requestProjectBody("project/$projectId/version") ?: return mutableSetOf()
             )
                 .filterFileModels(mcVersions, loaders)
+                .sortByLoaders(loaders)
                 .flatMap { version -> version.toProjectFiles() }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
@@ -216,8 +219,9 @@ object Modrinth : Platform(
         }
             .awaitAll()
             .flatten()
-            .sortedByDescending { it.datePublished }
             .filterFileModels(mcVersions, loaders)
+            .sortedByDescending { it.datePublished }
+            .sortByLoaders(loaders)
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()
     }

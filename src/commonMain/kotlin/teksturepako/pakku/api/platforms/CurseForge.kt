@@ -121,12 +121,14 @@ object CurseForge : Platform(
     ): List<CfModModel.File> = this
         .filter { file ->
             file.gameVersions.any { it in mcVersions } && file.sortableGameVersions
-                .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID } // Filter to loader only
+                .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.gameVersionName.lowercase() }?.any {
-                    it in loaders || it in validLoaders // Check default valid loaders
-                } ?: true // If no loaders found, accept model
-        }.sortedWith { a, b ->
+                    it in loaders || it in validLoaders
+                } ?: true
+        }
+
+    private fun List<CfModModel.File>.sortByLoaders(loaders: List<String>) = this.sortedWith { a, b ->
             val aVersions = a.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
                 .map { it.gameVersionName.lowercase() }
             val bVersions = b.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
@@ -198,6 +200,7 @@ object CurseForge : Platform(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
                 .filterFileModels(mcVersions, loaders)
+                .sortByLoaders(loaders)
                 .map { it.toProjectFile(gameVersionTypeIds) }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
@@ -229,6 +232,7 @@ object CurseForge : Platform(
         ).data
             .filterFileModels(mcVersions, loaders)
             .sortedByDescending { it.fileDate }
+            .sortByLoaders(loaders)
             .map { it.toProjectFile(gameVersionTypeIds) }
             .debugIfEmpty {
                 println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")
