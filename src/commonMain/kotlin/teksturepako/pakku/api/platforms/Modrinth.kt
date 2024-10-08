@@ -144,8 +144,9 @@ object Modrinth : Platform(
                 } ?: true // If no loaders found, accept model
         }
 
-    private fun List<MrVersionModel>.sortByLoaders(loaders: List<String>) = this.sortedWith { a, b ->
-        loaders.indexOfFirst { it in a.loaders } - loaders.indexOfFirst { it in b.loaders }
+    internal fun List<MrVersionModel>.sortByLoaders(loaders: List<String>) = this.sortedWith { aVersion, bVersion ->
+        loaders.indexOfFirst { it in aVersion.loaders }.let { if (it == -1) loaders.size else it }
+            .minus(loaders.indexOfFirst { it in bVersion.loaders }.let { if (it == -1) loaders.size else it })
     }
 
     private fun MrVersionModel.toProjectFiles(): List<ProjectFile>
