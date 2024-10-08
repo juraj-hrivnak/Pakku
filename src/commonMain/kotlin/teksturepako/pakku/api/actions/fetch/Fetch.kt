@@ -133,12 +133,14 @@ suspend fun deleteOldFiles(
         )
     }
 
-    @Suppress("ConvertCallChainIntoSequence")
+    val defaultIgnoredPaths = listOf("saves", "screenshots")
+
     val channel = produce { ProjectType.entries
         .filterNot { it == ProjectType.WORLD }
         .mapNotNull { projectType ->
             val prjTypeDir = Path(workingPath, projectType.getPathString(configFile))
-            if (prjTypeDir.notExists()) return@mapNotNull null
+            if (prjTypeDir.notExists() ||
+                defaultIgnoredPaths.any { it in prjTypeDir.pathString }) return@mapNotNull null
 
             prjTypeDir
         }
@@ -167,7 +169,12 @@ suspend fun deleteOldFiles(
 
     channel.consumeEach { path ->
         launch(Dispatchers.IO) {
-            path.tryToResult { it.deleteIfExists() }.onSuccess {
+            path.tryToResult {
+                if (defaultIgnoredPaths.none { ignored -> ignored in it.pathString })
+                {
+                    it.deleteIfExists()
+                }
+            }.onSuccess {
                 onSuccess(path)
             }.onFailure {
                 onError(it)
