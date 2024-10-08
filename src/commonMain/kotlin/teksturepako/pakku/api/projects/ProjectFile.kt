@@ -3,7 +3,7 @@ package teksturepako.pakku.api.projects
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.InstantIso8601Serializer
+import teksturepako.pakku.api.data.InstantIso8601Serializer
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.HashMismatch
 import teksturepako.pakku.api.actions.ActionError.NoHashes

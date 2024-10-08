@@ -8,7 +8,6 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.InstantIso8601Serializer
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
 import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
@@ -17,7 +16,6 @@ import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.io.filterPath
-import java.time.Instant
 
 /**
  * Represents a project. (E.g. a mod, resource pack, shader, etc.)

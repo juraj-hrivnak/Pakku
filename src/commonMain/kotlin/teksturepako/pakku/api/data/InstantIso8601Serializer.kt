@@ -1,4 +1,4 @@
-package teksturepako.pakku
+package teksturepako.pakku.api.data
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -18,15 +18,14 @@ import java.time.Instant
  */
 object InstantIso8601Serializer : KSerializer<Instant>
 {
-
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("java.time.Instant", PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): Instant =
         Instant.parse(decoder.decodeString())
 
-    override fun serialize(encoder: Encoder, value: Instant) {
+    override fun serialize(encoder: Encoder, value: Instant)
+    {
         encoder.encodeString(value.toString())
     }
-
 }
