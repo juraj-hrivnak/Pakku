@@ -114,7 +114,7 @@ object CurseForge : Platform(
 
     // -- FILES --
 
-    private const val LOADER_VERSION_TYPE_ID = 68441
+    internal const val LOADER_VERSION_TYPE_ID = 68441
 
     private fun List<CfModModel.File>.filterFileModels(
         mcVersions: List<String>, loaders: List<String>
@@ -124,9 +124,18 @@ object CurseForge : Platform(
                 .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID } // Filter to loader only
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.gameVersionName.lowercase() }?.any {
-                    loaders.any { loader -> loader == it } || it in validLoaders // Check default valid loaders
+                    it in loaders || it in validLoaders // Check default valid loaders
                 } ?: true // If no loaders found, accept model
         }
+
+    internal fun List<CfModModel.File>.sortByLoaders(loaders: List<String>) = this.sortedWith { fileA, fileB ->
+        val aLoaders = fileA.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
+            .map { it.gameVersionName.lowercase() }
+        val bLoaders = fileB.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
+            .map { it.gameVersionName.lowercase() }
+        loaders.indexOfFirst { it in aLoaders }.let { if (it == -1) loaders.size else it }
+            .minus(loaders.indexOfFirst { it in bLoaders }.let { if (it == -1) loaders.size else it })
+    }
 
     private fun CfModModel.File.toProjectFile(gameVersionTypeIds: List<Int>): ProjectFile
     {
@@ -192,6 +201,7 @@ object CurseForge : Platform(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
                 .filterFileModels(mcVersions, loaders)
+                .sortByLoaders(loaders)
                 .map { it.toProjectFile(gameVersionTypeIds) }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
@@ -223,6 +233,7 @@ object CurseForge : Platform(
         ).data
             .filterFileModels(mcVersions, loaders)
             .sortedByDescending { it.fileDate }
+            .sortByLoaders(loaders)
             .map { it.toProjectFile(gameVersionTypeIds) }
             .debugIfEmpty {
                 println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")
