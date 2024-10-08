@@ -9,7 +9,6 @@ import kotlinx.coroutines.channels.produce
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.data.FetchHistoryFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
@@ -110,8 +109,6 @@ suspend fun deleteOldFiles(
     configFile: ConfigFile?
 ) = coroutineScope {
 
-    val fetchHistory = FetchHistoryFile.readOrNew()
-
     val fileHashes = async { projectFiles
         .map { projectFile ->
             async x@ {
@@ -145,11 +142,6 @@ suspend fun deleteOldFiles(
 
             prjTypeDir
         }
-        .plus(
-            fetchHistory.paths.mapNotNull { (_, path) ->
-                Path(workingPath, filterPath(path).get() ?: return@mapNotNull null)
-            }
-        )
         .mapNotNull { dir ->
             dir.tryOrNull { path ->
                 path.toFile().walkBottomUp().mapNotNull { file: File ->
@@ -188,11 +180,5 @@ suspend fun deleteOldFiles(
         {
             this.cancel()
         }
-
-        ProjectType.entries.filterNot { it == ProjectType.WORLD }.map { projectType ->
-            fetchHistory.paths[projectType.serialName] = projectType.getPathString(configFile)
-        }
-
-        fetchHistory.write()
     }
 }
