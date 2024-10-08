@@ -38,7 +38,6 @@ data class ConfigFile(
 
     /** A mutable list of client overrides packed up with the modpack. */
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
-
     /**  A map of project types to their respective paths. */
     val paths: MutableMap<String, String> = mutableMapOf(),
 
@@ -112,7 +111,8 @@ data class ConfigFile(
         var side: ProjectSide? = null,
         @SerialName("update_strategy") var updateStrategy: UpdateStrategy? = null,
         @SerialName("redistributable") var redistributable: Boolean? = null,
-        var subpath: String? = null
+        var subpath: String? = null,
+        var aliases: MutableSet<String>? = null
     )
 
     // -- FILE I/O --

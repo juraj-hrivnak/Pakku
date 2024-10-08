@@ -17,4 +17,3 @@ val jsonEncodeDefaults = Json {
     classDiscriminator = "_internal"
     encodeDefaults = true
 }
-
