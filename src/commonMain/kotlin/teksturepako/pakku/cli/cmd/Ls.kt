@@ -10,6 +10,8 @@ import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.table.grid
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.info
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.getOrThrow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
@@ -18,6 +20,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
+import teksturepako.pakku.cli.ui.pError
 
 class Ls : CliktCommand()
 {
@@ -43,7 +46,11 @@ class Ls : CliktCommand()
                 lockFile.getMcVersions(),
                 lockFile.getLoaders(),
                 projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
-            )
+            ).getOrElse {
+                terminal.pError(it)
+                echo()
+                mutableSetOf()
+            }
         } else null
 
         terminal.println(grid {

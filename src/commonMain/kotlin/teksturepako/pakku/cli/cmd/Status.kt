@@ -5,11 +5,14 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.table.grid
 import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.getOrThrow
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.containProject
 import teksturepako.pakku.cli.ui.*
 
@@ -73,17 +76,24 @@ class Status: CliktCommand()
                 currentProjects.toMutableSet(),
                 ConfigFile.readOrNull(),
                 numberOfFiles = 1
-            )
+            ).getOrElse {
+                terminal.pError(it)
+                echo()
+                return@runBlocking
+            }
 
         fun projStatus()
         {
             terminal.println(grid {
                 currentProjects.filter { updatedProjects containProject it }.map { project ->
-                    row(project.getFlavoredSlug(), project.getFlavoredName(terminal.theme))
-
-                    val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }
-                    updatedProject?.run {
-
+                    row(project.getFlavoredSlug(), project.getFlavoredName(terminal.theme)) {
+                        val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }
+                        updatedProject?.run {
+                            for (file in files)
+                            {
+                                cell("${Provider.getProvider(file.type)?.shortName ?: file.type}: ${file.fileName}")
+                            }
+                        }
                     }
                 }
             })

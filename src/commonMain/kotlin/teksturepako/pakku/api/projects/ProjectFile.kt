@@ -3,6 +3,7 @@ package teksturepako.pakku.api.projects
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.InstantIso8601Serializer
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.HashMismatch
 import teksturepako.pakku.api.actions.ActionError.NoHashes
@@ -11,6 +12,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.io.createHash
 import java.nio.file.Path
+import java.time.Instant
 import kotlin.io.path.Path
 
 @Serializable
@@ -27,6 +29,7 @@ data class ProjectFile(
     val hashes: MutableMap<String, String>? = null,
     @SerialName("required_dependencies") val requiredDependencies: MutableSet<String>? = null,
     val size: Int = 0,
+    @SerialName("date_published") val datePublished: @Serializable(with = InstantIso8601Serializer::class) Instant = Instant.MIN,
 )
 {
     // -- PARENT --

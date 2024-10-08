@@ -8,6 +8,7 @@ import teksturepako.pakku.api.models.gh.GhRepoModel
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
+import java.time.Instant
 
 object GitHub : Http(), Provider
 {
@@ -56,6 +57,7 @@ object GitHub : Http(), Provider
                 hashes = null,
                 requiredDependencies = null,
                 size = asset.size,
+                datePublished = Instant.parse(publishedAt ?: createdAt)
             )
         }.asReversed()
     }

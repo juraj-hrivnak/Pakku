@@ -1,8 +1,12 @@
 package teksturepako.pakku.api.actions.update
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Multiplatform.platforms
@@ -10,6 +14,7 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.combineWith
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
+import java.time.Instant
 
 /**
  * Requests new data for provided [projects] from all platforms and updates them based on platform-specific slugs,
@@ -22,7 +27,7 @@ suspend fun updateMultipleProjectsWithFiles(
     projects: MutableSet<Project>,
     configFile: ConfigFile?,
     numberOfFiles: Int
-): MutableSet<Project> = coroutineScope {
+): Result<MutableSet<Project>, ActionError> = coroutineScope {
     val ghProjects = async {
         projects.filter { project ->
                 GitHub.serialName in project.slug.keys
@@ -34,29 +39,39 @@ suspend fun updateMultipleProjectsWithFiles(
             }
     }
 
-    return@coroutineScope platforms.fold(projects.map { it.copy(files = mutableSetOf()) }.toMutableSet()) { acc, platform ->
+    val combinedProjectsToOldFiles = projects.associateTo(mutableMapOf()) { it.copy(files = mutableSetOf()) to it.files }
 
-        val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
+    return@coroutineScope Ok(
+        platforms.fold(combinedProjectsToOldFiles.keys.toMutableSet()) { acc, platform ->
 
-        platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles)
-            .inheritPropertiesFrom(configFile)
-            .forEach { newProject ->
-                acc.find { accProject ->
-                    accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
-                }?.let { accProject ->
-                    // Combine projects
-                    (accProject + newProject).get()?.let x@ { combinedProject ->
-                        if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
-                        acc -= accProject
-                        acc += combinedProject
+            val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
+
+            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, Int.MAX_VALUE)
+                .inheritPropertiesFrom(configFile).forEach { newProject ->
+                    acc.find { accProject ->
+                        accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
+                    }?.also { accProject ->
+                        // Combine projects
+                        val accFiles = combinedProjectsToOldFiles[accProject]
+                            ?: return@coroutineScope Err(ActionError("Failed to combine project ${accProject.pakkuId} when updating. Report it to Pakku's developer."))
+                        val accPublished = accFiles.find { it.type == platform.serialName }?.datePublished
+                        if (accPublished != null && accPublished != Instant.MIN)
+                            newProject.files.removeIf { it.type == platform.serialName && it.datePublished < accPublished }
+                        (accProject + newProject).get()
+                            ?.copy(files = (newProject.files.take(numberOfFiles) + accProject.files).toMutableSet())
+                            ?.let x@{ combinedProject ->
+                                if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
+                                combinedProjectsToOldFiles[combinedProject] = accFiles
+                                combinedProjectsToOldFiles -= accProject
+                                acc -= accProject
+                                acc += combinedProject
+                            }
                     }
                 }
-            }
 
-        acc
-    }.combineWith(ghProjects.await()).filter { newProject ->
-        projects.none { oldProject ->
-            oldProject == newProject
-        } && newProject.updateStrategy == UpdateStrategy.LATEST
-    }.toMutableSet()
+            acc
+        }.combineWith(ghProjects.await()).filter { newProject ->
+            newProject !in projects && newProject.updateStrategy == UpdateStrategy.LATEST
+        }.toMutableSet()
+    )
 }
