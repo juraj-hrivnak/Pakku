@@ -18,9 +18,3 @@ val jsonEncodeDefaults = Json {
     classDiscriminator = "_internal"
     encodeDefaults = true
 }
-
-@OptIn(ExperimentalSerializationApi::class)
-val jsonSnakeCase = Json(json) {
-    namingStrategy = JsonNamingStrategy.SnakeCase
-}
-

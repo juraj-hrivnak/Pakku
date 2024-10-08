@@ -6,14 +6,13 @@ import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.data.jsonSnakeCase
 import kotlin.io.path.*
 
 suspend inline fun <reified T> writeToFile(
     value: T,
     path: String,
     overrideText: Boolean = false,
-    format: StringFormat = jsonSnakeCase
+    format: StringFormat = json
 ): ActionError?
 {
     val file = Path(path)

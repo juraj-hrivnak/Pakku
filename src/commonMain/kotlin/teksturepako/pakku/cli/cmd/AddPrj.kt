@@ -14,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.NotFoundOn
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
-import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
@@ -77,12 +76,6 @@ class AddPrj : CliktCommand("prj")
             return@runBlocking
         }
 
-        val configFile = ConfigFile.readToResult().getOrElse {
-            terminal.danger(it.message)
-            echo()
-            return@runBlocking
-        }
-
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
@@ -134,14 +127,7 @@ class AddPrj : CliktCommand("prj")
 
                         if (!noDepsFlag)
                         {
-                            project.resolveDependencies(
-                                terminal,
-                                reqHandlers,
-                                lockFile,
-                                configFile,
-                                projectProvider,
-                                platforms
-                            )
+                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
                         terminal.pSuccess("$projMsg added")

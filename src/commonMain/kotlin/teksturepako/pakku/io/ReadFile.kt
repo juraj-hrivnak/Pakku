@@ -4,7 +4,6 @@ import kotlinx.serialization.StringFormat
 import kotlinx.serialization.serializer
 import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.data.jsonSnakeCase
 import kotlin.io.path.Path
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
@@ -20,13 +19,13 @@ fun readPathBytesOrNull(path: String): ByteArray?
 }
 
 inline fun <reified T> decodeOrNew(
-    value: T, path: String, format: StringFormat = jsonSnakeCase
+    value: T, path: String, format: StringFormat = json
 ): T = readPathTextOrNull(path)?.let {
     runCatching { format.decodeFromString<T>(format.serializersModule.serializer(), it) }.getOrElse { value }
 } ?: value
 
 inline fun <reified T> decodeToResult(
-    path: String, format: StringFormat = jsonSnakeCase
+    path: String, format: StringFormat = json
 ): Result<T> = readPathTextOrNull(path)?.let {
     runCatching { Result.success(format.decodeFromString<T>(format.serializersModule.serializer(), it)) }.getOrElse { exception ->
         Result.failure(PakkuException("Error occurred while reading '$path': ${exception.message}"))
