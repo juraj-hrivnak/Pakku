@@ -3,6 +3,7 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.rendering.TextAlign
 import com.github.ajalt.mordant.table.grid
 import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.getOrElse
@@ -110,10 +111,12 @@ class Status: CliktCommand()
                         filesUpdated = true
 
                         row {
-                            cell(" ".repeat(6) + dim("${provider.shortName}:"))
-                            cell(cFile)
-                            cell(dim("->"))
-                            cell(uFile)
+                            cell(" ".repeat(6) + dim("${provider.shortName}_file:")) {
+                                align = TextAlign.RIGHT
+                            }
+                            cell(cFile) { align = TextAlign.CENTER }
+                            cell(dim("->")) { align = TextAlign.CENTER }
+                            cell(uFile) { align = TextAlign.LEFT }
                         }
                     }
 
