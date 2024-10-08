@@ -15,6 +15,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pDanger
+import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 
 class Update : CliktCommand()
@@ -47,7 +48,7 @@ class Update : CliktCommand()
         val updatedProjects = updateMultipleProjectsWithFiles(
             lockFile.getMcVersions(), lockFile.getLoaders(), currentProjects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
         ).getOrElse {
-            terminal.danger(it.message())
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

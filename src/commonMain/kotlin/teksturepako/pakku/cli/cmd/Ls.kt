@@ -20,6 +20,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
+import teksturepako.pakku.cli.ui.pError
 
 class Ls : CliktCommand()
 {
@@ -46,7 +47,7 @@ class Ls : CliktCommand()
                 lockFile.getLoaders(),
                 projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
             ).getOrElse {
-                terminal.danger(it.message())
+                terminal.pError(it)
                 echo()
                 mutableSetOf()
             }

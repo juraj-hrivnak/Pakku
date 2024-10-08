@@ -168,7 +168,7 @@ object Modrinth : Platform(
                     .filter { "required" in it.dependencyType }
                     .mapNotNull { it.projectId }.toMutableSet(),
                 size = versionFile.size,
-                dataPublished = Instant.parse(this.datePublished)
+                datePublished = Instant.parse(this.datePublished)
             )
         }.asReversed() // Reverse to make non source files first
     }

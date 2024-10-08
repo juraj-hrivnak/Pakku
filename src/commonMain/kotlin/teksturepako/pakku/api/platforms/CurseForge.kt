@@ -163,7 +163,7 @@ object CurseForge : Platform(
                 .filter { it.relationType == 3 }
                 .map { it.modId.toString() }.toMutableSet(),
             size = this.fileLength,
-            dataPublished = Instant.parse(fileDate)
+            datePublished = Instant.parse(fileDate)
         ).fetchAlternativeDownloadUrl()
     }
 

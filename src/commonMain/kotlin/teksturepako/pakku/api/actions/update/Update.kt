@@ -53,10 +53,10 @@ suspend fun updateMultipleProjectsWithFiles(
                     }?.also { accProject ->
                         // Combine projects
                         val accFiles = combinedProjectsToOldFiles[accProject]
-                            ?: return@coroutineScope Err(ActionError("Failed to combine project ${accProject.pakkuId} when updating. Report it to developer."))
-                        val accPublished = accFiles.find { it.type == platform.serialName }?.dataPublished
+                            ?: return@coroutineScope Err(ActionError("Failed to combine project ${accProject.pakkuId} when updating. Report it to Pakku's developer."))
+                        val accPublished = accFiles.find { it.type == platform.serialName }?.datePublished
                         if (accPublished != null && accPublished != Instant.MIN)
-                            newProject.files.removeIf { it.type == platform.serialName && it.dataPublished < accPublished }
+                            newProject.files.removeIf { it.type == platform.serialName && it.datePublished < accPublished }
                         (accProject + newProject).get()
                             ?.copy(files = (newProject.files.take(numberOfFiles) + accProject.files).toMutableSet())
                             ?.let x@{ combinedProject ->

@@ -77,7 +77,7 @@ class Status: CliktCommand()
                 ConfigFile.readOrNull(),
                 numberOfFiles = 1
             ).getOrElse {
-                terminal.danger(it.message())
+                terminal.pError(it)
                 echo()
                 return@runBlocking
             }

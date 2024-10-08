@@ -57,7 +57,7 @@ object GitHub : Http(), Provider
                 hashes = null,
                 requiredDependencies = null,
                 size = asset.size,
-                dataPublished = Instant.parse(publishedAt ?: createdAt)
+                datePublished = Instant.parse(publishedAt ?: createdAt)
             )
         }.asReversed()
     }
