@@ -13,6 +13,7 @@ import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.success
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.UpdateStrategy
 
@@ -131,7 +132,7 @@ class Set : CliktCommand()
             lockFile.getAllProjects().forEach { project ->
                 for (file in project.files)
                 {
-                    if (file.loaders.isNotEmpty() && file.loaders.none { it in loaders })
+                    if (file.loaders.isNotEmpty() && file.loaders.none { it in loaders || it in Platform.validLoaders })
                     {
                         terminal.danger(
                             "Can not set to $loaders,"

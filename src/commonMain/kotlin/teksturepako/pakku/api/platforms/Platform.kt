@@ -41,8 +41,6 @@ abstract class Platform(
 
     // -- FILES --
 
-    val validLoaders = listOf("minecraft", "iris", "optifine", "datapack")
-
     /**
      * Requests [project files][ProjectFile] based on [minecraft versions][mcVersions], [loaders], [projectId] or
      * [projectId] & [fileId].
@@ -85,4 +83,9 @@ abstract class Platform(
     abstract suspend fun requestMultipleProjectsWithFiles(
         mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
     ): MutableSet<Project>
+
+    companion object
+    {
+        val validLoaders = listOf("minecraft", "iris", "optifine", "datapack")
+    }
 }
