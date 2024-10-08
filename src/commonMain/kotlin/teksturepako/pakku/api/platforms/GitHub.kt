@@ -80,8 +80,7 @@ object GitHub : Http(), Provider
         {
             json.decodeFromString<GhReleaseModel>(
                 this.requestBody("https://api.github.com/repos/$input/releases/tags/$fileId") ?: return null
-            )
-                .toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles)
+            ).toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles)
         }
 
         return project.apply { files.addAll(projectFiles) }

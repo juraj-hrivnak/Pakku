@@ -38,6 +38,7 @@ data class ConfigFile(
 
     /** A mutable list of client overrides packed up with the modpack. */
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
+
     /**  A map of project types to their respective paths. */
     val paths: MutableMap<String, String> = mutableMapOf(),
 

@@ -39,7 +39,7 @@ fun MutableCollection<Project>.removeIf(predicate: (Project) -> Boolean): Boolea
 }
 
 /** Combines (or zips) projects with other projects. */
-fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project> = this
+infix fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project> = this
     .map { project ->
         otherProjects.find { project isAlmostTheSameAs it }?.let {
             if (project.type == it.type) (project + it).get() else project

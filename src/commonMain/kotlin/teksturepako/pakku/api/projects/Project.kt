@@ -101,7 +101,9 @@ data class Project(
     /** Check if the current project has an alias of the specified project. */
     infix fun hasAliasOf(other: Project): Boolean
     {
-        return this.aliases?.any { it in other.id.values || it in other.name.values || it in other.slug.values } ?: false
+        return this.aliases?.any {
+            it in other.id.values || it in other.name.values || it in other.slug.values
+        } ?: false
     }
 
     /** Checks if the current project contains the specified string in its slugs, names, IDs or aliases. */
@@ -127,6 +129,10 @@ data class Project(
 
     fun getPlatforms(): List<Platform> = Multiplatform.platforms.filter { platform ->
         this.hasFilesOnPlatform(platform)
+    }
+
+    fun getProviders(): List<Provider> = Provider.providers.filter { provider ->
+        this.hasFilesOn(provider)
     }
 
     /** Checks if the project has files on the specified [platform][Platform]. */
