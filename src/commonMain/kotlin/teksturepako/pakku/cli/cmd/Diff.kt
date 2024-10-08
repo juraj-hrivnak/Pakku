@@ -76,32 +76,26 @@ class Diff : CliktCommand()
             removedModLoaders = removedModLoaders.map { loader -> loader.replaceFirstChar { it.titlecase() } }.toSet()
             removedModLoaders.forEach { terminal.danger("- $it") }
 
-            if (verboseOpt)
-            {
+            if (verboseOpt) {
+                // Find the max length of the loader name and old version to align arrows
+                val maxLength = allOldModLoadersAndVersions.maxOfOrNull { oldModLoader ->
+                    "${oldModLoader.first.replaceFirstChar { it.uppercase() }} ${oldModLoader.second}".length
+                } ?: 0
+
+                // Updated modloaders: Same modloader in both sets but with different versions
                 updatedModLoaders = allNewModLoadersAndVersions.filter { newModLoader ->
                     allOldModLoadersAndVersions.any { oldModLoader ->
                         oldModLoader.first == newModLoader.first && oldModLoader.second != newModLoader.second
                     }
-                }.map { newMod ->
-                    // Find the corresponding old version
-                    val oldVersion = allOldModLoadersAndVersions.find { it.first == newMod.first }?.second
-                    val newVersion = newMod.second
+                }.map { newModLoader ->
+                    val oldModLoader = allOldModLoadersAndVersions.first { it.first == newModLoader.first }
+                    val oldModLoaderStr = "${oldModLoader.first.replaceFirstChar { it.uppercase() }} ${oldModLoader.second}"
+                    val newModLoaderStr = "${newModLoader.first.replaceFirstChar { it.uppercase() }} ${newModLoader.second}"
 
-                    val modLoaderName = newMod.first.replaceFirstChar { it.uppercase() }
-
-                    val oldLoadersAndVersion = "$modLoaderName $oldVersion"
-                    val newLoadersAndVersion = "$modLoaderName $newVersion"
-                    // Format the output
-                    oldLoadersAndVersion to newLoadersAndVersion
-                }.let {
-                    val maxOldModLoaderLength = it.maxOf { it.first.length }
-                    it.map { (oldEntry, newEntry) ->
-                        "${oldEntry.padEnd(maxOldModLoaderLength)} -> $newEntry"
-                    }
+                    // Pad the oldModLoaderStr to match maxLength, then add the arrow and the new version
+                    oldModLoaderStr.padEnd(maxLength) + " -> " + newModLoaderStr
                 }
-            }
-            else
-            {
+            } else {
                 // Updated modloaders: Same modloader in both sets but with different versions
                 updatedModLoaders = allNewModLoadersAndVersions.filter { newModLoader ->
                     allOldModLoadersAndVersions.any { oldModLoader ->
@@ -200,7 +194,9 @@ class Diff : CliktCommand()
             addedModLoaders.forEach { file.appendText("+ $it\n") }
             removedModLoaders.forEach { file.appendText("- $it\n") }
             updatedModLoaders.forEach { file.appendText("! $it\n") }
-            if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty()) file.appendText("\n")
+            if (addedModLoaders.isNotEmpty() || removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty()) file.appendText(
+                "\n"
+            )
             added.forEach { file.appendText("+ $it\n") }
             removed.forEach { file.appendText("- $it\n") }
             updated.forEach { file.appendText("! $it\n") }
@@ -247,7 +243,7 @@ class Diff : CliktCommand()
                     if (updated.isNotEmpty()) file.appendText("\n")
                 }
 
-                if (updated.isNotEmpty())
+                if (updatedModLoaders.isNotEmpty())
                 {
                     file.appendText("### Updated\n\n")
                     updatedModLoaders.forEach { file.appendText("- $it\n") }
