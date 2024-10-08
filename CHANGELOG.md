@@ -7,22 +7,27 @@
 ### Highlights
 
 - Added the `cfg` command for configuring properties of the config file, by @SettingDust in [#29](https://github.com/juraj-hrivnak/Pakku/pull/29).
-  - With this change, `pakku set [<projects>]` was deprecated. Use the config file (`pakku.json`) or the `cfg prj` subcommand instead.
-  - The removal of this argument is scheduled for the `1.0.0` release.
+  - This change deprecated the `pakku set [<projects>]` argument. Use the config file (`pakku.json`) or the `cfg prj` subcommand instead.
 - Implemented configurable subpaths for projects and configurable paths for project types.
+- Implemented configurable project aliases, by @SettingDust in [#34](https://github.com/juraj-hrivnak/Pakku/pull/34).
 - Added support for data packs.
-- Rewritten `fetch` command's deleting algorithm to account for recursion.
-  - Implemented fetch history file (`.pakku/fetch-history.json`) for handling changes to paths for project types.
+- Added better support for multi-loader modpacks, by @SettingDust in [#36](https://github.com/juraj-hrivnak/Pakku/pull/36) and [#37](https://github.com/juraj-hrivnak/Pakku/pull/37). (Sinytra Connector support.)
+  - Project files are now also sorted in order of loaders in the lock file.
+- Rewritten `fetch` command's deleting algorithm to account for subpaths.
+  - Saves & screenshots are always excluded.
+- Improved the UI of the `status` command.
+  - Now it's much nicer and shows you changes to project files.
 
-### Fixes 
+### Fixes
 
 - Fixed ConcurrentModificationException on running `fetch` command in some cases.
+- Fixed setting loaders using the `set` command when projects have unusual loaders.
 
 #### Configurable Subpaths
 
-There is now a new `subpath` property for projects that you configure using the [config file] or the `cfg prj` subcommand.
+There is now a new `subpath` property for projects that you configure in the [config file] or using the `cfg prj` subcommand.
 
-Usage:
+Config file - syntax:
 
 ```json
 {
@@ -34,7 +39,7 @@ Usage:
 }
 ```
 
-Example:
+Config file - example usage:
 
 ```json
 {
@@ -51,9 +56,9 @@ Example:
 
 #### Configurable Paths for Project Types
 
-There is now a variable for each project type that you configure using the [config file] or the `cfg` command.
+There is now a variable for each project type that you configure in the [config file] or using the `cfg` command.
 
-Usage:
+Config file - syntax:
 
 ```json
 {
@@ -63,6 +68,34 @@ Usage:
     "data_packs": "<path>",
     "worlds": "<path>",
     "shaders": "<path>"
+  }
+}
+```
+
+#### Project Aliases
+
+There is now a new `aliases` property of type array for projects that you configure in the [config file] or using the `cfg prj` subcommand.
+
+Config file - syntax:
+
+```json
+{
+  "projects": {
+    "<project>": {
+      "aliases": ["<alias>"]
+    }
+  }
+}
+```
+
+Config file - example usage:
+
+```json
+{
+  "projects": {
+    "forgified-fabric-api": {
+      "aliases": ["fabric-api"]
+    }
   }
 }
 ```
