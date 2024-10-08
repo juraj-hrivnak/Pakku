@@ -43,7 +43,7 @@ data class Project(
     @SerialName("redistributable") var redistributable: Boolean = true,
 
     private var subpath: String? = null,
-    var aliases: MutableSet<String> = mutableSetOf(),
+    var aliases: MutableSet<String>? = null,
 
     var files: MutableSet<ProjectFile>
 )
@@ -81,7 +81,7 @@ data class Project(
                 updateStrategy = this.updateStrategy,
                 redistributable = this.redistributable && other.redistributable,
 
-                aliases = (this.aliases + other.aliases).toMutableSet(),
+                aliases = this.aliases?.plus(other.aliases ?: emptySet())?.toMutableSet() ?: other.aliases,
 
                 files = (this.files + other.files).toMutableSet(),
             )
@@ -100,7 +100,7 @@ data class Project(
     /** Check if the current project has an alias of the specified project. */
     infix fun hasAliasOf(other: Project): Boolean
     {
-        return this.aliases.any { it in other.id.values || it in other.name.values || it in other.slug.values }
+        return this.aliases?.any { it in other.id.values || it in other.name.values || it in other.slug.values } ?: false
     }
 
     /** Checks if the current project contains the specified string in its slugs, names, IDs or aliases. */
@@ -109,7 +109,7 @@ data class Project(
         return input in this.slug.values
                 || input in this.name.values
                 || input in this.id.values
-                || input in this.aliases
+                || this.aliases?.contains(input) == true
     }
 
     /** Checks if the project has any files. */
