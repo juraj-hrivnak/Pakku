@@ -5,6 +5,8 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.table.grid
 import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.getOrThrow
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
@@ -74,7 +76,11 @@ class Status: CliktCommand()
                 currentProjects.toMutableSet(),
                 ConfigFile.readOrNull(),
                 numberOfFiles = 1
-            )
+            ).getOrElse {
+                terminal.danger(it.message())
+                echo()
+                return@runBlocking
+            }
 
         fun projStatus()
         {

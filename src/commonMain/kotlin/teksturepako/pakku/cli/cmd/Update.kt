@@ -7,6 +7,8 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
@@ -44,7 +46,11 @@ class Update : CliktCommand()
 
         val updatedProjects = updateMultipleProjectsWithFiles(
             lockFile.getMcVersions(), lockFile.getLoaders(), currentProjects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
-        )
+        ).getOrElse {
+            terminal.danger(it.message())
+            echo()
+            return@runBlocking
+        }
 
         for (updatedProject in updatedProjects)
         {
