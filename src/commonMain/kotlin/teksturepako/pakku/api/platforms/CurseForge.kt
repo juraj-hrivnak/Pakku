@@ -116,12 +116,12 @@ object CurseForge : Platform(
 
     internal const val LOADER_VERSION_TYPE_ID = 68441
 
-    internal fun List<CfModModel.File>.filterFileModels(
+    private fun List<CfModModel.File>.filterFileModels(
         mcVersions: List<String>, loaders: List<String>
     ): List<CfModModel.File> = this
         .filter { file ->
             file.gameVersions.any { it in mcVersions } && file.sortableGameVersions
-                .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
+                .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID } // Filter to loader only
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.gameVersionName.lowercase() }?.any {
                     it in loaders || it in validLoaders // Check default valid loaders
