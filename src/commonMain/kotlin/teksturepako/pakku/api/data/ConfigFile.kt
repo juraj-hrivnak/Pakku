@@ -38,7 +38,11 @@ data class ConfigFile(
 
     /** A mutable list of client overrides packed up with the modpack. */
     @SerialName("client_overrides") private val clientOverrides: MutableList<String> = mutableListOf(),
-    /**  A map of project types to their respective paths. */
+
+    /** Enable experimental features of Pakku. */
+    val experimental: Experimental? = null,
+
+    /** A mutable map of project types to their respective paths. */
     val paths: MutableMap<String, String> = mutableMapOf(),
 
     /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
@@ -113,6 +117,13 @@ data class ConfigFile(
         @SerialName("redistributable") var redistributable: Boolean? = null,
         var subpath: String? = null,
         var aliases: MutableSet<String>? = null
+    )
+
+    // -- EXPERIMENTAL --
+
+    @Serializable
+    data class Experimental(
+        val fetchHistory: Boolean = false
     )
 
     // -- FILE I/O --

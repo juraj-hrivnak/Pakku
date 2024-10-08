@@ -110,7 +110,11 @@ suspend fun deleteOldFiles(
     configFile: ConfigFile?
 ) = coroutineScope {
 
-    val fetchHistory = FetchHistoryFile.readOrNew()
+    val fetchHistory: FetchHistoryFile? = if (configFile?.experimental?.fetchHistory == true)
+    {
+        FetchHistoryFile.readOrNew()
+    }
+    else null
 
     val fileHashes = async { projectFiles
         .map { projectFile ->
@@ -136,7 +140,6 @@ suspend fun deleteOldFiles(
         )
     }
 
-    @Suppress("ConvertCallChainIntoSequence")
     val channel = produce { ProjectType.entries
         .filterNot { it == ProjectType.WORLD }
         .mapNotNull { projectType ->
@@ -145,11 +148,15 @@ suspend fun deleteOldFiles(
 
             prjTypeDir
         }
-        .plus(
-            fetchHistory.paths.mapNotNull { (_, path) ->
-                Path(workingPath, filterPath(path).get() ?: return@mapNotNull null)
+        .let {
+            if (fetchHistory != null)
+            {
+                it + fetchHistory.paths.mapNotNull { (_, path) ->
+                    Path(workingPath, filterPath(path).get() ?: return@mapNotNull null)
+                }
             }
-        )
+            else it
+        }
         .mapNotNull { dir ->
             dir.tryOrNull { path ->
                 path.toFile().walkBottomUp().mapNotNull { file: File ->
@@ -178,7 +185,7 @@ suspend fun deleteOldFiles(
             path.tryToResult { it.deleteIfExists() }.onSuccess {
                 onSuccess(path)
             }.onFailure {
-                onError(it)
+                if (it !is DirectoryNotEmpty) onError(it)
             }
         }
     }
@@ -189,10 +196,13 @@ suspend fun deleteOldFiles(
             this.cancel()
         }
 
-        ProjectType.entries.filterNot { it == ProjectType.WORLD }.map { projectType ->
-            fetchHistory.paths[projectType.serialName] = projectType.getPathString(configFile)
-        }
+        if (fetchHistory != null)
+        {
+            ProjectType.entries.filterNot { it == ProjectType.WORLD }.map { projectType ->
+                fetchHistory.paths[projectType.serialName] = projectType.getPathString(configFile)
+            }
 
-        fetchHistory.write()
+            fetchHistory.write()
+        }
     }
 }
