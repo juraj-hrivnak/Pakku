@@ -35,7 +35,9 @@ suspend fun updateMultipleProjectsWithFiles(
             }
     }
 
-    return@coroutineScope platforms.fold(projects) { acc, platform ->
+    val projectsToFiles = projects.associateTo(mutableMapOf()) { it.copy(files = mutableSetOf()) to it.files }
+
+    return@coroutineScope platforms.fold(projectsToFiles.keys.toMutableSet()) { acc, platform ->
 
         val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
 
@@ -45,17 +47,17 @@ suspend fun updateMultipleProjectsWithFiles(
                     accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
                 }?.also { accProject ->
                     // Combine projects
-                    val currentPublished = accProject.files.find { it.type == platform.serialName }?.dataPublished
-                    if (currentPublished != null && currentPublished != Instant.MIN)
-                        newProject.files.removeIf { it.type == platform.serialName && it.dataPublished < currentPublished }
-                    (accProject + newProject).get()?.copy(files = newProject.files.take(numberOfFiles).toMutableSet())
+                    val accFiles = projectsToFiles[accProject]!!
+                    val accPublished = accFiles.find { it.type == platform.serialName }?.dataPublished
+                    if (accPublished != null && accPublished != Instant.MIN)
+                        newProject.files.removeIf { it.type == platform.serialName && it.dataPublished < accPublished }
+                    (accProject + newProject).get()
+                        ?.copy(files = (newProject.files.take(numberOfFiles) + accProject.files).toMutableSet())
                         ?.let x@{ combinedProject ->
+                            if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
+                            projectsToFiles[combinedProject] = accFiles
+                            projectsToFiles -= accProject
                             acc -= accProject
-                            if (combinedProject.hasNoFiles())
-                            {
-                                acc += accProject.copy(files = mutableSetOf())
-                                return@x // Do not update project if files are missing
-                            }
                             acc += combinedProject
                         }
                 }
@@ -63,8 +65,6 @@ suspend fun updateMultipleProjectsWithFiles(
 
         acc
     }.combineWith(ghProjects.await()).filter { newProject ->
-        projects.none { oldProject ->
-            oldProject == newProject
-        } && newProject.updateStrategy == UpdateStrategy.LATEST
+        newProject !in projects && newProject.updateStrategy == UpdateStrategy.LATEST
     }.toMutableSet()
 }
