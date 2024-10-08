@@ -81,7 +81,7 @@ object CurseForge : Platform(
                 6552 -> ProjectType.SHADER
                 6945 -> ProjectType.DATA_PACK
 
-                else -> return null.also { println("Project type $classId not found!") }
+                else -> return null.also { println("$slug: Project type $classId from CurseForge isn't supported") }
             },
             id = mutableMapOf(serialName to id.toString()),
             redistributable = allowModDistribution ?: isAvailable,

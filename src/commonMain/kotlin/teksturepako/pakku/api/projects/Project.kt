@@ -81,6 +81,7 @@ data class Project(
                 updateStrategy = this.updateStrategy,
                 redistributable = this.redistributable && other.redistributable,
 
+                subpath = this.subpath ?: other.subpath,
                 aliases = this.aliases?.plus(other.aliases ?: emptySet())?.toMutableSet() ?: other.aliases,
 
                 files = (this.files + other.files).toMutableSet(),
