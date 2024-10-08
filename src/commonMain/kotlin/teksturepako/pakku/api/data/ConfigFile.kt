@@ -115,7 +115,8 @@ data class ConfigFile(
         var side: ProjectSide? = null,
         var updateStrategy: UpdateStrategy? = null,
         var redistributable: Boolean? = null,
-        var subpath: String? = null
+        var subpath: String? = null,
+        var aliases :MutableSet<String>? = null
     )
 
     // -- FILE I/O --

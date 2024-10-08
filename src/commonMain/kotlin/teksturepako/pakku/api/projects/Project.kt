@@ -200,6 +200,7 @@ data class Project(
                 config.updateStrategy?.let { this.updateStrategy = it }
                 config.redistributable?.let { this.redistributable = it }
                 config.subpath?.let { this.subpath = it }
+                config.aliases?.let { this.aliases = it }
             }
         }
 

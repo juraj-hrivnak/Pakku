@@ -57,12 +57,6 @@ class Cfg : CliktCommand()
     private val shadersPathOpt by option("--shaders-path", metavar = "path")
         .help("Change the path for the `${ProjectType.SHADER}` project type")
 
-    private val projectAliasesOpts: Map<String, String>? by option(
-        "-pa", "--project-alias",
-        help = "Add alias for project",
-        metavar = "<alias>=<project>"
-    ).associate()
-
     override fun run(): Unit = runBlocking {
 
         val configFile = ConfigFile.readOrNew()
@@ -133,15 +127,6 @@ class Cfg : CliktCommand()
             configFile.paths[serialName] = opt
             terminal.pSuccess("'paths.$serialName' set to '$opt'.")
             echo()
-        }
-
-        projectAliasesOpts?.let { opt ->
-            for ((alias, project) in opt)
-            {
-                configFile.projectAliases[alias] = project
-                terminal.pSuccess("'project_aliases.$alias' set to '$project'.")
-                echo()
-            }
         }
 
         configFile.write()?.let {
