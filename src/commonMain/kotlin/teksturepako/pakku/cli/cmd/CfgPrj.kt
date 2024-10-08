@@ -58,6 +58,9 @@ class CfgPrj : CliktCommand("prj")
     private val subpathOpt: String? by option("-p", "--subpath", metavar = "path")
         .help("Change the subpath of the project")
 
+    private val aliasOpt: String? by option("-a", "--alias", metavar = "alias")
+        .help("Add alias to the project")
+
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
@@ -104,6 +107,13 @@ class CfgPrj : CliktCommand("prj")
                 subpathOpt?.let { opt ->
                     subpath = opt
                     terminal.pSuccess("'projects.$arg.subpath' set to '$opt'.")
+                    echo()
+                }
+
+                aliasOpt?.let { opt ->
+                    if (aliases == null) aliases = mutableSetOf()
+                    aliases!!.add(opt)
+                    terminal.pSuccess("'projects.$arg.aliases' add '$opt'.")
                     echo()
                 }
             }

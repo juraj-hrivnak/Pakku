@@ -58,7 +58,6 @@ class Add : CliktCommand()
             echo()
             return@runBlocking
         }
-
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
