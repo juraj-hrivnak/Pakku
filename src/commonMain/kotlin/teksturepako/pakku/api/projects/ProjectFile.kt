@@ -29,7 +29,7 @@ data class ProjectFile(
     val hashes: MutableMap<String, String>? = null,
     @SerialName("required_dependencies") val requiredDependencies: MutableSet<String>? = null,
     val size: Int = 0,
-    val dataPublished: @Serializable(with = InstantIso8601Serializer::class) Instant = Instant.MIN,
+    @SerialName("data_published") val dataPublished: @Serializable(with = InstantIso8601Serializer::class) Instant = Instant.MIN,
 )
 {
     // -- PARENT --

@@ -35,9 +35,9 @@ suspend fun updateMultipleProjectsWithFiles(
             }
     }
 
-    val projectsToFiles = projects.associateTo(mutableMapOf()) { it.copy(files = mutableSetOf()) to it.files }
+    val combinedProjectsToOldFiles = projects.associateTo(mutableMapOf()) { it.copy(files = mutableSetOf()) to it.files }
 
-    return@coroutineScope platforms.fold(projectsToFiles.keys.toMutableSet()) { acc, platform ->
+    return@coroutineScope platforms.fold(combinedProjectsToOldFiles.keys.toMutableSet()) { acc, platform ->
 
         val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
 
@@ -47,7 +47,7 @@ suspend fun updateMultipleProjectsWithFiles(
                     accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
                 }?.also { accProject ->
                     // Combine projects
-                    val accFiles = projectsToFiles[accProject]!!
+                    val accFiles = combinedProjectsToOldFiles[accProject]!!
                     val accPublished = accFiles.find { it.type == platform.serialName }?.dataPublished
                     if (accPublished != null && accPublished != Instant.MIN)
                         newProject.files.removeIf { it.type == platform.serialName && it.dataPublished < accPublished }
@@ -55,8 +55,8 @@ suspend fun updateMultipleProjectsWithFiles(
                         ?.copy(files = (newProject.files.take(numberOfFiles) + accProject.files).toMutableSet())
                         ?.let x@{ combinedProject ->
                             if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
-                            projectsToFiles[combinedProject] = accFiles
-                            projectsToFiles -= accProject
+                            combinedProjectsToOldFiles[combinedProject] = accFiles
+                            combinedProjectsToOldFiles -= accProject
                             acc -= accProject
                             acc += combinedProject
                         }
