@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
+import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
@@ -31,10 +32,10 @@ import kotlin.io.path.fileSize
 
 class Export : CliktCommand()
 {
-    private val profiles: List<String> by argument(
+    private val profiles: List<(LockFile, ConfigFile) -> ExportProfile> by argument(
         name = "profiles",
         help = "Profiles to export. Will export server pack, mrpack and CurseForge pack if empty"
-    ).multiple()
+    ).choice(*ExportProfile.all.entries.map { it.toPair() }.toTypedArray()).multiple()
 
     override fun help(context: Context) = "Export modpack"
 
@@ -57,21 +58,14 @@ class Export : CliktCommand()
             return@runBlocking
         }
 
-        val profiles = profiles.mapNotNull {
-            (ExportProfile.all.getOrElse(it) {
-                terminal.pError(ActionError("Can't find export profile '$it'"))
-                null
-            })?.invoke(lockFile, configFile)
-        }.let {
-            if (it.isEmpty())
-            {
-                listOf(
-                    CurseForgeProfile(lockFile, configFile),
-                    ModrinthProfile(lockFile, configFile),
-                    ServerPackProfile(),
-                )
-            }
-            it
+        val profiles = profiles.map {
+            it(lockFile, configFile)
+        }.ifEmpty {
+            listOf(
+                CurseForgeProfile(lockFile, configFile),
+                ModrinthProfile(lockFile, configFile),
+                ServerPackProfile(),
+            )
         }
 
         export(
