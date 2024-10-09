@@ -14,15 +14,11 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.NotFoundOn
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
-import teksturepako.pakku.api.actions.promptForAddition
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.EmptyArg
-import teksturepako.pakku.cli.arg.ProjectArg
-import teksturepako.pakku.cli.arg.mapProjectArg
-import teksturepako.pakku.cli.arg.promptForProject
+import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.ui.pError
 
 class Add : CliktCommand()
