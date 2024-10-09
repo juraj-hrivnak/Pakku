@@ -25,7 +25,7 @@ fun retrieveProjectFiles(
     lockFile: LockFile,
     providers: List<Provider>
 ) : List<Result<ProjectFile, ActionError>> = lockFile.getAllProjects().map { project ->
-    val file = project.getFilesForProviders(providers).maxByOrNull { it.datePublished }
+    val file = project.getLatestFile(providers)
 
     if (file == null) Err(NoFiles(project, lockFile)) else Ok(file)
 }

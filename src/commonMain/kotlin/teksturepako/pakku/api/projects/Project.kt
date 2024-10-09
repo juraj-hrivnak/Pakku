@@ -187,6 +187,8 @@ data class Project(
         return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
     }
 
+    fun getLatestFile(providers: Collection<Provider>) = getFilesForProviders(providers).maxByOrNull { it.datePublished }
+
     // -- DEPENDENCIES --
 
     /**
