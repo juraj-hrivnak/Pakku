@@ -3,17 +3,23 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.export.ExportProfile
 import teksturepako.pakku.api.actions.export.export
-import teksturepako.pakku.api.actions.export.profiles.CurseForgeProfile
-import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile
-import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
+import teksturepako.pakku.api.actions.export.profiles.*
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.cli.arg.ProjectArg
+import teksturepako.pakku.cli.arg.mapProjectArg
 import teksturepako.pakku.cli.ui.createHyperlink
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
@@ -25,6 +31,11 @@ import kotlin.io.path.fileSize
 
 class Export : CliktCommand()
 {
+    private val profiles: List<String> by argument(
+        name = "profiles",
+        help = "Profiles to export. Will export server pack, mrpack and CurseForge pack if empty"
+    ).multiple()
+
     override fun help(context: Context) = "Export modpack"
 
     override fun run(): Unit = runBlocking {
@@ -46,12 +57,25 @@ class Export : CliktCommand()
             return@runBlocking
         }
 
+        val profiles = profiles.mapNotNull {
+            (ExportProfile.all.getOrElse(it) {
+                terminal.pError(ActionError("Can't find export profile '$it'"))
+                null
+            })?.invoke(lockFile, configFile)
+        }.let {
+            if (it.isEmpty())
+            {
+                listOf(
+                    CurseForgeProfile(lockFile, configFile),
+                    ModrinthProfile(lockFile, configFile),
+                    ServerPackProfile(),
+                )
+            }
+            it
+        }
+
         export(
-            profiles = listOf(
-                CurseForgeProfile(lockFile, configFile),
-                ModrinthProfile(lockFile, configFile),
-                ServerPackProfile()
-            ),
+            profiles = profiles,
             onError = { profile, error ->
                 if (error !is AlreadyExists)
                 {

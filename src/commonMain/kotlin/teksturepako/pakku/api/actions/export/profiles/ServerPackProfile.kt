@@ -11,3 +11,14 @@ class ServerPackProfile : ExportProfile(
         replacementRule()
     )
 )
+{
+    companion object
+    {
+        const val NAME = "serverpack"
+
+        init
+        {
+            all[NAME] = { _, _ -> ServerPackProfile() }
+        }
+    }
+}

@@ -23,3 +23,14 @@ class CurseForgeProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProf
     ),
     dependsOn = CurseForge
 )
+{
+    companion object
+    {
+        val NAME = CurseForge.serialName
+
+        init
+        {
+            all[NAME] = ::CurseForgeProfile
+        }
+    }
+}

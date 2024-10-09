@@ -1,6 +1,9 @@
 package teksturepako.pakku.api.actions.export
 
+import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
+import kotlin.reflect.KClass
 
 /**
  * An export profile is used to contain a list of [export rules][ExportRule].
@@ -18,4 +21,8 @@ open class ExportProfile(
     val fileExtension: String = "zip",
     val rules: List<ExportRule?>,
     val dependsOn: Platform? = null
-)
+) {
+    companion object {
+        val all = mutableMapOf<String, (LockFile, ConfigFile) -> ExportProfile>()
+    }
+}

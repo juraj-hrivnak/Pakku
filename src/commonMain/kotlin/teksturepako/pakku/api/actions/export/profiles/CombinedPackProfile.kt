@@ -5,9 +5,20 @@ import teksturepako.pakku.api.actions.export.rules.exportCombinedPack
 import teksturepako.pakku.api.actions.export.rules.replacementRule
 
 class CombinedPackProfile : ExportProfile(
-    name = "combinedpack",
+    name = NAME,
     rules = listOf(
         exportCombinedPack(),
         replacementRule()
     )
 )
+{
+    companion object
+    {
+        const val NAME = "combinedpack"
+
+        init
+        {
+            all[NAME] = { _, _ -> CombinedPackProfile() }
+        }
+    }
+}
