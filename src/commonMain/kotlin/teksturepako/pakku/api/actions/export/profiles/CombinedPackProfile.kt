@@ -15,10 +15,5 @@ class CombinedPackProfile : ExportProfile(
     companion object
     {
         const val NAME = "combinedpack"
-
-        init
-        {
-            all[NAME] = { _, _ -> CombinedPackProfile() }
-        }
     }
 }

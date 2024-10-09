@@ -28,10 +28,5 @@ class ModrinthProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProfil
     companion object
     {
         const val NAME = "mrpack"
-
-        init
-        {
-            all[NAME] = ::ModrinthProfile
-        }
     }
 }

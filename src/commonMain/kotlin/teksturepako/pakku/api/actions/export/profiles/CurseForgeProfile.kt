@@ -27,10 +27,5 @@ class CurseForgeProfile(lockFile: LockFile, configFile: ConfigFile) : ExportProf
     companion object
     {
         val NAME = CurseForge.serialName
-
-        init
-        {
-            all[NAME] = ::CurseForgeProfile
-        }
     }
 }

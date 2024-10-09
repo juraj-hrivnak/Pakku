@@ -5,13 +5,10 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
-import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.mordant.terminal.danger
-import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
 import teksturepako.pakku.api.actions.export.ExportProfile
 import teksturepako.pakku.api.actions.export.export
@@ -19,8 +16,6 @@ import teksturepako.pakku.api.actions.export.profiles.*
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.cli.arg.ProjectArg
-import teksturepako.pakku.cli.arg.mapProjectArg
 import teksturepako.pakku.cli.ui.createHyperlink
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
@@ -35,7 +30,7 @@ class Export : CliktCommand()
     private val profiles: List<(LockFile, ConfigFile) -> ExportProfile> by argument(
         name = "profiles",
         help = "Profiles to export. Will export server pack, mrpack and CurseForge pack if empty"
-    ).choice(*ExportProfile.all.entries.map { it.toPair() }.toTypedArray()).multiple()
+    ).choice(*ExportProfile.registry.entries.map { it.toPair() }.toTypedArray()).multiple()
 
     override fun help(context: Context) = "Export modpack"
 

@@ -12,10 +12,5 @@ class ClientPackProfile : ExportProfile(
     companion object
     {
         const val NAME = "clientpack"
-
-        init
-        {
-            all[NAME] = { _, _ -> ClientPackProfile() }
-        }
     }
 }
