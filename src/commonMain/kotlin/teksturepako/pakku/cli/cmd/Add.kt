@@ -14,15 +14,16 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.NotFoundOn
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
+import teksturepako.pakku.api.actions.promptForAddition
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.*
-import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.arg.EmptyArg
+import teksturepako.pakku.cli.arg.ProjectArg
+import teksturepako.pakku.cli.arg.mapProjectArg
+import teksturepako.pakku.cli.arg.promptForProject
 import teksturepako.pakku.cli.ui.pError
-import teksturepako.pakku.cli.ui.pSuccess
 
 class Add : CliktCommand()
 {
@@ -100,20 +101,7 @@ class Add : CliktCommand()
                     }
                 },
                 onSuccess = { project, isRecommended, reqHandlers ->
-                    val projMsg = project.getFullMsg()
-
-                    if (ynPrompt("Do you want to add $projMsg?", terminal, isRecommended))
-                    {
-                        lockFile.add(project)
-                        lockFile.linkProjectToDependents(project)
-
-                        if (!noDepsFlag)
-                        {
-                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        }
-
-                        terminal.pSuccess("$projMsg added")
-                    }
+                    project.promptForAddition(lockFile, terminal, isRecommended, noDepsFlag, reqHandlers, projectProvider, platforms)
                 },
                 lockFile, platforms, strict
             )

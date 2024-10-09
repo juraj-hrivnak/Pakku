@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.NotFoundOn
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
+import teksturepako.pakku.api.actions.promptForAddition
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
@@ -118,20 +119,7 @@ class AddPrj : CliktCommand("prj")
                     }
                 },
                 onSuccess = { project, isRecommended, reqHandlers ->
-                    val projMsg = project.getFullMsg()
-
-                    if (ynPrompt("Do you want to add $projMsg?", terminal, isRecommended))
-                    {
-                        lockFile.add(project)
-                        lockFile.linkProjectToDependents(project)
-
-                        if (!noDepsFlag)
-                        {
-                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        }
-
-                        terminal.pSuccess("$projMsg added")
-                    }
+                    project.promptForAddition(lockFile, terminal, isRecommended, noDepsFlag, reqHandlers, projectProvider, platforms)
                 }, lockFile, platforms, strict
             )
         }

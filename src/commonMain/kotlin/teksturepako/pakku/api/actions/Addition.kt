@@ -1,10 +1,16 @@
 package teksturepako.pakku.api.actions
 
+import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.arg.ynPrompt
+import teksturepako.pakku.cli.resolveDependencies
+import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.ui.pSuccess
 
 data class RequestHandlers(
     val onError: suspend (error: ActionError) -> Unit,
@@ -24,9 +30,11 @@ suspend fun Project?.createAdditionRequest(
     var isRecommended = true
 
     // Already added
-    if (lockFile.isProjectAdded(project))
+    val existingProject = lockFile.getProject(project)
+    if (existingProject != null)
     {
-        return onError(AlreadyAdded(project))
+        project.files.removeAll(existingProject.files)
+        if (project.hasNoFiles()) return onError(AlreadyAdded(project))
     }
 
     // We do not have to check platform for GitHub only project
@@ -69,4 +77,32 @@ suspend fun Project?.createAdditionRequest(
     }
 
     onSuccess(project, isRecommended, RequestHandlers(onError, onSuccess))
+}
+
+suspend fun Project.promptForAddition(
+    lockFile: LockFile,
+    terminal: Terminal,
+    isRecommended: Boolean,
+    noDepsFlag: Boolean,
+    reqHandlers: RequestHandlers,
+    projectProvider: Provider,
+    platforms: List<Platform>
+)
+{
+    val projMsg = this.getFullMsg()
+    val oldProject = lockFile.getProject(this)
+    val replacing = oldProject != null
+    if (ynPrompt("Do you want to ${if (replacing) "replace" else "add"} $projMsg?", terminal, isRecommended))
+    {
+        if (replacing) lockFile.update(this) else lockFile.add(this)
+
+        lockFile.linkProjectToDependents(this)
+
+        if (!noDepsFlag)
+        {
+            this.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+        }
+
+        terminal.pSuccess("$projMsg ${if (replacing) "replaced" else "added"}")
+    }
 }
