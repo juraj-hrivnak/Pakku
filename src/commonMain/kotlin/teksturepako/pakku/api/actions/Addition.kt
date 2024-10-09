@@ -26,7 +26,7 @@ suspend fun Project?.createAdditionRequest(
 )
 {
     // Exist
-    val project = this ?: return onError(ProjNotFound())
+    val project = this?.copy() ?: return onError(ProjNotFound())
     var isRecommended = true
 
     // Already added
@@ -77,32 +77,4 @@ suspend fun Project?.createAdditionRequest(
     }
 
     onSuccess(project, isRecommended, RequestHandlers(onError, onSuccess))
-}
-
-suspend fun Project.promptForAddition(
-    lockFile: LockFile,
-    terminal: Terminal,
-    isRecommended: Boolean,
-    noDepsFlag: Boolean,
-    reqHandlers: RequestHandlers,
-    projectProvider: Provider,
-    platforms: List<Platform>
-)
-{
-    val projMsg = this.getFullMsg()
-    val oldProject = lockFile.getProject(this)
-    val replacing = oldProject != null
-    if (ynPrompt("Do you want to ${if (replacing) "replace" else "add"} $projMsg?", terminal, isRecommended))
-    {
-        if (replacing) lockFile.update(this) else lockFile.add(this)
-
-        lockFile.linkProjectToDependents(this)
-
-        if (!noDepsFlag)
-        {
-            this.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-        }
-
-        terminal.pSuccess("$projMsg ${if (replacing) "replaced" else "added"}")
-    }
 }

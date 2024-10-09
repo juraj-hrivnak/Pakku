@@ -14,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.NotFoundOn
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createAdditionRequest
-import teksturepako.pakku.api.actions.promptForAddition
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
@@ -22,10 +21,7 @@ import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.*
-import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
-import teksturepako.pakku.cli.ui.pSuccess
 import kotlin.collections.fold
 import kotlin.system.exitProcess
 import com.github.michaelbull.result.fold as resultFold
