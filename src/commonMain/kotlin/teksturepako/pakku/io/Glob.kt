@@ -11,7 +11,7 @@ import kotlin.io.path.walk
 fun Path.listDirectoryEntriesRecursive(glob: String): List<Path>
 {
     val matcher = FileSystems.getDefault().getPathMatcher("glob:${glob.removePrefix("./")}")
-    return walk(PathWalkOption.FOLLOW_LINKS, PathWalkOption.INCLUDE_DIRECTORIES).filter { matcher.matches(it) }.toList()
+    return walk(PathWalkOption.INCLUDE_DIRECTORIES).filter { matcher.matches(it) }.toList()
 }
 
 fun List<String>.expandWithGlob() = flatMap { glob ->

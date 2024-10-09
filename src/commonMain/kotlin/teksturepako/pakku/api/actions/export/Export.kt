@@ -271,11 +271,11 @@ suspend fun List<ExportRule>.produceRuleResults(
     val results = this.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().map {
             rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + filterOverrides(configFile.getAllOverrides().expandWithGlob()).map {
+        } + configFile.getAllOverrides().map {
             rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
-        } + filterOverrides(configFile.getAllServerOverrides().expandWithGlob()).map {
+        } + configFile.getAllServerOverrides().map {
             rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
-        } + filterOverrides(configFile.getAllClientOverrides().expandWithGlob()).map {
+        } + configFile.getAllClientOverrides().map {
             rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
         } + readProjectOverrides(configFile).map {
             rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
