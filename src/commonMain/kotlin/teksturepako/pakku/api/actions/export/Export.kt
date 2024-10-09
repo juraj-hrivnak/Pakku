@@ -13,6 +13,7 @@ import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.OverrideType
+import teksturepako.pakku.api.overrides.filterOverrides
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
@@ -270,11 +271,11 @@ suspend fun List<ExportRule>.produceRuleResults(
     val results = this.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().map {
             rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + configFile.getAllOverrides().map {
+        } + filterOverrides(configFile.getAllOverrides().expandWithGlob()).map {
             rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
-        } + configFile.getAllServerOverrides().map {
+        } + filterOverrides(configFile.getAllServerOverrides().expandWithGlob()).map {
             rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
-        } + configFile.getAllClientOverrides().map {
+        } + filterOverrides(configFile.getAllClientOverrides().expandWithGlob()).map {
             rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
         } + readProjectOverrides(configFile).map {
             rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)

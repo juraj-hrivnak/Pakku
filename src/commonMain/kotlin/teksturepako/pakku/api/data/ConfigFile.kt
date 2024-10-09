@@ -100,9 +100,9 @@ data class ConfigFile(
         this.overrides.clear()
     }
 
-    fun getAllOverrides(): List<String> = filterOverrides(this.overrides)
-    fun getAllServerOverrides(): List<String> = filterOverrides(this.serverOverrides)
-    fun getAllClientOverrides(): List<String> = filterOverrides(this.clientOverrides)
+    fun getAllOverrides(): List<String> = this.overrides
+    fun getAllServerOverrides(): List<String> = this.serverOverrides
+    fun getAllClientOverrides(): List<String> = this.clientOverrides
 
     // -- PROJECTS --
 
