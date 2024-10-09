@@ -182,6 +182,11 @@ data class Project(
         return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
     }
 
+    fun getFilesForProviders(providers: Collection<Provider>): List<ProjectFile>
+    {
+        return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
+    }
+
     // -- DEPENDENCIES --
 
     /**
