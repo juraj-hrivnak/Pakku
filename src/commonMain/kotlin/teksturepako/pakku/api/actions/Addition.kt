@@ -1,16 +1,10 @@
 package teksturepako.pakku.api.actions
 
-import com.github.ajalt.mordant.terminal.Terminal
 import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.ynPrompt
-import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.getFullMsg
-import teksturepako.pakku.cli.ui.pSuccess
 
 data class RequestHandlers(
     val onError: suspend (error: ActionError) -> Unit,
