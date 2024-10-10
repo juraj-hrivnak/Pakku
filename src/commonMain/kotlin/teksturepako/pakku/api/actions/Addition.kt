@@ -20,37 +20,37 @@ suspend fun Project?.createAdditionRequest(
 )
 {
     // Exist
-    val project = this?.copy() ?: return onError(ProjNotFound())
+    val project = this?.copy(files = this.files.toMutableSet()) ?: return onError(ProjNotFound())
     var isRecommended = true
 
     // Already added
-    val existingProject = lockFile.getProject(project)
+    val existingProject = lockFile.getProject(this)
     if (existingProject != null)
     {
         project.files.removeAll(existingProject.files)
-        if (project.hasNoFiles()) return onError(AlreadyAdded(project))
+        if (project.hasNoFiles()) return onError(AlreadyAdded(this))
     }
 
     // We do not have to check platform for GitHub only project
-    if (project.slug.keys.size > 1 || project.slug.keys.firstOrNull() != GitHub.serialName)
+    if (this.slug.keys.size > 1 || this.slug.keys.firstOrNull() != GitHub.serialName)
     {
         for (platform in platforms)
         {
             // Check if project is on each platform
-            if (project.isNotOnPlatform(platform))
+            if (this.isNotOnPlatform(platform))
             {
                 if (!strict) continue
                 else
                 {
-                    onError(NotFoundOn(project, platform))
+                    onError(NotFoundOn(this, platform))
                     return
                 }
             }
 
             // Check if project has files on each platform
-            if (project.hasNoFilesOnPlatform(platform))
+            if (this.hasNoFilesOnPlatform(platform))
             {
-                onError(NoFilesOn(project, platform))
+                onError(NoFilesOn(this, platform))
                 isRecommended = false
             }
         }
@@ -58,17 +58,17 @@ suspend fun Project?.createAdditionRequest(
 
 
     // Check if project has any files at all
-    if (project.hasNoFiles())
+    if (this.hasNoFiles())
     {
-        return onError(NoFiles(project, lockFile))
+        return onError(NoFiles(this, lockFile))
     }
 
     // Check if project files match across platforms
-    if (project.fileNamesDoNotMatchAcrossPlatforms(platforms))
+    if (this.fileNamesDoNotMatchAcrossPlatforms(platforms))
     {
-        onError(FileNamesDoNotMatch(project))
+        onError(FileNamesDoNotMatch(this))
         isRecommended = false
     }
 
-    onSuccess(project, isRecommended, RequestHandlers(onError, onSuccess))
+    onSuccess(this, isRecommended, RequestHandlers(onError, onSuccess))
 }
