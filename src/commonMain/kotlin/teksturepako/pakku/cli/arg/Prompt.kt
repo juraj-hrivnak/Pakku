@@ -62,7 +62,8 @@ suspend fun Project.promptForAddition(
     val projMsg = this.getFullMsg()
     val oldProject = lockFile.getProject(this)
     val replacing = oldProject != null
-    if (ynPrompt("Do you want to ${if (replacing) "replace" else "add"} $projMsg?", terminal, isRecommended))
+    val oldProjMsg = oldProject?.getFullMsg()
+    if (ynPrompt("Do you want to ${if (replacing) "replace $oldProjMsg with" else "add"} ${getFullMsg()}?", terminal, isRecommended))
     {
         if (replacing) lockFile.update(this) else lockFile.add(this)
 
@@ -73,6 +74,6 @@ suspend fun Project.promptForAddition(
             this.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
         }
 
-        terminal.pSuccess("$projMsg ${if (replacing) "replaced" else "added"}")
+        terminal.pSuccess(if (replacing) "$oldProjMsg replaced" else "$projMsg added")
     }
 }
