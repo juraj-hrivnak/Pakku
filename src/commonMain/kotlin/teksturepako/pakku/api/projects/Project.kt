@@ -212,7 +212,7 @@ data class Project(
             if (input in this || this.files.any { input in it.fileName })
             {
                 config.type?.let { this.type = it }
-                this.side = config.side
+                config.side?.let { this.side = it }
                 config.updateStrategy?.let { this.updateStrategy = it }
                 config.redistributable?.let { this.redistributable = it }
                 config.subpath?.let { this.subpath = it }
