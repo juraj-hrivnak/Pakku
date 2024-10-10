@@ -9,6 +9,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.ProjectOverride
@@ -137,7 +138,7 @@ sealed class RuleContext(open val workingSubDir: String)
     {
         fun export(overridesDir: String? = type.folderName): RuleResult
         {
-            val inputPath = Path(path)
+            val inputPath = Path(workingPath, path)
             val outputPath = overridesDir?.let { getPath(it, path) } ?: getPath(path)
 
             val message = "export $type '$inputPath' to '$outputPath'"
@@ -247,9 +248,8 @@ sealed class RuleContext(open val workingSubDir: String)
         {
             if (!project.redistributable && !force) return error(NotRedistributable(project))
 
-            val projectFile =
-                project.getLatestFile(Provider.providers - excludedProviders)
-                    ?: return error(NoFiles(project, lockFile))
+            val projectFile = project.getLatestFile(Provider.providers - excludedProviders)
+                ?: return error(NoFiles(project, lockFile))
 
             val result = onExport(
                 // Creates a callback to download the file lazily.

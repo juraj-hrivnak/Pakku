@@ -9,6 +9,7 @@ import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.*
+import kotlin.io.path.Path
 
 /**
  * A config file (`pakku.json`) is a file used by the user to configure properties needed for modpack export.
@@ -97,9 +98,9 @@ data class ConfigFile(
         this.overrides.clear()
     }
 
-    fun getAllOverrides(): List<String> = filterOverrides(this.overrides.expandWithGlob())
-    fun getAllServerOverrides(): List<String> = filterOverrides(this.serverOverrides.expandWithGlob())
-    fun getAllClientOverrides(): List<String> = filterOverrides(this.clientOverrides.expandWithGlob())
+    fun getAllOverrides(): List<String> = filterOverrides(this.overrides.expandWithGlob(Path(workingPath)))
+    fun getAllServerOverrides(): List<String> = filterOverrides(this.serverOverrides.expandWithGlob(Path(workingPath)))
+    fun getAllClientOverrides(): List<String> = filterOverrides(this.clientOverrides.expandWithGlob(Path(workingPath)))
 
     // -- PROJECTS --
 

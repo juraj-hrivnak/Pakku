@@ -1,27 +1,29 @@
 package teksturepako.pakku.io
 
-import teksturepako.pakku.debug
+import teksturepako.pakku.debugIf
+import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.Path
-import kotlin.io.path.PathWalkOption
-import kotlin.io.path.walk
+import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
 fun Path.listDirectoryEntriesRecursive(glob: String): Sequence<Path>
 {
-    val matcher = FileSystems.getDefault().getPathMatcher("glob:${glob.removePrefix("./")}")
-    return walk(PathWalkOption.INCLUDE_DIRECTORIES).filter { matcher.matches(it) }
+    val globPattern = "glob:${this.invariantSeparatorsPathString}/${glob.removePrefix("./")}"
+    val matcher = FileSystems.getDefault().getPathMatcher(globPattern)
+
+    return this.walk(PathWalkOption.INCLUDE_DIRECTORIES)
+        .filter { matcher.matches(it) }
+        .map { Path(it.absolutePathString().removePrefix(this.absolutePathString()).removePrefix(File.separator)) }
 }
 
-fun List<String>.expandWithGlob() = fold(listOf<String>()) { acc, glob ->
+fun List<String>.expandWithGlob(inputPath: Path) = fold(listOf<String>()) { acc, glob ->
     if (glob.startsWith("!"))
     {
-        acc - Path("").listDirectoryEntriesRecursive(glob.removePrefix("!")).map { it.toString() }.toSet()
+        acc - inputPath.listDirectoryEntriesRecursive(glob.removePrefix("!")).map { it.toString() }.toSet()
     }
     else
     {
-        acc + Path("").listDirectoryEntriesRecursive(glob).map { it.toString() }
+        acc + inputPath.listDirectoryEntriesRecursive(glob).map { it.toString() }
     }
-}.debug(::println)
+}.debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }.toList()
