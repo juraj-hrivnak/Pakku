@@ -1,5 +1,8 @@
 package teksturepako.pakku.api.actions.export
 
+import teksturepako.pakku.api.actions.export.profiles.*
+import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 
 /**
@@ -18,4 +21,17 @@ open class ExportProfile(
     val fileExtension: String = "zip",
     val rules: List<ExportRule?>,
     val dependsOn: Platform? = null
-)
+) {
+    companion object {
+        val registry = mutableMapOf<String, (LockFile, ConfigFile) -> ExportProfile>()
+
+        init
+        {
+            registry[ClientPackProfile.NAME] = { _, _ -> ClientPackProfile() }
+            registry[CombinedPackProfile.NAME] = { _, _ -> CombinedPackProfile() }
+            registry[ServerPackProfile.NAME] = { _, _ -> ServerPackProfile() }
+            registry[CurseForgeProfile.NAME] = { lockFile, configFile -> CurseForgeProfile(lockFile, configFile) }
+            registry[ModrinthProfile.NAME] = { lockFile, configFile -> ModrinthProfile(lockFile, configFile) }
+        }
+    }
+}
