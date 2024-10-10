@@ -26,4 +26,4 @@ fun List<String>.expandWithGlob(inputPath: Path) = fold(listOf<String>()) { acc,
     {
         acc + inputPath.listDirectoryEntriesRecursive(glob).map { it.toString() }
     }
-}.debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }.toList()
+}.debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }

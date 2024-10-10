@@ -2,13 +2,15 @@
 
 package teksturepako.pakku.api.data
 
+import com.github.michaelbull.result.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.overrides.filterOverrides
+import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.*
+import java.nio.file.Path
 import kotlin.io.path.Path
 
 /**
@@ -98,9 +100,17 @@ data class ConfigFile(
         this.overrides.clear()
     }
 
-    fun getAllOverrides(): List<String> = filterOverrides(this.overrides.expandWithGlob(Path(workingPath)))
-    fun getAllServerOverrides(): List<String> = filterOverrides(this.serverOverrides.expandWithGlob(Path(workingPath)))
-    fun getAllClientOverrides(): List<String> = filterOverrides(this.clientOverrides.expandWithGlob(Path(workingPath)))
+    fun getAllOverrides(): List<Result<String, ActionError>> = this.overrides
+        .expandWithGlob(Path(workingPath))
+        .map { filterPath(it) }
+
+    fun getAllServerOverrides(): List<Result<String, ActionError>> = this.serverOverrides
+        .expandWithGlob(Path(workingPath))
+        .map { filterPath(it) }
+
+    fun getAllClientOverrides(): List<Result<String, ActionError>> = this.clientOverrides
+        .expandWithGlob(Path(workingPath))
+        .map { filterPath(it) }
 
     // -- PROJECTS --
 
@@ -128,11 +138,13 @@ data class ConfigFile(
 
         /**
          * Reads [LockFile] and parses it, or returns an exception.
-         * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
+         * Use [Result.fold] to map it's success and failure values.
          */
-        fun readToResult(): Result<ConfigFile> = decodeToResult("$workingPath/$FILE_NAME")
+        suspend fun readToResult(): Result<ConfigFile, ActionError> =
+            decodeToResult<ConfigFile>(Path(workingPath, FILE_NAME))
 
-        fun readToResultFrom(path: String): Result<ConfigFile> = decodeToResult(path)
+        suspend fun readToResultFrom(path: Path): Result<ConfigFile, ActionError> =
+            decodeToResult<ConfigFile>(path)
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = json)

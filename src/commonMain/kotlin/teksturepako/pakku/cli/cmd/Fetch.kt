@@ -42,7 +42,7 @@ class Fetch : CliktCommand()
         val configFile = if (ConfigFile.exists())
         {
             ConfigFile.readToResult().getOrElse {
-                terminal.danger(it.message)
+                terminal.pError(it)
                 echo()
                 return@runBlocking
             }

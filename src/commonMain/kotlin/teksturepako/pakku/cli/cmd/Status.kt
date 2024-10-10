@@ -27,7 +27,7 @@ class Status: CliktCommand()
         }
 
         val configFile = ConfigFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             null
         }
