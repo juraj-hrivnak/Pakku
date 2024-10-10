@@ -13,6 +13,7 @@ import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.OverrideType
+import teksturepako.pakku.api.overrides.filterOverrides
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
