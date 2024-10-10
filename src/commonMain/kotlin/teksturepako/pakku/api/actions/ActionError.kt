@@ -91,10 +91,10 @@ open class ActionError(
     // -- ADDITION --
 
     class AlreadyAdded(val project: Project) :
-        ActionError("Can not add ${project.type} ${project.slug}. It is already added.")
+        ActionError("${project.type} ${project.slug} is already added.")
         {
             override fun message(arg: String): String =
-                "Could not add ${dim(project.type)} ${project.getFlavoredSlug()}. It is already added."
+                "${dim(project.type)} ${project.getFlavoredSlug()} is already added."
         }
 
     class NotFoundOn(val project: Project, val provider: Provider) :

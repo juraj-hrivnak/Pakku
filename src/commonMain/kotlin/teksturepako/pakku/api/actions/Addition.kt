@@ -8,65 +8,66 @@ import teksturepako.pakku.api.projects.Project
 
 data class RequestHandlers(
     val onError: suspend (error: ActionError) -> Unit,
-    val onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit
+    val onSuccess: suspend (
+        project: Project, isRecommended: Boolean, isReplacing: Boolean, reqHandlers: RequestHandlers
+    ) -> Unit
 )
 
 suspend fun Project?.createAdditionRequest(
     onError: suspend (error: ActionError) -> Unit,
-    onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit,
+    onSuccess: suspend (
+        project: Project, isRecommended: Boolean, isReplacing: Boolean, reqHandlers: RequestHandlers
+    ) -> Unit,
     lockFile: LockFile,
     platforms: List<Platform>,
     strict: Boolean = false
 )
 {
     // Exist
-    val project = this ?: return onError(ProjNotFound())
+    if (this == null) return onError(ProjNotFound())
+
     var isRecommended = true
 
-    // Already added
-    if (lockFile.isProjectAdded(project))
+    // Handle already added project
+    val isReplacing = if (lockFile.isProjectAdded(this))
     {
-        return onError(AlreadyAdded(project))
+        onError(AlreadyAdded(this))
+        if (lockFile.getProject(this)?.files == this.files) return else true
     }
+    else false
 
     // We do not have to check platform for GitHub only project
-    if (project.slug.keys.size > 1 || project.slug.keys.firstOrNull() != GitHub.serialName)
+    if (this.slug.keys.size > 1 || this.slug.keys.firstOrNull() != GitHub.serialName)
     {
         for (platform in platforms)
         {
             // Check if project is on each platform
-            if (project.isNotOnPlatform(platform))
+            if (this.isNotOnPlatform(platform))
             {
-                if (!strict) continue
-                else
-                {
-                    onError(NotFoundOn(project, platform))
-                    return
-                }
+                if (!strict) continue else return onError(NotFoundOn(this, platform))
             }
 
             // Check if project has files on each platform
-            if (project.hasNoFilesOnPlatform(platform))
+            if (this.hasNoFilesOnPlatform(platform))
             {
-                onError(NoFilesOn(project, platform))
+                onError(NoFilesOn(this, platform))
                 isRecommended = false
             }
         }
     }
 
-
     // Check if project has any files at all
-    if (project.hasNoFiles())
+    if (this.hasNoFiles())
     {
-        return onError(NoFiles(project, lockFile))
+        return onError(NoFiles(this, lockFile))
     }
 
     // Check if project files match across platforms
-    if (project.fileNamesDoNotMatchAcrossPlatforms(platforms))
+    if (this.fileNamesDoNotMatchAcrossPlatforms(platforms))
     {
-        onError(FileNamesDoNotMatch(project))
+        onError(FileNamesDoNotMatch(this))
         isRecommended = false
     }
 
-    onSuccess(project, isRecommended, RequestHandlers(onError, onSuccess))
+    onSuccess(this, isRecommended, isReplacing, RequestHandlers(onError, onSuccess))
 }

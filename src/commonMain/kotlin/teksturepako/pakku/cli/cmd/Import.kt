@@ -61,8 +61,10 @@ class Import : CliktCommand()
                     onError = { error ->
                         if (error !is AlreadyAdded) terminal.pError(error)
                     },
-                    onSuccess = { project, _, reqHandlers ->
-                        lockFile.add(project)
+                    onSuccess = { project, _, isReplacing, reqHandlers ->
+                        val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
+
+                        if (!isReplacing) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
 
                         if (depsFlag)
@@ -70,7 +72,7 @@ class Import : CliktCommand()
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.pSuccess("${project.getFullMsg()} added")
+                        terminal.pSuccess("${project.getFullMsg()} ${promptMessage.second}")
                         Modrinth.checkRateLimit()
                     },
                     lockFile, platforms
