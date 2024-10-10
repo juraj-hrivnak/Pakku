@@ -112,9 +112,8 @@ sealed class RuleContext(open val workingSubDir: String)
         {
             if (!project.redistributable && !force) return error(NotRedistributable(project))
 
-            val projectFile = Provider.providers.firstNotNullOfOrNull { provider ->
-                project.getFilesForProvider(provider).firstOrNull()
-            } ?: return error(NoFiles(project, lockFile))
+            val projectFile =
+                project.getLatestFile(Provider.providers) ?: return error(NoFiles(project, lockFile))
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
@@ -248,9 +247,9 @@ sealed class RuleContext(open val workingSubDir: String)
         {
             if (!project.redistributable && !force) return error(NotRedistributable(project))
 
-            val projectFile = (Provider.providers - excludedProviders).firstNotNullOfOrNull { provider ->
-                project.getFilesForProvider(provider).firstOrNull()
-            } ?: return error(NoFiles(project, lockFile))
+            val projectFile =
+                project.getLatestFile(Provider.providers - excludedProviders)
+                    ?: return error(NoFiles(project, lockFile))
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
