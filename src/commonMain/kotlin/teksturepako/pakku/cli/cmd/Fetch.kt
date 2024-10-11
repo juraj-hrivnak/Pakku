@@ -3,10 +3,14 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.help
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.optionalValue
+import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.colormath.Color
 import com.github.ajalt.colormath.model.RGB
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
-import com.github.ajalt.mordant.animation.progress.advance
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.widgets.Spinner
@@ -31,6 +35,12 @@ import teksturepako.pakku.cli.ui.*
 class Fetch : CliktCommand()
 {
     override fun help(context: Context) = "Fetch projects to your modpack folder"
+
+    private val retryOpt: Int? by option("--retry")
+        .help("The number of times to retry")
+        .int()
+        .optionalValue(2)
+        .default(0)
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
@@ -68,21 +78,21 @@ class Fetch : CliktCommand()
 
         launch { progressBar.execute() }
 
-        val fetchJob = launch {
-            projectFiles.fetch(
-                onError = { error ->
-                    if (error !is AlreadyExists) terminal.pError(error)
-                },
-                onProgress = { advance, total ->
-                    progressBar.advance(advance)
-                    progressBar.update { this.total = total }
-                },
-                onSuccess = { path, _ ->
-                    terminal.pSuccess("$path saved")
-                },
-                lockFile, configFile
-            )
-        }
+        val fetchJob = projectFiles.fetch(
+            onError = { error ->
+                if (error !is AlreadyExists) terminal.pError(error)
+            },
+            onProgress = { completed, total ->
+                progressBar.update {
+                    this.completed = completed
+                    this.total = total
+                }
+            },
+            onSuccess = { path, _ ->
+                terminal.pSuccess("$path saved")
+            },
+            lockFile, configFile, retryOpt
+        )
 
         // -- OVERRIDES --
 
@@ -123,9 +133,7 @@ class Fetch : CliktCommand()
         syncJob.join()
         oldFilesJob.join()
 
-        launch {
-            progressBar.stop()
-        }
+        progressBar.stop()
 
         echo()
     }
