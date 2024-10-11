@@ -33,8 +33,8 @@ open class ActionError(
 
     // -- PROJECT FILE --
 
-    class DownloadFailed(val path: Path?) :
-        ActionError("Failed to download '$path'.")
+    class DownloadFailed(val path: Path?, val retryNumber: Int = 0) :
+        ActionError("Failed to download '$path'. ${if (retryNumber > 0) "Retry number $retryNumber." else ""}")
 
     class NoHashes(val path: Path?) :
         ActionError("File '$path' has no hashes.", isWarning = true)

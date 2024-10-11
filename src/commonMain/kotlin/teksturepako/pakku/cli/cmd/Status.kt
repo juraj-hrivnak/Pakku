@@ -3,10 +3,14 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.rendering.TextAlign
 import com.github.ajalt.mordant.table.grid
 import com.github.ajalt.mordant.terminal.danger
+import com.github.ajalt.mordant.widgets.Spinner
+import com.github.ajalt.mordant.widgets.progress.*
 import com.github.michaelbull.result.getOrElse
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
@@ -70,6 +74,12 @@ class Status: CliktCommand()
             append(".")
         })
 
+        val progressBar = progressBarLayout(spacing = 2) {
+            spinner(Spinner.Dots())
+        }.animateInCoroutine(terminal)
+
+        launch { progressBar.execute() }
+
         val currentProjects = lockFile.getAllProjects()
         val updatedProjects =
             updateMultipleProjectsWithFiles(
@@ -83,6 +93,8 @@ class Status: CliktCommand()
                 echo()
                 return@runBlocking
             }
+
+        progressBar.clear()
 
         fun projects()
         {
@@ -106,7 +118,9 @@ class Status: CliktCommand()
                         val cFile = currentProject.getFilesForProvider(provider).firstOrNull()?.fileName
                         val uFile = updatedProject.getFilesForProvider(provider).firstOrNull()?.fileName
 
-                        if (cFile == uFile) continue
+                        if (cFile == null || uFile == null || cFile == uFile) continue
+
+                        val (cDiffFile, uDiffFile) = coloredStringDiff(cFile, uFile)
 
                         filesUpdated = true
 
@@ -114,9 +128,9 @@ class Status: CliktCommand()
                             cell(" ".repeat(6) + dim("${provider.shortName}_file:")) {
                                 align = TextAlign.RIGHT
                             }
-                            cell(cFile) { align = TextAlign.CENTER }
+                            cell(cDiffFile) { align = TextAlign.CENTER }
                             cell(dim("->")) { align = TextAlign.CENTER }
-                            cell(uFile) { align = TextAlign.LEFT }
+                            cell(uDiffFile) { align = TextAlign.LEFT }
                         }
                     }
 
