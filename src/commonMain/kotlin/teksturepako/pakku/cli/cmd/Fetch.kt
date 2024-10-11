@@ -34,10 +34,10 @@ import teksturepako.pakku.cli.ui.*
 
 class Fetch : CliktCommand()
 {
-    override fun help(context: Context) = "Fetch projects to your modpack folder"
+    override fun help(context: Context) = "Download project files to your modpack folder"
 
-    private val retryOpt: Int? by option("--retry")
-        .help("The number of times to retry")
+    private val retryOpt: Int? by option("-r", "--retry", metavar = "<n>")
+        .help("Retries downloading when it fails, with optional number of times to retry (Defaults to 2)")
         .int()
         .optionalValue(2)
         .default(0)
