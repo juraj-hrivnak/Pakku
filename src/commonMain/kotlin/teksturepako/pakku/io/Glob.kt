@@ -1,29 +1,60 @@
 package teksturepako.pakku.io
 
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.runCatching
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import teksturepako.pakku.debug
 import teksturepako.pakku.debugIf
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
-fun Path.listDirectoryEntriesRecursive(glob: String): Sequence<Path>
-{
-    val globPattern = "glob:${this.invariantSeparatorsPathString}/${glob.removePrefix("./")}"
-    val matcher = FileSystems.getDefault().getPathMatcher(globPattern)
+suspend fun Path.walk(inputGlobs: List<String>): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO) {
+    val matchers: List<Pair<PathMatcher, Boolean>> = inputGlobs.mapNotNull { input ->
+        val negating = input.startsWith("!")
+        val glob = (if (negating) input.removePrefix("!") else input).removePrefix("./")
 
-    return this.walk(PathWalkOption.INCLUDE_DIRECTORIES)
-        .filter { matcher.matches(it) }
-        .map { Path(it.absolutePathString().removePrefix(this.absolutePathString()).removePrefix(File.separator)) }
+        val globPattern = "glob:${this@walk.invariantSeparatorsPathString}/$glob"
+        runCatching { FileSystems.getDefault().getPathMatcher(globPattern) to negating }.get()
+    }
+
+    return@withContext this@walk.walk(PathWalkOption.INCLUDE_DIRECTORIES)
+        .mapNotNull { path ->
+            val matcher = matchers.filter { (matcher) -> matcher.matches(path) }
+
+            if (matcher.isEmpty()) return@mapNotNull null
+
+            matcher to path
+        }.map { (matchers, path) ->
+            Path(path.absolutePathString().removePrefix(this@walk.absolutePathString()).removePrefix(File.separator)) to matchers.any { it.second }
+        }
 }
 
-fun List<String>.expandWithGlob(inputPath: Path) = fold(listOf<String>()) { acc, glob ->
-    if (glob.startsWith("!"))
-    {
-        acc - inputPath.listDirectoryEntriesRecursive(glob.removePrefix("!")).map { it.toString() }.toSet()
+suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
+{
+    val paths = mutableSetOf<String>()
+
+    val walk = inputPath.walk(this).toList().debug {
+        for ((path, negating) in it)
+        {
+            println("${if (negating) "!" else ""}$path")
+        }
     }
-    else
+
+    for ((path, _) in walk)
     {
-        acc + inputPath.listDirectoryEntriesRecursive(glob).map { it.toString() }
+        paths += path.toString()
     }
-}.debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }
+
+    for ((path, negating) in walk)
+    {
+        if (negating) paths -= path.toString()
+    }
+
+    return paths.toList().debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }
+}
+

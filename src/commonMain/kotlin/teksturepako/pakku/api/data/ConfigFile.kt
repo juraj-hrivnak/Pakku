@@ -3,6 +3,9 @@
 package teksturepako.pakku.api.data
 
 import com.github.michaelbull.result.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.ActionError
@@ -100,17 +103,23 @@ data class ConfigFile(
         this.overrides.clear()
     }
 
-    fun getAllOverrides(): List<Result<String, ActionError>> = this.overrides
-        .expandWithGlob(Path(workingPath))
-        .map { filterPath(it) }
+    suspend fun getAllOverrides(): Deferred<List<Result<String, ActionError>>> = coroutineScope {
+        async {
+            this@ConfigFile.overrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
+        }
+    }
 
-    fun getAllServerOverrides(): List<Result<String, ActionError>> = this.serverOverrides
-        .expandWithGlob(Path(workingPath))
-        .map { filterPath(it) }
+    suspend fun getAllServerOverrides(): Deferred<List<Result<String, ActionError>>> = coroutineScope {
+        async {
+            this@ConfigFile.serverOverrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
+        }
+    }
 
-    fun getAllClientOverrides(): List<Result<String, ActionError>> = this.clientOverrides
-        .expandWithGlob(Path(workingPath))
-        .map { filterPath(it) }
+    suspend fun getAllClientOverrides(): Deferred<List<Result<String, ActionError>>> = coroutineScope {
+        async {
+            this@ConfigFile.clientOverrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
+        }
+    }
 
     // -- PROJECTS --
 

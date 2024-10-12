@@ -268,43 +268,67 @@ suspend fun List<RuleResult>.finishResults(
 suspend fun List<ExportRule>.produceRuleResults(
     onError: suspend (error: ActionError) -> Unit,
     lockFile: LockFile, configFile: ConfigFile, workingSubDir: String
-): List<RuleResult>
-{
-    val results = this.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
-        acc + lockFile.getAllProjects().map {
-            rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + configFile.getAllOverrides().mapNotNull { result ->
+): List<RuleResult> = coroutineScope {
+    val projects: Deferred<List<RuleContext.ExportingProject>> = async {
+        lockFile.getAllProjects().map {
+            RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
+        }
+    }
+
+    val overrides: Deferred<List<RuleContext.ExportingOverride>> = async {
+        configFile.getAllOverrides().await().mapNotNull { result ->
             result.resultFold(
                 success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
+                    RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
                 },
                 failure = {
                     onError(it)
                     null
                 }
             )
-        } + configFile.getAllServerOverrides().mapNotNull { result ->
+        }
+    }
+
+    val serverOverrides: Deferred<List<RuleContext.ExportingOverride>> = async {
+        configFile.getAllServerOverrides().await().mapNotNull { result ->
             result.resultFold(
                 success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
+                    RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
                 },
                 failure = {
                     onError(it)
                     null
                 }
             )
-        } + configFile.getAllClientOverrides().mapNotNull { result ->
+        }
+    }
+
+    val clientOverrides: Deferred<List<RuleContext.ExportingOverride>> = async {
+        configFile.getAllClientOverrides().await().mapNotNull { result ->
             result.resultFold(
                 success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
+                    RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
                 },
                 failure = {
                     onError(it)
                     null
                 }
             )
-        } + readProjectOverrides(configFile).map {
-            rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
+        }
+    }
+
+    val projectOverrides: Deferred<List<RuleContext.ExportingProjectOverride>> = async {
+        readProjectOverrides(configFile).map {
+            RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
+        }
+    }
+
+    val deferredContexts = listOf(projects, overrides, serverOverrides, clientOverrides, projectOverrides)
+    val contexts = deferredContexts.awaitAll().flatten()
+
+    val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
+        acc + contexts.map { context ->
+            rule to context
         }
     }.map { (exportRule, ruleContext) ->
         exportRule.getResult(ruleContext)
@@ -313,15 +337,15 @@ suspend fun List<ExportRule>.produceRuleResults(
     val missing = results.filter {
         it.ruleContext is RuleContext.MissingProject
     }.flatMap { ruleResult ->
-        this.map { rule ->
+        this@produceRuleResults.map { rule ->
             val project = (ruleResult.ruleContext as RuleContext.MissingProject).project
             rule.getResult(RuleContext.MissingProject(project, lockFile, configFile, workingSubDir))
         }
     }
 
-    val finished = this.map { rule ->
+    val finished = this@produceRuleResults.map { rule ->
         rule.getResult(Finished(lockFile, configFile, workingSubDir))
     }
 
-    return results + missing + finished
+    return@coroutineScope results + missing + finished
 }
