@@ -1,6 +1,7 @@
 package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.http.Http
+import teksturepako.pakku.api.models.RequestProjectInformation
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -46,11 +47,11 @@ abstract class Platform(
      * [projectId] & [fileId].
      */
     abstract suspend fun requestProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String? = null
+        mcVersions: List<String>, projectInfo: RequestProjectInformation, fileId: String? = null
     ): MutableSet<ProjectFile>
 
     abstract suspend fun requestMultipleProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+        mcVersions: List<String>, loaders: List<String>, projectInfos: List<RequestProjectInformation>, fileIds: List<String>
     ): MutableSet<ProjectFile>
 
 
@@ -62,8 +63,8 @@ abstract class Platform(
         mcVersions: List<String>, loaders: List<String>, project: Project, fileId: String? = null, numberOfFiles: Int = 1
     ): MutableSet<ProjectFile>
     {
-        return project.id[this.serialName]?.let { projectId ->
-            this.requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles).toMutableSet()
+        return project.toRequestInformation(this, loaders)?.let { projectInfo ->
+            this.requestProjectFiles(mcVersions, projectInfo, fileId).take(numberOfFiles).toMutableSet()
         } ?: mutableSetOf()
     }
 
@@ -81,7 +82,7 @@ abstract class Platform(
     }
 
     abstract suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, projectInfos: List<RequestProjectInformation>, numberOfFiles: Int
     ): MutableSet<Project>
 
     companion object

@@ -44,9 +44,9 @@ suspend fun updateMultipleProjectsWithFiles(
     return@coroutineScope Ok(
         platforms.fold(combinedProjectsToOldFiles.keys.toMutableSet()) { acc, platform ->
 
-            val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
+            val projectInformations = projects.mapNotNull { it.toRequestInformation(platform, loaders) }
 
-            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, Int.MAX_VALUE)
+            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, projectInformations, Int.MAX_VALUE)
                 .inheritPropertiesFrom(configFile).forEach { newProject ->
                     acc.find { accProject ->
                         accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
@@ -60,7 +60,7 @@ suspend fun updateMultipleProjectsWithFiles(
                         (accProject + newProject).get()
                             ?.copy(files = (newProject.files.take(numberOfFiles) + accProject.files).toMutableSet())
                             ?.let x@{ combinedProject ->
-                                if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
+                                if (combinedProject.hasNoFiles()) return@x // Do not update the project if files are missing
                                 combinedProjectsToOldFiles[combinedProject] = accFiles
                                 combinedProjectsToOldFiles -= accProject
                                 acc -= accProject

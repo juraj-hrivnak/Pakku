@@ -12,6 +12,7 @@ import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
 import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
 import teksturepako.pakku.api.data.*
+import teksturepako.pakku.api.models.RequestProjectInformation
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
@@ -188,6 +189,16 @@ data class Project(
     }
 
     fun getLatestFile(providers: Collection<Provider>) = getFilesForProviders(providers).maxByOrNull { it.datePublished }
+
+    fun toRequestInformation(platform: Platform, loaders: List<String>): RequestProjectInformation?
+    {
+        return id[platform.serialName]?.let { id ->
+            RequestProjectInformation(id,
+                files.find { it.type == platform.serialName }?.loaders?.plus(loaders)?.distinct()
+                    ?: loaders
+            )
+        }
+    }
 
     // -- DEPENDENCIES --
 

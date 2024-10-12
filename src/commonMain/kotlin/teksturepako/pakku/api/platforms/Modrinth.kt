@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.encode
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.models.RequestProjectInformation
 import teksturepako.pakku.api.models.mr.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.mr.MrProjectModel
 import teksturepako.pakku.api.models.mr.MrVersionModel
@@ -178,17 +179,17 @@ object Modrinth : Platform(
     }
 
     override suspend fun requestProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?
+        mcVersions: List<String>, projectInfo: RequestProjectInformation, fileId: String?
     ): MutableSet<ProjectFile>
     {
         return if (fileId == null)
         {
             // Multiple files
             json.decodeFromString<List<MrVersionModel>>(
-                this.requestProjectBody("project/$projectId/version") ?: return mutableSetOf()
+                this.requestProjectBody("project/${projectInfo.id}/version") ?: return mutableSetOf()
             )
-                .filterFileModels(mcVersions, loaders)
-                .sortedWith(compareBy(compareByLoaders(loaders)))
+                .filterFileModels(mcVersions, projectInfo.loaders)
+                .sortedWith(compareBy(compareByLoaders(projectInfo.loaders)))
                 .flatMap { version -> version.toProjectFiles() }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
@@ -206,10 +207,13 @@ object Modrinth : Platform(
     }
 
     override suspend fun requestMultipleProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+        mcVersions: List<String>, loaders: List<String>, projectInfos: List<RequestProjectInformation>, fileIds: List<String>
     ): MutableSet<ProjectFile> = coroutineScope {
         // Chunk requests if there are too many ids; Also do this in parallel
-        return@coroutineScope ids.chunked(1_000).map { list ->
+
+        val projects = projectInfos.associateBy { it.id }
+
+        return@coroutineScope fileIds.chunked(1_000).map { list ->
             async {
                 val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
@@ -221,23 +225,24 @@ object Modrinth : Platform(
             .awaitAll()
             .flatten()
             .filterFileModels(mcVersions, loaders)
-            .sortedWith(compareBy ({ it.datePublished }, compareByLoaders(loaders)))
+            .sortedBy { it.datePublished }
+            .sortedWith(compareBy { compareByLoaders(projects[it.projectId]!!.loaders)(it) })
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()
     }
 
     override suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, projectInfos: List<RequestProjectInformation>, numberOfFiles: Int
     ): MutableSet<Project>
     {
-        val url = encode("projects?ids=${ids.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
+        val url = encode("projects?ids=${projectInfos.map { "\"${it.id}\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
         val response = json.decodeFromString<List<MrProjectModel>>(
             this.requestProjectBody(url) ?: return mutableSetOf()
         )
 
         val fileIds = response.flatMap { it.versions }
-        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, fileIds)
+        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectInfos, fileIds)
         val projects = response.mapNotNull { it.toProject() }
 
         projects.assignFiles(projectFiles, this)

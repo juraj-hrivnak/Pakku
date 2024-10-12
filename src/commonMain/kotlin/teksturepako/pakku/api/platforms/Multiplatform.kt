@@ -81,7 +81,7 @@ object Multiplatform : Provider
         {
             if (project.isOnPlatform(CurseForge))
             {
-                val cfFile = CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId).firstOrNull()
+                val cfFile = CurseForge.requestProjectFiles(mcVersions, project.toRequestInformation(CurseForge, loaders)!!, fileId).firstOrNull()
 
                 val hash = cfFile?.hashes?.get("sha1")
 
@@ -100,7 +100,7 @@ object Multiplatform : Provider
 
             if (project.isOnPlatform(Modrinth))
             {
-                val mrFile = Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId).firstOrNull()
+                val mrFile = Modrinth.requestProjectFiles(mcVersions, project.toRequestInformation(Modrinth, loaders)!!, fileId).firstOrNull()
 
                 val bytes = mrFile?.url?.let { Modrinth.requestByteArray(it) }
 

@@ -3,6 +3,7 @@ package teksturepako.pakku.api.models.cf
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.models.ModpackModel
+import teksturepako.pakku.api.models.RequestProjectInformation
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
@@ -43,8 +44,11 @@ data class CfModpackModel(
     ): Set<Project>
     {
         val projects = CurseForge.requestMultipleProjects(this.files.map { it.projectID.toString() })
-        val projectFiles = CurseForge.requestMultipleProjectFiles(lockFile.getMcVersions(),
-            lockFile.getLoaders(),
+        val loaders = lockFile.getLoaders()
+        val projectFiles = CurseForge.requestMultipleProjectFiles(
+            lockFile.getMcVersions(),
+            loaders,
+            projects.mapNotNull { it.toRequestInformation(CurseForge, loaders) },
             this.files.map { it.fileID.toString() })
 
         projects.assignFiles(projectFiles, CurseForge)
@@ -59,7 +63,7 @@ data class CfModpackModel(
             }
 
             val mrProjects = Modrinth.requestMultipleProjectsWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), slugs, 1
+                lockFile.getMcVersions(), loaders, slugs.map { RequestProjectInformation(it, loaders) }, 1
             )
 
             projects.combineWith(mrProjects)

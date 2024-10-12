@@ -4,6 +4,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.decode
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.models.RequestProjectInformation
 import teksturepako.pakku.api.models.cf.*
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
@@ -174,14 +175,14 @@ object CurseForge : Platform(
     }
 
     override suspend fun requestProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?
+        mcVersions: List<String>, projectInfo: RequestProjectInformation, fileId: String?
     ): MutableSet<ProjectFile>
     {
         // Handle optional fileId
         val fileIdSuffix = if (fileId == null) "" else "/$fileId"
 
         // Prepare base request URL
-        var requestUrl = "mods/$projectId/files$fileIdSuffix?"
+        var requestUrl = "mods/${projectInfo.id}/files$fileIdSuffix?"
 
         // Handle mcVersions
         val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
@@ -191,7 +192,7 @@ object CurseForge : Platform(
         }
 
         // Handle loaders
-        requestUrl += "&modLoaderTypes=${loaders.joinToString(",")}"
+        requestUrl += "&modLoaderTypes=${projectInfo.loaders.joinToString(",")}"
 
         return if (fileId == null)
         {
@@ -199,8 +200,8 @@ object CurseForge : Platform(
             json.decodeFromString<GetMultipleFilesResponse>(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
-                .filterFileModels(mcVersions, loaders)
-                .sortedWith(compareBy(compareByLoaders(loaders)))
+                .filterFileModels(mcVersions, projectInfo.loaders)
+                .sortedWith(compareBy(compareByLoaders(projectInfo.loaders)))
                 .map { it.toProjectFile(gameVersionTypeIds) }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
@@ -219,7 +220,7 @@ object CurseForge : Platform(
     }
 
     override suspend fun requestMultipleProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+        mcVersions: List<String>, loaders: List<String>, projectInfos: List<RequestProjectInformation>, fileIds: List<String>
     ): MutableSet<ProjectFile>
     {
         // Handle mcVersions
@@ -227,11 +228,15 @@ object CurseForge : Platform(
             requestGameVersionTypeId(version)
         }
 
+        val projects = projectInfos.associateBy { it.id.toInt() }
+
         return json.decodeFromString<GetMultipleFilesResponse>(
-            this.requestProjectBody("mods/files", MultipleFilesRequest(ids.map(String::toInt))) ?: return mutableSetOf()
+            this.requestProjectBody("mods/files", MultipleFilesRequest(fileIds.map(String::toInt)))
+                ?: return mutableSetOf()
         ).data
             .filterFileModels(mcVersions, loaders)
-            .sortedWith(compareByDescending<CfModModel.File>({ it.fileDate }).thenBy(compareByLoaders(loaders)))
+            .sortedByDescending { it.fileDate }
+            .sortedWith(compareBy { compareByLoaders(projects[it.modId]!!.loaders)(it) })
             .map { it.toProjectFile(gameVersionTypeIds) }
             .debugIfEmpty {
                 println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")
@@ -240,11 +245,11 @@ object CurseForge : Platform(
     }
 
     override suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, projectInfos: List<RequestProjectInformation>, numberOfFiles: Int
     ): MutableSet<Project>
     {
         val response = json.decodeFromString<GetMultipleProjectsResponse>(
-            this.requestProjectBody("mods", MultipleProjectsRequest(ids.map(String::toInt)))
+            this.requestProjectBody("mods", MultipleProjectsRequest(projectInfos.map { it.id.toInt() }))
                 ?: return mutableSetOf()
         ).data
 
@@ -252,7 +257,7 @@ object CurseForge : Platform(
             model.latestFilesIndexes.map { it.fileId.toString() }
         }
 
-        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, fileIds)
+        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectInfos, fileIds)
         val projects = response.mapNotNull { it.toProject() }
 
         projects.assignFiles(projectFiles, this)
