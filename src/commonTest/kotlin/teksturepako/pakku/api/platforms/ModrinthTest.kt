@@ -3,7 +3,7 @@ package teksturepako.pakku.api.platforms
 import io.mockk.every
 import io.mockk.mockk
 import teksturepako.pakku.api.models.mr.MrVersionModel
-import teksturepako.pakku.api.platforms.Modrinth.sortByLoaders
+import teksturepako.pakku.api.platforms.Modrinth.compareByLoaders
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 class ModrinthTest
 {
     @Test
-    fun sortByLoaders_WithValidLoaders_ShouldSortCorrectly() {
+    fun compareByLoaders_WithValidLoaders_ShouldSortCorrectly() {
         val versions = listOf(
             mockk<MrVersionModel> {
                 every { loaders } returns listOf("loaderb", "loaderc")
@@ -28,13 +28,13 @@ class ModrinthTest
         )
 
         val loaders = listOf("loadera", "loaderb", "loaderc")
-        val sortedVersions = versions.toList().sortByLoaders(loaders)
+        val sortedVersions = versions.toList().sortedWith(compareBy(compareByLoaders(loaders)))
 
         assertContentEquals(listOf(versions[1], versions[3], versions[0], versions[2]), sortedVersions)
     }
 
     @Test
-    fun sortByLoaders_WithNoMatchingLoaders_ShouldNotChangeOrder() {
+    fun compareByLoaders_ShouldNotChangeOrder() {
         val versions = listOf(
             mockk<MrVersionModel> {
                 every { loaders } returns listOf("loaderB")
@@ -45,13 +45,13 @@ class ModrinthTest
         )
 
         val loaders = listOf("loader1", "loader2")
-        val sortedVersions = versions.toList().sortByLoaders(loaders)
+        val sortedVersions = versions.toList().sortedWith(compareBy(compareByLoaders(loaders)))
 
         assertContentEquals(versions, sortedVersions)
     }
 
     @Test
-    fun sortByLoaders_WithSomeMatchingLoaders_ShouldSortCorrectly() {
+    fun compareByLoaders_WithSomeMatchingLoaders_ShouldSortCorrectly() {
         val versions = listOf(
             mockk<MrVersionModel> {
                 every { loaders } returns listOf("loadera")
@@ -62,7 +62,7 @@ class ModrinthTest
         )
 
         val loaders = listOf("loader1", "loader2")
-        val sortedVersions = versions.toList().sortByLoaders(loaders)
+        val sortedVersions = versions.toList().sortedWith(compareBy(compareByLoaders(loaders)))
 
         assertEquals(versions[0], sortedVersions[1])
     }
