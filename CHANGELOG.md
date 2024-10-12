@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.20.0
+
+### What's new?
+
+- Implemented [`glob`](https://en.wikipedia.org/wiki/Glob_(programming)#Syntax) pattern support for specifying overrides. by @SettingDust in [#43](https://github.com/juraj-hrivnak/Pakku/pull/43), and @juraj-hrivnak.
+  - An asterisk "`*`" matches anything except a slash. The character "`?`" matches any one character except "`/`". The range notation, e.g. `[a-zA-Z]`, can be used to match one of the characters in a range.
+  - Two consecutive asterisks ("`**`") means match in all directories; `<directory>/**` means match everything inside the directory.
+  - An optional prefix "`!`" negates the pattern; any matching file included by a previous pattern will become excluded again.
+- Implemented retry logic for the `fetch` command.
+  - Use `pakku fetch --retry` to retry downloading when it fails, with an optional number of times to retry. (Defaults to 2.)
+- Added support for specifying a different version of an already added project using the `add` command.
+- Added simple colored diff for showing changes to file names when using the `status` command.
+- The newest file from all providers is now preferred when downloading, by @SettingDust in [#41](https://github.com/juraj-hrivnak/Pakku/pull/41).
+
 ## v0.19.0
 
 ### Highlights
