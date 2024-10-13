@@ -2,10 +2,198 @@
 
 ## Unreleased
 
+## v0.20.1
+
+- Reverted [`glob`](https://en.wikipedia.org/wiki/Glob_(programming)#Syntax) pattern matching support for overrides, due to performance limitations with large modpacks.
+  - It will be reintroduced in the next releases.
+
+## v0.20.0
+
+### What's new?
+
+- Implemented [`glob`](https://en.wikipedia.org/wiki/Glob_(programming)#Syntax) pattern support for specifying overrides. by @SettingDust in [#43](https://github.com/juraj-hrivnak/Pakku/pull/43), and @juraj-hrivnak.
+  - An asterisk "`*`" matches anything except a slash. The character "`?`" matches any one character except "`/`". The range notation, e.g. `[a-zA-Z]`, can be used to match one of the characters in a range.
+  - Two consecutive asterisks ("`**`") means match in all directories; `<directory>/**` means match everything inside the directory.
+  - An optional prefix "`!`" negates the pattern; any matching file included by a previous pattern will become excluded again.
+- Implemented retry logic for the `fetch` command.
+  - Use `pakku fetch --retry` to retry downloading when it fails, with an optional number of times to retry. (Defaults to 2.)
+- Added support for specifying a different version of an already added project using the `add` command.
+- Added simple colored diff for showing changes to file names when using the `status` command.
+- The newest file from all providers is now preferred when downloading, by @SettingDust in [#41](https://github.com/juraj-hrivnak/Pakku/pull/41).
+
+## v0.19.0
+
+### Highlights
+
+- Added the `cfg` command for configuring properties of the config file, by @SettingDust in [#29](https://github.com/juraj-hrivnak/Pakku/pull/29).
+  - This change deprecated the `pakku set [<projects>]` argument. Use the config file (`pakku.json`) or the `cfg prj` subcommand instead.
+- Implemented configurable subpaths for projects and configurable paths for project types.
+- Implemented configurable project aliases, by @SettingDust in [#34](https://github.com/juraj-hrivnak/Pakku/pull/34).
+- Added support for data packs.
+- Added better support for multi-loader modpacks, by @SettingDust in [#36](https://github.com/juraj-hrivnak/Pakku/pull/36) and [#37](https://github.com/juraj-hrivnak/Pakku/pull/37). (Sinytra Connector support.)
+  - Project files are now also sorted in order of loaders in the lock file.
+- Rewritten `fetch` command's deleting algorithm to account for subpaths.
+  - Saves & screenshots are always excluded.
+- Improved the UI of the `status` command.
+  - Now it's much nicer and shows you changes to project files.
+
+### Fixes
+
+- Fixed ConcurrentModificationException on running `fetch` command in some cases.
+- Fixed setting loaders using the `set` command when projects have unusual loaders.
+
+#### Configurable Subpaths
+
+There is now a new `subpath` property for projects that you configure in the [config file] or using the `cfg prj` subcommand.
+
+Config file - syntax:
+
+```json
+{
+  "projects": {
+    "<project>": {
+      "subpath": "<path>"
+    }
+  }
+}
+```
+
+Config file - example usage:
+
+```json
+{
+  "projects": {
+    "sodium-extras": {
+      "subpath": "optimize.client"
+    },
+    "iris": {
+      "subpath": "decoration.client"
+    }
+  }
+}
+```
+
+#### Configurable Paths for Project Types
+
+There is now a variable for each project type that you configure in the [config file] or using the `cfg` command.
+
+Config file - syntax:
+
+```json
+{
+  "paths": {
+    "mods": "<path>",
+    "resource_packs": "<path>",
+    "data_packs": "<path>",
+    "worlds": "<path>",
+    "shaders": "<path>"
+  }
+}
+```
+
+#### Project Aliases
+
+There is now a new `aliases` property of type array for projects that you configure in the [config file] or using the `cfg prj` subcommand.
+
+Config file - syntax:
+
+```json
+{
+  "projects": {
+    "<project>": {
+      "aliases": ["<alias>"]
+    }
+  }
+}
+```
+
+Config file - example usage:
+
+```json
+{
+  "projects": {
+    "forgified-fabric-api": {
+      "aliases": ["fabric-api"]
+    }
+  }
+}
+```
+
+### API
+
+- Updated Clikt to `5.0.0` & Mordant to `3.0.0`.
+- Improved docs generation with better subcommand support.
+
+## v0.18.2
+
+- Fixed error when GitHub license URL is `null`.
+
+## v0.18.1
+
+- Fixed tag parsing in GitHub project arguments.
+
+## v0.18.0
+
+### Highlights
+
+Pakku now fully supports GitHub.
+
+#### Adding GitHub projects
+
+GitHub repositories with releases can be added as projects.
+To add a GitHub project, run `pakku add {owner}/{repo}` or `pakku add https://github.com/{owner}/{repo}`.
+
+You can also use the `prj` subcommand: `pakku add prj --gh {owner}/{repo}` or `pakku add prj --gh https://github.com/{owner}/{repo}`
+
+Combining projects is also possible: `pakku add prj --mr greenery --gh juraj-hrivnak/Greenery`
+
+To add a specific version (tag) of a GitHub project, run `pakku add {owner}/{repo}@{tag}`, `pakku add https://github.com/{owner}/{repo}/releases/tag/{tag}` or `pakku add https://github.com/{owner}/{repo}/tree/{tag}`.
+
+#### Updating
+
+GitHub projects can be updated using the `pakku update` command.
+They are also recognized in other commands as expected.
+
+#### Exporting
+
+For CurseForge, GitHub projects are added to the `overrides`.
+For Modrinth, GitHub projects are added to the `modrinth.index.json` also with generated `sha512` and `sha1` hashes.
+
+The project side of GitHub projects defaults to `BOTH.` If you need to change this, do so in `pakku.json`.
+Pakku determines whether the GitHub project is redistributable based on its licence's spdx code. No licence means `ARR`.
+
+#### UI
+
+GitHub projects are displayed in the format: `gh={owner}/{repo}`
+
+![gh_support](https://github.com/user-attachments/assets/3d3e81c0-f764-4679-bdf8-71cc4107a643)
+
+### Other Changes
+
+- Project types can now be overridden in the config file (`pakku.json`).
+- Deprecated `set` command's `-s`,`--side` and `-r`, `--redistributable` options. Use the config file (`pakku.json`) instead.
+
+### Technical Notes
+
+- Many functions now support `IProjectProvider`s instead of `Platform`s only.
+- The lock file is now sorted by project names instead of slugs.
+- Implemented the `ProjectArg` monad to better handle project additions.
+  - Its `fold()` function can be used to map the possible arg types:
+
+    ```kt
+    arg.fold(
+        commonArg = { },
+        gitHubArg = { }
+    )
+    ```
+
+- Integrity checking will now allow projects without hashes (GitHub) and will warn the user instead.
+
 ## v0.17.1
 
 - Fixed `add` command not being invoked without a subcommand. ([#22](https://github.com/juraj-hrivnak/Pakku/issues/22))
 - Updated to the latest snapshot of the Clikt library.
+
 ## v0.17.0
 
 - Added the `prj` subcommand for the `add` command.
@@ -59,7 +247,7 @@
 
 ## v0.13.1
 
-- Removed unwanted `File not found: '.\.pakku\cli-config.json'` print 
+- Removed unwanted `File not found: '.\.pakku\cli-config.json'` print
 when CLI Config does not exist.
 - Set default CLI theme to Pakku's default theme instead of the _default one_.
 
@@ -120,7 +308,7 @@ which can be used to modify the UI aspects of the Pakku CLI.
 
 ### What's new?
 
-- Fixed error with null icon in CurseForge projects. 
+- Fixed error with null icon in CurseForge projects.
 - Fixed the `fetch` command not resolving files other than from CurseForge.
 
 ## v0.11.0
@@ -147,8 +335,12 @@ versions and loaders.
 - Fixed issue with the `fetch` command not properly listing platforms.
 
 ### Docs
+
 - Implemented auto generation for CLI Commands reference for docs.
 - Added option to switch between Java and PATH examples in docs.
 
 ### API
+
 - Refactored models
+
+[config file]: https://juraj-hrivnak.github.io/Pakku/

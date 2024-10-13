@@ -16,14 +16,12 @@ import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
-import teksturepako.pakku.io.createHash
-import teksturepako.pakku.io.tryOrNull
-import teksturepako.pakku.io.tryToResult
-import teksturepako.pakku.io.zip
+import teksturepako.pakku.io.*
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
+import com.github.michaelbull.result.fold as resultFold
 
 
 suspend fun export(
@@ -68,8 +66,7 @@ suspend fun ExportProfile.export(
             .onFailure { onError(this, CouldNotSave(null, it.message)) }
             .get() ?: return
 
-        // -- FILE CACHE --
-
+        // Create parent directory
         cacheDir.tryOrNull {
             it.createDirectory()
             it.setAttribute("dos:hidden", true)
@@ -77,12 +74,17 @@ suspend fun ExportProfile.export(
 
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
-        val results = this.rules.filterNotNull().produceRuleResults(lockFile, configFile, this.name)
+        val results: List<RuleResult> = this.rules.filterNotNull()
+            .produceRuleResults({ onError(this, it) }, lockFile, configFile, this.name)
 
-        val cachedPaths = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
+        // Run export rules
+        val cachedPaths: List<Path> = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
                 results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
 
-        val fileHashes = cachedPaths.filterNot { it.isDirectory() }
+        // -- FILE CACHE --
+
+        /** Map of _absolute paths_ to their _hashes_ for every path not in a directory */
+        val fileHashes: Map<Path, String> = cachedPaths.filterNot { it.isDirectory() }
             .mapNotNull { file ->
                 file.tryToResult { it.readBytes() }
                     .onFailure { onError(this, it) }
@@ -90,7 +92,8 @@ suspend fun ExportProfile.export(
             }
             .associate { it.first.absolute() to createHash("sha1", it.second) }
 
-        val dirContentHashes = cachedPaths.filter { it.isDirectory() }
+        /** Map of _absolute paths_ to their _hashes_ for every path in a directory */
+        val dirContentHashes: Map<Path, String> = cachedPaths.filter { it.isDirectory() }
             .mapNotNull { directory ->
                 directory.tryToResult { it.toFile().walkTopDown() }
                     .onFailure { onError(this, it) }.get()
@@ -99,7 +102,7 @@ suspend fun ExportProfile.export(
                 it.mapNotNull { file -> file.toPath() }
             }
             .mapNotNull { path ->
-                path.generateSHA1FromBytes()?.let {
+                path.readAndCreateSha1FromBytes()?.let {
                     path.absolute() to it
                 }
             }
@@ -127,7 +130,7 @@ suspend fun ExportProfile.export(
                 }
                 else
                 {
-                    val hash = path.generateSHA1FromBytes() ?: continue
+                    val hash = path.readAndCreateSha1FromBytes() ?: continue
                     if ((path.absolute() in fileHashes.keys && hash in fileHashes.values) ||
                         (path.absolute() in dirContentHashes.keys && hash in dirContentHashes.values)) continue
 
@@ -148,9 +151,6 @@ suspend fun ExportProfile.export(
 
     onSuccess(this, timedValue.value, timedValue.duration)
 }
-
-private suspend fun Path.generateSHA1FromBytes() = this.tryToResult { it.readBytes() }.get()
-    ?.let { createHash("sha1", it) }
 
 suspend fun List<RuleResult>.resolveResults(
     onError: suspend (error: ActionError) -> Unit
@@ -259,24 +259,55 @@ suspend fun List<RuleResult>.finishResults(
     }
 }
 
+/**
+ * Runs through a list of [ExportRules][ExportRule],
+ * applies data to their [RuleContexts][RuleContext] and transforms them into [RuleResults][RuleResult].
+ *
+ * [RuleContext.MissingProject] and [RuleContext.Finished] are applied last.
+ */
 suspend fun List<ExportRule>.produceRuleResults(
+    onError: suspend (error: ActionError) -> Unit,
     lockFile: LockFile, configFile: ConfigFile, workingSubDir: String
 ): List<RuleResult>
 {
     val results = this.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().map {
             rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + configFile.getAllOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
-        } + configFile.getAllServerOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
-        } + configFile.getAllClientOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
-        } + readProjectOverrides().map {
+        } + configFile.getAllOverrides().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + configFile.getAllServerOverrides().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + configFile.getAllClientOverrides().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + readProjectOverrides(configFile).map {
             rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
         }
-    }.map { (rule, ruleEntry) ->
-        rule.getResult(ruleEntry)
+    }.map { (exportRule, ruleContext) ->
+        exportRule.getResult(ruleContext)
     }
 
     val missing = results.filter {

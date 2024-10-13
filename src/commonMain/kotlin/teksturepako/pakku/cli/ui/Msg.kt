@@ -3,18 +3,34 @@ package teksturepako.pakku.cli.ui
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.terminal.Terminal
+import com.github.ajalt.mordant.terminal.danger
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.success
 import teksturepako.pakku.api.actions.ActionError
 import kotlin.time.Duration
 
-fun dim(text: Any): String = TextStyle(color = TextColors.gray)(text.toString())
+fun dim(text: Any?): String = TextStyle(color = TextColors.gray)(text.toString())
 fun String.plusDim(string: String): String = this + TextStyle(color = TextColors.gray)(string)
 
 fun strong(string: String): String = TextStyle(bold = true, underline = true)(string)
-fun strong(text: Any): String = TextStyle(bold = true, underline = true)(text.toString())
+fun strong(text: Any?): String = TextStyle(bold = true, underline = true)(text.toString())
 fun String.plusStrong(string: String): String = this + TextStyle(bold = true, underline = true)(string)
 
 fun String.createHyperlink(hyperlink: String): String = TextStyle(hyperlink = hyperlink)(this)
 
+fun <T : Any> Collection<T>.toMsg(): String
+{
+    if (this.size == 1) return this.first().toString()
+
+    return this.foldIndexed("") { i, acc, value ->
+        when
+        {
+            acc.isBlank()      -> acc + value.toString()
+            this.size <= i + 1 -> "$acc and $value"
+            else               -> "$acc, $value"
+        }
+    }
+}
 
 fun Terminal.pSuccess(message: String, offset: Int = 0)
 {

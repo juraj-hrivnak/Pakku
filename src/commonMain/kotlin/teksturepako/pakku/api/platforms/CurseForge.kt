@@ -13,6 +13,7 @@ import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.getEnvOrNull
 import teksturepako.pakku.io.toMurmur2
+import java.time.Instant
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform(
@@ -30,6 +31,7 @@ object CurseForge : Platform(
     {
         ProjectType.MOD             -> "${this.siteUrl}/mc-mods"
         ProjectType.RESOURCE_PACK   -> "${this.siteUrl}/texture-packs"
+        ProjectType.DATA_PACK       -> "${this.siteUrl}/data-packs"
         ProjectType.WORLD           -> "${this.siteUrl}/worlds"
         ProjectType.SHADER          -> "${this.siteUrl}/shaders"
     }
@@ -78,8 +80,9 @@ object CurseForge : Platform(
                 12   -> ProjectType.RESOURCE_PACK
                 17   -> ProjectType.WORLD
                 6552 -> ProjectType.SHADER
+                6945 -> ProjectType.DATA_PACK
 
-                else -> return null.also { println("Project type $classId not found!") }
+                else -> return null.also { println("$slug: Project type $classId from CurseForge isn't supported") }
             },
             id = mutableMapOf(serialName to id.toString()),
             redistributable = allowModDistribution ?: isAvailable,
@@ -112,7 +115,7 @@ object CurseForge : Platform(
 
     // -- FILES --
 
-    private const val LOADER_VERSION_TYPE_ID = 68441
+    internal const val LOADER_VERSION_TYPE_ID = 68441
 
     private fun List<CfModModel.File>.filterFileModels(
         mcVersions: List<String>, loaders: List<String>
@@ -122,9 +125,18 @@ object CurseForge : Platform(
                 .filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID } // Filter to loader only
                 .takeIf { it.isNotEmpty() }
                 ?.map { it.gameVersionName.lowercase() }?.any {
-                    loaders.any { loader -> loader == it } || it in validLoaders // Check default valid loaders
+                    it in loaders || it in validLoaders // Check default valid loaders
                 } ?: true // If no loaders found, accept model
         }
+
+    internal fun List<CfModModel.File>.sortByLoaders(loaders: List<String>) = this.sortedWith { fileA, fileB ->
+        val aLoaders = fileA.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
+            .map { it.gameVersionName.lowercase() }
+        val bLoaders = fileB.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
+            .map { it.gameVersionName.lowercase() }
+        loaders.indexOfFirst { it in aLoaders }.let { if (it == -1) loaders.size else it }
+            .minus(loaders.indexOfFirst { it in bLoaders }.let { if (it == -1) loaders.size else it })
+    }
 
     private fun CfModModel.File.toProjectFile(gameVersionTypeIds: List<Int>): ProjectFile
     {
@@ -160,6 +172,7 @@ object CurseForge : Platform(
                 .filter { it.relationType == 3 }
                 .map { it.modId.toString() }.toMutableSet(),
             size = this.fileLength,
+            datePublished = Instant.parse(fileDate)
         ).fetchAlternativeDownloadUrl()
     }
 
@@ -190,6 +203,7 @@ object CurseForge : Platform(
                 this.requestProjectBody(requestUrl) ?: return mutableSetOf()
             ).data
                 .filterFileModels(mcVersions, loaders)
+                .sortByLoaders(loaders)
                 .map { it.toProjectFile(gameVersionTypeIds) }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
@@ -221,6 +235,7 @@ object CurseForge : Platform(
         ).data
             .filterFileModels(mcVersions, loaders)
             .sortedByDescending { it.fileDate }
+            .sortByLoaders(loaders)
             .map { it.toProjectFile(gameVersionTypeIds) }
             .debugIfEmpty {
                 println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")

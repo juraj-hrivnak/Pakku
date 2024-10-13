@@ -3,33 +3,46 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.*
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.fold
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.NotFoundOnPlatform
-import teksturepako.pakku.api.actions.ActionError.ProjNotFound
+import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.arg.splitProjectArg
-import teksturepako.pakku.cli.cmd.subcmd.Prj
+import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
-import teksturepako.pakku.cli.ui.*
+import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pSuccess
 
 class Add : CliktCommand()
 {
     override fun help(context: Context) = "Add projects"
 
-    private val projectArgs: List<String> by argument("projects", help = "Projects to add").multiple()
+    private val projectArgs: List<ProjectArg> by argument("projects", help = "Projects to add").multiple().transformAll {
+        it.mapNotNull x@ { input ->
+            mapProjectArg(input).getOrElse { err ->
+                terminal.pError(err)
+                null
+            }
+        }
+    }
+
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
     private val flags by findOrSetObject { mutableMapOf<String, Boolean>() }
 
     init
     {
-        this.subcommands(Prj())
+        this.subcommands(AddPrj())
     }
 
     override val invokeWithoutSubcommand = true
@@ -44,7 +57,6 @@ class Add : CliktCommand()
             echo()
             return@runBlocking
         }
-
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
@@ -57,37 +69,42 @@ class Add : CliktCommand()
             return@runBlocking
         }
 
-        suspend fun add(projectIn: Project?, args: Triple<String, String, String?>, strict: Boolean = true)
+        suspend fun add(projectIn: Project?, arg: ProjectArg, strict: Boolean = true)
         {
-            suspend fun handleMissingProject(error: NotFoundOnPlatform, args: Triple<String, String, String?>)
+            suspend fun handleMissingProject(error: NotFoundOn, arg: ProjectArg)
             {
-                val prompt = promptForProject(error.platform, terminal, lockFile, args.third)
-                    ?: return add(projectIn, args, strict = false)
+                val prompt = promptForProject(error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag})).onFailure {
+                    if (it is EmptyArg) return add(projectIn, arg, strict = false)
+                }.getOrElse {
+                    return terminal.pError(it)
+                }
 
-                val (promptedProject, promptedArgs) = prompt
-                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArgs.first)
+                val (promptedProject, promptedArg) = prompt
+
+                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArg.rawArg)
 
                 (error.project + promptedProject).fold( // Combine projects
                     failure = { terminal.pError(it) },
-                    success = { add(it, promptedArgs) }
+                    success = { add(it, promptedArg) }
                 )
             }
 
             projectIn.createAdditionRequest(
                 onError = { error ->
-                    terminal.pError(error, arg = args.first)
+                    terminal.pError(error, arg = arg.rawArg)
 
-                    if (error is NotFoundOnPlatform && strict)
+                    if (error is NotFoundOn && strict)
                     {
-                        handleMissingProject(error, args)
+                        handleMissingProject(error, arg)
                     }
                 },
-                onSuccess = { project, isRecommended, reqHandlers ->
+                onSuccess = { project, isRecommended, isReplacing, reqHandlers ->
                     val projMsg = project.getFullMsg()
+                    val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
 
-                    if (ynPrompt("Do you want to add $projMsg?", terminal, isRecommended))
+                    if (ynPrompt("Do you want to ${promptMessage.first} $projMsg?", terminal, isRecommended))
                     {
-                        lockFile.add(project)
+                        if (!isReplacing) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
 
                         if (!noDepsFlag)
@@ -95,22 +112,29 @@ class Add : CliktCommand()
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.pSuccess("$projMsg added")
+                        terminal.pSuccess("$projMsg ${promptMessage.second}")
                     }
                 },
                 lockFile, platforms, strict
             )
         }
 
-        for ((projectIn, args) in projectArgs.map { arg ->
-            val (input, fileId) = splitProjectArg(arg)
-
-            projectProvider.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), input, fileId
-            ) to Triple(arg, input, fileId)
+        for ((projectIn, arg) in projectArgs.map { arg ->
+            arg.fold(
+                commonArg = {
+                    projectProvider.requestProjectWithFiles(
+                        lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId
+                    ) to it
+                },
+                gitHubArg = {
+                    GitHub.requestProjectWithFiles(
+                        listOf(), listOf(), "${it.owner}/${it.repo}", it.tag
+                    ) to it
+                }
+            )
         })
         {
-            add(projectIn, args)
+            add(projectIn, arg)
             echo()
         }
 

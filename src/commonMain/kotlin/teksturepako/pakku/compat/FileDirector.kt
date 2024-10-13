@@ -10,7 +10,7 @@ import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.RuleContext.MissingProject
 import teksturepako.pakku.api.actions.export.ruleResult
-import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.compat.FileDirectorModel.UrlEntry
@@ -23,24 +23,24 @@ data class FileDirectorModel(
 {
     @Serializable
     data class UrlEntry(
-        val url: String, val folder: String
+        val url: String, val folder: String, val fileName: String
     )
 
     @Serializable
     data class CurseEntry(
-        val addonId: String, val fileId: String, val folder: String
+        val addonId: String, val fileId: String, val folder: String, val fileName: String
     )
 }
 
 fun exportFileDirector(
-    platform: Platform,
+    excludedProviders: Set<Provider> = setOf(),
     fileDirectorModel: FileDirectorModel = FileDirectorModel()
 ) = ExportRule {
     when (it)
     {
         is MissingProject ->
         {
-            it.addToFileDirector(fileDirectorModel, platform)
+            it.addToFileDirector(fileDirectorModel, excludedProviders)
         }
         is Finished       ->
         {
@@ -57,20 +57,26 @@ data class CanNotAddToFileDirector(val project: Project) :
                 " because it is not redistributable."
     }
 
-fun MissingProject.addToFileDirector(fileDirector: FileDirectorModel, platform: Platform) =
-    ruleResult("addToFileDirector ${project.slug}", Packaging.Action {
-        if (!project.redistributable) return@Action CanNotAddToFileDirector(project)
+fun MissingProject.addToFileDirector(
+    fileDirector: FileDirectorModel, excludedProviders: Set<Provider> = setOf()
+) = ruleResult("addToFileDirector ${project.slug}", Packaging.Action {
+    if (!project.redistributable) return@Action CanNotAddToFileDirector(project)
 
-        val url = project.getFilesForPlatform(platform).firstOrNull()?.url?.let {
-                UrlEncoderUtil.encode(it, ":/") // Encode the URL due to bug in FileDirector.
-            } ?: return@Action NoFiles(project, lockFile)
+    val (projectFile, url) = (Provider.providers - excludedProviders).firstNotNullOfOrNull { provider ->
+        val projectFile = project.getFilesForProvider(provider).firstOrNull()
 
-        fileDirector.urlBundle.plusAssign(
-            UrlEntry(
-                url = url,
-                folder = this.project.type.folderName
-            )
+        projectFile?.url?.let {
+            projectFile to UrlEncoderUtil.encode(it, ":/") // Encode the URL due to bug in FileDirector.
+        }
+    } ?: return@Action NoFiles(project, lockFile)
+
+    fileDirector.urlBundle.plusAssign(
+        UrlEntry(
+            url = url,
+            folder = this.project.getPathStringWithSubpath(this.configFile),
+            fileName = projectFile.fileName
         )
+    )
 
-        null
-    })
+    null
+})

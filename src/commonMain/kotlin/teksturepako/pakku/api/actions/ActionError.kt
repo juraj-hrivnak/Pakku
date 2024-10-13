@@ -1,9 +1,8 @@
 package teksturepako.pakku.api.actions
 
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.cli.ui.dim
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import java.nio.file.Path
@@ -19,10 +18,9 @@ open class ActionError(
 
     // -- FILE --
 
-    class FileNotFound(val file: String) : ActionError("File not found: '$file'")
-    {
-        override fun message(arg: String): String = "Project '$arg' not found."
-    }
+    class DirectoryNotEmpty(val file: String) : ActionError("Directory '$file' is not empty.")
+
+    class FileNotFound(val file: String) : ActionError("File '$file' not found.")
 
     class CouldNotRead(val file: String, val reason: String? = "") :
         ActionError("Could not read: '$file'. $reason")
@@ -35,14 +33,14 @@ open class ActionError(
 
     // -- PROJECT FILE --
 
-    class DownloadFailed(val path: Path?) :
-        ActionError("Failed to download '$path'.")
+    class DownloadFailed(val path: Path?, val retryNumber: Int = 0) :
+        ActionError("Failed to download '$path'. ${if (retryNumber > 0) "Retry number $retryNumber." else ""}")
 
-    class NoHashes(val projectFile: ProjectFile) :
-        ActionError("File '${projectFile.getPath()}' has no hashes.")
+    class NoHashes(val path: Path?) :
+        ActionError("File '$path' has no hashes.", isWarning = true)
 
-    class HashFailed(val projectFile: ProjectFile, val originalHash: String, val newHash: String) :
-        ActionError("""Failed to math hash for file '${projectFile.getPath()}'.
+    class HashMismatch(val path: Path?, val originalHash: String, val newHash: String) :
+        ActionError("""Failed to math hash for file '$path'.
             | Original hash: $originalHash
             | New hash: $newHash
             """.trimMargin())
@@ -93,24 +91,24 @@ open class ActionError(
     // -- ADDITION --
 
     class AlreadyAdded(val project: Project) :
-        ActionError("Can not add ${project.type} ${project.slug}. It is already added.")
+        ActionError("${project.type} ${project.slug} is already added.")
         {
             override fun message(arg: String): String =
-                "Could not add ${dim(project.type)} ${project.getFlavoredSlug()}. It is already added."
+                "${dim(project.type)} ${project.getFlavoredSlug()} is already added."
         }
 
-    class NotFoundOnPlatform(val project: Project, val platform: Platform) :
-        ActionError("${project.type} ${project.slug} was not found on ${platform.name}")
+    class NotFoundOn(val project: Project, val provider: Provider) :
+        ActionError("${project.type} ${project.slug} was not found on ${provider.name}")
         {
             override fun message(arg: String): String =
-                "${dim(project.type)} ${project.getFlavoredSlug()} was not found on ${platform.name}."
+                "${dim(project.type)} ${project.getFlavoredSlug()} was not found on ${provider.name}."
         }
 
-    class NoFilesOnPlatform(val project: Project, val platform: Platform) :
-        ActionError("No files for ${project.type} ${project.slug} found on ${platform.name}.")
+    class NoFilesOn(val project: Project, val provider: Provider) :
+        ActionError("No files for ${project.type} ${project.slug} found on ${provider.name}.")
         {
             override fun message(arg: String) =
-                "No files for ${dim(project.type)} ${project.getFlavoredSlug()} found on ${platform.name}."
+                "No files for ${dim(project.type)} ${project.getFlavoredSlug()} found on ${provider.name}."
         }
 
     class NoFiles(val project: Project, val lockFile: LockFile) :

@@ -5,13 +5,9 @@ package teksturepako.pakku.api.data
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Modrinth
-import teksturepako.pakku.api.platforms.Multiplatform
-import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.projects.IProjectProvider
+import teksturepako.pakku.api.platforms.*
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.containsProject
+import teksturepako.pakku.api.projects.containProject
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.decodeOrNew
@@ -43,14 +39,9 @@ data class LockFile(
     private var projects: MutableList<Project> = mutableListOf(),
 
     /** The version of the LockFile. */
-    @SerialName("lockfile_version") @Required private var lockFileVersion: Int? = null,
+    @SerialName("lockfile_version") @Required private val lockFileVersion: Int = 1,
 )
 {
-    init
-    {
-        lockFileVersion = 1
-    }
-
     // -- MC VERSIONS --
 
     fun setMcVersions(mcVersions: Collection<String>)
@@ -99,7 +90,7 @@ data class LockFile(
     }
     else Result.failure(PakkuException("Target not found"))
 
-    fun getProjectProvider(): Result<IProjectProvider> = if (target != null) when (target!!.lowercase())
+    fun getProjectProvider(): Result<Provider> = if (target != null) when (target!!.lowercase())
     {
         "curseforge" -> Result.success(CurseForge)
         "modrinth" -> Result.success(Modrinth)
@@ -112,7 +103,7 @@ data class LockFile(
 
     fun add(project: Project): Boolean?
     {
-        val added: Boolean? = if (projects containsProject project)
+        val added: Boolean? = if (projects containProject project)
         {
             debug { println("Could not add ${project.name}") }
             null
@@ -123,8 +114,8 @@ data class LockFile(
             this.projects.add(project)
             true
         }
-        // Sort alphabetically
-        this.projects.sortBy { it.slug.values.first() }
+        // Sort alphabetically by name
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return added
     }
@@ -135,7 +126,7 @@ data class LockFile(
         this.projects.addAll(projects).also {
             added = it
         }
-        this.projects.sortBy { it.slug.values.first() }
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return added
     }
@@ -162,7 +153,7 @@ data class LockFile(
             }
         }
         // Sort alphabetically
-        this.projects.sortBy { it.slug.values.first() }
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return updated
     }
@@ -176,7 +167,7 @@ data class LockFile(
         this.projects.addAll(projects).also {
             updated = it
         }
-        this.projects.sortBy { it.slug.values.first() }
+        this.projects.sortBy { it.name.values.firstOrNull() }
 
         return updated
     }
@@ -238,14 +229,14 @@ data class LockFile(
 
     fun linkProjectToDependents(project: Project)
     {
-        for (dependent in this.projects)
+        for (dependentProject in this.projects)
         {
-            x@ for (file in dependent.files)
+            x@ for (file in dependentProject.files)
             {
-                val deps = file.requiredDependencies ?: continue@x
-                if (project.id.values.any { it in deps } && project.pakkuId !in dependent.pakkuLinks)
+                val dependencyIds = file.requiredDependencies ?: continue@x
+                if (project.id.values.any { id -> id in dependencyIds } && project.pakkuId !in dependentProject.pakkuLinks)
                 {
-                    dependent.pakkuLinks.add(project.pakkuId!!)
+                    dependentProject.pakkuLinks.add(project.pakkuId!!)
                 }
             }
         }
@@ -267,7 +258,7 @@ data class LockFile(
         fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
-         fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
+        fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
             .also { it.inheritConfig(ConfigFile.readOrNull()) }
 
         /**

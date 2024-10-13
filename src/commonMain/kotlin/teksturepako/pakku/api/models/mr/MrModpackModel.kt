@@ -26,28 +26,22 @@ data class MrModpackModel(
 {
     @Serializable
     data class MrFile(
-        val path: String,
-        val hashes: Hashes,
-        val env: Env? = null,
-        val downloads: Set<String>,
-        val fileSize: Int
-    ) {
+        val path: String, val hashes: Hashes, val env: Env? = null, val downloads: Set<String>, val fileSize: Int
+    )
+    {
         @Serializable
         data class Hashes(
-            val sha512: String,
-            val sha1: String
+            val sha512: String, val sha1: String
         )
 
         @Serializable
         data class Env(
-            val client: String = "required",
-            val server: String = "required"
+            val client: String = "required", val server: String = "required"
         )
     }
 
     override suspend fun toSetOfProjects(
-        lockFile: LockFile,
-        platforms: List<Platform>
+        lockFile: LockFile, platforms: List<Platform>
     ): Set<Project>
     {
         val projects = Modrinth.requestMultipleProjectsWithFilesFromHashes(
@@ -83,9 +77,7 @@ data class MrModpackModel(
     override suspend fun toLockFile() = LockFile(
         target = Modrinth.serialName,
         mcVersions = mutableListOf(this.dependencies["minecraft"] ?: ""),
-        loaders = this.dependencies.filterNot {
-            it.key == "minecraft"
-        }.toMutableMap(),
+        loaders = this.dependencies.filterNot { it.key == "minecraft" }.toMutableMap(),
         projects = mutableListOf()
     )
 

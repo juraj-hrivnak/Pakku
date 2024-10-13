@@ -11,7 +11,6 @@ import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.cf.CfModpackModel.*
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
@@ -35,13 +34,18 @@ fun ruleOfCfModpack(modpackModel: CfModpackModel) = ExportRule {
     }
 }
 
-fun ruleOfCfMissingProjects(platform: Platform) = ExportRule {
+fun ruleOfCfMissingProjects() = ExportRule {
     when (it)
     {
         is MissingProject ->
         {
-            it.exportAsOverrideFrom(platform) { bytesCallback, fileName, _ ->
-                it.createFile(bytesCallback, OverrideType.OVERRIDE.folderName, it.project.type.folderName, fileName)
+            it.exportAsOverride(excludedProviders = setOf(CurseForge)) { bytesCallback, fileName, _ ->
+                it.createFile(
+                    bytesCallback,
+                    OverrideType.OVERRIDE.folderName,
+                    it.project.getPathStringWithSubpath(it.configFile),
+                    fileName
+                )
             }
         }
         else -> it.ignore()

@@ -9,11 +9,11 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.ProjectOverride
-import teksturepako.pakku.api.platforms.Multiplatform
-import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.io.tryToResult
 import kotlin.io.path.*
@@ -113,9 +113,8 @@ sealed class RuleContext(open val workingSubDir: String)
         {
             if (!project.redistributable && !force) return error(NotRedistributable(project))
 
-            val projectFile = Multiplatform.platforms.firstNotNullOfOrNull { platform ->
-                project.getFilesForPlatform(platform).firstOrNull()
-            } ?: return error(NoFiles(project, lockFile))
+            val projectFile =
+                project.getLatestFile(Provider.providers) ?: return error(NoFiles(project, lockFile))
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
@@ -139,7 +138,7 @@ sealed class RuleContext(open val workingSubDir: String)
     {
         fun export(overridesDir: String? = type.folderName): RuleResult
         {
-            val inputPath = Path(path)
+            val inputPath = Path(workingPath, path)
             val outputPath = overridesDir?.let { getPath(it, path) } ?: getPath(path)
 
             val message = "export $type '$inputPath' to '$outputPath'"
@@ -211,7 +210,7 @@ sealed class RuleContext(open val workingSubDir: String)
     ) : RuleContext(workingSubDir)
     {
         suspend fun exportAsOverrideFrom(
-            platform: Platform,
+            provider: Provider,
             onExport: suspend (
                 bytesCallback: suspend () -> ByteArray?,
                 fileName: String,
@@ -221,8 +220,8 @@ sealed class RuleContext(open val workingSubDir: String)
         {
             if (!project.redistributable) return error(NotRedistributable(project))
 
-            val projectFile = project.getFilesForPlatform(platform).firstOrNull()
-                ?: return error(NoFilesOnPlatform(project, platform))
+            val projectFile = project.getFilesForProvider(provider).firstOrNull()
+                ?: return error(NoFilesOn(project, provider))
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
@@ -232,9 +231,34 @@ sealed class RuleContext(open val workingSubDir: String)
             )
 
             return ruleResult(
-                "exportAsOverrideFrom ${platform.name} ${result.message}",
+                "exportAsOverrideFrom ${provider.name} ${result.message}",
                 result.packaging
             )
+        }
+
+        suspend fun exportAsOverride(
+            force: Boolean = false,
+            excludedProviders: Set<Provider> = setOf(),
+            onExport: suspend (
+                bytesCallback: suspend () -> ByteArray?,
+                fileName: String,
+                overridesFolder: String
+            ) -> RuleResult
+        ): RuleResult
+        {
+            if (!project.redistributable && !force) return error(NotRedistributable(project))
+
+            val projectFile = project.getLatestFile(Provider.providers - excludedProviders)
+                ?: return error(NoFiles(project, lockFile))
+
+            val result = onExport(
+                // Creates a callback to download the file lazily.
+                { projectFile.url?.let { url -> Http().requestByteArray(url) } },
+                projectFile.fileName,
+                OverrideType.fromProject(project).folderName
+            )
+
+            return ruleResult("exportAsOverride ${result.message}", result.packaging)
         }
     }
 

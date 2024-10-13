@@ -42,6 +42,6 @@ Diff projects in modpack
 </snippet>
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

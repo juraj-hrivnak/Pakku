@@ -16,7 +16,7 @@ fun exportServerPack() = ExportRule {
             else
             {
                 it.exportAsOverride(force = true) { bytesCallback, fileName, _ ->
-                    it.createFile(bytesCallback, it.project.type.folderName, fileName)
+                    it.createFile(bytesCallback, it.project.getPathStringWithSubpath(it.configFile), fileName)
                 }
             }
         }

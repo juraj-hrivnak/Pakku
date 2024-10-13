@@ -1,11 +1,12 @@
 package teksturepako.pakku.cli
 
 import com.github.ajalt.mordant.terminal.Terminal
+import com.github.ajalt.mordant.terminal.info
 import teksturepako.pakku.api.actions.RequestHandlers
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.projects.IProjectProvider
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.pInfo
@@ -16,9 +17,8 @@ suspend fun Project.resolveDependencies(
     terminal: Terminal,
     reqHandlers: RequestHandlers,
     lockFile: LockFile,
-    projectProvider: IProjectProvider,
+    projectProvider: Provider,
     platforms: List<Platform>,
-    addAsProjects: Boolean = true
 )
 {
     val dependencies = this.requestDependencies(projectProvider, lockFile)
@@ -35,13 +35,13 @@ suspend fun Project.resolveDependencies(
                 lockFile.addPakkuLink(pakkuId, this)
             }
         }
-        else if (addAsProjects)
+        else
         {
             // Add dependency as a regular project and resolve dependencies for it too
             debug { terminal.info(dependencyIn.toPrettyString()) }
             dependencyIn.createAdditionRequest(
                 onError = reqHandlers.onError,
-                onSuccess = { dependency, _, depReqHandlers ->
+                onSuccess = { dependency, _, _, depReqHandlers ->
                     // Add dependency
                     lockFile.add(dependency)
 

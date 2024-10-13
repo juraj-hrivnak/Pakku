@@ -3,13 +3,19 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
+import com.github.ajalt.mordant.rendering.TextAlign
 import com.github.ajalt.mordant.table.grid
+import com.github.ajalt.mordant.terminal.danger
+import com.github.ajalt.mordant.widgets.Spinner
+import com.github.ajalt.mordant.widgets.progress.*
+import com.github.michaelbull.result.getOrElse
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.api.projects.containsProject
 import teksturepako.pakku.cli.ui.*
 
 
@@ -25,7 +31,7 @@ class Status: CliktCommand()
         }
 
         val configFile = ConfigFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             null
         }
@@ -38,52 +44,97 @@ class Status: CliktCommand()
 
         if (configFile != null)
         {
-            val msg = buildString {
-                append("Managing '${strong(configFile.getName())}' modpack")
+            terminal.print("Managing ${configFile.getName()} modpack")
 
-                if (configFile.getVersion().isNotBlank())
-                {
-                    append("; version '${strong(configFile.getVersion())}'")
-                }
+            if (configFile.getVersion().isNotBlank())
+            {
+                terminal.print(", version ${configFile.getVersion()}")
+            }
 
-                if (configFile.getAuthor().isNotBlank())
-                {
-                    append("; by '${strong(configFile.getAuthor())}'")
+            if (configFile.getAuthor().isNotBlank())
+            {
+                terminal.print(", by ${configFile.getAuthor()}")
+            }
+
+            terminal.println()
+        }
+
+        terminal.println(buildString {
+            val mcVer = lockFile.getMcVersions()
+            val loaders = lockFile.getLoadersWithVersions().map { (loaderName, loaderVersion) ->
+                buildString {
+                    append(loaderName)
+                    if (loaderVersion.isNotBlank()) append("-$loaderVersion")
                 }
             }
 
-            terminal.pInfo(msg)
-        }
-
-        terminal.pInfo(buildString {
-            val mcVer = lockFile.getMcVersions()
-            val loaders = lockFile.getLoadersWithVersions()
-
-            append("On Minecraft " + (if (mcVer.size > 1) "versions" else "version") + " ${strong(mcVer)}; ")
-            append((if (loaders.size > 1) "loaders" else "loader") + " ${strong(loaders)}; ")
-            append("targeting " + (if (platforms.size > 1) "platforms" else "platform") + " ${strong(platforms)}")
+            append("on Minecraft " + (if (mcVer.size > 1) "versions" else "version") + " ${mcVer.toMsg()}, ")
+            append((if (loaders.size > 1) "loaders" else "loader") + " ${loaders.toMsg()}, ")
+            append("targeting " + (if (platforms.size > 1) "platforms" else "platform") + " ${platforms.toMsg()}")
+            append(".")
         })
+
+        val progressBar = progressBarLayout(spacing = 2) {
+            spinner(Spinner.Dots())
+        }.animateInCoroutine(terminal)
+
+        launch { progressBar.execute() }
 
         val currentProjects = lockFile.getAllProjects()
         val updatedProjects =
-            Multiplatform.updateMultipleProjectsWithFiles(
+            updateMultipleProjectsWithFiles(
                 lockFile.getMcVersions(),
                 lockFile.getLoaders(),
                 currentProjects.toMutableSet(),
                 ConfigFile.readOrNull(),
                 numberOfFiles = 1
-            )
+            ).getOrElse {
+                terminal.pError(it)
+                echo()
+                return@runBlocking
+            }
 
-        fun projStatus()
+        progressBar.clear()
+
+        fun projects()
         {
             terminal.println(grid {
-                currentProjects.filter { updatedProjects containsProject it }.map { project ->
-                    row(project.getFlavoredSlug(), project.getFlavoredName(terminal.theme))
-
-                    val updatedProject = updatedProjects.find { it isAlmostTheSameAs project }
-                    updatedProject?.run {
-
+                for (updatedProject in updatedProjects)
+                {
+                    row {
+                        cell(" ".repeat(3) + updatedProject.getFlavoredSlug())
+                        cell(updatedProject.getFlavoredName(terminal.theme))
+                        cell(updatedProject.type.name)
+                        updatedProject.side?.let { cell(it.name) }
                     }
+
+                    val currentProject = currentProjects.firstOrNull { it isAlmostTheSameAs updatedProject }
+                    if (currentProject == null) continue
+
+                    var filesUpdated = false
+
+                    for (provider in updatedProject.getProviders())
+                    {
+                        val cFile = currentProject.getFilesForProvider(provider).firstOrNull()?.fileName
+                        val uFile = updatedProject.getFilesForProvider(provider).firstOrNull()?.fileName
+
+                        if (cFile == null || uFile == null || cFile == uFile) continue
+
+                        val (cDiffFile, uDiffFile) = coloredStringDiff(cFile, uFile)
+
+                        filesUpdated = true
+
+                        row {
+                            cell(" ".repeat(6) + dim("${provider.shortName}_file:")) {
+                                align = TextAlign.RIGHT
+                            }
+                            cell(cDiffFile) { align = TextAlign.CENTER }
+                            cell(dim("->")) { align = TextAlign.CENTER }
+                            cell(uDiffFile) { align = TextAlign.LEFT }
+                        }
+                    }
+
+                    if (filesUpdated) row()
                 }
             })
         }
@@ -93,19 +144,28 @@ class Status: CliktCommand()
             updatedProjects.isEmpty() && currentProjects.isNotEmpty() ->
             {
                 terminal.pSuccess("All projects are up to date.")
+
+                echo()
             }
             updatedProjects.size == 1                                 ->
             {
                 terminal.pInfo("Following project has a new version available:")
-                projStatus()
+                terminal.println(
+                    " ".repeat(2) + "(use \"pakku update"
+                        + " ${dim(updatedProjects.firstOrNull()?.slug?.values?.firstOrNull())}\""
+                        + " to update the project)"
+                )
+                projects()
             }
             else ->
             {
                 terminal.pInfo("Following projects have a new version available:")
-                projStatus()
+                terminal.println(
+                    " ".repeat(2) + "(use \"pakku update ${dim("[<projects>]...")}\" to update"
+                        + " projects individually or \"pakku update ${dim("-a")}\" to update all projects)"
+                )
+                projects()
             }
         }
-
-        echo()
     }
 }

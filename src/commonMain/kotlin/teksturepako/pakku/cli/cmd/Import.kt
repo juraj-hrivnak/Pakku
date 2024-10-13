@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
+import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -40,7 +41,6 @@ class Import : CliktCommand()
 
         val lockFile = LockFile.readToResult().getOrNull() ?: modpackModel.toLockFile()
 
-        // Configuration
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.danger(it.message)
             echo()
@@ -52,7 +52,6 @@ class Import : CliktCommand()
             echo()
             return@runBlocking
         }
-        // --
 
         val importedProjects = modpackModel.toSetOfProjects(lockFile, platforms)
 
@@ -62,10 +61,18 @@ class Import : CliktCommand()
                     onError = { error ->
                         if (error !is AlreadyAdded) terminal.pError(error)
                     },
-                    onSuccess = { project, _, reqHandlers ->
-                        lockFile.add(project)
-                        if (depsFlag) project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
-                        terminal.pSuccess("${project.getFullMsg()} added")
+                    onSuccess = { project, _, isReplacing, reqHandlers ->
+                        val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
+
+                        if (!isReplacing) lockFile.add(project) else lockFile.update(project)
+                        lockFile.linkProjectToDependents(project)
+
+                        if (depsFlag)
+                        {
+                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                        }
+
+                        terminal.pSuccess("${project.getFullMsg()} ${promptMessage.second}")
                         Modrinth.checkRateLimit()
                     },
                     lockFile, platforms

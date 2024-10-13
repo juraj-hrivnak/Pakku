@@ -5,27 +5,51 @@ modpack export.
 
 ## Properties
 
-`name`
-: The name of the modpack.
-
-`version`
-: The version of the modpack.
-
-`description`
-: Description of the modpack.
-
-`author`
-: The author of the modpack.
-
-`overrides`
-: A list of [overrides](Pakku-Terminology.md#override) packed up with the modpack.
-
-`server_overrides`
-: A list of [server overrides](Pakku-Terminology.md#override) packed up with the modpack.
-
-`client_overrides`
-: A list of [client overrides](Pakku-Terminology.md#override) packed up with the modpack.
-
-`projects`
-: A list of project slugs, names, IDs or filenames from the [lock file](Lock-File.md)
-with properties you want to change.
+<deflist>
+    <def>
+        <title><code>name</code></title>
+        <p>The name of the modpack.</p>
+    </def>
+    <def>
+        <title><code>version</code></title>
+        <p>The version of the modpack.</p>
+    </def>
+    <def>
+        <title><code>description</code></title>
+        <p>Description of the modpack.</p>
+    </def>
+    <def>
+        <title><code>author</code></title>
+        <p>The author of the modpack.</p>
+    </def>
+    <def>
+        <title><code>overrides</code></title>
+        <p>
+            A list of <a href="Pakku-Terminology.md" anchor="override">overrides</a> packed up with the modpack.
+        </p>
+    </def>
+    <def>
+        <title><code>server_overrides</code></title>
+        <p>
+            A list of <a href="Pakku-Terminology.md" anchor="override">server overrides</a> packed up with the modpack.
+        </p>
+    </def>
+    <def>
+        <title><code>client_overrides</code></title>
+        <p>
+            A list of <a href="Pakku-Terminology.md" anchor="override">client overrides</a> packed up with the modpack.
+        </p>
+    </def>
+    <def>
+        <title><code>paths</code></title>
+        <p>A map of project types to their respective paths.</p>
+    </def>
+    <def>
+        <title><code>projects</code></title>
+        <p>
+            A list of project slugs, names, IDs from the <a href="Lock-File.md">lock file</a>
+            with properties you want to change.
+            You can use <a href="pakku-cfg.md">cfg</a> command to change the properties as well.
+        </p>U
+    </def>
+</deflist>

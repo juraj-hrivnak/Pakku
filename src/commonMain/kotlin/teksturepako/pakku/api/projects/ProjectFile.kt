@@ -1,18 +1,18 @@
 package teksturepako.pakku.api.projects
 
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.Result
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
+import teksturepako.pakku.api.data.InstantIso8601Serializer
 import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.HashFailed
+import teksturepako.pakku.api.actions.ActionError.HashMismatch
+import teksturepako.pakku.api.actions.ActionError.NoHashes
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.io.createHash
 import java.nio.file.Path
+import java.time.Instant
 import kotlin.io.path.Path
 
 @Serializable
@@ -29,6 +29,7 @@ data class ProjectFile(
     val hashes: MutableMap<String, String>? = null,
     @SerialName("required_dependencies") val requiredDependencies: MutableSet<String>? = null,
     val size: Int = 0,
+    @SerialName("date_published") val datePublished: @Serializable(with = InstantIso8601Serializer::class) Instant = Instant.MIN,
 )
 {
     // -- PARENT --
@@ -37,39 +38,35 @@ data class ProjectFile(
 
     // -- FILE PATH --
 
-    @Transient
-    private lateinit var path: Path
-
-    fun getPath(lockFile: LockFile): Path?
+    fun getPath(parentProject: Project, configFile: ConfigFile?): Path
     {
-        val parentProject = getParentProject(lockFile) ?: return null
-
-        val path = Path(workingPath, parentProject.type.folderName, fileName)
-        this.path = path
-
-        return path
+        val parentPathString = parentProject.getPathStringWithSubpath(configFile)
+        return Path(workingPath, parentPathString, fileName)
     }
 
-    fun getPath(): Path? = if (!this::path.isInitialized) null else this.path
+    fun getRelativePathString(parentProject: Project, configFile: ConfigFile?, separator: Char = '/'): String
+    {
+        val parentPathString = parentProject.getPathStringWithSubpath(configFile, separator)
+        return "$parentPathString$separator$fileName"
+    }
 
     // -- INTEGRITY --
 
-    fun checkIntegrity(bytes: ByteArray): Result<ByteArray, ActionError>
+    fun checkIntegrity(bytes: ByteArray, path: Path): ActionError?
     {
-        return if (this.hashes != null)
-        {
-            for ((hashType, originalHash) in this.hashes)
-            {
-                val newHash = createHash(hashType, bytes)
+        if (this.hashes == null) return NoHashes(path)
 
-                if (originalHash != newHash)
-                {
-                    return Err(HashFailed(this, originalHash, newHash))
-                }
-                else continue
+        for ((hashType, originalHash) in this.hashes)
+        {
+            val newHash = createHash(hashType, bytes)
+
+            if (originalHash != newHash)
+            {
+                return HashMismatch(path, originalHash, newHash)
             }
-            Ok(bytes)
+            else continue
         }
-        else Err(ActionError.NoHashes(this))
+
+        return null
     }
 }

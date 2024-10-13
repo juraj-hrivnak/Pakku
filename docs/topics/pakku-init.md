@@ -17,6 +17,6 @@ Initialize modpack
 <snippet id="snippet-options-all">
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

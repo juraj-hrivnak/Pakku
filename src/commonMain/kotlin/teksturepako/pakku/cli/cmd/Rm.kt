@@ -7,12 +7,17 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.danger
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.cli.ui.*
+import teksturepako.pakku.cli.arg.ynPrompt
+import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.ui.pDanger
+import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pInfo
 import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand()
@@ -38,7 +43,7 @@ class Rm : CliktCommand()
 
                     if (error is ProjNotFound)
                     {
-                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values }
+                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values + it.name.values }
 
                         typoSuggester(arg, slugs).firstOrNull()?.let { realArg ->
                             if (ynPrompt("Do you mean '$realArg'?", terminal))

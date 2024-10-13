@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "teksturepako.pakku"
-version = "0.17.1"
+version = "0.20.1"
 
 val nativeEnabled = false
 
@@ -86,7 +86,9 @@ kotlin {
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
                 // CLI
-                implementation("com.github.ajalt.clikt:clikt:4.4.0.41-SNAPSHOT")
+                implementation("com.github.ajalt.clikt:clikt:5.0.0")
+                implementation("com.github.ajalt.clikt:clikt-markdown:5.0.0")
+                implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.0")
 
                 // Logging
                 implementation("org.slf4j:slf4j-api:2.0.7")
@@ -97,6 +99,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation("io.mockk:mockk:1.13.12")
             }
         }
 

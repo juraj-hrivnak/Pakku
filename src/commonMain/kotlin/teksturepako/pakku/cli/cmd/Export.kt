@@ -3,6 +3,8 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
@@ -34,7 +36,7 @@ class Export : CliktCommand()
         }
 
         val configFile = ConfigFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

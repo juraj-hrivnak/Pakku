@@ -1,15 +1,14 @@
 package teksturepako.pakku.api.platforms
 
 import com.github.michaelbull.result.get
-import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.projects.IProjectProvider
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.api.projects.inheritPropertiesFrom
 
-object Multiplatform : IProjectProvider
+object Multiplatform : Provider
 {
     override val name = "Multiplatform"
+    override val serialName = "multiplatform"
+    override val shortName = "mp"
+    override val siteUrl = null
 
     /** List of registered platforms. */
     val platforms = listOf(
@@ -120,44 +119,5 @@ object Multiplatform : IProjectProvider
         }
 
         return project
-    }
-
-    /**
-     * Requests new data for provided [projects] from all platforms and updates them based on platform-specific slugs,
-     * with optional [number of files][numberOfFiles] to take.
-     * Projects are also filtered using their [update strategy][UpdateStrategy].
-     */
-    suspend fun updateMultipleProjectsWithFiles(
-        mcVersions: List<String>,
-        loaders: List<String>,
-        projects: MutableSet<Project>,
-        configFile: ConfigFile?,
-        numberOfFiles: Int
-    ): MutableSet<Project>
-    {
-        return platforms.fold(projects.map { it.copy(files = mutableSetOf()) }.toMutableSet()) { acc, platform ->
-
-            val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
-
-            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles)
-                .inheritPropertiesFrom(configFile)
-                .forEach { newProject ->
-                    acc.find { accProject ->
-                        accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
-                    }?.let { accProject ->
-                        (accProject + newProject).get()?.let x@ { combinedProject ->
-                            if (combinedProject.hasNoFiles()) return@x // Do not update project is files are missing
-                            acc -= accProject
-                            acc += combinedProject // Combine projects
-                        }
-                    }
-                }
-
-            acc
-        }.filter { newProject ->
-            projects.none { oldProject ->
-                oldProject == newProject
-            } && newProject.updateStrategy == UpdateStrategy.LATEST
-        }.toMutableSet()
     }
 }

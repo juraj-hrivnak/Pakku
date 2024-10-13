@@ -52,9 +52,9 @@ Add project overrides.
      ┗━━━ shaderpacks/<put shader files here>
 ```
 
-These project overrides will br synchronized with your modpack folder
-when running [pakku fetch](pakku-fetch.md), and exported properly
-when running [pakku export](pakku-export.md).
+These project overrides will be synchronized with your modpack folder
+when running [](pakku-fetch.md), and exported properly
+when running [](pakku-export.md).
 
 </step>
 

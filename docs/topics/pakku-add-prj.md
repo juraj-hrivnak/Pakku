@@ -24,9 +24,12 @@ Specify the project precisely
 `--mr`, `--modrinth`
 : Modrinth project slug or ID
 
+`--gh`, `--github`
+: GitHub repository URL or `{owner}/{repo}`
+
 </snippet>
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

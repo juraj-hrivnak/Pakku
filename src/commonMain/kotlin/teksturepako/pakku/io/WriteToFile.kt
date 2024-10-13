@@ -16,15 +16,11 @@ suspend inline fun <reified T> writeToFile(
 ): ActionError?
 {
     val file = Path(path)
-
     val backup = file.tryOrNull { it.readBytes() }
 
     return file.tryToResult {
-
-        // Override file text
         if (overrideText) it.deleteIfExists()
 
-        // Write to file
         runCatching { it.parent.createParentDirectories() }
         it.writeText(format.encodeToString(value))
     }.onFailure {

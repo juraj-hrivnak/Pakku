@@ -5,6 +5,7 @@ package teksturepako.pakku.api.projects
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.ActionError
@@ -13,6 +14,8 @@ import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
 import teksturepako.pakku.api.data.*
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.platforms.Provider
+import teksturepako.pakku.io.filterPath
 
 /**
  * Represents a project. (E.g. a mod, resource pack, shader, etc.)
@@ -29,7 +32,7 @@ import teksturepako.pakku.api.platforms.Platform
 data class Project(
     @SerialName("pakku_id") var pakkuId: String? = null,
     @SerialName("pakku_links") val pakkuLinks: MutableSet<String> = mutableSetOf(),
-    val type: ProjectType,
+    var type: ProjectType,
     var side: ProjectSide? = null,
 
     val slug: MutableMap<String, String>,
@@ -38,6 +41,9 @@ data class Project(
 
     @SerialName("update_strategy") var updateStrategy: UpdateStrategy = UpdateStrategy.LATEST,
     @SerialName("redistributable") var redistributable: Boolean = true,
+
+    private var subpath: String? = null,
+    var aliases: MutableSet<String>? = null,
 
     var files: MutableSet<ProjectFile>
 )
@@ -75,6 +81,9 @@ data class Project(
                 updateStrategy = this.updateStrategy,
                 redistributable = this.redistributable && other.redistributable,
 
+                subpath = this.subpath ?: other.subpath,
+                aliases = this.aliases?.plus(other.aliases ?: emptySet())?.toMutableSet() ?: other.aliases,
+
                 files = (this.files + other.files).toMutableSet(),
             )
         )
@@ -86,14 +95,24 @@ data class Project(
         return this.id.values.any { it in other.id.values }
                 || this.name.values.any { it in other.name.values }
                 || this.slug.values.any { it in other.slug.values }
+                || hasAliasOf(other)
     }
 
-    /** Checks if the current project contains the specified string in its slugs, names or IDs. */
+    /** Check if the current project has an alias of the specified project. */
+    infix fun hasAliasOf(other: Project): Boolean
+    {
+        return this.aliases?.any {
+            it in other.id.values || it in other.name.values || it in other.slug.values
+        } ?: false
+    }
+
+    /** Checks if the current project contains the specified string in its slugs, names, IDs or aliases. */
     operator fun contains(input: String): Boolean
     {
         return input in this.slug.values
                 || input in this.name.values
                 || input in this.id.values
+                || this.aliases?.contains(input) == true
     }
 
     /** Checks if the project has any files. */
@@ -112,6 +131,10 @@ data class Project(
         this.hasFilesOnPlatform(platform)
     }
 
+    fun getProviders(): List<Provider> = Provider.providers.filter { provider ->
+        this.hasFilesOn(provider)
+    }
+
     /** Checks if the project has files on the specified [platform][Platform]. */
     fun hasFilesOnPlatform(platform: Platform): Boolean
     {
@@ -120,6 +143,15 @@ data class Project(
 
     /** Checks if the project has no files on the specified [platform][Platform]. */
     fun hasNoFilesOnPlatform(platform: Platform): Boolean = !hasFilesOnPlatform(platform)
+
+    /** Checks if the project has files on the specified [provider]. */
+    fun hasFilesOn(provider: Provider): Boolean
+    {
+        return provider.serialName in this.files.map { it.type }
+    }
+
+    /** Checks if the project has no files on the specified [provider]. */
+    fun hasNoFilesOn(provider: Provider) = !hasFilesOn(provider)
 
     /** Checks if file names match across specified [platforms][platforms]. */
     fun fileNamesMatchAcrossPlatforms(platforms: List<Platform>): Boolean
@@ -140,17 +172,76 @@ data class Project(
         return this.files.filter { platform.serialName == it.type }
     }
 
+    fun getFilesForProvider(provider: Provider): List<ProjectFile>
+    {
+        return this.files.filter { provider.serialName == it.type }
+    }
+
+    fun getFilesForProviders(vararg providers: Provider): List<ProjectFile>
+    {
+        return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
+    }
+
+    fun getFilesForProviders(providers: Collection<Provider>): List<ProjectFile>
+    {
+        return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
+    }
+
+    fun getLatestFile(providers: Collection<Provider>) = getFilesForProviders(providers).maxByOrNull { it.datePublished }
+
+    // -- DEPENDENCIES --
+
     /**
-     * Requests [projects with files][IProjectProvider.requestProjectWithFiles] for all dependencies of this project.
+     * Requests [projects with files][Provider.requestProjectWithFiles] for all dependencies of this project.
      * @return List of [dependencies][Project].
      */
-    suspend fun requestDependencies(projectProvider: IProjectProvider, lockFile: LockFile): List<Project>
+    suspend fun requestDependencies(projectProvider: Provider, lockFile: LockFile): List<Project>
     {
         return this.files
             .flatMap { it.requiredDependencies ?: emptyList() }
             .mapNotNull {
                 projectProvider.requestProjectWithFiles(lockFile.getMcVersions(), lockFile.getLoaders(), it)
             }
+    }
+
+    // -- CONFIG INHERITANCE --
+
+    fun inheritPropertiesFrom(configFile: ConfigFile?): Project
+    {
+        configFile?.projects?.forEach { (input, config) ->
+            if (input in this || this.files.any { input in it.fileName })
+            {
+                config.type?.let { this.type = it }
+                config.side?.let { this.side = it }
+                config.updateStrategy?.let { this.updateStrategy = it }
+                config.redistributable?.let { this.redistributable = it }
+                config.subpath?.let { this.subpath = it }
+                config.aliases?.let { this.aliases = it }
+            }
+        }
+
+        return this
+    }
+
+    // -- SUBPATH --
+
+    fun setSubpath(subpath: String)
+    {
+        filterPath(subpath).get()?.let { this.subpath = it }
+    }
+
+    fun getSubpath(): Result<String, ActionError>? = subpath?.let { subpath ->
+        filterPath(subpath)
+    }
+
+    fun getSubpathOrNull(): String? = subpath?.let { subpath ->
+        filterPath(subpath).get()
+    }
+
+    fun getPathStringWithSubpath(configFile: ConfigFile?, separator: Char = '/') = buildString {
+        append(type.getPathString(configFile))
+        val subpath = getSubpathOrNull()
+        if (subpath != null) append("$separator$subpath")
     }
 
     init
