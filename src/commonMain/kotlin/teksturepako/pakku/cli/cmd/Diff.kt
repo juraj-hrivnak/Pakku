@@ -4,8 +4,11 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.int
+import com.github.ajalt.clikt.parameters.types.restrictTo
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.terminal.success
@@ -30,6 +33,9 @@ class Diff : CliktCommand()
     private val verboseOpt: Boolean by option(
         "-v", "--verbose", help = "Gives detailed information on which mods were updated"
     ).flag()
+    private val headerSize by option(
+        "-h", "--header-size", help = "Specifies the base header size. Default = 2",
+    ).int().restrictTo(0..5).default(2)
 
     override fun run(): Unit = runBlocking {
         val oldLockFile = LockFile.readToResultFrom(oldPathArg).getOrElse {
@@ -66,7 +72,8 @@ class Diff : CliktCommand()
         val didModLoaderChange = allOldModLoadersAndVersions != allNewModLoadersAndVersions
         val addedModLoaders = if (didModLoaderChange)
         {
-            getAddedMCVersionsAndLoaders(allOldModLoadersAndVersions.map { it.first }.toSet(),
+            getAddedMCVersionsAndLoaders(
+                allOldModLoadersAndVersions.map { it.first }.toSet(),
                 allNewModLoadersAndVersions.map { it.first }.toSet()
             ).map { loader -> loader.replaceFirstChar { it.titlecase() } }.toSet()
         }
@@ -74,7 +81,8 @@ class Diff : CliktCommand()
 
         val removedModLoaders = if (didModLoaderChange)
         {
-            getRemovedMCVersionsAndLoaders(allOldModLoadersAndVersions.map { it.first }.toSet(),
+            getRemovedMCVersionsAndLoaders(
+                allOldModLoadersAndVersions.map { it.first }.toSet(),
                 allNewModLoadersAndVersions.map { it.first }.toSet()
             ).map { loader -> loader.replaceFirstChar { it.titlecase() } }.toSet()
         }
@@ -92,7 +100,8 @@ class Diff : CliktCommand()
         val didProjectsChange = allOldProjects != allNewProjects
         val addedProjects = if (didProjectsChange)
         {
-            getAddedMCVersionsAndLoaders(allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet(),
+            getAddedMCVersionsAndLoaders(
+                allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet(),
                 allNewProjects.mapNotNull { it.name.values.firstOrNull() }.toSet()
             )
         }
@@ -100,7 +109,8 @@ class Diff : CliktCommand()
 
         val removedProjects = if (didProjectsChange)
         {
-            getRemovedMCVersionsAndLoaders(allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet(),
+            getRemovedMCVersionsAndLoaders(
+                allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet(),
                 allNewProjects.mapNotNull { it.name.values.firstOrNull() }.toSet()
             )
         }
@@ -281,28 +291,31 @@ class Diff : CliktCommand()
             file.createNewFile()
             file.outputStream().close()
 
+            val mainHeader = if (headerSize > 0) "${"#".repeat(headerSize)} " else ""
+            val subHeader = if (headerSize > 0) "${"#".repeat(headerSize + 1)} " else ""
+
             if (didMCVersionsChange)
             {
-                file.appendText("## Minecraft\n\n")
+                file.appendText("${mainHeader}Minecraft\n\n")
                 if (addedMCVersions.isNotEmpty())
                 {
-                    file.appendText("### Added\n\n")
+                    file.appendText("${subHeader}Added\n\n")
                     addedMCVersions.forEach { file.appendText("- $it\n") }
                     if (removedMCVersions.isNotEmpty() || didModLoaderChange || didProjectsChange) file.appendText("\n")
                 }
                 if (addedMCVersions.isNotEmpty())
                 {
-                    file.appendText("### Removed\n\n")
+                    file.appendText("${subHeader}Removed\n\n")
                     removedMCVersions.forEach { file.appendText("- $it\n") }
                     if (didModLoaderChange || didProjectsChange) file.appendText("\n")
                 }
             }
             if (didModLoaderChange)
             {
-                file.appendText("## Loaders\n\n")
+                file.appendText("${mainHeader}Loaders\n\n")
                 if (addedModLoaders.isNotEmpty())
                 {
-                    file.appendText("### Added\n\n")
+                    file.appendText("${subHeader}Added\n\n")
                     addedModLoaders.forEach { file.appendText("- $it\n") }
                     if (removedModLoaders.isNotEmpty() || updatedModLoaders.isNotEmpty() || didProjectsChange) file.appendText(
                         "\n"
@@ -310,13 +323,13 @@ class Diff : CliktCommand()
                 }
                 if (removedModLoaders.isNotEmpty())
                 {
-                    file.appendText("### Removed\n\n")
+                    file.appendText("${subHeader}Removed\n\n")
                     removedModLoaders.forEach { file.appendText("- $it\n") }
                     if (updatedModLoaders.isNotEmpty() || didProjectsChange) file.appendText("\n")
                 }
                 if (updatedModLoaders.isNotEmpty())
                 {
-                    file.appendText("### Updated\n\n")
+                    file.appendText("${subHeader}Updated\n\n")
                     updatedModLoaders.forEach { file.appendText("- $it\n") }
                     if (didProjectsChange) file.appendText("\n")
                 }
@@ -324,22 +337,22 @@ class Diff : CliktCommand()
 
             if (didProjectsChange)
             {
-                file.appendText("## Projects\n\n")
+                file.appendText("${mainHeader}Projects\n\n")
                 if (addedProjects.isNotEmpty())
                 {
-                    file.appendText("### Added\n\n")
+                    file.appendText("${subHeader}Added\n\n")
                     addedProjects.forEach { file.appendText("- $it\n") }
                     if (removedProjects.isNotEmpty() || updatedProjects.isNotEmpty()) file.appendText("\n")
                 }
                 if (removedProjects.isNotEmpty())
                 {
-                    file.appendText("### Removed\n\n")
+                    file.appendText("${subHeader}Removed\n\n")
                     removedProjects.forEach { file.appendText("- $it\n") }
                     if (updatedProjects.isNotEmpty()) file.appendText("\n")
                 }
                 if (updatedProjects.isNotEmpty())
                 {
-                    file.appendText("### Updated\n\n")
+                    file.appendText("${subHeader}Updated\n\n")
                     updatedProjects.forEach { file.appendText("- $it\n") }
                 }
             }
