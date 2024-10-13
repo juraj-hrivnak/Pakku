@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.20.1
+
+- Reverted [`glob`](https://en.wikipedia.org/wiki/Glob_(programming)#Syntax) pattern matching support for overrides, due to performance limitations with large modpacks.
+  - It will be reintroduced in the next releases.
+
 ## v0.20.0
 
 ### What's new?
