@@ -79,6 +79,9 @@ kotlin {
                 // AtomicFU
                 implementation("org.jetbrains.kotlinx:atomicfu:0.24.0")
 
+                // Datetime
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+
                 // URL Encoding
                 implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
 

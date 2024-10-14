@@ -6,6 +6,7 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.Instant
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.platforms.GitHub
@@ -14,7 +15,6 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.combineWith
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
-import java.time.Instant
 
 /**
  * Requests new data for provided [projects] from all platforms and updates them based on platform-specific slugs,
@@ -51,18 +51,27 @@ suspend fun updateMultipleProjectsWithFiles(
                     acc.find { accProject ->
                         accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
                     }?.also { accProject ->
-                        // Combine projects
-                        val accFiles = combinedProjectsToOldFiles[accProject]
-                            ?: return@coroutineScope Err(ActionError("Failed to combine project ${accProject.pakkuId} when updating. Report it to Pakku's developer."))
+                        val accFiles = combinedProjectsToOldFiles[accProject] ?: return@coroutineScope Err(
+                            ActionError("Failed to combine project ${accProject.pakkuId} when updating." +
+                                    " Report it to Pakku's developer.")
+                        )
+
                         val accPublished = accFiles.find { it.type == platform.serialName }?.datePublished
-                        if (accPublished != null && accPublished != Instant.MIN)
+
+                        if (accPublished != null && accPublished != Instant.DISTANT_FUTURE)
+                        {
                             newProject.files.removeIf { it.type == platform.serialName && it.datePublished < accPublished }
+                        }
+
+                        // Combine projects
                         (accProject + newProject).get()
                             ?.copy(files = (newProject.files.take(numberOfFiles) + accProject.files).toMutableSet())
                             ?.let x@{ combinedProject ->
                                 if (combinedProject.hasNoFiles()) return@x // Do not update project if files are missing
+
                                 combinedProjectsToOldFiles[combinedProject] = accFiles
                                 combinedProjectsToOldFiles -= accProject
+
                                 acc -= accProject
                                 acc += combinedProject
                             }

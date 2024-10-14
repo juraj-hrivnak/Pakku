@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.platforms
 
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.decode
@@ -13,7 +14,6 @@ import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.getEnvOrNull
 import teksturepako.pakku.io.toMurmur2
-import java.time.Instant
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CurseForge : Platform(
