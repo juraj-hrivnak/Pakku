@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.20.2
+
+- Fixed an issue that caused project files from CurseForge to be outdated due to incorrect release date parsing.
+
 ## v0.20.1
 
 - Reverted [`glob`](https://en.wikipedia.org/wiki/Glob_(programming)#Syntax) pattern matching support for overrides, due to performance limitations with large modpacks.
