@@ -222,7 +222,7 @@ object Modrinth : Platform(
             .awaitAll()
             .flatten()
             .filterFileModels(mcVersions, loaders)
-            .sortedByDescending { it.datePublished }
+            .sortedByDescending { Instant.parse(it.datePublished) }
             .sortByLoaders(loaders)
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()

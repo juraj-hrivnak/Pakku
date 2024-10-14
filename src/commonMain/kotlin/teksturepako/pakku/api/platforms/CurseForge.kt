@@ -132,10 +132,12 @@ object CurseForge : Platform(
     internal fun List<CfModModel.File>.sortByLoaders(loaders: List<String>) = this.sortedWith { fileA, fileB ->
         val aLoaders = fileA.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
             .map { it.gameVersionName.lowercase() }
+
         val bLoaders = fileB.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
             .map { it.gameVersionName.lowercase() }
+
         loaders.indexOfFirst { it in aLoaders }.let { if (it == -1) loaders.size else it }
-            .minus(loaders.indexOfFirst { it in bLoaders }.let { if (it == -1) loaders.size else it })
+            - loaders.indexOfFirst { it in bLoaders }.let { if (it == -1) loaders.size else it }
     }
 
     private fun CfModModel.File.toProjectFile(gameVersionTypeIds: List<Int>): ProjectFile
@@ -234,7 +236,7 @@ object CurseForge : Platform(
             this.requestProjectBody("mods/files", MultipleFilesRequest(ids.map(String::toInt))) ?: return mutableSetOf()
         ).data
             .filterFileModels(mcVersions, loaders)
-            .sortedByDescending { it.fileDate }
+            .sortedByDescending { Instant.parse(it.fileDate) }
             .sortByLoaders(loaders)
             .map { it.toProjectFile(gameVersionTypeIds) }
             .debugIfEmpty {

@@ -8,7 +8,8 @@ import com.github.ajalt.mordant.rendering.TextAlign
 import com.github.ajalt.mordant.table.grid
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.widgets.Spinner
-import com.github.ajalt.mordant.widgets.progress.*
+import com.github.ajalt.mordant.widgets.progress.progressBarLayout
+import com.github.ajalt.mordant.widgets.progress.spinner
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -81,18 +82,13 @@ class Status: CliktCommand()
         launch { progressBar.execute() }
 
         val currentProjects = lockFile.getAllProjects()
-        val updatedProjects =
-            updateMultipleProjectsWithFiles(
-                lockFile.getMcVersions(),
-                lockFile.getLoaders(),
-                currentProjects.toMutableSet(),
-                ConfigFile.readOrNull(),
-                numberOfFiles = 1
-            ).getOrElse {
-                terminal.pError(it)
-                echo()
-                return@runBlocking
-            }
+        val updatedProjects = updateMultipleProjectsWithFiles(
+            lockFile.getMcVersions(),
+            lockFile.getLoaders(),
+            currentProjects.toMutableSet(),
+            ConfigFile.readOrNull(),
+            numberOfFiles = 1
+        )
 
         progressBar.clear()
 
