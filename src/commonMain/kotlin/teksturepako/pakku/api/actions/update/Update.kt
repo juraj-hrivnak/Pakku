@@ -60,15 +60,25 @@ suspend fun updateMultipleProjectsWithFiles(
 
 private fun combineProjects(accProject: Project, newProject: Project, platformName: String, numberOfFiles: Int): Project
 {
-    val accPublished = accProject.files
-        .filter { projectFile ->
-            projectFile.type == platformName
+    val accFile = accProject.files.filter { projectFile ->
+        projectFile.type == platformName
+    }
+    val accPublished = accFile.maxOfOrNull { it.datePublished } ?: Instant.DISTANT_PAST
+    val newFiles =
+        if (accFile.isEmpty())
+        {
+            newProject.files
         }
-        .maxOfOrNull { it.datePublished }
-        ?: Instant.DISTANT_PAST
+        else
+        {
+            val accLoaders = accFile.single().loaders
+            newProject.files.sortedWith(compareBy { file ->
+                val fileLoaders = file.loaders
+                accLoaders.indexOfFirst { it in fileLoaders }.let { if (it == -1) accLoaders.size else it }
+            })
+        }
 
-    val updatedFiles = (newProject.files.take(numberOfFiles) + accProject.files)
-        .filterNot { projectFile ->
+    val updatedFiles = (newFiles.take(numberOfFiles) + accProject.files).filterNot { projectFile ->
             projectFile.type == platformName && projectFile.datePublished < accPublished
         }
         .toMutableSet()
