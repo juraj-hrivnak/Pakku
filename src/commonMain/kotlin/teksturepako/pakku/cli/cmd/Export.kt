@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
@@ -42,7 +43,7 @@ class Export : CliktCommand()
         }
 
         val configFile = ConfigFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

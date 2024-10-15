@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.platforms
 
+import kotlinx.datetime.Instant
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.http.Http
@@ -8,7 +9,6 @@ import teksturepako.pakku.api.models.gh.GhRepoModel
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
-import java.time.Instant
 
 object GitHub : Http(), Provider
 {

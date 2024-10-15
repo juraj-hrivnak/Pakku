@@ -6,6 +6,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.JsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.encode
@@ -14,9 +15,7 @@ import teksturepako.pakku.api.models.mr.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.mr.MrProjectModel
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.projects.*
-import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
-import java.time.Instant
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 
@@ -223,7 +222,7 @@ object Modrinth : Platform(
             .awaitAll()
             .flatten()
             .filterFileModels(mcVersions, loaders)
-            .sortedByDescending { it.datePublished }
+            .sortedByDescending { Instant.parse(it.datePublished) }
             .sortByLoaders(loaders)
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()

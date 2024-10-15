@@ -25,9 +25,7 @@ fun retrieveProjectFiles(
     lockFile: LockFile,
     providers: List<Provider>
 ) : List<Result<ProjectFile, ActionError>> = lockFile.getAllProjects().map { project ->
-    val file = providers.firstNotNullOfOrNull { provider ->
-        project.getFilesForProvider(provider).firstOrNull()
-    }
+    val file = project.getLatestFile(providers)
 
     if (file == null) Err(NoFiles(project, lockFile)) else Ok(file)
 }
@@ -35,68 +33,92 @@ fun retrieveProjectFiles(
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun List<ProjectFile>.fetch(
     onError: suspend (error: ActionError) -> Unit,
-    onProgress: suspend (advance: Long, total: Long) -> Unit,
+    onProgress: suspend (completed: Long, total: Long) -> Unit,
     onSuccess: suspend (path: Path, projectFile: ProjectFile) -> Unit,
-    lockFile: LockFile, configFile: ConfigFile?
+    lockFile: LockFile, configFile: ConfigFile?, retry: Int? = null
 ) = coroutineScope {
-    val maxBytes: AtomicLong = atomic(0L)
+    tailrec suspend fun tryFetch(projectFiles: List<ProjectFile>, retryNumber: Int = 0)
+    {
+        val totalBytes: AtomicLong = atomic(0L)
+        val completedBytes: AtomicLong = atomic(0L)
+        
+        val fetchChannel = produce {
+            for (projectFile in projectFiles)
+            {
+                launch {
+                    val parentProject = projectFile.getParentProject(lockFile) ?: return@launch
 
-    val channel = produce {
-        for (projectFile in this@fetch)
+                    val path = projectFile.getPath(parentProject, configFile)
+
+                    if (path.exists())
+                    {
+                        onError(AlreadyExists(path.toString()))
+                        return@launch
+                    }
+
+                    totalBytes += projectFile.size.toLong()
+                    val prevBytes: AtomicLong = atomic(0L)
+
+                    val bytes = Http().requestByteArray(projectFile.url!!) { bytesSentTotal, _ ->
+                        completedBytes.getAndAdd(bytesSentTotal - prevBytes.value)
+
+                        onProgress(completedBytes.value, totalBytes.value)
+                        prevBytes.getAndSet(bytesSentTotal)
+                    }
+
+                    if (bytes == null)
+                    {
+                        onError(DownloadFailed(path, retryNumber))
+                        send(Err(projectFile))
+                        return@launch
+                    }
+
+                    projectFile.checkIntegrity(bytes, path)?.let { err ->
+                        onError(err)
+
+                        if (err is HashMismatch) return@launch
+                    }
+
+                    send(Ok(Triple(path, projectFile, bytes)))
+                }
+            }
+        }
+
+        val jobs = mutableListOf<Job>()
+        val fails = mutableListOf<Deferred<ProjectFile>>()
+
+        fetchChannel.consumeEach { result ->
+            result.onSuccess { (path, projectFile, bytes) ->
+                jobs += launch(Dispatchers.IO) {
+                    runCatching {
+                        path.createParentDirectories()
+                        path.writeBytes(bytes)
+                    }.onSuccess {
+                        onSuccess(path, projectFile)
+                    }.onFailure {
+                        onError(CouldNotSave(path, it.stackTraceToString()))
+                    }
+                }
+            }.onFailure { projectFile ->
+                fails += async {
+                    projectFile
+                }
+            }
+        }
+
+        jobs.joinAll()
+
+        val filesToRetry = fails.awaitAll()
+
+        if (retry != null && retryNumber < retry && retryNumber < 10 && filesToRetry.isNotEmpty() )
         {
-            launch {
-                val parentProject = projectFile.getParentProject(lockFile)?: return@launch
-
-                val path = projectFile.getPath(parentProject, configFile)
-
-                if (path.exists())
-                {
-                    onError(AlreadyExists(path.toString()))
-                    return@launch
-                }
-
-                maxBytes += projectFile.size.toLong()
-                val prevBytes: AtomicLong = atomic(0L)
-
-                val bytes = Http().requestByteArray(projectFile.url!!) { bytesSentTotal, _ ->
-                    onProgress(bytesSentTotal - prevBytes.value, maxBytes.value)
-                    prevBytes.getAndSet(bytesSentTotal)
-                }
-
-                if (bytes == null)
-                {
-                    onError(DownloadFailed(path))
-                    return@launch
-                }
-
-                projectFile.checkIntegrity(bytes, path)?.let { err ->
-                    onError(err)
-
-                    if (err is HashMismatch) return@launch
-                }
-
-                send(Triple(path, projectFile, bytes))
-            }
+            tryFetch(filesToRetry, retryNumber + 1)
         }
     }
 
-    val jobs = mutableListOf<Job>()
-
-    channel.consumeEach { (path, projectFile, bytes) ->
-        jobs += launch(Dispatchers.IO) {
-            runCatching {
-                path.createParentDirectories()
-                path.writeBytes(bytes)
-            }.onSuccess {
-                onSuccess(path, projectFile)
-            }.onFailure {
-                onError(CouldNotSave(path, it.stackTraceToString()))
-            }
-        }
+    launch {
+        tryFetch(this@fetch)
     }
-
-    jobs.joinAll()
-    this.cancel()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

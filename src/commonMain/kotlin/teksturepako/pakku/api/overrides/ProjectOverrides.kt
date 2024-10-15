@@ -8,6 +8,7 @@ import teksturepako.pakku.api.data.Dirs.PAKKU_DIR
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.debug
+import teksturepako.pakku.debugIf
 import teksturepako.pakku.io.tryOrNull
 import java.io.File
 import kotlin.io.path.Path
@@ -38,4 +39,6 @@ suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> 
     .awaitAll()
     .filterNotNull()
     .toSet()
-    .debug { println("ProjectOverrides = ${it.map { projectOverride -> projectOverride.path }}") }
+    .debugIf({ it.isNotEmpty() }) {
+        println("readProjectOverrides = ${it.map { projectOverride -> projectOverride.path }}")
+    }

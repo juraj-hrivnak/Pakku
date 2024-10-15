@@ -1,6 +1,6 @@
 # pakku fetch
 
-Fetch projects to your modpack folder
+Download project files to your modpack folder
 
 ## Usage
 
@@ -15,6 +15,13 @@ Fetch projects to your modpack folder
 ## Options
 
 <snippet id="snippet-options-all">
+
+<snippet id="snippet-options">
+
+`-r`, `--retry`
+: Retries downloading when it fails, with optional number of times to retry (Defaults to 2)
+
+</snippet>
 
 `-h`, `--help`
 : Show the help message and exit

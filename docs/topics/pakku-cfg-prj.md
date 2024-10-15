@@ -42,6 +42,9 @@ Configure projects
 `-p`, `--subpath`
 : Change the subpath of the project
 
+`-a`, `--alias`
+: Add alias to the project
+
 </snippet>
 
 `-h`, `--help`

@@ -21,6 +21,7 @@ import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
+import com.github.michaelbull.result.fold as resultFold
 
 
 suspend fun export(
@@ -73,7 +74,8 @@ suspend fun ExportProfile.export(
 
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
-        val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(lockFile, configFile, this.name)
+        val results: List<RuleResult> = this.rules.filterNotNull()
+            .produceRuleResults({ onError(this, it) }, lockFile, configFile, this.name)
 
         // Run export rules
         val cachedPaths: List<Path> = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
@@ -264,18 +266,43 @@ suspend fun List<RuleResult>.finishResults(
  * [RuleContext.MissingProject] and [RuleContext.Finished] are applied last.
  */
 suspend fun List<ExportRule>.produceRuleResults(
+    onError: suspend (error: ActionError) -> Unit,
     lockFile: LockFile, configFile: ConfigFile, workingSubDir: String
 ): List<RuleResult>
 {
     val results = this.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().map {
             rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + configFile.getAllOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
-        } + configFile.getAllServerOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
-        } + configFile.getAllClientOverrides().map {
-            rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
+        } + configFile.getAllOverrides().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + configFile.getAllServerOverrides().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + configFile.getAllClientOverrides().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
         } + readProjectOverrides(configFile).map {
             rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
         }

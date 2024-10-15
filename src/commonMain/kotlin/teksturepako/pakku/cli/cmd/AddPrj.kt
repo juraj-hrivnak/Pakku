@@ -11,8 +11,7 @@ import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.NotFoundOn
-import teksturepako.pakku.api.actions.ActionError.ProjNotFound
+import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.CurseForge
@@ -117,12 +116,13 @@ class AddPrj : CliktCommand("prj")
                         handleMissingProject(error)
                     }
                 },
-                onSuccess = { project, isRecommended, reqHandlers ->
+                onSuccess = { project, isRecommended, isReplacing, reqHandlers ->
                     val projMsg = project.getFullMsg()
+                    val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
 
-                    if (ynPrompt("Do you want to add $projMsg?", terminal, isRecommended))
+                    if (ynPrompt("Do you want to ${promptMessage.first} $projMsg?", terminal, isRecommended))
                     {
-                        lockFile.add(project)
+                        if (!isReplacing) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
 
                         if (!noDepsFlag)
@@ -130,7 +130,7 @@ class AddPrj : CliktCommand("prj")
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.pSuccess("$projMsg added")
+                        terminal.pSuccess("$projMsg ${promptMessage.second}")
                     }
                 }, lockFile, platforms, strict
             )

@@ -35,9 +35,9 @@ inline fun <T> T.debug(block: (T) -> Unit): T
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T> Collection<T>.debugIf(
-    predicate: (Collection<T>) -> Boolean, block: (Collection<T>) -> Unit
-): Collection<T>
+inline fun <T> T.debugIf(
+    predicate: (T) -> Boolean, block: (T) -> Unit
+): T
 {
     contract {
         callsInPlace(block, InvocationKind.AT_MOST_ONCE)
