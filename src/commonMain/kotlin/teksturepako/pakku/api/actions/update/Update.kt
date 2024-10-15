@@ -62,16 +62,16 @@ private fun combineProjects(accProject: Project, newProject: Project, platformNa
 {
     val accFile = accProject.files.filter { projectFile ->
         projectFile.type == platformName
-    }
-    val accPublished = accFile.maxOfOrNull { it.datePublished } ?: Instant.DISTANT_PAST
+    }.maxByOrNull { it.datePublished }
+    val accPublished = accFile?.datePublished ?: Instant.DISTANT_PAST
     val newFiles =
-        if (accFile.isEmpty())
+        if (accFile == null)
         {
             newProject.files
         }
         else
         {
-            val accLoaders = accFile.single().loaders
+            val accLoaders = accFile.loaders
             newProject.files.sortedWith(compareBy { file ->
                 val fileLoaders = file.loaders
                 accLoaders.indexOfFirst { it in fileLoaders }.let { if (it == -1) accLoaders.size else it }
