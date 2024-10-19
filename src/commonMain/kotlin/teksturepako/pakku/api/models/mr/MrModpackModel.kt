@@ -55,14 +55,14 @@ data class MrModpackModel(
                 debug { println("CurseForge sub-import") }
 
                 val slugs = projects.mapNotNull { project ->
-                    project.slug[Modrinth.serialName]
+                    project.slug[Modrinth.serialName]?.let { project to it }
                 }
 
                 val cfProjects = slugs.map { slug ->
                     async {
-                        CurseForge.requestProjectFromSlug(slug)?.apply {
+                        CurseForge.requestProjectFromSlug(slug.second)?.apply {
                             files += CurseForge.requestFilesForProject(
-                                lockFile.getMcVersions(), lockFile.getLoaders(), this
+                                lockFile.getMcVersions(), lockFile.getLoaders(), this, projectType = slug.first.type
                             )
                         }
                     }

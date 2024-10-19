@@ -45,6 +45,7 @@ data class CfModpackModel(
         val projects = CurseForge.requestMultipleProjects(this.files.map { it.projectID.toString() })
         val projectFiles = CurseForge.requestMultipleProjectFiles(lockFile.getMcVersions(),
             lockFile.getLoaders(),
+            projects.mapNotNull { project -> project.slug[CurseForge.serialName]?.let { it to project.type } }.toMap(),
             this.files.map { it.fileID.toString() })
 
         projects.assignFiles(projectFiles, CurseForge)
@@ -55,8 +56,8 @@ data class CfModpackModel(
             debug { println("Modrinth sub-import") }
 
             val slugs = projects.mapNotNull { project ->
-                project.slug[CurseForge.serialName]
-            }
+                project.slug[CurseForge.serialName]?.let { it to project.type }
+            }.toMap()
 
             val mrProjects = Modrinth.requestMultipleProjectsWithFiles(
                 lockFile.getMcVersions(), lockFile.getLoaders(), slugs, 1

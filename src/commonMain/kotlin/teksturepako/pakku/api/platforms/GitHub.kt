@@ -29,12 +29,11 @@ object GitHub : Http(), Provider
         )
     }
 
-    override suspend fun requestProject(input: String): Project?
+    override suspend fun requestProject(input: String, projectType: ProjectType?): Project?
     {
         return json.decodeFromString<GhRepoModel>(
-            this.requestBody("https://api.github.com/repos/$input")
-                ?: return null
-        ).toProject()
+            this.requestBody("https://api.github.com/repos/$input") ?: return null
+        ).toProject().also { project -> projectType?.let { project.type = it } }
     }
 
     private fun GhReleaseModel.toProjectFiles(parentId: String): List<ProjectFile>
@@ -63,10 +62,15 @@ object GitHub : Http(), Provider
     }
 
     override suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, fileId: String?, numberOfFiles: Int
+        mcVersions: List<String>,
+        loaders: List<String>,
+        input: String,
+        fileId: String?,
+        numberOfFiles: Int ,
+        projectType: ProjectType?
     ): Project?
     {
-        val project = requestProject(input) ?: return null
+        val project = requestProject(input, projectType) ?: return null
 
         val projectFiles = if (fileId == null)
         {

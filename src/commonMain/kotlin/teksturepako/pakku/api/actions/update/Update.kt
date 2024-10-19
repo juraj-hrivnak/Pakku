@@ -29,7 +29,7 @@ suspend fun updateMultipleProjectsWithFiles(
             .filter { GitHub.serialName in it.slug.keys }
             .map { oldProject ->
                 val ghSlug = oldProject.slug[GitHub.serialName] ?: return@map oldProject
-                GitHub.requestProjectWithFiles(emptyList(), emptyList(), ghSlug)
+                GitHub.requestProjectWithFiles(emptyList(), emptyList(), ghSlug, projectType = oldProject.type)
                     ?.inheritPropertiesFrom(configFile)
                     ?.takeIf { it.hasFiles() }
                     ?: oldProject
@@ -40,7 +40,7 @@ suspend fun updateMultipleProjectsWithFiles(
         val platformProjects = platform.requestMultipleProjectsWithFiles(
             mcVersions,
             loaders,
-            accProjects.mapNotNull { it.id[platform.serialName] },
+            accProjects.mapNotNull { project -> project.id[platform.serialName]?.let { it to project.type } }.toMap(),
             Int.MAX_VALUE
         ).inheritPropertiesFrom(configFile)
 
