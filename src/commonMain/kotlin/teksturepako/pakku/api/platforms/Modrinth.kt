@@ -230,12 +230,16 @@ object Modrinth : Platform(
             .awaitAll()
             .flatten()
             .filterFileModels(mcVersions, loadersWithType)
-            .sortedWith(compareBy({ Instant.parse(it.datePublished) }, { file ->
-                compareByLoaders(projectInfos[file.projectId]?.let {
-                    if (it == ProjectType.DATA_PACK) listOf(DATAPACK_LOADER) else null
-                } ?: loaders)(file)
-            })
-            )
+            .sortedWith(
+                compareByDescending<MrVersionModel> { Instant.parse(it.datePublished) }
+                    .thenBy { file ->
+                        compareByLoaders(projectInfos[file.projectId]?.let {
+                            if (it == ProjectType.DATA_PACK) listOf(
+                                DATAPACK_LOADER
+                            )
+                            else null
+                        } ?: loaders)(file)
+                    })
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()
     }
