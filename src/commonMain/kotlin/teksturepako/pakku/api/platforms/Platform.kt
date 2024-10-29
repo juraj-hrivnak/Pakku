@@ -54,7 +54,7 @@ abstract class Platform(
     ): MutableSet<ProjectFile>
 
     abstract suspend fun requestMultipleProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, projectInfos: Map<String, ProjectType?>, ids: List<String>
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
     ): MutableSet<ProjectFile>
 
 
@@ -95,7 +95,7 @@ abstract class Platform(
     }
 
     abstract suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, projectInfos: Map<String, ProjectType?>, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, numberOfFiles: Int
     ): MutableSet<Project>
 
     companion object

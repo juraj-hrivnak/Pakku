@@ -144,7 +144,7 @@ object Modrinth : Platform(
                 } ?: true // If no loaders found, accept model
         }
 
-    internal fun compareByLoaders(loaders: List<String>) = if (loaders.size <= 1)
+    internal fun compareByLoaders(loaders: List<String>): (MrVersionModel) -> Comparable<*> = if (loaders.size <= 1)
     {
         { 0 }
     }
@@ -187,7 +187,12 @@ object Modrinth : Platform(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?, projectType: ProjectType?
     ): MutableSet<ProjectFile>
     {
-        val actualLoaders = projectType?.let { if (it == ProjectType.DATA_PACK) listOf(DATAPACK_LOADER) else null } ?: loaders
+        val actualLoaders = when (projectType)
+        {
+            ProjectType.DATA_PACK -> listOf(DATAPACK_LOADER)
+            else                  -> loaders
+        }
+
         return if (fileId == null)
         {
             // Multiple files
@@ -213,10 +218,10 @@ object Modrinth : Platform(
     }
 
     override suspend fun requestMultipleProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, projectInfos: Map<String, ProjectType?>, ids: List<String>
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
     ): MutableSet<ProjectFile> = coroutineScope {
         val loadersWithType =
-            (if (projectInfos.values.any { it == ProjectType.DATA_PACK }) listOf(DATAPACK_LOADER) else listOf()) + loaders
+            (if (projectIdsToTypes.values.any { it == ProjectType.DATA_PACK }) listOf(DATAPACK_LOADER) else listOf()) + loaders
         // Chunk requests if there are too many ids; Also do this in parallel
         return@coroutineScope ids.chunked(1_000).map { list ->
             async {
@@ -233,11 +238,12 @@ object Modrinth : Platform(
             .sortedWith(
                 compareByDescending<MrVersionModel> { Instant.parse(it.datePublished) }
                     .thenBy { file ->
-                        compareByLoaders(projectInfos[file.projectId]?.let {
-                            if (it == ProjectType.DATA_PACK) listOf(
-                                DATAPACK_LOADER
-                            )
-                            else null
+                        compareByLoaders(projectIdsToTypes[file.projectId]?.let {
+                            when (it)
+                            {
+                                ProjectType.DATA_PACK -> listOf(DATAPACK_LOADER)
+                                else                  -> null
+                            }
                         } ?: loaders)(file)
                     })
             .flatMap { version -> version.toProjectFiles() }
@@ -245,17 +251,17 @@ object Modrinth : Platform(
     }
 
     override suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, projectInfos: Map<String, ProjectType?>, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, numberOfFiles: Int
     ): MutableSet<Project>
     {
-        val url = encode("projects?ids=${projectInfos.keys.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
+        val url = encode("projects?ids=${projectIdsToTypes.keys.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
         val response = json.decodeFromString<List<MrProjectModel>>(
             this.requestProjectBody(url) ?: return mutableSetOf()
         )
 
         val fileIds = response.flatMap { it.versions }
-        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectInfos, fileIds)
+        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectIdsToTypes, fileIds)
         val projects = response.mapNotNull { it.toProject() }
 
         projects.assignFiles(projectFiles, this)

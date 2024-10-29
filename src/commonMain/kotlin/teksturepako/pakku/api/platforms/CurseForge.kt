@@ -129,7 +129,7 @@ object CurseForge : Platform(
                 } ?: true // If no loaders found, accept model
         }
 
-    internal fun compareByLoaders(loaders: List<String>) = { file: CfModModel.File ->
+    internal fun compareByLoaders(loaders: List<String>): (CfModModel.File) -> Comparable<*> = { file: CfModModel.File ->
         val fileLoaders = file.sortableGameVersions.filter { it.gameVersionTypeId == LOADER_VERSION_TYPE_ID }
             .map { it.gameVersionName.lowercase() }
         loaders.indexOfFirst { it in fileLoaders }.let { if (it == -1) loaders.size else it }
@@ -219,7 +219,7 @@ object CurseForge : Platform(
     }
 
     override suspend fun requestMultipleProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, projectInfos: Map<String, ProjectType?>, ids: List<String>
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
     ): MutableSet<ProjectFile>
     {
         // Handle mcVersions
@@ -240,11 +240,11 @@ object CurseForge : Platform(
     }
 
     override suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, projectInfos: Map<String, ProjectType?>, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, numberOfFiles: Int
     ): MutableSet<Project>
     {
         val response = json.decodeFromString<GetMultipleProjectsResponse>(
-            this.requestProjectBody("mods", MultipleProjectsRequest(projectInfos.keys.map(String::toInt)))
+            this.requestProjectBody("mods", MultipleProjectsRequest(projectIdsToTypes.keys.map(String::toInt)))
                 ?: return mutableSetOf()
         ).data
 
@@ -252,7 +252,7 @@ object CurseForge : Platform(
             model.latestFilesIndexes.map { it.fileId.toString() }
         }
 
-        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectInfos, fileIds)
+        val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectIdsToTypes, fileIds)
         val projects = response.mapNotNull { it.toProject() }
 
         projects.assignFiles(projectFiles, this)

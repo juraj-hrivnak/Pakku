@@ -40,7 +40,7 @@ class Add : CliktCommand()
 
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
-    private val type: ProjectType? by option(
+    private val projectTypeOpt: ProjectType? by option(
         "-t",
         "--type",
         help = "Project type of projects to add",
@@ -82,7 +82,7 @@ class Add : CliktCommand()
         {
             suspend fun handleMissingProject(error: NotFoundOn, arg: ProjectArg)
             {
-                val prompt = promptForProject(error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag}), type).onFailure {
+                val prompt = promptForProject(error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag}), projectTypeOpt).onFailure {
                     if (it is EmptyArg) return add(projectIn, arg, strict = false)
                 }.getOrElse {
                     return terminal.pError(it)
@@ -132,12 +132,12 @@ class Add : CliktCommand()
             arg.fold(
                 commonArg = {
                     projectProvider.requestProjectWithFiles(
-                        lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = type
+                        lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = projectTypeOpt
                     ) to it
                 },
                 gitHubArg = {
                     GitHub.requestProjectWithFiles(
-                        listOf(), listOf(), "${it.owner}/${it.repo}", it.tag, projectType = type
+                        listOf(), listOf(), "${it.owner}/${it.repo}", it.tag, projectType = projectTypeOpt
                     ) to it
                 }
             )

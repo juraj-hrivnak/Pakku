@@ -65,7 +65,7 @@ class AddPrj : CliktCommand("prj")
         }
     }
 
-    private val type: ProjectType? by option(
+    private val projectTypeOpt: ProjectType? by option(
         "-t",
         "--type",
         help = "Project type of project to add",
@@ -100,7 +100,7 @@ class AddPrj : CliktCommand("prj")
         {
             suspend fun handleMissingProject(error: NotFoundOn)
             {
-                val prompt = promptForProject(error.provider, terminal, lockFile, projectType = type).onFailure {
+                val prompt = promptForProject(error.provider, terminal, lockFile, projectType = projectTypeOpt).onFailure {
                     if (it is EmptyArg) return add(projectIn, strict = false)
                 }.getOrElse {
                     return terminal.pError(it)
@@ -147,19 +147,19 @@ class AddPrj : CliktCommand("prj")
 
         val cf = cfOpt?.let {
             CurseForge.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = type
+                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = projectTypeOpt
             )
         }
 
         val mr = mrOpt?.let {
             Modrinth.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = type
+                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = projectTypeOpt
             )
         }
 
         val gh = ghOpt?.let {
             GitHub.requestProjectWithFiles(
-                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag, projectType = type
+                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag, projectType = projectTypeOpt
             )
         }
 

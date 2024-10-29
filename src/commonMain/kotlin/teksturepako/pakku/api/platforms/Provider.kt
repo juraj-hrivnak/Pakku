@@ -28,7 +28,7 @@ interface Provider
     val siteUrl: String?
 
     /** Requests a [project][Project] based on provided [input]. */
-    suspend fun requestProject(input: String, projectType: ProjectType?): Project?
+    suspend fun requestProject(input: String, projectType: ProjectType? = null): Project?
 
     /**
      * Requests project with files for specified combinations of Minecraft versions and mod loaders.
