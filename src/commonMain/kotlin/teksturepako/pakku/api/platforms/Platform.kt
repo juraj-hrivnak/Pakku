@@ -46,11 +46,15 @@ abstract class Platform(
      * [projectId] & [fileId].
      */
     abstract suspend fun requestProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String? = null
+        mcVersions: List<String>,
+        loaders: List<String>,
+        projectId: String,
+        fileId: String? = null,
+        projectType: ProjectType? = null
     ): MutableSet<ProjectFile>
 
     abstract suspend fun requestMultipleProjectFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
     ): MutableSet<ProjectFile>
 
 
@@ -59,11 +63,16 @@ abstract class Platform(
      * [number of files][numberOfFiles] to take.
      */
     suspend fun requestFilesForProject(
-        mcVersions: List<String>, loaders: List<String>, project: Project, fileId: String? = null, numberOfFiles: Int = 1
+        mcVersions: List<String>,
+        loaders: List<String>,
+        project: Project,
+        fileId: String? = null,
+        numberOfFiles: Int = 1,
+        projectType: ProjectType? = null
     ): MutableSet<ProjectFile>
     {
         return project.id[this.serialName]?.let { projectId ->
-            this.requestProjectFiles(mcVersions, loaders, projectId, fileId).take(numberOfFiles).toMutableSet()
+            this.requestProjectFiles(mcVersions, loaders, projectId, fileId, projectType).take(numberOfFiles).toMutableSet()
         } ?: mutableSetOf()
     }
 
@@ -72,16 +81,21 @@ abstract class Platform(
      * with optional [number of files][numberOfFiles] to take.
      */
     override suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, fileId: String?, numberOfFiles: Int
+        mcVersions: List<String>,
+        loaders: List<String>,
+        input: String,
+        fileId: String?,
+        numberOfFiles: Int,
+        projectType: ProjectType?
     ): Project?
     {
-        return requestProject(input)?.apply {
-            files.addAll(requestFilesForProject(mcVersions, loaders, this, fileId, numberOfFiles))
+        return requestProject(input, projectType)?.apply {
+            files.addAll(requestFilesForProject(mcVersions, loaders, this, fileId, numberOfFiles, projectType))
         }
     }
 
     abstract suspend fun requestMultipleProjectsWithFiles(
-        mcVersions: List<String>, loaders: List<String>, ids: List<String>, numberOfFiles: Int
+        mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, numberOfFiles: Int
     ): MutableSet<Project>
 
     companion object

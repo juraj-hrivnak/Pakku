@@ -12,9 +12,10 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectType
 
 suspend fun promptForProject(
-    provider: Provider, terminal: Terminal, lockFile: LockFile, fileId: String? = null
+    provider: Provider, terminal: Terminal, lockFile: LockFile, fileId: String? = null, projectType: ProjectType? = null
 ): Result<Pair<Project?, ProjectArg>, ActionError>
 {
     val prompt: String? = StringPrompt("Specify ${provider.name}", terminal).ask()
@@ -26,12 +27,12 @@ suspend fun promptForProject(
     return arg.fold(
         commonArg = {
             Ok(provider.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId ?: fileId
+                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId ?: fileId, projectType = projectType
             ) to it)
         },
         gitHubArg = {
             Ok(GitHub.requestProjectWithFiles(
-                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag ?: fileId
+                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag ?: fileId, projectType = projectType
             ) to it)
         }
     )

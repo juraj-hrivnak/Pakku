@@ -27,6 +27,9 @@ Specify the project precisely
 `--gh`, `--github`
 : GitHub repository URL or `{owner}/{repo}`
 
+`-t`, `--type=(mod|resource_pack|data_pack|world|shader)`
+: Project type of project to add
+
 </snippet>
 
 `-h`, `--help`

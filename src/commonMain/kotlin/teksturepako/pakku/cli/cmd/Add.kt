@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrElse
@@ -17,6 +18,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
@@ -37,6 +39,13 @@ class Add : CliktCommand()
     }
 
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
+
+    private val projectTypeOpt: ProjectType? by option(
+        "-t",
+        "--type",
+        help = "Project type of projects to add",
+        metavar = "project type"
+    ).enum<ProjectType>()
 
     private val flags by findOrSetObject { mutableMapOf<String, Boolean>() }
 
@@ -73,7 +82,7 @@ class Add : CliktCommand()
         {
             suspend fun handleMissingProject(error: NotFoundOn, arg: ProjectArg)
             {
-                val prompt = promptForProject(error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag})).onFailure {
+                val prompt = promptForProject(error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag}), projectTypeOpt).onFailure {
                     if (it is EmptyArg) return add(projectIn, arg, strict = false)
                 }.getOrElse {
                     return terminal.pError(it)
@@ -123,12 +132,12 @@ class Add : CliktCommand()
             arg.fold(
                 commonArg = {
                     projectProvider.requestProjectWithFiles(
-                        lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId
+                        lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = projectTypeOpt
                     ) to it
                 },
                 gitHubArg = {
                     GitHub.requestProjectWithFiles(
-                        listOf(), listOf(), "${it.owner}/${it.repo}", it.tag
+                        listOf(), listOf(), "${it.owner}/${it.repo}", it.tag, projectType = projectTypeOpt
                     ) to it
                 }
             )

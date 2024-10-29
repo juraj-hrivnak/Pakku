@@ -36,6 +36,9 @@ Add projects
 `-D`, `--no-deps`
 : Ignore resolving dependencies
 
+`-t`, `--type=(mod|resource_pack|data_pack|world|shader)`
+: Project type of projects to add
+
 </snippet>
 
 `-h`, `--help`
