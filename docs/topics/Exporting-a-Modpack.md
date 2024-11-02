@@ -13,7 +13,10 @@ Pakku will try to add the file from the other platform,
 but only if it is redistributable.
 </note>
 
-Example output:
+The location of the output files is: `./build/<export_profile>/<modpack_file>`.
+Where: `<export_profile>` can be `curseforge`, `modrinth` or `serverpack`.
+
+Example output: 
 
 <img src="screenshot_export.png" alt="export image"/>
 
