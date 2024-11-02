@@ -25,7 +25,7 @@ Specify the project precisely
 : Modrinth project slug or ID
 
 `--gh`, `--github`
-: GitHub repository URL or `{owner}/{repo}`
+: GitHub `<owner>/<repo>` or repository URL
 
 `-t`, `--type=(mod|resource_pack|data_pack|world|shader)`
 : Project type of project to add

@@ -57,7 +57,7 @@ class AddPrj : CliktCommand("prj")
     }
 
     private val ghOpt: ProjectArg.GitHubArg? by option(
-        "--gh", "--github", help = "GitHub repository URL or `{owner}/{repo}`"
+        "--gh", "--github", help = "GitHub repository URL or `<owner>/<repo>`"
     ).convert {
         splitGitHubArg(it).getOrElse { err ->
             terminal.pError(err)
