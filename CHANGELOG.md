@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.21.0
+
+- Improved projects updating, by @SettingDust in [#49](https://github.com/juraj-hrivnak/Pakku/pull/49).
+  - Projects now prefer their current loaders of project files when updating.
+- Added option the specify the project type when adding projects, by @SettingDust in [#54](https://github.com/juraj-hrivnak/Pakku/pull/54).
+  - Fixed duplicated project files when updating.
+- Updated _Exporting a Modpack_ docs page and improved the _Managing Projects_ docs page.
+
 ## v0.20.2
 
 - Fixed an issue that caused project files from CurseForge to be outdated due to incorrect release date parsing.
