@@ -10,7 +10,7 @@ import java.util.*
 plugins {
     kotlin("multiplatform") version libs.versions.kotlin
     kotlin("plugin.serialization") version libs.versions.kotlin
-    id("org.jetbrains.dokka") version libs.versions.kotlin
+    id("org.jetbrains.dokka") version libs.versions.dokka
     id("io.ktor.plugin") version libs.versions.ktor
     id("maven-publish")
 }
@@ -71,26 +71,26 @@ kotlin {
                 implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
                 // Coroutines
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
                 // Serialization
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
                 // AtomicFU
-                implementation("org.jetbrains.kotlinx:atomicfu:0.24.0")
+                implementation("org.jetbrains.kotlinx:atomicfu:0.26.0")
 
                 // Datetime
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
 
                 // URL Encoding
-                implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
+                implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.6.0")
 
                 // Kotlin Result
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
                 // CLI
-                implementation("com.github.ajalt.clikt:clikt:5.0.0")
-                implementation("com.github.ajalt.clikt:clikt-markdown:5.0.0")
+                implementation("com.github.ajalt.clikt:clikt:5.0.1")
+                implementation("com.github.ajalt.clikt:clikt-markdown:5.0.1")
                 implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.0")
 
                 // Logging
@@ -157,9 +157,11 @@ tasks.withType<Jar> {
         {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             val main by kotlin.jvm().compilations.getting
-            from(main.runtimeDependencyFiles.files
-                .filter { it.name.endsWith("jar") }
-                .map { zipTree(it) })
+            from(
+                main.runtimeDependencyFiles.files
+                    .filter { it.name.endsWith("jar") }
+                    .map { zipTree(it) }
+            )
         }
     }
 }
