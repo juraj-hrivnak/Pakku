@@ -71,7 +71,7 @@ class Fetch : CliktCommand()
         )
 
         val progressBar = progressBarContextLayout(spacing = 2) {
-            text { context.toString() }
+            text { context }
             spinner(Spinner.Dots())
             percentage()
         }.animateInCoroutine(terminal, fetchMsg("Fetching"))
