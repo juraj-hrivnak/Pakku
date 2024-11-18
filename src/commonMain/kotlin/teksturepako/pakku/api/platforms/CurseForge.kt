@@ -87,6 +87,8 @@ object CurseForge : Platform(
             id = mutableMapOf(serialName to id.toString()),
             redistributable = allowModDistribution ?: isAvailable,
             files = mutableSetOf(),
+
+            icon = mutableMapOf(serialName to logo?.url)
         )
     }
 

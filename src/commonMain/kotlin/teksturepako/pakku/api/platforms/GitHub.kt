@@ -26,6 +26,8 @@ object GitHub : Http(), Provider
             id = mutableMapOf(serialName to id.toString()),
             redistributable = license != null && license.spdxId != "ARR",
             files = mutableSetOf(),
+
+            icon = mutableMapOf(serialName to owner.avatarUrl)
         )
     }
 

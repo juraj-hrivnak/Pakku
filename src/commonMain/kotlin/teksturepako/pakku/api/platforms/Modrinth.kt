@@ -105,6 +105,8 @@ object Modrinth : Platform(
             id = mutableMapOf(serialName to id),
             redistributable = license.id != "ARR",
             files = mutableSetOf(),
+
+            icon = mutableMapOf(serialName to iconUrl)
         )
     }
 
@@ -204,7 +206,8 @@ object Modrinth : Platform(
                 .flatMap { version -> version.toProjectFiles() }
                 .debugIfEmpty {
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
-                }.toMutableSet()
+                }
+                .toMutableSet()
         }
         else
         {
@@ -245,7 +248,8 @@ object Modrinth : Platform(
                                 else                  -> null
                             }
                         } ?: loaders)(file)
-                    })
+                    }
+            )
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()
     }

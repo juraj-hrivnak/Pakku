@@ -8,6 +8,7 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import teksturepako.pakku.api.actions.ActionError
 import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
 import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
@@ -45,7 +46,9 @@ data class Project(
     private var subpath: String? = null,
     var aliases: MutableSet<String>? = null,
 
-    var files: MutableSet<ProjectFile>
+    var files: MutableSet<ProjectFile>,
+
+    @Transient val icon: MutableMap<String, String?> = mutableMapOf()
 )
 {
     /**
@@ -85,6 +88,8 @@ data class Project(
                 aliases = this.aliases?.plus(other.aliases ?: emptySet())?.toMutableSet() ?: other.aliases,
 
                 files = (this.files + other.files).toMutableSet(),
+
+                icon = (this.icon + other.icon).toMutableMap()
             )
         )
     }
