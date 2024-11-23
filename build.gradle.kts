@@ -163,6 +163,11 @@ tasks.withType<Jar> {
                     .map { zipTree(it) }
             )
         }
+        else
+        {
+            // Don't bundle to sources jar
+            exclude("**/CurseForgeApiKey.kt")
+        }
     }
 }
 
@@ -234,6 +239,10 @@ if (nativeEnabled)
 }
 
 tasks.named("compileKotlinJvm") {
+    dependsOn("embedApiKey")
+}
+
+tasks.named("jvmSourcesJar") {
     dependsOn("embedApiKey")
 }
 
