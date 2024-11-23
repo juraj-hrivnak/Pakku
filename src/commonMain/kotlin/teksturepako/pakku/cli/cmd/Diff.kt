@@ -273,16 +273,25 @@ class Diff : CliktCommand()
             file.outputStream().close()
 
             file.appendText("```diff\n")
-            addedMCVersions.forEach { file.appendText("+ $it\n") }
-            removedMCVersions.forEach { file.appendText("- $it\n") }
-            if (didModLoaderChange || didProjectsChange) file.appendText("\n")
-            addedModLoaders.forEach { file.appendText("+ $it\n") }
-            removedModLoaders.forEach { file.appendText("- $it\n") }
-            updatedModLoaders.forEach { file.appendText("! $it\n") }
-            if (didProjectsChange) file.appendText("\n")
-            addedProjects.forEach { file.appendText("+ $it\n") }
-            removedProjects.forEach { file.appendText("- $it\n") }
-            updatedProjects.forEach { file.appendText("! $it\n") }
+            if (didMCVersionsChange)
+            {
+                addedMCVersions.forEach { file.appendText("+ $it\n") }
+                removedMCVersions.forEach { file.appendText("- $it\n") }
+                if (didModLoaderChange || didProjectsChange) file.appendText("\n")
+            }
+            if (didModLoaderChange)
+            {
+                addedModLoaders.forEach { file.appendText("+ $it\n") }
+                removedModLoaders.forEach { file.appendText("- $it\n") }
+                updatedModLoaders.forEach { file.appendText("! $it\n") }
+                if (didProjectsChange) file.appendText("\n")
+            }
+            if (didProjectsChange)
+            {
+                addedProjects.forEach { file.appendText("+ $it\n") }
+                removedProjects.forEach { file.appendText("- $it\n") }
+                updatedProjects.forEach { file.appendText("! $it\n") }
+            }
             file.appendText("```\n")
         }
         if (markdownOpt != null)
