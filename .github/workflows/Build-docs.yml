@@ -56,16 +56,13 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: 📦 Build API docs using Dokka
-        uses: burrunan/gradle-cache-action@v1
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: wrapper
-          arguments: dokkaHtml
-          properties: |
-            org.gradle.vfs.watch=false
-            org.gradle.vfs.verbose=false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: 📦 Build API docs using Dokka
+        run: ./gradlew dokkaHtml
 
       - name: Upload API docs
         uses: actions/upload-artifact@v4
