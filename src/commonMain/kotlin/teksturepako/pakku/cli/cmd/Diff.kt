@@ -303,7 +303,7 @@ class Diff : CliktCommand()
                     addedMCVersions.forEach { file.appendText("- $it\n") }
                     if (removedMCVersions.isNotEmpty() || didModLoaderChange || didProjectsChange) file.appendText("\n")
                 }
-                if (addedMCVersions.isNotEmpty())
+                if (removedMCVersions.isNotEmpty())
                 {
                     file.appendText("${subHeader}Removed\n\n")
                     removedMCVersions.forEach { file.appendText("- $it\n") }
