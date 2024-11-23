@@ -25,11 +25,16 @@ abstract class Platform(
 
     abstract fun getUrlForProjectType(projectType: ProjectType): String
 
-    suspend fun requestProjectBody(input: String): String? =
-        this.requestBody("$apiUrl/v$apiVersion/$input")
+    open fun getCommonRequestUrl(
+        apiUrl: String = this.apiUrl,
+        apiVersion: Int = this.apiVersion
+    ) = "$apiUrl/v$apiVersion"
 
-    suspend inline fun <reified T> requestProjectBody(input: String, bodyContent: T): String? =
-        this.requestBody("$apiUrl/v$apiVersion/$input", bodyContent)
+    suspend fun requestProjectBody(input: String): String? =
+        this.requestBody("${this.getCommonRequestUrl()}/$input")
+
+    suspend fun requestProjectBody(input: String, bodyContent: () -> String): String? =
+        this.requestBody("${this.getCommonRequestUrl()}/$input", bodyContent)
 
     /** Requests a [project][Project] using its [ID][id]. */
     abstract suspend fun requestProjectFromId(id: String): Project?
@@ -62,7 +67,7 @@ abstract class Platform(
      * [Requests project files][requestProjectFiles] for provided [project][Project], with optional
      * [number of files][numberOfFiles] to take.
      */
-    suspend fun requestFilesForProject(
+    open suspend fun requestFilesForProject(
         mcVersions: List<String>,
         loaders: List<String>,
         project: Project,

@@ -7,6 +7,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.encode
@@ -278,8 +280,9 @@ object Modrinth : Platform(
     ): MutableSet<Project>
     {
         val response = json.decodeFromString<Map<String, MrVersionModel>>(
-            this.requestProjectBody("version_files", GetVersionsFromHashesRequest(hashes, algorithm))
-                ?: return mutableSetOf()
+            this.requestProjectBody("version_files") {
+                Json.encodeToString(GetVersionsFromHashesRequest(hashes, algorithm))
+            } ?: return mutableSetOf()
         ).values
 
         val projectFiles = response.flatMap { version -> version.toProjectFiles().take(1) }
@@ -296,8 +299,9 @@ object Modrinth : Platform(
     ): MutableSet<ProjectFile>
     {
         return json.decodeFromString<Map<String, MrVersionModel>>(
-            this.requestProjectBody("version_files", GetVersionsFromHashesRequest(hashes, algorithm))
-                ?: return mutableSetOf()
+            this.requestProjectBody("version_files") {
+                Json.encodeToString(GetVersionsFromHashesRequest(hashes, algorithm))
+            } ?: return mutableSetOf()
         ).values
             .flatMap { version -> version.toProjectFiles().take(1) }
             .toMutableSet()

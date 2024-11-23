@@ -168,14 +168,14 @@ tasks.withType<Jar> {
 
 // -- VERSION --
 
-private val sourceFile = File("$rootDir/resources/teksturepako/pakku/TemplateVersion.kt")
-private val destFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/Version.kt")
+private val versionSourceFile = File("$rootDir/resources/teksturepako/pakku/TemplateVersion.kt")
+private val versionDestFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/Version.kt")
 
 tasks.register("generateVersion") {
     group = "build"
 
-    inputs.file(sourceFile)
-    outputs.file(destFile)
+    inputs.file(versionSourceFile)
+    outputs.file(versionDestFile)
 
     doFirst {
         generateVersion()
@@ -198,11 +198,53 @@ tasks.named("jvmSourcesJar") {
 }
 
 fun generateVersion() {
-    val inputStream: InputStream = sourceFile.inputStream()
+    val inputStream: InputStream = versionSourceFile.inputStream()
 
-    destFile.printWriter().use { out ->
+    versionDestFile.printWriter().use { out ->
         inputStream.bufferedReader().forEachLine { inputLine ->
             val newLine = inputLine.replace("__VERSION", version.toString())
+            out.println(newLine)
+        }
+    }
+
+    inputStream.close()
+}
+
+// -- API KEY --
+
+private val apiKeySourceFile = File("$rootDir/resources/teksturepako/pakku/api/platforms/TemplateApiKey.kt")
+private val apiKeyDestFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/api/platforms/CurseForgeApiKey.kt")
+
+tasks.register("embedApiKey") {
+    group = "build"
+
+    inputs.file(apiKeySourceFile)
+    outputs.file(apiKeyDestFile)
+
+    doLast {
+        embedApiKey()
+    }
+}
+
+if (nativeEnabled)
+{
+    tasks.named("compileKotlinNative") {
+        dependsOn("embedApiKey")
+    }
+}
+
+tasks.named("compileKotlinJvm") {
+    dependsOn("embedApiKey")
+}
+
+fun embedApiKey() {
+    val apiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
+
+    val inputStream: InputStream = apiKeySourceFile.inputStream()
+
+    apiKeyDestFile.printWriter().use { out ->
+        inputStream.bufferedReader().forEachLine { inputLine ->
+            val newLine = inputLine.replace("__CURSEFORGE_API_KEY", apiKey.replace("$", "\\$"))
             out.println(newLine)
         }
     }
