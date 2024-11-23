@@ -10,6 +10,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.createDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalPathApi::class)
@@ -110,7 +111,7 @@ class DiffTest
         }
     }
 
-//    @Test
+    @Test
     fun `should success if newlines around markdown headings are correct`()
     {
         generateDiffTestCases()
@@ -155,6 +156,7 @@ class DiffTest
                 contentLines.forEachIndexed { it, line ->
                     // Identify the line with the heading.
                     // The headerSize = 0 option does not have to be checked since the logic for the header size does not modify newlines.
+                    // TODO: Invert this "if" once "continue" in lambdas is no longer unstable
                     if (line.startsWith("#"))
                     {
                         // Check the previous line for a newline
@@ -233,28 +235,31 @@ class DiffTest
         }
     }
 
-
-    /*
-    //    @Test
+    // The primary purpose of this test is to make sure that Pakku correctly identifies which project/versions changed.
+    // Formatting of all combinations is checked in the above tests.
+    // The test can easily be expanded by increasing the test counter below and adding more expected result files to the diffMatch folder.
+    @Test
     fun `should success diff matches`()
     {
+        val cmd = Diff()
 
+        val numberOfTestCases = 1
         for (testNumber in 1..numberOfTestCases)
         {
-            val oldLockFile = "$testInputFiles/old/$testNumber.json"
-            val newLockFile = "$testInputFiles/new/$testNumber.json"
+            val oldLockFile = File("src/commonTest/resources/diffTest/diffMatch/$testNumber-old.json")
+            val newLockFile = File("src/commonTest/resources/diffTest/diffMatch/$testNumber-new.json")
 
-            val outputFileMD = "$testOutputPath/$testNumber-markdown.md"
-            val expectedOutputFileMD = "$testInputFiles/expected_output/$testNumber-markdown.md"
+            val outputFileMD = "$workingPath/$testNumber-markdown-expected-generated.md"
+            val expectedOutputFileMD = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-expected.md"
 
-            val outputFileMDVerbose = "$testOutputPath/$testNumber-markdown-verbose.md"
-            val expectedOutputFileMDVerbose = "$testInputFiles/expected_output/$testNumber-markdown-verbose.md"
+            val outputFileMDVerbose = "$workingPath/$testNumber-markdown-verbose-expected-generated.md"
+            val expectedOutputFileMDVerbose = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-verbose-expected.md"
 
-            val outputFileMDDiff = "$testOutputPath/$testNumber-markdown-diff.md"
-            val expectedOutputFileMDDiff = "$testInputFiles/expected_output/$testNumber-markdown-diff.md"
+            val outputFileMDDiff = "$workingPath/$testNumber-markdown-diff-expected-generated.md"
+            val expectedOutputFileMDDiff = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-diff-expected.md"
 
-            val outputFileMDDiffVerbose = "$testOutputPath/$testNumber-markdown-diff-verbose.md"
-            val expectedOutputFileMDDiffVerbose = "$testInputFiles/expected_output/$testNumber-markdown-diff-verbose.md"
+            val outputFileMDDiffVerbose = "$workingPath/$testNumber-markdown-diff-verbose-expected-generated.md"
+            val expectedOutputFileMDDiffVerbose = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-diff-verbose-expected.md"
 
             cmd.test("$oldLockFile $newLockFile --markdown $outputFileMD")
             cmd.test("$oldLockFile $newLockFile --verbose --markdown $outputFileMDVerbose")
@@ -262,26 +267,34 @@ class DiffTest
             cmd.test("$oldLockFile $newLockFile --verbose --markdown-diff $outputFileMDDiffVerbose")
 
             assertEquals(
-                expected = Files.readAllLines(File(expectedOutputFileMD).toPath()),
-                actual = Files.readAllLines(File(outputFileMD).toPath()),
-                message = "Test diff failed at $testNumber-markdown.md\n"
+                actual = File(outputFileMD).readText(),
+                expected = File(expectedOutputFileMD).readText(),
+                message = "Test file ${File(outputFileMD)} does not match ${File(expectedOutputFileMD)}"
             )
+
             assertEquals(
-                expected = Files.readAllLines(File(expectedOutputFileMDVerbose).toPath()),
-                actual = Files.readAllLines(File(outputFileMDVerbose).toPath()),
-                message = "Test diff failed at $testNumber-markdown-verbose.md\n"
+                actual = File(outputFileMDVerbose).readText(),
+                expected = File(expectedOutputFileMDVerbose).readText(),
+                message = "Test file ${File(outputFileMDVerbose)} does not match ${File(expectedOutputFileMDVerbose)}"
             )
+
             assertEquals(
-                expected = Files.readAllLines(File(expectedOutputFileMDDiff).toPath()),
-                actual = Files.readAllLines(File(outputFileMDDiff).toPath()),
-                message = "Test diff failed at $testNumber-markdown-diff.md\n"
+                actual = File(outputFileMD).readText(),
+                expected = File(expectedOutputFileMD).readText(),
+                message = "Test file ${File(outputFileMD)} does not match ${File(expectedOutputFileMD)}"
             )
+
             assertEquals(
-                expected = Files.readAllLines(File(expectedOutputFileMDDiffVerbose).toPath()),
-                actual = Files.readAllLines(File(outputFileMDDiffVerbose).toPath()),
-                message = "Test diff failed at $testNumber-markdown-diff-verbose.md\n"
+                actual = File(outputFileMDDiff).readText(),
+                expected = File(expectedOutputFileMDDiff).readText(),
+                message = "Test file ${File(outputFileMDDiff)} does not match ${File(expectedOutputFileMDDiff)}"
+            )
+
+            assertEquals(
+                actual = File(outputFileMDDiffVerbose).readText(),
+                expected = File(expectedOutputFileMDDiffVerbose).readText(),
+                message = "Test file ${File(outputFileMDDiffVerbose)} does not match ${File(expectedOutputFileMDDiffVerbose)}"
             )
         }
     }
-    */
 }
