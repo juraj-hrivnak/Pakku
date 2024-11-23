@@ -71,7 +71,10 @@ object Modrinth : Platform(
 
     fun checkRateLimit()
     {
-        if (requestsRemaining < 200 && requestsRemaining != 0) println("Rate limit remaining: $requestsRemaining")
+        if (requestsRemaining < 200 && requestsRemaining != 0)
+        {
+            println("Modrinth: Rate limit remaining: $requestsRemaining")
+        }
     }
 
     // -- PROJECT --

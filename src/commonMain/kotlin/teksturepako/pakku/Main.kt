@@ -9,6 +9,7 @@ import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.http.client
+import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
@@ -33,6 +34,8 @@ fun main(args: Array<String>)
 
     // Check Modrinth's rate limit
     Modrinth.checkRateLimit()
+
+    debug { CurseForge.checkApiKey() }
 
     debug { println("Program arguments: ${args.joinToString()}") }
 

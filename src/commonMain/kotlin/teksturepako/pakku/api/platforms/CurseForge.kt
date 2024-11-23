@@ -43,6 +43,11 @@ object CurseForge : Platform(
 
     private val apiKey: String? = CURSEFORGE_API_KEY.takeIf { it.isNotBlank() }
 
+    fun checkApiKey()
+    {
+        if (apiKey != null) println("CurseForge: Using embedded API key.")
+    }
+
     override fun getCommonRequestUrl(apiUrl: String, apiVersion: Int): String
     {
         // In dev environment
