@@ -110,8 +110,6 @@ object Modrinth : Platform(
             id = mutableMapOf(serialName to id),
             redistributable = license.id != "ARR",
             files = mutableSetOf(),
-
-            icon = mutableMapOf(serialName to iconUrl)
         )
     }
 
