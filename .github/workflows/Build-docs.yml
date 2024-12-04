@@ -88,7 +88,7 @@ jobs:
           chmod +x .github/create-dist-forms.sh
           .github/create-dist-forms.sh
 
-      - name: Upload API docs
+      - name: Upload Distribution Forms
         uses: actions/upload-artifact@v4
         with:
           name: dist-forms

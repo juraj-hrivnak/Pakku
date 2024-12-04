@@ -63,37 +63,37 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                // Kotlin
+                // Kotlin | Apache-2.0
                 implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-                // Ktor
+                // Ktor | Apache-2.0
                 implementation("io.ktor:ktor-client-core:$ktorVersion")
                 implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
-                // Coroutines
+                // Coroutines | Apache-2.0
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
-                // Serialization
+                // Serialization | Apache-2.0
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
-                // AtomicFU
+                // AtomicFU | Apache-2.0
                 implementation("org.jetbrains.kotlinx:atomicfu:0.26.0")
 
-                // Datetime
+                // Datetime | Apache-2.0
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
 
-                // URL Encoding
+                // URL Encoding | Apache-2.0
                 implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.6.0")
 
-                // Kotlin Result
+                // Kotlin Result | ISC
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
-                // CLI
+                // Clikt | Apache-2.0
                 implementation("com.github.ajalt.clikt:clikt:5.0.1")
                 implementation("com.github.ajalt.clikt:clikt-markdown:5.0.1")
                 implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.0")
 
-                // Logging
+                // SLF4J Logging | MIT
                 implementation("org.slf4j:slf4j-api:2.0.7")
                 implementation("org.slf4j:slf4j-simple:2.0.7")
             }

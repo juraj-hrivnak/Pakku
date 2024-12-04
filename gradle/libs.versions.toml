@@ -2,4 +2,4 @@
 kotlin = "2.0.21"
 ktor = "3.0.1"
 kotest = "5.0.2"
-dokka = "2.0.0-Beta"
+dokka = "1.9.20"
