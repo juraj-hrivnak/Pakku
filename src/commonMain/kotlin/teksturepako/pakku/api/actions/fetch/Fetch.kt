@@ -110,7 +110,7 @@ suspend fun List<ProjectFile>.fetch(
 
         val filesToRetry = fails.awaitAll()
 
-        if (retry != null && retryNumber < retry && retryNumber < 10 && filesToRetry.isNotEmpty() )
+        if (retry != null && retryNumber < retry && retryNumber < 10 && filesToRetry.isNotEmpty())
         {
             tryFetch(filesToRetry, retryNumber + 1)
         }

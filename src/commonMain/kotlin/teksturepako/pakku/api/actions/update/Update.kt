@@ -73,7 +73,8 @@ private fun combineProjects(accProject: Project, newProject: Project, platformNa
         })
     }
 
-    val updatedFiles = (newFiles.take(numberOfFiles) + accProject.files).filterNot { projectFile ->
+    val updatedFiles = (newFiles.take(numberOfFiles) + accProject.files)
+        .filterNot { projectFile ->
             projectFile.type == platformName && projectFile.datePublished < accPublished
         }
         .distinctBy { it.type }
