@@ -3,15 +3,17 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.export.ExportProfile
 import teksturepako.pakku.api.actions.export.export
-import teksturepako.pakku.api.actions.export.profiles.CurseForgeProfile
-import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile
-import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
+import teksturepako.pakku.api.actions.export.profiles.*
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
@@ -26,6 +28,11 @@ import kotlin.io.path.fileSize
 
 class Export : CliktCommand()
 {
+    private val profiles: List<(LockFile, ConfigFile) -> ExportProfile> by argument(
+        name = "profiles",
+        help = "Profiles to export. Will export server pack, mrpack and CurseForge pack if empty"
+    ).choice(*ExportProfile.registry.entries.map { it.toPair() }.toTypedArray()).multiple()
+
     override fun help(context: Context) = "Export modpack"
 
     override fun run(): Unit = runBlocking {
@@ -47,12 +54,18 @@ class Export : CliktCommand()
             return@runBlocking
         }
 
-        export(
-            profiles = listOf(
+        val profiles = profiles.map {
+            it(lockFile, configFile)
+        }.ifEmpty {
+            listOf(
                 CurseForgeProfile(lockFile, configFile),
                 ModrinthProfile(lockFile, configFile),
-                ServerPackProfile()
-            ),
+                ServerPackProfile(),
+            )
+        }
+
+        export(
+            profiles = profiles,
             onError = { profile, error ->
                 if (error !is AlreadyExists)
                 {

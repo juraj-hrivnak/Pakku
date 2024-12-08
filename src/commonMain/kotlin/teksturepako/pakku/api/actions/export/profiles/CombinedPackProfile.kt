@@ -1,19 +1,19 @@
 package teksturepako.pakku.api.actions.export.profiles
 
 import teksturepako.pakku.api.actions.export.ExportProfile
-import teksturepako.pakku.api.actions.export.rules.exportServerPack
+import teksturepako.pakku.api.actions.export.rules.exportCombinedPack
 import teksturepako.pakku.api.actions.export.rules.replacementRule
 
-class ServerPackProfile : ExportProfile(
-    name = "serverpack",
+class CombinedPackProfile : ExportProfile(
+    name = NAME,
     rules = listOf(
-        exportServerPack(),
+        exportCombinedPack(),
         replacementRule()
     )
 )
 {
     companion object
     {
-        const val NAME = "serverpack"
+        const val NAME = "combinedpack"
     }
 }
