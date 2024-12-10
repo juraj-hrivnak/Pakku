@@ -33,7 +33,7 @@ class Diff : CliktCommand()
     private val verboseOpt: Boolean by option(
         "-v", "--verbose", help = "Gives detailed information on which mods were updated"
     ).flag()
-    private val headerSize by option(
+    private val headerSizeOpt by option(
         "-h", "--header-size", help = "Specifies the base header size. Default = 2",
     ).int().restrictTo(0..5).default(2)
 
@@ -300,8 +300,8 @@ class Diff : CliktCommand()
             file.createNewFile()
             file.outputStream().close()
 
-            val mainHeader = if (headerSize > 0) "${"#".repeat(headerSize)} " else ""
-            val subHeader = if (headerSize > 0) "${"#".repeat(headerSize + 1)} " else ""
+            val mainHeader = if (headerSizeOpt > 0) "${"#".repeat(headerSizeOpt)} " else ""
+            val subHeader = if (headerSizeOpt > 0) "${"#".repeat(headerSizeOpt + 1)} " else ""
 
             if (didMCVersionsChange)
             {
