@@ -58,13 +58,13 @@ class Diff : CliktCommand()
         val didMCVersionsChange = allOldMCVersions != allNewMCVersions
         val addedMCVersions = if (didMCVersionsChange)
         {
-            getAddedMCVersionsAndLoaders(allOldMCVersions, allNewMCVersions)
+            allNewMCVersions - allOldMCVersions
         }
         else emptySet()
 
         val removedMCVersions = if (didMCVersionsChange)
         {
-            getRemovedMCVersionsAndLoaders(allOldMCVersions, allNewMCVersions)
+            allOldMCVersions - allNewMCVersions
         }
         else emptySet()
 
@@ -72,18 +72,14 @@ class Diff : CliktCommand()
         val didModLoaderChange = allOldModLoadersAndVersions != allNewModLoadersAndVersions
         val addedModLoaders = if (didModLoaderChange)
         {
-            getAddedMCVersionsAndLoaders(
-                allOldModLoadersAndVersions.map { it.first }.toSet(),
-                allNewModLoadersAndVersions.map { it.first }.toSet()
+            (allNewModLoadersAndVersions.map { it.first }.toSet() - allOldModLoadersAndVersions.map { it.first }.toSet()
             ).map { loader -> loader.replaceFirstChar { it.titlecase() } }.toSet()
         }
         else emptySet()
 
         val removedModLoaders = if (didModLoaderChange)
         {
-            getRemovedMCVersionsAndLoaders(
-                allOldModLoadersAndVersions.map { it.first }.toSet(),
-                allNewModLoadersAndVersions.map { it.first }.toSet()
+            (allOldModLoadersAndVersions.map { it.first }.toSet() - allNewModLoadersAndVersions.map { it.first }.toSet()
             ).map { loader -> loader.replaceFirstChar { it.titlecase() } }.toSet()
         }
         else emptySet()
@@ -100,19 +96,13 @@ class Diff : CliktCommand()
         val didProjectsChange = allOldProjects != allNewProjects
         val addedProjects = if (didProjectsChange)
         {
-            getAddedMCVersionsAndLoaders(
-                allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet(),
-                allNewProjects.mapNotNull { it.name.values.firstOrNull() }.toSet()
-            )
+            allNewProjects.mapNotNull { it.name.values.firstOrNull() }.toSet() - allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet()
         }
         else emptySet()
 
         val removedProjects = if (didProjectsChange)
         {
-            getRemovedMCVersionsAndLoaders(
-                allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet(),
-                allNewProjects.mapNotNull { it.name.values.firstOrNull() }.toSet()
-            )
+            allOldProjects.mapNotNull { it.name.values.firstOrNull() }.toSet() - allNewProjects.mapNotNull { it.name.values.firstOrNull() }.toSet()
         }
         else emptySet()
 
@@ -142,16 +132,6 @@ class Diff : CliktCommand()
             didModLoaderChange,
             didProjectsChange
         )
-    }
-
-    private fun getAddedMCVersionsAndLoaders(allOldVersions: Set<String>, allNewVersions: Set<String>): Set<String>
-    {
-        return allNewVersions - allOldVersions
-    }
-
-    private fun getRemovedMCVersionsAndLoaders(allOldVersions: Set<String>, allNewVersions: Set<String>): Set<String>
-    {
-        return allOldVersions - allNewVersions
     }
 
     private fun getUpdatedModLoaders(
