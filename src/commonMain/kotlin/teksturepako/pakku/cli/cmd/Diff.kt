@@ -108,16 +108,9 @@ class Diff : CliktCommand()
 
         val updatedProjects = if (didProjectsChange) getUpdatedProjects(allOldProjects, allNewProjects) else emptyList()
 
-        printDiffChangesToTerminal(
-            addedMCVersions,
-            removedMCVersions,
-            addedModLoaders,
-            removedModLoaders,
-            updatedModLoaders,
-            addedProjects,
-            removedProjects,
-            updatedProjects
-        )
+        printDiffChangesToTerminal(addedMCVersions, removedMCVersions)
+        printDiffChangesToTerminal(addedModLoaders, removedModLoaders, updatedModLoaders)
+        printDiffChangesToTerminal(addedProjects, removedProjects, updatedProjects.toSet())
 
         writeDiffChangesToFile(
             addedMCVersions,
@@ -211,24 +204,14 @@ class Diff : CliktCommand()
     }
 
     private fun printDiffChangesToTerminal(
-        addedMCVersions: Set<String>,
-        removedMCVersions: Set<String>,
-        addedModLoaders: Set<String>,
-        removedModLoaders: Set<String>,
-        updatedModLoaders: Set<String>,
-        addedProjects: Set<String>,
-        removedProjects: Set<String>,
-        updatedProjects: List<String>
+        added: Set<String>,
+        removed: Set<String>,
+        updated: Set<String> = emptySet()
     )
     {
-        addedMCVersions.forEach { terminal.success("+ $it") }
-        removedMCVersions.forEach { terminal.danger("- $it") }
-        addedModLoaders.forEach { terminal.success("+ $it") }
-        removedModLoaders.forEach { terminal.danger("- $it") }
-        updatedModLoaders.forEach { terminal.info("! $it") }
-        addedProjects.forEach { terminal.success("+ $it") }
-        removedProjects.forEach { terminal.danger("- $it") }
-        updatedProjects.forEach { terminal.info("! $it") }
+        added.forEach { terminal.success("+ $it") }
+        removed.forEach { terminal.danger("- $it") }
+        updated.forEach { terminal.info("! $it") }
     }
 
     private fun writeDiffChangesToFile(
