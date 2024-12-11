@@ -3,6 +3,7 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.input.interactiveSelectList
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.terminal.prompt
@@ -10,6 +11,9 @@ import com.github.ajalt.mordant.terminal.success
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.cli.ui.hint
+import teksturepako.pakku.cli.ui.pDanger
+import teksturepako.pakku.cli.ui.pInfo
 
 class Init : CliktCommand()
 {
@@ -18,8 +22,13 @@ class Init : CliktCommand()
     override fun run() = runBlocking {
         if (LockFile.exists())
         {
-            terminal.danger("Modpack is already initialized")
-            terminal.info("To change already initialized properties, use the command: \"set\"")
+            terminal.pDanger("Modpack is already initialized.")
+            echo(
+                hint(
+                    "use \"pakku set\" or \"pakku cfg\" to change",
+                    " already configured properties of your modpack"
+                )
+            )
             echo()
             return@runBlocking
         }
@@ -66,11 +75,12 @@ class Init : CliktCommand()
         // -- TARGET --
 
         with(
-            terminal.prompt("? Target", choices = listOf("curseforge", "modrinth", "multiplatform"))
-            ?: return@runBlocking
+            terminal.interactiveSelectList(
+                listOf("curseforge", "modrinth", "multiplatform"),
+                title = "? Target",
+            ) ?: return@runBlocking
         )
         {
-
             lockFile.setTarget(this)
             terminal.success("'target' set to '$this'")
         }

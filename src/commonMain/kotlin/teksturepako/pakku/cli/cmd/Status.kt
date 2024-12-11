@@ -147,9 +147,10 @@ class Status: CliktCommand()
             {
                 terminal.pInfo("Following project has a new version available:")
                 terminal.println(
-                    " ".repeat(2) + "(use \"pakku update"
-                        + " ${dim(updatedProjects.firstOrNull()?.slug?.values?.firstOrNull())}\""
-                        + " to update the project)"
+                    hint(
+                        "use \"pakku update ${dim(updatedProjects.firstOrNull()?.slug?.values?.firstOrNull())}\"",
+                        " to update the project"
+                    )
                 )
                 projects()
             }
@@ -157,8 +158,10 @@ class Status: CliktCommand()
             {
                 terminal.pInfo("Following projects have a new version available:")
                 terminal.println(
-                    " ".repeat(2) + "(use \"pakku update ${dim("[<projects>]...")}\" to update"
-                        + " projects individually or \"pakku update ${dim("-a")}\" to update all projects)"
+                    hint(
+                        "use \"pakku update ${dim("[<projects>]...")}\" to update projects individually",
+                        " or \"pakku update ${dim("-a")}\" to update all projects"
+                    )
                 )
                 projects()
             }
