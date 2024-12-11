@@ -7,7 +7,7 @@ import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.export.export
 import teksturepako.pakku.api.actions.export.profiles.CurseForgeProfile
 import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile

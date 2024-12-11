@@ -6,8 +6,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.serializer
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.*
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.json
 import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.FileAlreadyExistsException

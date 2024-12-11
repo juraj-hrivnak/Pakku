@@ -4,8 +4,6 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.input.interactiveSelectList
-import com.github.ajalt.mordant.terminal.danger
-import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.terminal.prompt
 import com.github.ajalt.mordant.terminal.success
 import kotlinx.coroutines.runBlocking
@@ -13,7 +11,6 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.hint
 import teksturepako.pakku.cli.ui.pDanger
-import teksturepako.pakku.cli.ui.pInfo
 
 class Init : CliktCommand()
 {

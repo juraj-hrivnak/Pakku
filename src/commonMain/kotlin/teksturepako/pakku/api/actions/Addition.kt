@@ -1,11 +1,10 @@
 package teksturepako.pakku.api.actions
 
-import teksturepako.pakku.api.actions.ActionError.*
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectType
 
 data class RequestHandlers(
     val onError: suspend (error: ActionError) -> Unit,

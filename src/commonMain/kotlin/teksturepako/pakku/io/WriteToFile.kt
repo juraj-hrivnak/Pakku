@@ -4,7 +4,7 @@ import com.github.michaelbull.result.getError
 import com.github.michaelbull.result.onFailure
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.json
 import kotlin.io.path.*
 

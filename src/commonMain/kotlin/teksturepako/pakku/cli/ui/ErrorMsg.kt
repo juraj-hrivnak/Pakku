@@ -1,7 +1,7 @@
 package teksturepako.pakku.cli.ui
 
 import com.github.ajalt.mordant.terminal.Terminal
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 
 fun Terminal.processErrorMsg(error: ActionError, arg: String = "", prepend: String? = null, offset: Int = 0): String
 {

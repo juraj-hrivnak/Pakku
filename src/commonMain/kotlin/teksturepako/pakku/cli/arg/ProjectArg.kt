@@ -3,7 +3,7 @@ package teksturepako.pakku.cli.arg
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -32,10 +32,15 @@ sealed class ProjectArg(open val rawArg: String)
     }
 }
 
-data class ArgFailed(val arg: String, val argType: String) :
-    ActionError("Failed to process $argType arg: '$arg'")
+data class ArgFailed(val arg: String, val argType: String) : ActionError()
+{
+    override val rawMessage = "Failed to process $argType arg: '$arg'"
+}
 
-data class EmptyArg(val argType: String) : ActionError("$argType arg is empty")
+data class EmptyArg(val argType: String) : ActionError()
+{
+    override val rawMessage = "$argType arg is empty"
+}
 
 fun splitCommonArg(arg: String): Result<ProjectArg.CommonArg, ActionError>
 {

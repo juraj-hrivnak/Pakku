@@ -6,7 +6,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.terminal.success
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 import kotlin.time.Duration
 
 fun dim(text: Any?): String = TextStyle(color = TextColors.gray)(text.toString())

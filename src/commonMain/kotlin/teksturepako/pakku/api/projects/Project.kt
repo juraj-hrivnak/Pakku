@@ -8,9 +8,9 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
-import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjDiffPLinks
+import teksturepako.pakku.api.actions.errors.ProjDiffTypes
 import teksturepako.pakku.api.data.*
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
