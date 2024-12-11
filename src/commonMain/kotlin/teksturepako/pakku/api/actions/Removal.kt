@@ -26,9 +26,9 @@ suspend fun Project?.createRemovalRequest(
         onRemoval(this, false)
     }
 
-    x@ for (pakkuLink in this.pakkuLinks)
+    for (pakkuLink in this.pakkuLinks)
     {
-        val dependency = lockFile.getProjectByPakkuId(pakkuLink) ?: continue@x
+        val dependency = lockFile.getProjectByPakkuId(pakkuLink) ?: continue
         val depDependants = lockFile.getLinkedProjects(dependency.pakkuId!!)
 
         if (depDependants.isNotEmpty())

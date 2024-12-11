@@ -40,7 +40,7 @@ suspend fun promptForProject(
 
 var overrideYes = false
 
-fun ynPrompt(prompt: String, terminal: Terminal, default: Boolean? = null): Boolean
+fun Terminal.ynPrompt(question: String, default: Boolean? = null): Boolean
 {
-    return if (overrideYes) true else YesNoPrompt(prompt, terminal, default).ask() == true
+    return if (overrideYes) true else YesNoPrompt(question, this, default).ask() == true
 }

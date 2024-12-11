@@ -52,9 +52,14 @@ fun Terminal.pDanger(message: String, offset: Int = 0)
     this.danger(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>"), offset))
 }
 
-fun prefixed(string: String, prefix: String, offset: Int = 0): String = buildString {
+fun prefixed(text: String, prefix: String, offset: Int = 0): String = buildString {
     repeat(offset) { append(" ".repeat(3)) }
-    append ("${TextStyle(inverse = true)(prefix)} $string")
+    append("${TextStyle(inverse = true)(prefix)} $text")
+}
+
+fun offset(text: String, offset: Int): String = buildString {
+    repeat(offset) { append(" ".repeat(3)) }
+    append(text)
 }
 
 fun Duration.shortForm() = this.toString().replace("\\.\\d+".toRegex(), "")

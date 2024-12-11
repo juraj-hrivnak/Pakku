@@ -111,7 +111,7 @@ class Add : CliktCommand()
                     val projMsg = project.getFullMsg()
                     val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
 
-                    if (ynPrompt("Do you want to ${promptMessage.first} $projMsg?", terminal, isRecommended))
+                    if (terminal.ynPrompt("Do you want to ${promptMessage.first} $projMsg?", isRecommended))
                     {
                         if (!isReplacing) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
