@@ -29,25 +29,25 @@ data class ErrorWhileReading(val file: String, val reason: String? = "") : Actio
     override val rawMessage = "Error occurred while reading: '$file'. $reason"
 }
 
-class AlreadyExists(val file: String) : ActionError()
+data class AlreadyExists(val file: String) : ActionError()
 {
     override val rawMessage = "File '$file' already exists."
 }
 
 // -- PROJECT FILE --
 
-class DownloadFailed(val path: Path?, val retryNumber: Int = 0) : ActionError()
+data class DownloadFailed(val path: Path?, val retryNumber: Int = 0) : ActionError()
 {
     override val rawMessage = "Failed to download '$path'. ${if (retryNumber > 0) "Retry number $retryNumber." else ""}"
 }
 
-class NoHashes(val path: Path?) : ActionError()
+data class NoHashes(val path: Path?) : ActionError()
 {
     override val rawMessage = "File '$path' has no hashes."
     override val isWarning = true
 }
 
-class HashMismatch(val path: Path?, val originalHash: String, val newHash: String) : ActionError()
+data class HashMismatch(val path: Path?, val originalHash: String, val newHash: String) : ActionError()
 {
     override val rawMessage = """Failed to math hash for file '$path'.
             | Original hash: $originalHash
@@ -55,27 +55,26 @@ class HashMismatch(val path: Path?, val originalHash: String, val newHash: Strin
             """.trimMargin()
 }
 
-class CouldNotSave(val path: Path?, val reason: String? = "") : ActionError()
+data class CouldNotSave(val path: Path?, val reason: String? = "") : ActionError()
 {
     override val rawMessage = if (path != null) "Could not save: '$path'. $reason" else "Could not save file. $reason"
 }
 
 // -- IMPORT --
 
-class CouldNotImport(val file: String) : ActionError()
+data class CouldNotImport(val file: String) : ActionError()
 {
     override val rawMessage = "Could not import from: '$file'. It is not a proper modpack file."
 }
 
 // -- PROJECT --
 
-class ProjNotFound : ActionError()
+data object ProjNotFound : ActionError()
 {
     override val rawMessage = "Project not found."
 }
 
-class ProjDiffTypes(val project: Project, val otherProject: Project) : ActionError(
-)
+data class ProjDiffTypes(val project: Project, val otherProject: Project) : ActionError()
 {
     override val rawMessage = """Can not combine two projects of different types:
             | ${project.slug} ${project.type} + ${otherProject.slug} ${otherProject.type}
@@ -86,8 +85,7 @@ class ProjDiffTypes(val project: Project, val otherProject: Project) : ActionErr
             """.trimMargin()
 }
 
-class ProjDiffPLinks(val project: Project, val otherProject: Project) : ActionError(
-)
+data class ProjDiffPLinks(val project: Project, val otherProject: Project) : ActionError()
 {
     override val rawMessage = """Can not combine two projects with different pakku links:
             | ${project.slug} ${project.type} + ${otherProject.slug} ${otherProject.type}
@@ -101,7 +99,7 @@ class ProjDiffPLinks(val project: Project, val otherProject: Project) : ActionEr
 
 // -- EXPORT --
 
-class NotRedistributable(val project: Project) : ActionError()
+data class NotRedistributable(val project: Project) : ActionError()
 {
     override val rawMessage = "${project.type} ${project.slug} can not be exported, because it is not redistributable."
 
@@ -111,14 +109,14 @@ class NotRedistributable(val project: Project) : ActionError()
 
 // -- ADDITION --
 
-class AlreadyAdded(val project: Project) : ActionError()
+data class AlreadyAdded(val project: Project) : ActionError()
 {
     override val rawMessage = "${project.type} ${project.slug} is already added."
 
     override fun message(arg: String): String = "${dim(project.type)} ${project.getFlavoredSlug()} is already added."
 }
 
-class NotFoundOn(val project: Project, val provider: Provider) : ActionError()
+data class NotFoundOn(val project: Project, val provider: Provider) : ActionError()
 {
     override val rawMessage = "${project.type} ${project.slug} was not found on ${provider.name}"
 
@@ -126,7 +124,7 @@ class NotFoundOn(val project: Project, val provider: Provider) : ActionError()
         "${dim(project.type)} ${project.getFlavoredSlug()} was not found on ${provider.name}."
 }
 
-class NoFilesOn(val project: Project, val provider: Provider) : ActionError()
+data class NoFilesOn(val project: Project, val provider: Provider) : ActionError()
 {
     override val rawMessage = "No files for ${project.type} ${project.slug} found on ${provider.name}."
 
@@ -134,9 +132,7 @@ class NoFilesOn(val project: Project, val provider: Provider) : ActionError()
         "No files for ${dim(project.type)} ${project.getFlavoredSlug()} found on ${provider.name}."
 }
 
-class NoFiles(val project: Project, val lockFile: LockFile) : ActionError(
-
-)
+data class NoFiles(val project: Project, val lockFile: LockFile) : ActionError()
 {
     override val rawMessage = """No files found for ${project.type} ${project.slug}.
             | Your modpack requires Minecraft versions: ${lockFile.getMcVersions()} and loaders: ${lockFile.getLoaders()}.
@@ -149,9 +145,7 @@ class NoFiles(val project: Project, val lockFile: LockFile) : ActionError(
             """.trimMargin()
 }
 
-class FileNamesDoNotMatch(val project: Project) : ActionError(
-
-)
+data class FileNamesDoNotMatch(val project: Project) : ActionError()
 {
     override val rawMessage = """${project.type} ${project.slug} versions do not match across platforms.
             | ${project.files.map { "${it.type}: ${it.fileName}" }}
@@ -165,7 +159,7 @@ class FileNamesDoNotMatch(val project: Project) : ActionError(
 
 // -- REMOVAL --
 
-class ProjRequiredBy(val project: Project, val dependants: List<Project>) : ActionError()
+data class ProjRequiredBy(val project: Project, val dependants: List<Project>) : ActionError()
 {
     override val rawMessage = "${project.type} ${project.slug} is required by ${dependants.map { it.slug }}"
     override val isWarning = true
