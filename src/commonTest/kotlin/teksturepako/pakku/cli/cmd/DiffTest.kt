@@ -112,7 +112,22 @@ class DiffTest
     }
 
     @Test
+    fun `should success if newlines around verbose markdown headings are correct`()
+    {
+        val cmdArgs = "--markdown"
+        val outputFileName = "markdown"
+        testForNewlineHeadingsOnMarkdownOutput(cmdArgs, outputFileName)
+    }
+
+    @Test
     fun `should success if newlines around markdown headings are correct`()
+    {
+        val cmdArgs = "--verbose --markdown"
+        val outputFileName = "markdown-verbose"
+        testForNewlineHeadingsOnMarkdownOutput(cmdArgs, outputFileName)
+    }
+
+    private fun testForNewlineHeadingsOnMarkdownOutput(cmdArgs: String, outputFileName: String)
     {
         generateDiffTestCases()
 
@@ -125,62 +140,57 @@ class DiffTest
         {
             val newLockFile = "$workingPath/$testNumber.json"
 
-            val outputFileMD = "$workingPath/$testNumber-markdown.md"
-            val outputFileMDVerbose = "$workingPath/$testNumber-markdown-verbose.md"
+            val outputFile = "$workingPath/$testNumber-$outputFileName.md"
 
-            cmd.test("$oldLockFile $newLockFile --markdown $outputFileMD")
-            cmd.test("$oldLockFile $newLockFile --verbose --markdown $outputFileMDVerbose")
+            cmd.test("$oldLockFile $newLockFile $cmdArgs $outputFile")
 
-            val outputFiles = mutableListOf(outputFileMD, outputFileMDVerbose)
-            outputFiles.forEach { outputFile ->
-                val contentText = File(outputFile).readText()
+            val contentText = File(outputFile).readText()
 
-                /*
-                 * We need to check for 3 newlines since the entire content is one string
-                 * and there is only one beginning of the string.
-                 * Otherwise, ^\n\n could have been used.
-                 */
-                // @formatter:off
-                assertTrue(!Regex("\n\n\n").containsMatchIn(contentText),
-                    "Found two consecutive newlines in $outputFile\n" +
-                            "File content:\n\"\"\"\n$contentText\n\"\"\"")
+            /*
+            * We need to check for 3 newlines since the entire content is one string
+            * and there is only one beginning of the string.
+            * Otherwise, ^\n\n could have been used.
+            */
+            // @formatter:off
+            assertTrue(!Regex("\n\n\n").containsMatchIn(contentText),
+                "Found two consecutive newlines in $outputFile\n" +
+                        "File content:\n\"\"\"\n$contentText\n\"\"\"")
 
-                // Checks for two empty lines at the end of the output file
-                assertTrue(!Regex("\n\n$").containsMatchIn(contentText),
-                    "Found two empty lines at the end of $outputFile\n" +
-                            "File content:\n\"\"\"\n$contentText\n\"\"\"")
-                // @formatter:on
+            // Checks for two empty lines at the end of the output file
+            assertTrue(!Regex("\n\n$").containsMatchIn(contentText),
+                "Found two empty lines at the end of $outputFile\n" +
+                        "File content:\n\"\"\"\n$contentText\n\"\"\"")
+            // @formatter:on
 
-                val contentLines = contentText.lines()
+            val contentLines = contentText.lines()
 
-                contentLines.forEachIndexed { it, line ->
-                    // Identify the line with the heading.
-                    // The headerSize = 0 option does not have to be checked since the logic for the header size does not modify newlines.
-                    // TODO: Invert this "if" once "continue" in lambdas is no longer unstable
-                    if (line.startsWith("#"))
+            contentLines.forEachIndexed { it, line ->
+                // Identify the line with the heading.
+                // The headerSize = 0 option does not have to be checked since the logic for the header size does not modify newlines.
+                // TODO: Invert this "if" once "continue" in lambdas is no longer unstable
+                if (line.startsWith("#"))
+                {
+                    // Check the previous line for a newline
+                    // it > 0 ignores the first line
+                    if (it > 0)
                     {
-                        // Check the previous line for a newline
-                        // it > 0 ignores the first line
-                        if (it > 0)
-                        {
-                            val previousLine = contentLines[it - 1].trim()
-                            // @formatter:off
+                        val previousLine = contentLines[it - 1].trim()
+                        // @formatter:off
                             assertTrue(previousLine.isEmpty(),
                                 "Expected a newline before heading at line ${it + 1} in $outputFile\n" +
                                         "File content:\n\"\"\"\n$contentText\n\"\"\"")
                             // @formatter:on
-                        }
-                        // Check the next one for a newline
-                        // index < content.size - 1 ignores last line
-                        if (it < contentLines.size - 1)
-                        {
-                            val nextLine = contentLines[it + 1].trim()
-                            // @formatter:off
+                    }
+                    // Check the next one for a newline
+                    // index < content.size - 1 ignores last line
+                    if (it < contentLines.size - 1)
+                    {
+                        val nextLine = contentLines[it + 1].trim()
+                        // @formatter:off
                             assertTrue(nextLine.isEmpty(),
                                 "Expected a newline after heading at line ${it + 1} in $outputFile\n" +
                                         "File content:\n\"\"\"\n$contentText\n\"\"\"")
                             // @formatter:on
-                        }
                     }
                 }
             }
@@ -190,6 +200,21 @@ class DiffTest
     @Test
     fun `should success if newlines around markdown-diff is correct`()
     {
+        val cmdArgs = "--markdown-diff"
+        val outputFileName = "markdown-diff"
+        testForNewlineHeadingsOnMarkdownDiffOutput(cmdArgs, outputFileName)
+    }
+
+    @Test
+    fun `should success if newlines around verbose markdown-diff is correct`()
+    {
+        val cmdArgs = "--verbose --markdown-diff"
+        val outputFileName = "markdown-diff-verbose"
+        testForNewlineHeadingsOnMarkdownDiffOutput(cmdArgs, outputFileName)
+    }
+
+    private fun testForNewlineHeadingsOnMarkdownDiffOutput(cmdArgs: String, outputFileName: String)
+    {
         generateDiffTestCases()
 
         val cmd = Diff()
@@ -201,18 +226,14 @@ class DiffTest
         {
             val newLockFile = "$workingPath/$testNumber.json"
 
-            val outputFileMDDiff = "$workingPath/$testNumber-markdown-diff.md"
-            val outputFileMDDiffVerbose = "$workingPath/$testNumber-markdown-diff-verbose.md"
+            val outputFile = "$workingPath/$testNumber-$outputFileName.md"
 
-            cmd.test("$oldLockFile $newLockFile --markdown-diff $outputFileMDDiff")
-            cmd.test("$oldLockFile $newLockFile --verbose --markdown-diff $outputFileMDDiffVerbose")
+            cmd.test("$oldLockFile $newLockFile $cmdArgs $outputFile")
 
-            val outputFiles = mutableListOf(outputFileMDDiff, outputFileMDDiffVerbose)
-            outputFiles.forEach { outputFile ->
-                val contentText = File(outputFile).readText()
+            val contentText = File(outputFile).readText()
 
-                // Check that there is no empty line after ```diff
-                // @formatter:off
+            // Check that there is no empty line after ```diff
+            // @formatter:off
                 assertTrue(!Regex("```diff\n\n").containsMatchIn(contentText),
                     "Found empty line after header in $outputFile\n" +
                             "File content:\n\"\"\"\n$contentText\n\"\"\"")
@@ -231,15 +252,45 @@ class DiffTest
                     "Found two empty lines at the end of $outputFile\n" +
                             "File content:\n\"\"\"\n$contentText\n\"\"\"")
                 // @formatter:on
-            }
         }
+    }
+
+    @Test
+    fun `should success if markdown diff matches`()
+    {
+        val cmdArgs = "--markdown"
+        val outputFileName = "markdown"
+        testIfDiffMatches(cmdArgs, outputFileName)
+    }
+
+    @Test
+    fun `should success if verbose markdown diff matches`()
+    {
+        val cmdArgs = "--verbose --markdown"
+        val outputFileName = "markdown-verbose"
+        testIfDiffMatches(cmdArgs, outputFileName)
+    }
+
+    @Test
+    fun `should success if markdown-diff diff matches`()
+    {
+        val cmdArgs = "--markdown-diff"
+        val outputFileName = "markdown-diff"
+        testIfDiffMatches(cmdArgs, outputFileName)
+    }
+
+    @Test
+    fun `should success if verbose markdown-diff diff matches`()
+    {
+        val cmdArgs = "--verbose --markdown-diff"
+        val outputFileName = "markdown-diff-verbose"
+        testIfDiffMatches(cmdArgs, outputFileName)
     }
 
     // The primary purpose of this test is to make sure that Pakku correctly identifies which project/versions changed.
     // Formatting of all combinations is checked in the above tests.
     // The test can easily be expanded by increasing the test counter below and adding more expected result files to the diffMatch folder.
-    @Test
-    fun `should success diff matches`()
+    private fun testIfDiffMatches(cmdArgs: String, outputFileName: String)
     {
         val cmd = Diff()
 
@@ -249,51 +300,15 @@ class DiffTest
             val oldLockFile = File("src/commonTest/resources/diffTest/diffMatch/$testNumber-old.json")
             val newLockFile = File("src/commonTest/resources/diffTest/diffMatch/$testNumber-new.json")
 
-            val outputFileMD = "$workingPath/$testNumber-markdown-expected-generated.md"
-            val expectedOutputFileMD = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-expected.md"
+            val outputFile = "$workingPath/$testNumber-$outputFileName-generated.json"
+            val expectedOutputFile = "src/commonTest/resources/diffTest/diffMatch/$testNumber-$outputFileName-expected.md"
 
-            val outputFileMDVerbose = "$workingPath/$testNumber-markdown-verbose-expected-generated.md"
-            val expectedOutputFileMDVerbose = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-verbose-expected.md"
-
-            val outputFileMDDiff = "$workingPath/$testNumber-markdown-diff-expected-generated.md"
-            val expectedOutputFileMDDiff = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-diff-expected.md"
-
-            val outputFileMDDiffVerbose = "$workingPath/$testNumber-markdown-diff-verbose-expected-generated.md"
-            val expectedOutputFileMDDiffVerbose = "src/commonTest/resources/diffTest/diffMatch/$testNumber-markdown-diff-verbose-expected.md"
-
-            cmd.test("$oldLockFile $newLockFile --markdown $outputFileMD")
-            cmd.test("$oldLockFile $newLockFile --verbose --markdown $outputFileMDVerbose")
-            cmd.test("$oldLockFile $newLockFile --markdown-diff $outputFileMDDiff")
-            cmd.test("$oldLockFile $newLockFile --verbose --markdown-diff $outputFileMDDiffVerbose")
+            cmd.test("$oldLockFile $newLockFile $cmdArgs $outputFile")
 
             assertEquals(
-                actual = File(outputFileMD).readText(),
-                expected = File(expectedOutputFileMD).readText(),
-                message = "Test file ${File(outputFileMD)} does not match ${File(expectedOutputFileMD)}"
-            )
-
-            assertEquals(
-                actual = File(outputFileMDVerbose).readText(),
-                expected = File(expectedOutputFileMDVerbose).readText(),
-                message = "Test file ${File(outputFileMDVerbose)} does not match ${File(expectedOutputFileMDVerbose)}"
-            )
-
-            assertEquals(
-                actual = File(outputFileMD).readText(),
-                expected = File(expectedOutputFileMD).readText(),
-                message = "Test file ${File(outputFileMD)} does not match ${File(expectedOutputFileMD)}"
-            )
-
-            assertEquals(
-                actual = File(outputFileMDDiff).readText(),
-                expected = File(expectedOutputFileMDDiff).readText(),
-                message = "Test file ${File(outputFileMDDiff)} does not match ${File(expectedOutputFileMDDiff)}"
-            )
-
-            assertEquals(
-                actual = File(outputFileMDDiffVerbose).readText(),
-                expected = File(expectedOutputFileMDDiffVerbose).readText(),
-                message = "Test file ${File(outputFileMDDiffVerbose)} does not match ${File(expectedOutputFileMDDiffVerbose)}"
+                actual = File(outputFile).readText(),
+                expected = File(expectedOutputFile).readText(),
+                message = "Test file ${File(outputFile)} does not match ${File(expectedOutputFile)}"
             )
         }
     }
