@@ -24,7 +24,7 @@ suspend fun Project?.createAdditionRequest(
 )
 {
     // Exist
-    if (this == null) return onError(ProjNotFound())
+    if (this == null) return onError(ProjNotFound)
 
     var isRecommended = true
 

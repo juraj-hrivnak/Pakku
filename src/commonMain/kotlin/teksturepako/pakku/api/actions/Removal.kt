@@ -13,7 +13,7 @@ suspend fun Project?.createRemovalRequest(
     lockFile: LockFile,
 )
 {
-    if (this == null) return onError(ProjNotFound())
+    if (this == null) return onError(ProjNotFound)
 
     val dependants = lockFile.getLinkedProjects(this.pakkuId!!, ignore = this)
 

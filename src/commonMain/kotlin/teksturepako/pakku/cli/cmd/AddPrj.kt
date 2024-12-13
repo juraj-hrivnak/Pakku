@@ -109,7 +109,7 @@ class AddPrj : CliktCommand("prj")
 
                 val (promptedProject, promptedArg) = prompt
 
-                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArg.rawArg)
+                if (promptedProject == null) return terminal.pError(ProjNotFound, promptedArg.rawArg)
 
                 (error.project + promptedProject).resultFold( // Combine projects
                     failure = { terminal.pError(it) },

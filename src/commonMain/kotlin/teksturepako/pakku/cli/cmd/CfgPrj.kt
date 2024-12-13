@@ -71,7 +71,7 @@ class CfgPrj : CliktCommand("prj")
         val configFile = ConfigFile.readOrNew()
 
         projectArgs.map { arg ->
-            if (lockFile.getProject(arg) != null) Ok(arg) else Err(ProjNotFound())
+            if (lockFile.getProject(arg) != null) Ok(arg) else Err(ProjNotFound)
         }.mapNotNull { result ->
             result.onFailure { terminal.pError(it) }.get()
         }.forEach { arg ->

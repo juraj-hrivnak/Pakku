@@ -91,7 +91,7 @@ class Add : CliktCommand()
 
                 val (promptedProject, promptedArg) = prompt
 
-                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArg.rawArg)
+                if (promptedProject == null) return terminal.pError(ProjNotFound, promptedArg.rawArg)
 
                 (error.project + promptedProject).fold( // Combine projects
                     failure = { terminal.pError(it) },
