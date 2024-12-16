@@ -5,8 +5,6 @@ import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import teksturepako.pakku.debug
 
 open class Http
@@ -16,7 +14,7 @@ open class Http
      */
     open suspend fun requestByteArray(
         url: String,
-        onDownload: suspend (bytesSentTotal: Long, contentLength: Long) -> Unit = { _: Long, _: Long ->}
+        onDownload: suspend (bytesSentTotal: Long, contentLength: Long?) -> Unit = { _: Long, _: Long? ->}
     ): ByteArray?
     {
         return try
@@ -57,7 +55,7 @@ open class Http
     /**
      * @return A body [String] of a https request, with headers provided or null if status code is not OK.
      */
-    suspend fun requestBody(url: String, vararg headers: Pair<String, String>): String?
+    open suspend fun requestBody(url: String, vararg headers: Pair<String, String>): String?
     {
         return try
         {
@@ -73,15 +71,39 @@ open class Http
         }
     }
 
-    suspend inline fun <reified T> requestBody(url: String, bodyContent: T): String?
+    open suspend fun requestBody(url: String, bodyContent: () -> String): String?
     {
         return try
         {
             client.post(url) {
                 contentType(ContentType.Application.Json)
-                setBody(Json.encodeToString(bodyContent)) // Do not use pretty print
+                setBody(bodyContent()) // Do not use pretty print
             }
                 .debug { println("${this::class.simpleName} ${it.call} ${it.request.content}") }
+                .checkLimit()
+                .bodyIfOK()
+        }
+        catch (e: Exception)
+        {
+            println("Error: ${this::class.simpleName} ${e.printStackTrace()}")
+            null
+        }
+    }
+
+    /**
+     * @return A body [String] of a https request, with headers provided or null if status code is not OK.
+     */
+    open suspend fun requestBody(url: String, bodyContent: () -> String, vararg headers: Pair<String, String>): String?
+    {
+        return try
+        {
+            client.post(url) {
+                headers.forEach { this.headers.append(it.first, it.second) }
+
+                contentType(ContentType.Application.Json)
+                setBody(bodyContent()) // Do not use pretty print
+            }
+                .debug { println("${this::class.simpleName} $it") }
                 .checkLimit()
                 .bodyIfOK()
         }

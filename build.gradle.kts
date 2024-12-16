@@ -10,13 +10,13 @@ import java.util.*
 plugins {
     kotlin("multiplatform") version libs.versions.kotlin
     kotlin("plugin.serialization") version libs.versions.kotlin
-    id("org.jetbrains.dokka") version libs.versions.kotlin
+    id("org.jetbrains.dokka") version libs.versions.dokka
     id("io.ktor.plugin") version libs.versions.ktor
     id("maven-publish")
 }
 
 group = "teksturepako.pakku"
-version = "0.20.0"
+version = "0.21.0"
 
 val nativeEnabled = false
 
@@ -63,34 +63,37 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                // Kotlin
+                // Kotlin | Apache-2.0
                 implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-                // Ktor
+                // Ktor | Apache-2.0
                 implementation("io.ktor:ktor-client-core:$ktorVersion")
                 implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
-                // Coroutines
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                // Coroutines | Apache-2.0
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
-                // Serialization
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+                // Serialization | Apache-2.0
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
-                // AtomicFU
-                implementation("org.jetbrains.kotlinx:atomicfu:0.24.0")
+                // AtomicFU | Apache-2.0
+                implementation("org.jetbrains.kotlinx:atomicfu:0.26.0")
 
-                // URL Encoding
-                implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.4.0")
+                // Datetime | Apache-2.0
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
 
-                // Kotlin Result
+                // URL Encoding | Apache-2.0
+                implementation("net.thauvin.erik.urlencoder:urlencoder-lib:1.6.0")
+
+                // Kotlin Result | ISC
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
-                // CLI
-                implementation("com.github.ajalt.clikt:clikt:5.0.0")
-                implementation("com.github.ajalt.clikt:clikt-markdown:5.0.0")
+                // Clikt | Apache-2.0
+                implementation("com.github.ajalt.clikt:clikt:5.0.1")
+                implementation("com.github.ajalt.clikt:clikt-markdown:5.0.1")
                 implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.0")
 
-                // Logging
+                // SLF4J Logging | MIT
                 implementation("org.slf4j:slf4j-api:2.0.7")
                 implementation("org.slf4j:slf4j-simple:2.0.7")
             }
@@ -154,23 +157,30 @@ tasks.withType<Jar> {
         {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             val main by kotlin.jvm().compilations.getting
-            from(main.runtimeDependencyFiles.files
-                .filter { it.name.endsWith("jar") }
-                .map { zipTree(it) })
+            from(
+                main.runtimeDependencyFiles.files
+                    .filter { it.name.endsWith("jar") }
+                    .map { zipTree(it) }
+            )
+        }
+        else
+        {
+            // Don't bundle to sources jar
+            exclude("**/CurseForgeApiKey.kt")
         }
     }
 }
 
 // -- VERSION --
 
-private val sourceFile = File("$rootDir/resources/teksturepako/pakku/TemplateVersion.kt")
-private val destFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/Version.kt")
+private val versionSourceFile = File("$rootDir/resources/teksturepako/pakku/TemplateVersion.kt")
+private val versionDestFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/Version.kt")
 
 tasks.register("generateVersion") {
     group = "build"
 
-    inputs.file(sourceFile)
-    outputs.file(destFile)
+    inputs.file(versionSourceFile)
+    outputs.file(versionDestFile)
 
     doFirst {
         generateVersion()
@@ -193,11 +203,57 @@ tasks.named("jvmSourcesJar") {
 }
 
 fun generateVersion() {
-    val inputStream: InputStream = sourceFile.inputStream()
+    val inputStream: InputStream = versionSourceFile.inputStream()
 
-    destFile.printWriter().use { out ->
+    versionDestFile.printWriter().use { out ->
         inputStream.bufferedReader().forEachLine { inputLine ->
             val newLine = inputLine.replace("__VERSION", version.toString())
+            out.println(newLine)
+        }
+    }
+
+    inputStream.close()
+}
+
+// -- API KEY --
+
+private val apiKeySourceFile = File("$rootDir/resources/teksturepako/pakku/api/platforms/TemplateApiKey.kt")
+private val apiKeyDestFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/api/platforms/CurseForgeApiKey.kt")
+
+tasks.register("embedApiKey") {
+    group = "build"
+
+    inputs.file(apiKeySourceFile)
+    outputs.file(apiKeyDestFile)
+
+    doLast {
+        embedApiKey()
+    }
+}
+
+if (nativeEnabled)
+{
+    tasks.named("compileKotlinNative") {
+        dependsOn("embedApiKey")
+    }
+}
+
+tasks.named("compileKotlinJvm") {
+    dependsOn("embedApiKey")
+}
+
+tasks.named("jvmSourcesJar") {
+    dependsOn("embedApiKey")
+}
+
+fun embedApiKey() {
+    val apiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
+
+    val inputStream: InputStream = apiKeySourceFile.inputStream()
+
+    apiKeyDestFile.printWriter().use { out ->
+        inputStream.bufferedReader().forEachLine { inputLine ->
+            val newLine = inputLine.replace("__CURSEFORGE_API_KEY", apiKey.replace("$", "\\$"))
             out.println(newLine)
         }
     }

@@ -1,6 +1,6 @@
 package teksturepako.pakku.api.actions
 
-import teksturepako.pakku.api.actions.ActionError.*
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
@@ -24,7 +24,7 @@ suspend fun Project?.createAdditionRequest(
 )
 {
     // Exist
-    if (this == null) return onError(ProjNotFound())
+    if (this == null) return onError(ProjNotFound)
 
     var isRecommended = true
 

@@ -21,7 +21,7 @@ import com.github.ajalt.mordant.widgets.progress.text
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.fetch.deleteOldFiles
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
@@ -71,7 +71,7 @@ class Fetch : CliktCommand()
         )
 
         val progressBar = progressBarContextLayout(spacing = 2) {
-            text { context.toString() }
+            text { context }
             spinner(Spinner.Dots())
             percentage()
         }.animateInCoroutine(terminal, fetchMsg("Fetching"))

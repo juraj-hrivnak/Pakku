@@ -7,7 +7,7 @@ import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.export.export
 import teksturepako.pakku.api.actions.export.profiles.CurseForgeProfile
 import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile
@@ -15,7 +15,6 @@ import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
-import teksturepako.pakku.cli.ui.createHyperlink
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.cli.ui.shortForm
@@ -61,8 +60,7 @@ class Export : CliktCommand()
             },
             onSuccess = { profile, file, duration ->
                 val fileSize = file.fileSize().toHumanReadableSize()
-                val filePath = file.tryOrNull { it.absolutePathString() }
-                    ?.let { file.toString().createHyperlink(it) } ?: file.toString()
+                val filePath = file.tryOrNull { it.absolutePathString() } ?: file.toString()
 
                 terminal.pSuccess("[${profile.name} profile] exported to '$filePath' ($fileSize) in ${duration.shortForm()}")
             },

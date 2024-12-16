@@ -3,7 +3,7 @@ package teksturepako.pakku.io
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 import java.security.MessageDigest
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -13,7 +13,10 @@ fun createHash(type: String, input: ByteArray): String =
         .digest(input)
         .toHexString()
 
-class IllegalPath(path: String) : ActionError("Illegal path: '$path'.")
+class IllegalPath(path: String) : ActionError()
+{
+    override val rawMessage = "Illegal path: '$path'."
+}
 
 fun filterPath(path: String): Result<String, ActionError>
 {

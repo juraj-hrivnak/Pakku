@@ -3,8 +3,8 @@ package teksturepako.pakku.api.actions.sync
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import kotlinx.coroutines.*
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.AlreadyExists
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.overrides.ProjectOverride
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.tryToResult

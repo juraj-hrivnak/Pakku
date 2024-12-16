@@ -6,8 +6,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.*
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
@@ -16,7 +15,10 @@ import teksturepako.pakku.api.overrides.ProjectOverride
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.io.*
+import teksturepako.pakku.io.createHash
+import teksturepako.pakku.io.readAndCreateSha1FromBytes
+import teksturepako.pakku.io.tryOrNull
+import teksturepako.pakku.io.tryToResult
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -110,7 +112,7 @@ suspend fun List<ProjectFile>.fetch(
 
         val filesToRetry = fails.awaitAll()
 
-        if (retry != null && retryNumber < retry && retryNumber < 10 && filesToRetry.isNotEmpty() )
+        if (retry != null && retryNumber < retry && retryNumber < 10 && filesToRetry.isNotEmpty())
         {
             tryFetch(filesToRetry, retryNumber + 1)
         }
@@ -161,8 +163,8 @@ suspend fun deleteOldFiles(
         .filterNot { it == ProjectType.WORLD }
         .mapNotNull { projectType ->
             val prjTypeDir = Path(workingPath, projectType.getPathString(configFile))
-            if (prjTypeDir.notExists() ||
-                defaultIgnoredPaths.any { it in prjTypeDir.pathString }) return@mapNotNull null
+            if (prjTypeDir.notExists() || defaultIgnoredPaths.any { it in prjTypeDir.pathString })
+                return@mapNotNull null
 
             prjTypeDir
         }

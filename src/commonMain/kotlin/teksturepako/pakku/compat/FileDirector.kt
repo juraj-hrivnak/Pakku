@@ -3,8 +3,8 @@ package teksturepako.pakku.compat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.NoFiles
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.NoFiles
 import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
@@ -50,12 +50,13 @@ fun exportFileDirector(
     }
 }
 
-data class CanNotAddToFileDirector(val project: Project) :
-    ActionError("${project.slug} can not be added to FileDirector's config, because it is not redistributable.")
-    {
-        override fun message(arg: String) = "${project.getFlavoredSlug()} can not be added to FileDirector's config," +
-                " because it is not redistributable."
-    }
+data class CanNotAddToFileDirector(val project: Project) : ActionError()
+{
+    override val rawMessage = "${project.slug} can not be added to FileDirector's config, because it is not redistributable."
+
+    override fun message(arg: String) = "${project.getFlavoredSlug()} can not be added to FileDirector's config," +
+        " because it is not redistributable."
+}
 
 fun MissingProject.addToFileDirector(
     fileDirector: FileDirectorModel, excludedProviders: Set<Provider> = setOf()

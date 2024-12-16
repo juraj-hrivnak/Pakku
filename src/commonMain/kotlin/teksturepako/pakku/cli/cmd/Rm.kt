@@ -9,15 +9,12 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.danger
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createRemovalRequest
+import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.ynPrompt
-import teksturepako.pakku.cli.ui.getFullMsg
-import teksturepako.pakku.cli.ui.pDanger
-import teksturepako.pakku.cli.ui.pError
-import teksturepako.pakku.cli.ui.pInfo
+import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.typoSuggester
 
 class Rm : CliktCommand()
@@ -46,7 +43,7 @@ class Rm : CliktCommand()
                         val slugs = lockFile.getAllProjects().flatMap { it.slug.values + it.name.values }
 
                         typoSuggester(arg, slugs).firstOrNull()?.let { realArg ->
-                            if (ynPrompt("Do you mean '$realArg'?", terminal))
+                            if (terminal.ynPrompt("Do you mean '$realArg'?"))
                             {
                                 remove(lockFile.getProject(realArg), realArg)
                             }
@@ -56,7 +53,7 @@ class Rm : CliktCommand()
                 onRemoval = { project, isRecommended ->
                     val projMsg = project.getFullMsg()
 
-                    if (ynPrompt("Do you want to remove $projMsg?", terminal, isRecommended))
+                    if (terminal.ynPrompt("Do you want to remove $projMsg?", isRecommended))
                     {
                         lockFile.remove(project)
                         lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
@@ -67,11 +64,13 @@ class Rm : CliktCommand()
                     if (noDepsFlag) return@createRemovalRequest
                     val projMsg = dependency.getFullMsg()
 
-                    if (isRecommended || ynPrompt("Do you want to remove $projMsg?", terminal, false))
+                    val question = offset(text = "Do you want to remove $projMsg?", offset = 1)
+
+                    if (terminal.ynPrompt(question, default = isRecommended))
                     {
                         lockFile.remove(dependency)
                         lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
-                        terminal.pInfo("$projMsg removed")
+                        terminal.pInfo("$projMsg removed", offset = 1)
                     }
                 },
                 lockFile
@@ -80,7 +79,7 @@ class Rm : CliktCommand()
 
         if (allFlag)
         {
-            if (ynPrompt("Do you really want to remove all projects?", terminal))
+            if (terminal.ynPrompt("Do you really want to remove all projects?"))
             {
                 echo()
                 lockFile.removeAllProjects()

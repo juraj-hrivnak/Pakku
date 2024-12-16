@@ -7,7 +7,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.github.michaelbull.result.Result
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.Dirs.PAKKU_DIR
 import teksturepako.pakku.api.data.jsonEncodeDefaults
 import teksturepako.pakku.api.data.workingPath

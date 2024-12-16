@@ -1,6 +1,7 @@
 package teksturepako.pakku.api.platforms
 
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectType
 
 interface Provider
 {
@@ -27,7 +28,7 @@ interface Provider
     val siteUrl: String?
 
     /** Requests a [project][Project] based on provided [input]. */
-    suspend fun requestProject(input: String): Project?
+    suspend fun requestProject(input: String, projectType: ProjectType? = null): Project?
 
     /**
      * Requests project with files for specified combinations of Minecraft versions and mod loaders.
@@ -36,9 +37,15 @@ interface Provider
      * @param loaders The list of mod loaders.
      * @param input The input for the project files request.
      * @param numberOfFiles The number of files to take. Defaults to 1.
+     * @param projectType The type of project.
      * @return A [Project] with requested project files, or null if no data is found.
      */
     suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, fileId: String? = null, numberOfFiles: Int = 1
+        mcVersions: List<String>,
+        loaders: List<String>,
+        input: String,
+        fileId: String? = null,
+        numberOfFiles: Int = 1,
+        projectType: ProjectType? = null
     ): Project?
 }

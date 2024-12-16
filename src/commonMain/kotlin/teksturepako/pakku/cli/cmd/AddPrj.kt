@@ -6,19 +6,22 @@ import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.terminal.danger
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.*
 import teksturepako.pakku.api.actions.createAdditionRequest
+import teksturepako.pakku.api.actions.errors.NotFoundOn
+import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
@@ -55,13 +58,20 @@ class AddPrj : CliktCommand("prj")
     }
 
     private val ghOpt: ProjectArg.GitHubArg? by option(
-        "--gh", "--github", help = "GitHub repository URL or `{owner}/{repo}`"
+        "--gh", "--github", help = "GitHub repository URL or `<owner>/<repo>`"
     ).convert {
         splitGitHubArg(it).getOrElse { err ->
             terminal.pError(err)
             exitProcess(1)
         }
     }
+
+    private val projectTypeOpt: ProjectType? by option(
+        "-t",
+        "--type",
+        help = "Project type of project to add",
+        metavar = "project type"
+    ).enum<ProjectType>()
 
     private val flags by requireObject<Map<String, Boolean>>()
 
@@ -91,7 +101,7 @@ class AddPrj : CliktCommand("prj")
         {
             suspend fun handleMissingProject(error: NotFoundOn)
             {
-                val prompt = promptForProject(error.provider, terminal, lockFile).onFailure {
+                val prompt = promptForProject(error.provider, terminal, lockFile, projectType = projectTypeOpt).onFailure {
                     if (it is EmptyArg) return add(projectIn, strict = false)
                 }.getOrElse {
                     return terminal.pError(it)
@@ -99,7 +109,7 @@ class AddPrj : CliktCommand("prj")
 
                 val (promptedProject, promptedArg) = prompt
 
-                if (promptedProject == null) return terminal.pError(ProjNotFound(), promptedArg.rawArg)
+                if (promptedProject == null) return terminal.pError(ProjNotFound, promptedArg.rawArg)
 
                 (error.project + promptedProject).resultFold( // Combine projects
                     failure = { terminal.pError(it) },
@@ -120,7 +130,7 @@ class AddPrj : CliktCommand("prj")
                     val projMsg = project.getFullMsg()
                     val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
 
-                    if (ynPrompt("Do you want to ${promptMessage.first} $projMsg?", terminal, isRecommended))
+                    if (terminal.ynPrompt("Do you want to ${promptMessage.first} $projMsg?", isRecommended))
                     {
                         if (!isReplacing) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
@@ -138,19 +148,19 @@ class AddPrj : CliktCommand("prj")
 
         val cf = cfOpt?.let {
             CurseForge.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId
+                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = projectTypeOpt
             )
         }
 
         val mr = mrOpt?.let {
             Modrinth.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId
+                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId, projectType = projectTypeOpt
             )
         }
 
         val gh = ghOpt?.let {
             GitHub.requestProjectWithFiles(
-                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag
+                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag, projectType = projectTypeOpt
             )
         }
 

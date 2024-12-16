@@ -6,7 +6,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.terminal.success
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 import kotlin.time.Duration
 
 fun dim(text: Any?): String = TextStyle(color = TextColors.gray)(text.toString())
@@ -52,9 +52,14 @@ fun Terminal.pDanger(message: String, offset: Int = 0)
     this.danger(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>"), offset))
 }
 
-fun prefixed(string: String, prefix: String, offset: Int = 0): String = buildString {
+fun prefixed(text: String, prefix: String, offset: Int = 0): String = buildString {
     repeat(offset) { append(" ".repeat(3)) }
-    append ("${TextStyle(inverse = true)(prefix)} $string")
+    append("${TextStyle(inverse = true)(prefix)} $text")
+}
+
+fun offset(text: String, offset: Int): String = buildString {
+    repeat(offset) { append(" ".repeat(3)) }
+    append(text)
 }
 
 fun Duration.shortForm() = this.toString().replace("\\.\\d+".toRegex(), "")

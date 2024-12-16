@@ -8,9 +8,9 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.ProjDiffPLinks
-import teksturepako.pakku.api.actions.ActionError.ProjDiffTypes
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjDiffPLinks
+import teksturepako.pakku.api.actions.errors.ProjDiffTypes
 import teksturepako.pakku.api.data.*
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
@@ -45,7 +45,7 @@ data class Project(
     private var subpath: String? = null,
     var aliases: MutableSet<String>? = null,
 
-    var files: MutableSet<ProjectFile>
+    var files: MutableSet<ProjectFile>,
 )
 {
     /**
@@ -187,7 +187,8 @@ data class Project(
         return this.files.filter { it.type in providers.map { provider -> provider.serialName } }
     }
 
-    fun getLatestFile(providers: Collection<Provider>) = getFilesForProviders(providers).maxByOrNull { it.datePublished }
+    fun getLatestFile(providers: Collection<Provider>): ProjectFile? =
+        getFilesForProviders(providers).maxByOrNull { it.datePublished }
 
     // -- DEPENDENCIES --
 
