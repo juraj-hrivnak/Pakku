@@ -101,14 +101,14 @@ data class ConfigFile(
         this.overrides.clear()
     }
 
-    fun getAllOverrides(): List<Result<String, ActionError>> = this.overrides
-        .map { filterPath(it) }
+    suspend fun getAllOverrides(): List<Result<String, ActionError>> =
+        this.overrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
 
-    fun getAllServerOverrides(): List<Result<String, ActionError>> = this.serverOverrides
-        .map { filterPath(it) }
+    suspend fun getAllServerOverrides(): List<Result<String, ActionError>> =
+        this.serverOverrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
 
-    fun getAllClientOverrides(): List<Result<String, ActionError>> = this.clientOverrides
-        .map { filterPath(it) }
+    suspend fun getAllClientOverrides(): List<Result<String, ActionError>> =
+        this.clientOverrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
 
     // -- PROJECTS --
 

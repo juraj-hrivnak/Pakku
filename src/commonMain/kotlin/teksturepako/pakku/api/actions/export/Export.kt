@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.actions.export
 
+import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.runCatching
@@ -46,12 +47,24 @@ suspend fun export(
     configFile: ConfigFile,
     platforms: List<Platform>
 ): List<Job> = coroutineScope {
+    val overrides: Deferred<List<Result<String, ActionError>>> = async {
+        configFile.getAllOverrides()
+    }
+
+    val serverOverrides: Deferred<List<Result<String, ActionError>>> = async {
+        configFile.getAllServerOverrides()
+    }
+
+    val clientOverrides: Deferred<List<Result<String, ActionError>>> = async {
+        configFile.getAllClientOverrides()
+    }
+
     profiles.map { profile ->
         launch {
             profile.export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
-                lockFile, configFile, platforms
+                lockFile, configFile, platforms, overrides, serverOverrides, clientOverrides
             )
         }
     }
@@ -62,7 +75,10 @@ suspend fun ExportProfile.export(
     onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile,
-    platforms: List<Platform>
+    platforms: List<Platform>,
+    overrides: Deferred<List<Result<String, ActionError>>>,
+    serverOverrides: Deferred<List<Result<String, ActionError>>>,
+    clientOverrides: Deferred<List<Result<String, ActionError>>>,
 )
 {
     if (this.dependsOn != null && this.dependsOn !in platforms) return
@@ -88,8 +104,10 @@ suspend fun ExportProfile.export(
 
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
-        val results: List<RuleResult> = this.rules.filterNotNull()
-            .produceRuleResults({ onError(this, it) }, lockFile, configFile, this.name)
+        val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(
+            onError = { onError(this, it) },
+            lockFile, configFile, this.name, overrides, serverOverrides, clientOverrides
+        )
 
         // Run export rules
         val cachedPaths: List<Path> = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
@@ -281,7 +299,10 @@ suspend fun List<RuleResult>.finishResults(
  */
 suspend fun List<ExportRule>.produceRuleResults(
     onError: suspend (error: ActionError) -> Unit,
-    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String
+    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String,
+    overrides: Deferred<List<Result<String, ActionError>>>,
+    serverOverrides: Deferred<List<Result<String, ActionError>>>,
+    clientOverrides: Deferred<List<Result<String, ActionError>>>,
 ): List<RuleResult> = coroutineScope {
     val projects: Deferred<List<RuleContext.ExportingProject>> = async {
         lockFile.getAllProjects().map {
@@ -289,8 +310,8 @@ suspend fun List<ExportRule>.produceRuleResults(
         }
     }
 
-    val overrides: Deferred<List<RuleContext.ExportingOverride>> = async {
-        configFile.getAllOverrides().await().mapNotNull { result ->
+    val overridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
+        overrides.await().mapNotNull { result ->
             result.resultFold(
                 success = {
                     RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
@@ -303,8 +324,8 @@ suspend fun List<ExportRule>.produceRuleResults(
         }
     }
 
-    val serverOverrides: Deferred<List<RuleContext.ExportingOverride>> = async {
-        configFile.getAllServerOverrides().await().mapNotNull { result ->
+    val serverOverridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
+        serverOverrides.await().mapNotNull { result ->
             result.resultFold(
                 success = {
                     RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
@@ -317,8 +338,8 @@ suspend fun List<ExportRule>.produceRuleResults(
         }
     }
 
-    val clientOverrides: Deferred<List<RuleContext.ExportingOverride>> = async {
-        configFile.getAllClientOverrides().await().mapNotNull { result ->
+    val clientOverridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
+        clientOverrides.await().mapNotNull { result ->
             result.resultFold(
                 success = {
                     RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
@@ -337,7 +358,7 @@ suspend fun List<ExportRule>.produceRuleResults(
         }
     }
 
-    val deferredContexts = listOf(projects, overrides, serverOverrides, clientOverrides, projectOverrides)
+    val deferredContexts = listOf(projects, overridesR, serverOverridesR, clientOverridesR, projectOverrides)
     val contexts = deferredContexts.awaitAll().flatten()
 
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
