@@ -13,8 +13,8 @@ import java.nio.file.PathMatcher
 import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
-suspend fun Path.walk(inputGlobs: List<String>): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO) {
-    val matchers: List<Pair<PathMatcher, Boolean>> = inputGlobs.mapNotNull { input ->
+suspend fun Path.walk(globPatterns: List<String>): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO) {
+    val matchers: List<Pair<PathMatcher, Boolean>> = globPatterns.mapNotNull { input ->
         val negating = input.startsWith("!")
         val glob = (if (negating) input.removePrefix("!") else input).removePrefix("./")
 
@@ -30,7 +30,10 @@ suspend fun Path.walk(inputGlobs: List<String>): Sequence<Pair<Path, Boolean>> =
 
             matcher to path
         }.map { (matchers, path) ->
-            Path(path.absolutePathString().removePrefix(this@walk.absolutePathString()).removePrefix(File.separator)) to matchers.any { it.second }
+            val resultPath = Path(path.absolutePathString().removePrefix(this@walk.absolutePathString()).removePrefix(File.separator))
+            val negating = matchers.any { it.second }
+
+            resultPath to negating
         }
 }
 

@@ -3,6 +3,7 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.testing.test
 import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
@@ -16,21 +17,13 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-@OptIn(ExperimentalPathApi::class)
-class CfgPrjTest
+class CfgPrjTest : PakkuTest()
 {
-    init
-    {
-        workingPath = "./build/test"
-        runCatching { Path("./build/test").deleteRecursively() }
-        runCatching { Path("./build/test").createDirectory() }
-    }
-
     @Test
     fun `should fail without lock file`()
     {
         val cmd = CfgPrj()
-        val output = cmd.test("test -p test").output
+        val output = cmd.test("test --subpath test-subpath").output
 
         assertContains(output, "Could not read '$workingPath/${LockFile.FILE_NAME}'")
     }
@@ -54,9 +47,12 @@ class CfgPrjTest
 
         val cmd = CfgPrj()
         val output = cmd.test("test -p test -s both -u latest -r true")
+
         assertEquals("", output.stderr, "Command failed to execute")
         assertNotNull(ConfigFile.readOrNull(), "Config file should be created")
+
         val config = ConfigFile.readOrNull()!!.projects["test"]
+
         assertNotNull(config, "Project config should be created")
         assertEquals(UpdateStrategy.LATEST, config.updateStrategy)
         assertEquals(true, config.redistributable)
