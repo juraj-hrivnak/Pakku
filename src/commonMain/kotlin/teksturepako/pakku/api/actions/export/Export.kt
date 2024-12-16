@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.actions.export
 
+import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.runCatching
@@ -46,12 +47,24 @@ suspend fun export(
     configFile: ConfigFile,
     platforms: List<Platform>
 ): List<Job> = coroutineScope {
+    val overrides: Deferred<List<Result<String, ActionError>>> = async {
+        configFile.getAllOverrides()
+    }
+
+    val serverOverrides: Deferred<List<Result<String, ActionError>>> = async {
+        configFile.getAllServerOverrides()
+    }
+
+    val clientOverrides: Deferred<List<Result<String, ActionError>>> = async {
+        configFile.getAllClientOverrides()
+    }
+
     profiles.map { profile ->
         launch {
             profile.export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
-                lockFile, configFile, platforms
+                lockFile, configFile, platforms, overrides, serverOverrides, clientOverrides
             )
         }
     }
@@ -62,7 +75,10 @@ suspend fun ExportProfile.export(
     onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile,
-    platforms: List<Platform>
+    platforms: List<Platform>,
+    overrides: Deferred<List<Result<String, ActionError>>>,
+    serverOverrides: Deferred<List<Result<String, ActionError>>>,
+    clientOverrides: Deferred<List<Result<String, ActionError>>>,
 )
 {
     if (this.dependsOn != null && this.dependsOn !in platforms) return
@@ -88,8 +104,10 @@ suspend fun ExportProfile.export(
 
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
-        val results: List<RuleResult> = this.rules.filterNotNull()
-            .produceRuleResults({ onError(this, it) }, lockFile, configFile, this.name)
+        val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(
+            onError = { onError(this, it) },
+            lockFile, configFile, this.name, overrides, serverOverrides, clientOverrides
+        )
 
         // Run export rules
         val cachedPaths: List<Path> = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
@@ -281,44 +299,71 @@ suspend fun List<RuleResult>.finishResults(
  */
 suspend fun List<ExportRule>.produceRuleResults(
     onError: suspend (error: ActionError) -> Unit,
-    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String
-): List<RuleResult>
-{
-    val results = this.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
-        acc + lockFile.getAllProjects().map {
-            rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + configFile.getAllOverrides().mapNotNull { result ->
+    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String,
+    overrides: Deferred<List<Result<String, ActionError>>>,
+    serverOverrides: Deferred<List<Result<String, ActionError>>>,
+    clientOverrides: Deferred<List<Result<String, ActionError>>>,
+): List<RuleResult> = coroutineScope {
+    val projects: Deferred<List<RuleContext.ExportingProject>> = async {
+        lockFile.getAllProjects().map {
+            RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
+        }
+    }
+
+    val overridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
+        overrides.await().mapNotNull { result ->
             result.resultFold(
                 success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
+                    RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
                 },
                 failure = {
                     onError(it)
                     null
                 }
             )
-        } + configFile.getAllServerOverrides().mapNotNull { result ->
+        }
+    }
+
+    val serverOverridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
+        serverOverrides.await().mapNotNull { result ->
             result.resultFold(
                 success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
+                    RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
                 },
                 failure = {
                     onError(it)
                     null
                 }
             )
-        } + configFile.getAllClientOverrides().mapNotNull { result ->
+        }
+    }
+
+    val clientOverridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
+        clientOverrides.await().mapNotNull { result ->
             result.resultFold(
                 success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
+                    RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
                 },
                 failure = {
                     onError(it)
                     null
                 }
             )
-        } + readProjectOverrides(configFile).map {
-            rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
+        }
+    }
+
+    val projectOverrides: Deferred<List<RuleContext.ExportingProjectOverride>> = async {
+        readProjectOverrides(configFile).map {
+            RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
+        }
+    }
+
+    val deferredContexts = listOf(projects, overridesR, serverOverridesR, clientOverridesR, projectOverrides)
+    val contexts = deferredContexts.awaitAll().flatten()
+
+    val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
+        acc + contexts.map { context ->
+            rule to context
         }
     }.map { (exportRule, ruleContext) ->
         exportRule.getResult(ruleContext)
@@ -327,15 +372,15 @@ suspend fun List<ExportRule>.produceRuleResults(
     val missing = results.filter {
         it.ruleContext is RuleContext.MissingProject
     }.flatMap { ruleResult ->
-        this.map { rule ->
+        this@produceRuleResults.map { rule ->
             val project = (ruleResult.ruleContext as RuleContext.MissingProject).project
             rule.getResult(RuleContext.MissingProject(project, lockFile, configFile, workingSubDir))
         }
     }
 
-    val finished = this.map { rule ->
+    val finished = this@produceRuleResults.map { rule ->
         rule.getResult(Finished(lockFile, configFile, workingSubDir))
     }
 
-    return results + missing + finished
+    return@coroutineScope results + missing + finished
 }

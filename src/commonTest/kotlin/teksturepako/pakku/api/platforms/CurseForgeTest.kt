@@ -12,11 +12,6 @@ import kotlin.test.assertEquals
 class CurseForgeTest
 {
     @Test
-    fun requestProject()
-    {
-    }
-
-    @Test
     fun sortByLoaders_WithValidLoaders_ShouldCompareCorrectly() {
         val files = listOf(
             mockk<CfModModel.File> {
