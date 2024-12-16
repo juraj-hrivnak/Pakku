@@ -19,8 +19,6 @@ import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.cli.ui.shortForm
 import teksturepako.pakku.io.toHumanReadableSize
-import teksturepako.pakku.io.tryOrNull
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.fileSize
 
 class Export : CliktCommand()
@@ -60,9 +58,8 @@ class Export : CliktCommand()
             },
             onSuccess = { profile, file, duration ->
                 val fileSize = file.fileSize().toHumanReadableSize()
-                val filePath = file.tryOrNull { it.absolutePathString() } ?: file.toString()
 
-                terminal.pSuccess("[${profile.name} profile] exported to '$filePath' ($fileSize) in ${duration.shortForm()}")
+                terminal.pSuccess("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
             },
             lockFile, configFile, platforms
         ).joinAll()
