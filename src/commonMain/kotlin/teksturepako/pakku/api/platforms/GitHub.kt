@@ -74,14 +74,16 @@ object GitHub : Http(), Provider
 
         val projectFiles = if (fileId == null)
         {
+            // Multiple files
             json.decodeFromString<List<GhReleaseModel>>(
                 this.requestBody("https://api.github.com/repos/$input/releases") ?: return null
             )
-                .flatMap { it.toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles) }
+                .flatMap { it.toProjectFiles(project.id[this.serialName]!!).take(1) }
                 .take(numberOfFiles)
         }
         else
         {
+            // One file
             json.decodeFromString<GhReleaseModel>(
                 this.requestBody("https://api.github.com/repos/$input/releases/tags/$fileId") ?: return null
             ).toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles)

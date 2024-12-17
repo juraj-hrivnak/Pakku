@@ -9,7 +9,6 @@ import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Multiplatform.platforms
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.api.projects.combineWith
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
 
 /**
@@ -53,7 +52,11 @@ suspend fun updateMultipleProjectsWithFiles(
 
     val ghProjects = ghProjectsDeferred.await().toSet()
 
-    (updatedProjects combineWith ghProjects)
+    updatedProjects.map { accProject ->
+        ghProjects.find { it.slug[GitHub.serialName] == accProject.slug[GitHub.serialName] }
+            ?.let { newProject -> combineProjects(accProject, newProject, GitHub.serialName, numberOfFiles) }
+            ?: accProject
+    }
         .filter { it.updateStrategy == UpdateStrategy.LATEST && it !in projects }
         .toMutableSet()
 }

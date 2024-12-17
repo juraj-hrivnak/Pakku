@@ -18,6 +18,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.ui.*
+import teksturepako.pakku.debug
 
 
 class Status: CliktCommand()
@@ -111,8 +112,15 @@ class Status: CliktCommand()
 
                     for (provider in updatedProject.getProviders())
                     {
+                        debug { println(provider.serialName) }
+
                         val cFile = currentProject.getFilesForProvider(provider).firstOrNull()?.fileName
                         val uFile = updatedProject.getFilesForProvider(provider).firstOrNull()?.fileName
+
+                        debug {
+                            println(cFile)
+                            println(updatedProject.files)
+                        }
 
                         if (cFile == null || uFile == null || cFile == uFile) continue
 
@@ -154,7 +162,7 @@ class Status: CliktCommand()
                 )
                 projects()
             }
-            else ->
+            updatedProjects.size > 1 ->
             {
                 terminal.pInfo("Following projects have a new version available:")
                 terminal.println(
@@ -165,6 +173,7 @@ class Status: CliktCommand()
                 )
                 projects()
             }
+            else -> echo()
         }
     }
 }
