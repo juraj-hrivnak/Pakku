@@ -1,6 +1,25 @@
+
 # Changelog
 
 ## Unreleased
+
+## v0.22.0
+
+### Highlights
+
+- When removing a project, Pakku will always ask whether you want to remove each of its dependencies.
+- Added glob pattern support for specifying overrides, server_overrides and client_overrides, in [#70](https://github.com/juraj-hrivnak/Pakku/pull/70).
+  - This new implementation is optimized to work with large modpacks.
+  - For more info see [v0.20.0](https://github.com/juraj-hrivnak/Pakku/releases/tag/v0.20.0).
+
+### Fixes
+
+- Removed hyperlink from exported modpack file path messages. They didn't work properly on all platforms.
+
+### API
+
+- Breaking change: Refactored action errors to separate data classes.
+- Created a mini framework for simplifying tests.
 
 ## v0.21.0
 
