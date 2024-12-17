@@ -11,6 +11,10 @@ fun Terminal.processErrorMsg(error: ActionError, arg: String = "", prepend: Stri
 
     return when (error.severity)
     {
+        ErrorSeverity.FATAL ->
+        {
+            this.theme.danger(prefixed("$prep$msg", this.theme.string("pakku.prefix", ">>>"), offset))
+        }
         ErrorSeverity.ERROR ->
         {
             this.theme.danger(prefixed("$prep$msg", this.theme.string("pakku.prefix", ">>>"), offset))

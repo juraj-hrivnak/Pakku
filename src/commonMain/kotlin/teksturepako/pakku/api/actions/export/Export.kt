@@ -7,8 +7,10 @@ import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.CouldNotSave
+import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.actions.export.Packaging.*
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
+import teksturepako.pakku.api.actions.export.profiles.defaultProfiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
@@ -19,25 +21,28 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.*
 import java.nio.file.Path
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.associate
-import kotlin.collections.filter
-import kotlin.collections.filterNot
-import kotlin.collections.filterNotNull
-import kotlin.collections.flatMap
 import kotlin.collections.fold
-import kotlin.collections.isNotEmpty
-import kotlin.collections.listOf
 import kotlin.collections.map
-import kotlin.collections.mapNotNull
-import kotlin.collections.plus
-import kotlin.collections.toMap
 import kotlin.io.path.*
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 import com.github.michaelbull.result.fold as resultFold
 
+suspend fun exportDefaultProfiles(
+    onError: suspend (profile: ExportProfile, error: ActionError) -> Unit,
+    onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
+    lockFile: LockFile,
+    configFile: ConfigFile,
+    platforms: List<Platform>
+): List<Job>
+{
+    return export(
+        profiles = defaultProfiles.map { it.build(exportingScope(lockFile, configFile)) },
+        onError = { profile, error -> onError(profile, error) },
+        onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
+        lockFile, configFile, platforms
+    )
+}
 
 suspend fun export(
     profiles: List<ExportProfile>,
@@ -81,7 +86,7 @@ suspend fun ExportProfile.export(
     clientOverrides: Deferred<List<Result<String, ActionError>>>,
 )
 {
-    if (this.dependsOn != null && this.dependsOn !in platforms) return
+    if (this.requiresPlatform != null && this.requiresPlatform !in platforms) return
 
     val timedValue = measureTimedValue {
 
@@ -105,7 +110,7 @@ suspend fun ExportProfile.export(
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
         val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(
-            onError = { onError(this, it) },
+            onError = { error -> onError(this, error) },
             lockFile, configFile, this.name, overrides, serverOverrides, clientOverrides
         )
 
@@ -194,6 +199,7 @@ suspend fun List<RuleResult>.resolveResults(
             {
                 onError(packagingAction.error)
                 debug { println(ruleResult) }
+                if (packagingAction.error.severity == ErrorSeverity.FATAL) return@coroutineScope listOf()
                 null
             }
             is Ignore       -> null

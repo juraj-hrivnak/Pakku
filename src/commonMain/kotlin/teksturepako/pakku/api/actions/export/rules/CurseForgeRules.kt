@@ -1,5 +1,7 @@
 package teksturepako.pakku.api.actions.export.rules
 
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
@@ -14,7 +16,18 @@ import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
-fun ruleOfCfModpack(modpackModel: CfModpackModel) = ExportRule {
+data object RequiresMcVersion : ActionError()
+{
+    override val rawMessage = "Modpack requires a minimum of one version of Minecraft."
+    override val severity = ErrorSeverity.FATAL
+}
+
+fun cfModpackRule() = ExportRule {
+
+    val modpackModel = it.lockFile.getFirstMcVersion()?.let { mcVersion ->
+        createCfModpackModel(mcVersion, it.lockFile, it.configFile)
+    } ?: return@ExportRule it.error(RequiresMcVersion)
+
     when (it)
     {
         is ExportingProject         ->
@@ -34,7 +47,7 @@ fun ruleOfCfModpack(modpackModel: CfModpackModel) = ExportRule {
     }
 }
 
-fun ruleOfCfMissingProjects() = ExportRule {
+fun cfMissingProjectsRule() = ExportRule {
     when (it)
     {
         is MissingProject ->

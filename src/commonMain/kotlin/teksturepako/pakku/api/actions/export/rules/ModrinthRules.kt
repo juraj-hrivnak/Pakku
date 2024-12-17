@@ -16,7 +16,12 @@ import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.readPathBytesOrNull
 
-fun ruleOfMrModpack(modpackModel: MrModpackModel) = ExportRule {
+fun mrModpackRule() = ExportRule {
+
+    val modpackModel = it.lockFile.getFirstMcVersion()?.let { mcVersion ->
+        createMrModpackModel(mcVersion, it.lockFile, it.configFile)
+    } ?: return@ExportRule it.error(RequiresMcVersion)
+
     when (it)
     {
         is ExportingProject         ->
@@ -36,7 +41,7 @@ fun ruleOfMrModpack(modpackModel: MrModpackModel) = ExportRule {
     }
 }
 
-fun ruleOfMrMissingProjects() = ExportRule {
+fun mrMissingProjectsRule() = ExportRule {
     when (it)
     {
         is MissingProject ->

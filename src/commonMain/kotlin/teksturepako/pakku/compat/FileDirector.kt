@@ -6,6 +6,7 @@ import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.NoFiles
 import teksturepako.pakku.api.actions.export.ExportRule
+import teksturepako.pakku.api.actions.export.ExportingScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.RuleContext.MissingProject
@@ -32,21 +33,26 @@ data class FileDirectorModel(
     )
 }
 
-fun exportFileDirector(
+fun ExportingScope.fileDirectorRule(
     excludedProviders: Set<Provider> = setOf(),
     fileDirectorModel: FileDirectorModel = FileDirectorModel()
-) = ExportRule {
-    when (it)
-    {
-        is MissingProject ->
+): ExportRule?
+{
+    if (lockFile.getProject("filedirector") == null) return null
+
+    return ExportRule {
+        when (it)
         {
-            it.addToFileDirector(fileDirectorModel, excludedProviders)
+            is MissingProject ->
+            {
+                it.addToFileDirector(fileDirectorModel, excludedProviders)
+            }
+            is Finished       ->
+            {
+                it.createJsonFile(fileDirectorModel, "overrides/config/mod-director/.bundle.json")
+            }
+            else              -> it.ignore()
         }
-        is Finished       ->
-        {
-            it.createJsonFile(fileDirectorModel, "overrides/config/mod-director/.bundle.json")
-        }
-        else              -> it.ignore()
     }
 }
 

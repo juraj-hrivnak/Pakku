@@ -20,7 +20,11 @@ import kotlin.io.path.*
 /**
  * Rule Context keeps track of currently exporting content.
  */
-sealed class RuleContext(open val workingSubDir: String)
+sealed class RuleContext(
+    open val workingSubDir: String,
+    open val lockFile: LockFile,
+    open val configFile: ConfigFile
+)
 {
     fun getPath(path: String, vararg subpath: String) =
         Path(cacheDir.pathString, workingSubDir, path, *subpath)
@@ -91,10 +95,10 @@ sealed class RuleContext(open val workingSubDir: String)
     /** Rule context representing a [project][Project]. */
     data class ExportingProject(
         val project: Project,
-        val lockFile: LockFile,
-        val configFile: ConfigFile,
+        override val lockFile: LockFile,
+        override val configFile: ConfigFile,
         override val workingSubDir: String
-    ) : RuleContext(workingSubDir)
+    ) : RuleContext(workingSubDir, lockFile, configFile)
     {
         /** Sets the [project entry][RuleContext.ExportingProject] missing. */
         fun setMissing(): RuleResult = MissingProject(
@@ -130,10 +134,10 @@ sealed class RuleContext(open val workingSubDir: String)
     data class ExportingOverride(
         val path: String,
         val type: OverrideType,
-        val lockFile: LockFile,
-        val configFile: ConfigFile,
+        override val lockFile: LockFile,
+        override val configFile: ConfigFile,
         override val workingSubDir: String
-    ) : RuleContext(workingSubDir)
+    ) : RuleContext(workingSubDir, lockFile, configFile)
     {
         fun export(overridesDir: String? = type.folderName): RuleResult
         {
@@ -173,10 +177,10 @@ sealed class RuleContext(open val workingSubDir: String)
     /** Rule context representing a [project override][ProjectOverride]. */
     data class ExportingProjectOverride(
         val projectOverride: ProjectOverride,
-        val lockFile: LockFile,
-        val configFile: ConfigFile,
+        override val lockFile: LockFile,
+        override val configFile: ConfigFile,
         override val workingSubDir: String
-    ) : RuleContext(workingSubDir)
+    ) : RuleContext(workingSubDir, lockFile, configFile)
     {
         fun export(overridesDir: String? = projectOverride.type.folderName): RuleResult
         {
@@ -203,10 +207,10 @@ sealed class RuleContext(open val workingSubDir: String)
     /** Rule context representing a [missing project][Project]. */
     data class MissingProject(
         val project: Project,
-        val lockFile: LockFile,
-        val configFile: ConfigFile,
+        override val lockFile: LockFile,
+        override val configFile: ConfigFile,
         override val workingSubDir: String
-    ) : RuleContext(workingSubDir)
+    ) : RuleContext(workingSubDir, lockFile, configFile)
     {
         suspend fun exportAsOverrideFrom(
             provider: Provider,
@@ -263,10 +267,10 @@ sealed class RuleContext(open val workingSubDir: String)
 
     /** Rule context indicating that all other actions have been finished. */
     data class Finished(
-        val lockFile: LockFile,
-        val configFile: ConfigFile,
+        override val lockFile: LockFile,
+        override val configFile: ConfigFile,
         override val workingSubDir: String
-    ) : RuleContext(workingSubDir)
+    ) : RuleContext(workingSubDir, lockFile, configFile)
     {
         fun replaceText(vararg pairs: Pair<String, String>): RuleResult
         {

@@ -4,7 +4,7 @@ import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.overrides.OverrideType
 
-fun exportServerPack() = ExportRule {
+fun serverPackRule() = ExportRule {
     when (it)
     {
         is ExportingProject         ->

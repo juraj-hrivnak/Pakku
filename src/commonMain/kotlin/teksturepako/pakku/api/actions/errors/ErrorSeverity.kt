@@ -2,5 +2,5 @@ package teksturepako.pakku.api.actions.errors
 
 enum class ErrorSeverity
 {
-    ERROR, WARNING, NOTICE;
+    FATAL, ERROR, WARNING, NOTICE;
 }

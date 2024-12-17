@@ -8,10 +8,7 @@ import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.errors.AlreadyExists
-import teksturepako.pakku.api.actions.export.export
-import teksturepako.pakku.api.actions.export.profiles.CurseForgeProfile
-import teksturepako.pakku.api.actions.export.profiles.ModrinthProfile
-import teksturepako.pakku.api.actions.export.profiles.ServerPackProfile
+import teksturepako.pakku.api.actions.export.exportDefaultProfiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
@@ -44,12 +41,7 @@ class Export : CliktCommand()
             return@runBlocking
         }
 
-        export(
-            profiles = listOf(
-                CurseForgeProfile(lockFile, configFile),
-                ModrinthProfile(lockFile, configFile),
-                ServerPackProfile()
-            ),
+        exportDefaultProfiles(
             onError = { profile, error ->
                 if (error !is AlreadyExists)
                 {
