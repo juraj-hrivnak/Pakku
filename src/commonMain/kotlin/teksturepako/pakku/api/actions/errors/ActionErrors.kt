@@ -44,7 +44,7 @@ data class DownloadFailed(val path: Path?, val retryNumber: Int = 0) : ActionErr
 data class NoHashes(val path: Path?) : ActionError()
 {
     override val rawMessage = "File '$path' has no hashes."
-    override val isWarning = true
+    override val severity = ErrorSeverity.WARNING
 }
 
 data class HashMismatch(val path: Path?, val originalHash: String, val newHash: String) : ActionError()
@@ -113,6 +113,8 @@ data class AlreadyAdded(val project: Project) : ActionError()
 {
     override val rawMessage = "${project.type} ${project.slug} is already added."
 
+    override val severity = ErrorSeverity.NOTICE
+
     override fun message(arg: String): String = "${dim(project.type)} ${project.getFlavoredSlug()} is already added."
 }
 
@@ -162,8 +164,9 @@ data class FileNamesDoNotMatch(val project: Project) : ActionError()
 data class ProjRequiredBy(val project: Project, val dependants: List<Project>) : ActionError()
 {
     override val rawMessage = "${project.type} ${project.slug} is required by ${dependants.map { it.slug }}"
-    override val isWarning = true
-    override fun message(arg: String) =
-        "${dim(project.type)} ${project.getFlavoredSlug()} is required by " +
+
+    override val severity = ErrorSeverity.WARNING
+
+    override fun message(arg: String) = "${dim(project.type)} ${project.getFlavoredSlug()} is required by " +
                 "${dependants.map { it.getFlavoredSlug() }}."
 }
