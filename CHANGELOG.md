@@ -3,6 +3,15 @@
 
 ## Unreleased
 
+## v0.23.0
+
+- Fixed that updating GitHub projects was not working properly.
+
+### Technical Notes
+
+- Implemented DSL builder for export profiles.
+- Implemented error severity and make the `AlreadyAdded` error only a notice.
+
 ## v0.22.0
 
 ### Highlights
