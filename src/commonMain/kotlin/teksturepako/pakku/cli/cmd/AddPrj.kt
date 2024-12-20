@@ -101,13 +101,13 @@ class AddPrj : CliktCommand("prj")
         {
             suspend fun handleMissingProject(error: NotFoundOn)
             {
-                val prompt = promptForProject(error.provider, terminal, lockFile, projectType = projectTypeOpt).onFailure {
+                val (promptedProject, promptedArg) = promptForProject(
+                    error.provider, terminal, lockFile, projectType = projectTypeOpt
+                ).onFailure {
                     if (it is EmptyArg) return add(projectIn, strict = false)
                 }.getOrElse {
                     return terminal.pError(it)
                 }
-
-                val (promptedProject, promptedArg) = prompt
 
                 if (promptedProject == null) return terminal.pError(ProjNotFound, promptedArg.rawArg)
 

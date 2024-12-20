@@ -83,13 +83,13 @@ class Add : CliktCommand()
         {
             suspend fun handleMissingProject(error: NotFoundOn, arg: ProjectArg)
             {
-                val prompt = promptForProject(error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag}), projectTypeOpt).onFailure {
+                val (promptedProject, promptedArg) = promptForProject(
+                    error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag}), projectType = projectTypeOpt
+                ).onFailure {
                     if (it is EmptyArg) return add(projectIn, arg, strict = false)
                 }.getOrElse {
                     return terminal.pError(it)
                 }
-
-                val (promptedProject, promptedArg) = prompt
 
                 if (promptedProject == null) return terminal.pError(ProjNotFound, promptedArg.rawArg)
 

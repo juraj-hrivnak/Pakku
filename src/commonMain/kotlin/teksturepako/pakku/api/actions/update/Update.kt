@@ -69,12 +69,11 @@ private fun combineProjects(accProject: Project, newProject: Project, platformNa
 
     val accPublished = accFile?.datePublished ?: Instant.DISTANT_PAST
 
-    val newFiles = if (accFile == null) newProject.files else
-    {
-        newProject.files.sortedWith(compareBy { file ->
+    val newFiles = if (accFile == null) newProject.files else newProject.files.sortedWith(
+        compareBy { file ->
             accFile.loaders.indexOfFirst { it in file.loaders }.let { if (it == -1) accFile.loaders.size else it }
-        })
-    }
+        }
+    )
 
     val updatedFiles = (newFiles.take(numberOfFiles) + accProject.files)
         .filterNot { projectFile ->
