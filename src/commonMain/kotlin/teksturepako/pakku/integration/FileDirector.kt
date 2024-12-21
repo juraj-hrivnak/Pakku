@@ -1,4 +1,4 @@
-package teksturepako.pakku.compat
+package teksturepako.pakku.integration
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -14,7 +14,7 @@ import teksturepako.pakku.api.actions.export.ruleResult
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
-import teksturepako.pakku.compat.FileDirectorModel.UrlEntry
+import teksturepako.pakku.integration.FileDirectorModel.UrlEntry
 
 @Serializable
 data class FileDirectorModel(
