@@ -1,12 +1,12 @@
-# pakku add prj
+# pakku sync
 
-Specify the project precisely
+Sync your modpack with local project files
 
 ## Usage
 
 <snippet id="snippet-cmd">
 
-<var name="cmd">add prj</var>
+<var name="cmd">sync</var>
 <var name="params">[&lt;options&gt;] </var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
@@ -18,17 +18,14 @@ Specify the project precisely
 
 <snippet id="snippet-options">
 
-`--cf`, `--curseforge`
-: CurseForge project slug or ID
+`-A`, `--additions`
+: Sync additions only
 
-`--mr`, `--modrinth`
-: Modrinth project slug or ID
+`-R`, `--removals`
+: Sync removals only
 
-`--gh`, `--github`
-: GitHub repository URL or `<owner>/<repo>`
-
-`-t`, `--type`
-: Project type of project to add
+`-U`, `--updates`
+: Sync updates only
 
 </snippet>
 
