@@ -2,11 +2,12 @@ package teksturepako.pakku.api.actions.sync
 
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.overrides.ProjectOverride
-import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.tryToResult
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
@@ -34,12 +35,4 @@ suspend fun Set<ProjectOverride>.sync(
             }
         }
     }
-}
-
-suspend fun Set<ProjectOverride>.getFileHashes(type: String = "sha1"): List<String> = coroutineScope {
-    this@getFileHashes.map { projectOverride ->
-        async {
-            createHash(type, projectOverride.bytes)
-        }
-    }.awaitAll()
 }

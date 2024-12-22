@@ -29,7 +29,7 @@ fun main(args: Array<String>)
     Pakku().context {
         terminal = cliConfig?.toTerminal() ?: Terminal(theme = CliThemes.Default)
     }.subcommands(
-        Init(), Import(), Add(), Rm(), Cfg(), Set(), Status(), Update(), Ls(), Fetch(), Link(), Export(), Diff()
+        Init(), Import(), Add(), Rm(), Cfg(), Set(), Status(), Update(), Ls(), Fetch(), Sync(), Link(), Export(), Diff()
     ).main(args)
 
     // Check Modrinth's rate limit

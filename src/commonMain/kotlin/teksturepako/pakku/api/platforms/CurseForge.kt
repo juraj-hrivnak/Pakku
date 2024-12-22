@@ -287,7 +287,9 @@ object CurseForge : Platform(
             } ?: return mutableSetOf()
         ).data.exactMatches
 
-        val projectFiles = response.map { match -> match.file.toProjectFile(gameVersionTypeIds) }
+        val projectFiles = response
+            .filter { it.file.isAvailable }
+            .map { match -> match.file.toProjectFile(gameVersionTypeIds) }
         val projectIds = projectFiles.map { it.parentId }
         val projects = requestMultipleProjects(projectIds)
 
@@ -312,6 +314,7 @@ object CurseForge : Platform(
                 Json.encodeToString(GetFingerprintsMatches(murmurs))
             } ?: return mutableSetOf()
         ).data.exactMatches
+            .filter { it.file.isAvailable }
             .map { match -> match.file.toProjectFile(gameVersionTypeIds) }
             .toMutableSet()
     }
