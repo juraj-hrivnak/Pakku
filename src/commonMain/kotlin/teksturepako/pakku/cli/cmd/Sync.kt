@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.widgets.Spinner
@@ -25,7 +26,7 @@ class Sync : CliktCommand()
 {
     override fun help(context: Context) = "Sync your modpack with local project files"
 
-    override fun run() = runBlocking {
+    override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             it.message?.let { message -> terminal.pDanger(message) }
             echo()
@@ -54,7 +55,7 @@ class Sync : CliktCommand()
 
         launch { progressBar.execute() }
 
-        val (addedProjects, removedProjects) = syncProjects(lockFile, configFile, platforms)
+        val (addedProjects, removedProjects, updatedProjects) = syncProjects(lockFile, configFile, platforms)
 
         progressBar.clear()
 
@@ -91,16 +92,15 @@ class Sync : CliktCommand()
                         }?.onFailure { error ->
                             terminal.pError(error)
                         }
-
                     }
                 },
                 lockFile, platforms
             )
         }
 
-        removedProjects.takeIf { it.isNotEmpty() }?.run {
-            if (addedProjects.isNotEmpty()) echo()
+        if (addedProjects.isNotEmpty()) echo()
 
+        removedProjects.takeIf { it.isNotEmpty() }?.run {
             val msg = removedProjects.map { it.getFullMsg() }.toMsg()
             val verb = if (removedProjects.size > 1) "were" else "was"
 
@@ -122,6 +122,15 @@ class Sync : CliktCommand()
                         lockFile.remove(project)
                         lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
                         terminal.pDanger("$projMsg removed")
+
+                        project.getSubpath()?.onSuccess {
+                            configFile?.setProjectConfig(projectIn, lockFile) { slug ->
+                                this.subpath = null
+                                terminal.pDanger("'projects.$slug.subpath' removed")
+                            }
+                        }?.onFailure { error ->
+                            terminal.pError(error)
+                        }
                     }
                 },
                 onDepRemoval = { _, _ ->
@@ -131,9 +140,43 @@ class Sync : CliktCommand()
             )
         }
 
-        if (addedProjects.isNotEmpty() || removedProjects.isNotEmpty()) echo()
+        if (removedProjects.isNotEmpty()) echo()
 
-        lockFile.write()
-        configFile?.write()
+        updatedProjects.takeIf { it.isNotEmpty() }?.run {
+            val msg = updatedProjects.map { it.getFullMsg() }.toMsg()
+            val verb = if (updatedProjects.size > 1) "were" else "was"
+
+            echo("$msg $verb updated in your modpack's file system.")
+            echo()
+        }
+
+        for (project in updatedProjects)
+        {
+            if (terminal.ynPrompt("Do you want to update ${project.getFullMsg()}?", true))
+            {
+                lockFile.update(project)
+                terminal.pInfo("${project.getFullMsg()} updated")
+
+                project.getSubpath()?.onSuccess { subpath ->
+                    configFile?.setProjectConfig(project, lockFile) { slug ->
+                        this.subpath = subpath
+                        terminal.pInfo("'projects.$slug.subpath' set to '$subpath'")
+                    }
+                }?.onFailure { error ->
+                    terminal.pError(error)
+                }
+            }
+        }
+
+        if (updatedProjects.isNotEmpty()) echo()
+
+        lockFile.write()?.let { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
+        }
+        configFile?.write()?.let { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
+        }
     }
 }
