@@ -3,6 +3,11 @@
 
 ## Unreleased
 
+## v0.24.1
+
+- Refactored `sync` command's subpath search algorithm to async.
+- Fixed export profiles' `orElse` function not working as intended. (Optional integration with FileDirector did not work.)
+
 ## v0.24.0
 
 ### Highlights
