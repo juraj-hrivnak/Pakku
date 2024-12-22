@@ -57,8 +57,6 @@ suspend fun syncProjects(
 
                     val bytes = readPathBytesOrNull(path) ?: return@async null
 
-                    println(path)
-
                     path to bytes
                 }
             }
