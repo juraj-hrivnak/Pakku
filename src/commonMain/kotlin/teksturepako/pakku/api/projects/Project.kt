@@ -2,10 +2,7 @@
 
 package teksturepako.pakku.api.projects
 
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.get
+import com.github.michaelbull.result.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.errors.ActionError
@@ -89,20 +86,27 @@ data class Project(
         )
     }
 
+    private fun String.filterName() = this.lowercase().filterNot { it.isWhitespace() }
+
     /** Checks if the current project contains at least one slug, ID or name from the other project. */
     infix fun isAlmostTheSameAs(other: Project): Boolean
     {
         return this.id.values.any { it in other.id.values }
-                || this.name.values.any { it in other.name.values }
+                || this.name.values.any { it.filterName() in other.name.values.map { otherName -> otherName.filterName() } }
                 || this.slug.values.any { it in other.slug.values }
                 || hasAliasOf(other)
+                || this.files.any {
+                    it.hashes?.get("sha1") in other.files.flatMap { otherFile -> otherFile.hashes?.values ?: listOf() }
+                }
     }
 
     /** Check if the current project has an alias of the specified project. */
     infix fun hasAliasOf(other: Project): Boolean
     {
         return this.aliases?.any {
-            it in other.id.values || it in other.name.values || it in other.slug.values
+            it in other.id.values
+                    || it.filterName() in other.name.values.map { otherName -> otherName.filterName() }
+                    || it in other.slug.values
         } ?: false
     }
 
@@ -110,7 +114,7 @@ data class Project(
     operator fun contains(input: String): Boolean
     {
         return input in this.slug.values
-                || input in this.name.values
+                || input.filterName() in this.name.values.map { it.filterName() }
                 || input in this.id.values
                 || this.aliases?.contains(input) == true
     }
@@ -226,10 +230,13 @@ data class Project(
 
     // -- SUBPATH --
 
-    fun setSubpath(subpath: String)
-    {
-        filterPath(subpath).get()?.let { this.subpath = it }
-    }
+    fun setSubpath(subpath: String): ActionError? = filterPath(subpath).fold(
+        success = {
+            this.subpath = it
+            null
+        },
+        failure = { it}
+    )
 
     fun getSubpath(): Result<String, ActionError>? = subpath?.let { subpath ->
         filterPath(subpath)
