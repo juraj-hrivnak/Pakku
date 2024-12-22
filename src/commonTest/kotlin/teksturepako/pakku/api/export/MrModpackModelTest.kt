@@ -25,9 +25,6 @@ import kotlin.test.assertNotNull
 
 class MrModpackModelTest : PakkuTest()
 {
-    override val teardown: Boolean
-        get() = false
-
     private val modpackName = "ModrinthProfileTestModpack"
 
     private val greeneryMrId = "EVaCo3rr"
