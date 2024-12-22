@@ -14,9 +14,9 @@
 
 ### Other
 
-- Made most command print help on empty args and added spinner progress bar to some of them.
+- Made most of the commands print help on empty args and added a spinner progress bar to some of them.
 - Projects will now be compared with lowercase and white space filtered project names and their project file hashes.
-- Trailing commas are now allowed in config file and lock file.
+- Trailing commas are now allowed in the config file and lock file.
 - Added a better error message to `ProjNotFound` errors.
 - `.jar.meta` is now allowed extension when removing old files on `fetch`.
 - Created tests for CurseForge and Modrinth modpack models.
