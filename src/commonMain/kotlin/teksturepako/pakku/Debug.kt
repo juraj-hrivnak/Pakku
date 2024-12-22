@@ -56,6 +56,17 @@ inline fun <T> Collection<T>.debugIfEmpty(block: (Collection<T>) -> Unit): Colle
     return this
 }
 
+
+@OptIn(ExperimentalContracts::class)
+inline fun <T> Collection<T>.debugIfNotEmpty(block: (Collection<T>) -> Unit): Collection<T>
+{
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+    if (debugMode && this.isNotEmpty()) block(this)
+    return this
+}
+
 fun Any.toPrettyString(): String
 {
     var indentLevel = 0

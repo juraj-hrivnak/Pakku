@@ -13,10 +13,13 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.containNotProject
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
+import teksturepako.pakku.debug
+import teksturepako.pakku.debugIfNotEmpty
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.readAndCreateSha1FromBytes
 import teksturepako.pakku.io.readPathBytesOrNull
 import teksturepako.pakku.io.tryOrNull
+import teksturepako.pakku.toPrettyString
 import java.io.File
 import kotlin.io.path.*
 
@@ -63,8 +66,11 @@ suspend fun syncProjects(
         }
         .awaitAll()
         .filterNotNull()
+        .debugIfNotEmpty {
+            println(it.map { (path, _) -> path.pathString }.toPrettyString())
+        }
 
-    fun List<Project>.withFoundSubpath(): List<Project> = this.map { project ->
+    fun List<Project>.withFoundSubpaths(): List<Project> = this.map { project ->
         val subpath = files.mapNotNull { (path, bytes) ->
             val projectFile = project.files.find {
                 val fileHash = it.hashes?.get("sha1")
@@ -74,6 +80,10 @@ suspend fun syncProjects(
                 fileHash == createHash("sha1", bytes)
             } ?: return@mapNotNull null
 
+            debug {
+                println("Found subpath for ${projectFile.fileName}")
+            }
+
             val subpath = path.absolute().invariantSeparatorsPathString
                 .substringAfter(project.type.getPathString(configFile) + "/")
                 .substringBefore(projectFile.fileName)
@@ -81,6 +91,10 @@ suspend fun syncProjects(
 
             subpath.ifBlank { return@mapNotNull null }
         }.firstOrNull()
+
+        debug {
+            println("Subpath: $subpath")
+        }
 
         if (subpath != null)
         {
@@ -92,10 +106,8 @@ suspend fun syncProjects(
     val cfProjectsDeferred = async {
         if (CurseForge in platforms)
         {
-            val projects = CurseForge.requestMultipleProjectsWithFilesFromBytes(lockFile.getMcVersions(), files.map { it.second })
+            CurseForge.requestMultipleProjectsWithFilesFromBytes(lockFile.getMcVersions(), files.map { it.second })
                 .inheritPropertiesFrom(configFile)
-
-            projects
         }
         else mutableSetOf()
     }
@@ -103,20 +115,18 @@ suspend fun syncProjects(
     val mrProjectsDeferred = async {
         if (Modrinth in platforms)
         {
-            val projects = Modrinth.requestMultipleProjectsWithFilesFromHashes(files.map { createHash("sha1", it.second) }, "sha1")
+            Modrinth.requestMultipleProjectsWithFilesFromHashes(files.map { createHash("sha1", it.second) }, "sha1")
                 .inheritPropertiesFrom(configFile)
-
-            projects
         }
         else mutableSetOf()
     }
 
-    val detectedProjects = async {
+    val deferredPlatformsToProjects = async {
         listOf(CurseForge to cfProjectsDeferred.await(), Modrinth to mrProjectsDeferred.await())
     }
 
-    val combinedProjects = detectedProjects.await()
-        .fold(detectedProjects.await().flatMap { it.second }) { accProjects, (platform, platformProjects) ->
+    val detectedProjects = deferredPlatformsToProjects.await()
+        .fold(deferredPlatformsToProjects.await().flatMap { it.second }) { accProjects, (platform, platformProjects) ->
             accProjects.map { accProject ->
                 platformProjects.find { it isAlmostTheSameAs accProject }
                     ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, 1) }
@@ -130,26 +140,26 @@ suspend fun syncProjects(
         it.slug.keys.firstOrNull() == GitHub.serialName && it.slug.keys.size == 1
     }
 
-    val addedProjects = combinedProjects
+    val addedProjects = detectedProjects
         .filter { detectedProject -> currentProjects containNotProject detectedProject }
-        .withFoundSubpath()
+        .withFoundSubpaths()
         .toSet()
 
     val removedProjects = currentProjects
-        .filter { currentProject -> combinedProjects containNotProject currentProject }
-        .withFoundSubpath()
+        .filter { currentProject -> detectedProjects containNotProject currentProject }
+        .withFoundSubpaths()
         .toSet()
 
     val updatedProjects = Multiplatform.platforms.fold(currentProjects) { accProjects, platform ->
         accProjects.map { accProject ->
-            combinedProjects.find { it.slug[platform.serialName] == accProject.slug[platform.serialName] }
+            detectedProjects.find { it.slug[platform.serialName] == accProject.slug[platform.serialName] }
                 ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, 1) }
                 ?: accProject
         }
     }
         .distinctBy { it.files }
-        .filter { it !in currentProjects }
-        .withFoundSubpath()
+        .withFoundSubpaths()
+        .filter { project -> project !in currentProjects }
         .toSet()
 
     return@coroutineScope SyncResult(addedProjects, removedProjects, updatedProjects)

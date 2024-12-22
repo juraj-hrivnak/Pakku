@@ -4,6 +4,9 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.help
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.widgets.Spinner
 import com.github.ajalt.mordant.widgets.progress.progressBarLayout
@@ -25,6 +28,15 @@ import teksturepako.pakku.cli.ui.*
 class Sync : CliktCommand()
 {
     override fun help(context: Context) = "Sync your modpack with local project files"
+
+    private val additionsFlag by option("-A", "--additions").flag()
+        .help("Sync additions only")
+
+    private val removalsFlag by option("-R", "--removals").flag()
+        .help("Sync removals only")
+
+    private val updatesFlag by option("-U", "--updates").flag()
+        .help("Sync updates only")
 
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
@@ -49,6 +61,8 @@ class Sync : CliktCommand()
             return@runBlocking
         }
 
+        val flagsUsed = additionsFlag || removalsFlag || updatesFlag
+
         val progressBar = progressBarLayout(spacing = 2) {
             spinner(Spinner.Dots())
         }.animateInCoroutine(terminal)
@@ -59,116 +73,129 @@ class Sync : CliktCommand()
 
         progressBar.clear()
 
-        addedProjects.takeIf { it.isNotEmpty() }?.run {
-            val msg = addedProjects.map { it.getFullMsg() }.toMsg()
-            val verb = if (addedProjects.size > 1) "were" else "was"
+        // -- ADDITIONS --
 
-            echo("$msg $verb added to your modpack's file system.")
-            echo()
-        }
-
-        for (projectIn in addedProjects)
+        if (!flagsUsed || additionsFlag)
         {
-            projectIn.createAdditionRequest(
-                onError = { error ->
-                    terminal.pError(error)
-                },
-                onSuccess = { project, isRecommended, isReplacing, _ ->
-                    val projMsg = project.getFullMsg()
-                    val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
+            addedProjects.takeIf { it.isNotEmpty() }?.run {
+                val msg = addedProjects.map { it.getFullMsg() }.toMsg()
+                val verb = if (addedProjects.size > 1) "were" else "was"
 
-                    if (terminal.ynPrompt("Do you want to ${promptMessage.first} $projMsg?", isRecommended))
-                    {
-                        if (!isReplacing) lockFile.add(project) else lockFile.update(project)
-                        lockFile.linkProjectToDependents(project)
+                echo("$msg $verb added to your modpack's file system.")
+                echo()
+            }
 
-                        terminal.pSuccess("$projMsg ${promptMessage.second}")
-
-                        project.getSubpath()?.onSuccess { subpath ->
-                            configFile?.setProjectConfig(projectIn, lockFile) { slug ->
-                                this.subpath = subpath
-                                terminal.pSuccess("'projects.$slug.subpath' set to '$subpath'")
-                            }
-                        }?.onFailure { error ->
-                            terminal.pError(error)
-                        }
-                    }
-                },
-                lockFile, platforms
-            )
-        }
-
-        if (addedProjects.isNotEmpty()) echo()
-
-        removedProjects.takeIf { it.isNotEmpty() }?.run {
-            val msg = removedProjects.map { it.getFullMsg() }.toMsg()
-            val verb = if (removedProjects.size > 1) "were" else "was"
-
-            echo("$msg $verb removed from your modpack's file system.")
-            echo()
-        }
-
-        for (projectIn in removedProjects)
-        {
-            projectIn.createRemovalRequest(
-                onError = { error ->
-                    terminal.pError(error)
-                },
-                onRemoval = { project, isRecommended ->
-                    val projMsg = project.getFullMsg()
-
-                    if (terminal.ynPrompt("Do you want to remove $projMsg?", isRecommended))
-                    {
-                        lockFile.remove(project)
-                        lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
-                        terminal.pDanger("$projMsg removed")
-
-                        project.getSubpath()?.onSuccess {
-                            configFile?.setProjectConfig(projectIn, lockFile) { slug ->
-                                this.subpath = null
-                                terminal.pDanger("'projects.$slug.subpath' removed")
-                            }
-                        }?.onFailure { error ->
-                            terminal.pError(error)
-                        }
-                    }
-                },
-                onDepRemoval = { _, _ ->
-
-                },
-                lockFile
-            )
-        }
-
-        if (removedProjects.isNotEmpty()) echo()
-
-        updatedProjects.takeIf { it.isNotEmpty() }?.run {
-            val msg = updatedProjects.map { it.getFullMsg() }.toMsg()
-            val verb = if (updatedProjects.size > 1) "were" else "was"
-
-            echo("$msg $verb updated in your modpack's file system.")
-            echo()
-        }
-
-        for (project in updatedProjects)
-        {
-            if (terminal.ynPrompt("Do you want to update ${project.getFullMsg()}?", true))
+            for (projectIn in addedProjects)
             {
-                lockFile.update(project)
-                terminal.pInfo("${project.getFullMsg()} updated")
+                projectIn.createAdditionRequest(
+                    onError = { error ->
+                        terminal.pError(error)
+                    },
+                    onSuccess = { project, isRecommended, isReplacing, _ ->
+                        val projMsg = project.getFullMsg()
+                        val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
 
-                project.getSubpath()?.onSuccess { subpath ->
-                    configFile?.setProjectConfig(project, lockFile) { slug ->
-                        this.subpath = subpath
-                        terminal.pInfo("'projects.$slug.subpath' set to '$subpath'")
+                        if (terminal.ynPrompt("Do you want to ${promptMessage.first} $projMsg?", isRecommended))
+                        {
+                            if (!isReplacing) lockFile.add(project) else lockFile.update(project)
+                            lockFile.linkProjectToDependents(project)
+
+                            terminal.pSuccess("$projMsg ${promptMessage.second}")
+
+                            project.getSubpath()?.onSuccess { subpath ->
+                                configFile?.setProjectConfig(projectIn, lockFile) { slug ->
+                                    this.subpath = subpath
+                                    terminal.pSuccess("'projects.$slug.subpath' set to '$subpath'")
+                                }
+                            }?.onFailure { error ->
+                                terminal.pError(error)
+                            }
+                        }
+                    },
+                    lockFile, platforms
+                )
+            }
+
+            if (addedProjects.isNotEmpty()) echo()
+        }
+
+        // -- REMOVALS --
+
+        if (!flagsUsed || removalsFlag)
+        {
+            removedProjects.takeIf { it.isNotEmpty() }?.run {
+                val msg = removedProjects.map { it.getFullMsg() }.toMsg()
+                val verb = if (removedProjects.size > 1) "were" else "was"
+
+                echo("$msg $verb removed from your modpack's file system.")
+                echo()
+            }
+
+            for (projectIn in removedProjects)
+            {
+                projectIn.createRemovalRequest(
+                    onError = { error ->
+                        terminal.pError(error)
+                    },
+                    onRemoval = { project, isRecommended ->
+                        val projMsg = project.getFullMsg()
+
+                        if (terminal.ynPrompt("Do you want to remove $projMsg?", isRecommended))
+                        {
+                            lockFile.remove(project)
+                            lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
+                            terminal.pDanger("$projMsg removed")
+
+                            project.getSubpath()?.onSuccess {
+                                configFile?.setProjectConfig(projectIn, lockFile) { slug ->
+                                    this.subpath = null
+                                    terminal.pDanger("'projects.$slug.subpath' removed")
+                                }
+                            }?.onFailure { error ->
+                                terminal.pError(error)
+                            }
+                        }
+                    },
+                    onDepRemoval = { _, _ ->
+
+                    },
+                    lockFile
+                )
+            }
+
+            if (removedProjects.isNotEmpty()) echo()
+        }
+
+        if (!flagsUsed || updatesFlag)
+        {
+            updatedProjects.takeIf { it.isNotEmpty() }?.run {
+                val msg = updatedProjects.map { it.getFullMsg() }.toMsg()
+                val verb = if (updatedProjects.size > 1) "were" else "was"
+
+                echo("$msg $verb updated in your modpack's file system.")
+                echo()
+            }
+
+            for (project in updatedProjects)
+            {
+                if (terminal.ynPrompt("Do you want to update ${project.getFullMsg()}?", true))
+                {
+                    lockFile.update(project)
+                    terminal.pInfo("${project.getFullMsg()} updated")
+
+                    project.getSubpath()?.onSuccess { subpath ->
+                        configFile?.setProjectConfig(project, lockFile) { slug ->
+                            this.subpath = subpath
+                            terminal.pInfo("'projects.$slug.subpath' set to '$subpath'")
+                        }
+                    }?.onFailure { error ->
+                        terminal.pError(error)
                     }
-                }?.onFailure { error ->
-                    terminal.pError(error)
                 }
             }
-        }
 
-        if (updatedProjects.isNotEmpty()) echo()
+            if (updatedProjects.isNotEmpty()) echo()
+        }
 
         lockFile.write()?.let { error ->
             terminal.pError(error)
