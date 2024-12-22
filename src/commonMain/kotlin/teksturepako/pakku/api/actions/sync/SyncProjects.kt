@@ -70,15 +70,22 @@ suspend fun syncProjects(
             println(it.map { (path, _) -> path.pathString }.toPrettyString())
         }
 
-    fun List<Project>.withFoundSubpaths(): List<Project> = this.map { project ->
+    suspend fun List<Project>.withFoundSubpaths(): List<Project> = this.map { project ->
         val subpath = files.mapNotNull { (path, bytes) ->
-            val projectFile = project.files.find {
-                val fileHash = it.hashes?.get("sha1")
-                    ?: runBlocking { it.getPath(project, configFile).readAndCreateSha1FromBytes() }
-                    ?: return@mapNotNull null
-
-                fileHash == createHash("sha1", bytes)
-            } ?: return@mapNotNull null
+            val projectFile = project.files
+                .map { file ->
+                    async {
+                        val hash = file.hashes?.get("sha1")
+                            ?: file.getPath(project, configFile).readAndCreateSha1FromBytes()
+                        file to hash
+                    }
+                }
+                .awaitAll()
+                .find { (_, hash) ->
+                    hash == createHash("sha1", bytes)
+                }
+                ?.first
+                ?: return@mapNotNull null
 
             debug {
                 println("Found subpath for ${projectFile.fileName}")
