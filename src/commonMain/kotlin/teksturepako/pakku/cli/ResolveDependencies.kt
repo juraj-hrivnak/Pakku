@@ -19,9 +19,14 @@ suspend fun Project.resolveDependencies(
     lockFile: LockFile,
     projectProvider: Provider,
     platforms: List<Platform>,
+    onDependencyReq: suspend (
+        project: Project, provider: Provider, lockfile: LockFile
+    ) -> List<Project> = { project, provider, _ ->
+        project.requestDependencies(provider, lockFile)
+    }
 )
 {
-    val dependencies = this.requestDependencies(projectProvider, lockFile)
+    val dependencies = onDependencyReq(this, projectProvider, lockFile)
     if (dependencies.isEmpty()) return
 
     terminal.pInfo("Resolving dependencies...")

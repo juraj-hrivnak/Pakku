@@ -61,7 +61,7 @@ suspend fun updateMultipleProjectsWithFiles(
         .toMutableSet()
 }
 
-private fun combineProjects(accProject: Project, newProject: Project, platformName: String, numberOfFiles: Int): Project
+fun combineProjects(accProject: Project, newProject: Project, platformName: String, numberOfFiles: Int): Project
 {
     val accFile = accProject.files.filter { projectFile ->
         projectFile.type == platformName
