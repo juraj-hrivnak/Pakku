@@ -5,7 +5,7 @@ import teksturepako.pakku.api.actions.export.rules.mrMissingProjectsRule
 import teksturepako.pakku.api.actions.export.rules.mrModpackRule
 import teksturepako.pakku.api.actions.export.rules.replacementRule
 import teksturepako.pakku.api.platforms.Modrinth
-import teksturepako.pakku.compat.fileDirectorRule
+import teksturepako.pakku.integration.fileDirectorRule
 
 fun modrinthProfile() = exportProfile(
     name = Modrinth.serialName, fileExtension = "mrpack", requiresPlatform = Modrinth

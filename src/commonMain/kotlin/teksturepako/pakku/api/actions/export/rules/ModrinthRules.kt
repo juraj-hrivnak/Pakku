@@ -1,6 +1,7 @@
 package teksturepako.pakku.api.actions.export.rules
 
 import teksturepako.pakku.api.actions.export.ExportRule
+import teksturepako.pakku.api.actions.export.ExportingScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.actions.export.ruleResult
@@ -16,28 +17,30 @@ import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.readPathBytesOrNull
 
-fun mrModpackRule() = ExportRule {
+fun ExportingScope.mrModpackRule(): ExportRule
+{
+    val modpackModel = lockFile.getFirstMcVersion()?.run {
+        createMrModpackModel(this, lockFile, configFile)
+    }
 
-    val modpackModel = it.lockFile.getFirstMcVersion()?.let { mcVersion ->
-        createMrModpackModel(mcVersion, it.lockFile, it.configFile)
-    } ?: return@ExportRule it.error(RequiresMcVersion)
-
-    when (it)
-    {
-        is ExportingProject         ->
+    return ExportRule {
+        when (it)
         {
-            val projectFile = it.project.getFilesForProviders(Modrinth, GitHub).firstOrNull()
-                ?: return@ExportRule it.setMissing()
+            is ExportingProject         ->
+            {
+                val projectFile = it.project.getFilesForProviders(Modrinth, GitHub).firstOrNull()
+                    ?: return@ExportRule it.setMissing()
 
-            it.addToMrModpackModel(projectFile, modpackModel)
+                it.addToMrModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
+            }
+            is ExportingOverride        -> it.export()
+            is ExportingProjectOverride -> it.export()
+            is Finished                 ->
+            {
+                it.createJsonFile(modpackModel, MrModpackModel.MANIFEST, format = jsonEncodeDefaults)
+            }
+            else                        -> it.ignore()
         }
-        is ExportingOverride        -> it.export()
-        is ExportingProjectOverride -> it.export()
-        is Finished                 ->
-        {
-            it.createJsonFile(modpackModel, MrModpackModel.MANIFEST, format = jsonEncodeDefaults)
-        }
-        else                        -> it.ignore()
     }
 }
 

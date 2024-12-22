@@ -32,12 +32,10 @@ sealed class RuleContext(
     fun getPath() = Path(cacheDir.pathString, workingSubDir)
 
     /** Returns an [error][ActionError]. */
-    fun error(error: ActionError) =
-        ruleResult("error ${error.rawMessage}", Packaging.Error(error))
+    fun error(error: ActionError) = ruleResult("error ${error.rawMessage}", Packaging.Error(error))
 
     /** Ignores this [rule context][RuleContext]. */
-    fun ignore() =
-        ruleResult("ignore", Packaging.Ignore)
+    fun ignore() = ruleResult("ignore", Packaging.Ignore)
 
     /** Creates a new JSON file at the specified [path] & returns a result. */
     inline fun <reified T> createJsonFile(

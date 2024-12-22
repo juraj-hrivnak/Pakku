@@ -61,9 +61,10 @@ class ExportProfileBuilder(
         lockFile = exportingScope.lockFile
         configFile = exportingScope.configFile
 
-        builder.invoke(this)
+        this.apply(builder)
 
-        debug { println("Building $name profile") }
+        debug { println("Building [$name profile]") }
+        debug { println("[$name profile] has ${rules.toList().size} rule(s)") }
 
         return ExportProfile(name, fileExtension, rules.toList(), requiresPlatform)
     }

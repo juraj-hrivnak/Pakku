@@ -199,7 +199,12 @@ suspend fun List<RuleResult>.resolveResults(
             {
                 onError(packagingAction.error)
                 debug { println(ruleResult) }
-                if (packagingAction.error.severity == ErrorSeverity.FATAL) return@coroutineScope listOf()
+                if (packagingAction.error.severity == ErrorSeverity.FATAL)
+                {
+                    debug { println("FATAL") }
+                    return@coroutineScope listOf()
+                }
+
                 null
             }
             is Ignore       -> null
@@ -310,66 +315,42 @@ suspend fun List<ExportRule>.produceRuleResults(
     serverOverrides: Deferred<List<Result<String, ActionError>>>,
     clientOverrides: Deferred<List<Result<String, ActionError>>>,
 ): List<RuleResult> = coroutineScope {
-    val projects: Deferred<List<RuleContext.ExportingProject>> = async {
-        lockFile.getAllProjects().map {
-            RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        }
-    }
-
-    val overridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
-        overrides.await().mapNotNull { result ->
-            result.resultFold(
-                success = {
-                    RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
-                },
-                failure = {
-                    onError(it)
-                    null
-                }
-            )
-        }
-    }
-
-    val serverOverridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
-        serverOverrides.await().mapNotNull { result ->
-            result.resultFold(
-                success = {
-                    RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
-                },
-                failure = {
-                    onError(it)
-                    null
-                }
-            )
-        }
-    }
-
-    val clientOverridesR: Deferred<List<RuleContext.ExportingOverride>> = async {
-        clientOverrides.await().mapNotNull { result ->
-            result.resultFold(
-                success = {
-                    RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
-                },
-                failure = {
-                    onError(it)
-                    null
-                }
-            )
-        }
-    }
-
-    val projectOverrides: Deferred<List<RuleContext.ExportingProjectOverride>> = async {
-        readProjectOverrides(configFile).map {
-            RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
-        }
-    }
-
-    val deferredContexts = listOf(projects, overridesR, serverOverridesR, clientOverridesR, projectOverrides)
-    val contexts = deferredContexts.awaitAll().flatten()
 
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
-        acc + contexts.map { context ->
-            rule to context
+        acc + lockFile.getAllProjects().map {
+            rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
+        } + overrides.await().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + serverOverrides.await().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + clientOverrides.await().mapNotNull { result ->
+            result.resultFold(
+                success = {
+                    rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
+                },
+                failure = {
+                    onError(it)
+                    null
+                }
+            )
+        } + readProjectOverrides(configFile).map {
+            rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
         }
     }.map { (exportRule, ruleContext) ->
         exportRule.getResult(ruleContext)
