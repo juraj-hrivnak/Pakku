@@ -39,8 +39,9 @@ class CfModpackModelTest : PakkuTest()
                 type = CurseForge.serialName,
                 fileName = "Greenery-1.12.2-7.0.jar",
                 mcVersions = mutableListOf("1.12.2", "1.12.1", "1.12"),
+                loaders = mutableListOf("forge"),
                 id = greeneryCfFileId.toString(),
-                parentId = "574029",
+                parentId = greeneryCfId.toString(),
             )
         )
     )
@@ -61,9 +62,9 @@ class CfModpackModelTest : PakkuTest()
             name = modpackName
         )
 
-        val platforms = lockFile.getPlatforms().getOrElse {
-            throw AssertionError(it)
-        }
+        val platforms = lockFile.getPlatforms().getOrNull()
+
+        assertNotNull(platforms)
 
         runBlocking {
             export(
@@ -109,7 +110,7 @@ class CfModpackModelTest : PakkuTest()
     @Test
     fun `test cf modpack model in zip`()
     {
-        val zipPath = testFile("build", CurseForge.serialName, "$modpackName.zip")
+        val zipPath = testFile("build", CurseForge.serialName, "$modpackName.${CfModpackModel.EXTENSION}")
 
         val modpackModel = runBlocking {
             readPathTextFromZip(zipPath, CfModpackModel.MANIFEST).toCfModpackModel()
