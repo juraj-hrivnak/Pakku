@@ -9,6 +9,6 @@ import teksturepako.pakku.integration.fileDirectorRule
 
 fun curseForgeProfile() = exportProfile(name = CurseForge.serialName, requiresPlatform = CurseForge) {
     rule { cfModpackRule() }
-    optionalRule { fileDirectorRule(excludedProviders = setOf(CurseForge)) } orElse rule { cfMissingProjectsRule() }
+    optionalRule { fileDirectorRule(excludedProviders = setOf(CurseForge)) } orElse { cfMissingProjectsRule() }
     rule { replacementRule() }
 }

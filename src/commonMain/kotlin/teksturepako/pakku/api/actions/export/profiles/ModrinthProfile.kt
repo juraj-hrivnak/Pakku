@@ -11,6 +11,6 @@ fun modrinthProfile() = exportProfile(
     name = Modrinth.serialName, fileExtension = "mrpack", requiresPlatform = Modrinth
 ) {
     rule { mrModpackRule() }
-    optionalRule { fileDirectorRule(excludedProviders = setOf(Modrinth)) } orElse rule { mrMissingProjectsRule() }
+    optionalRule { fileDirectorRule(excludedProviders = setOf(Modrinth)) } orElse { mrMissingProjectsRule() }
     rule { replacementRule() }
 }

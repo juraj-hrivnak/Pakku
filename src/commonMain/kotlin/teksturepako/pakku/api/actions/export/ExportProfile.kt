@@ -94,12 +94,18 @@ class ExportProfileBuilder(
     }
 
     /** Provides a fallback mechanism when an optional rule is null. */
-    infix fun ExportRule?.orElse(exportRule: ExportRule): ExportRule?
+    infix fun ExportRule?.orElse(exportRule: (ExportingScope) -> ExportRule?): ExportRule?
     {
         if (this == null)
         {
-            rules += exportRule
-            return exportRule
+            val rule = exportRule(this@ExportProfileBuilder)
+
+            if (rule != null)
+            {
+                rules += rule
+                return rule
+            }
+            else return null
         }
         else return null
     }
