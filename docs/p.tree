@@ -40,6 +40,7 @@
             <toc-element topic="pakku-update.md"/>
             <toc-element topic="pakku-ls.md"/>
             <toc-element topic="pakku-fetch.md"/>
+            <toc-element topic="pakku-sync.md"/>
             <toc-element topic="pakku-link.md"/>
             <toc-element topic="pakku-export.md"/>
             <toc-element topic="pakku-diff.md"/>
