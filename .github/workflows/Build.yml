@@ -33,8 +33,36 @@ jobs:
           name: changelog
           path: ${{ github.workspace }}/NEW_CHANGELOG.md
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - run: ./gradlew jvmTest --stacktrace
+
+      - name: Upload the build report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report
+          path: '**/build/reports'
+
   build-jvm-jar:
     name: Build JVM Jar
+    needs: [ test ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -64,6 +92,7 @@ jobs:
 
   build-jvm-dist-zip:
     name: Build JVM ZIP Distribution
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -93,6 +122,7 @@ jobs:
 
   build-jvm-dist-tar:
     name: Build JVM Tar Distribution
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
