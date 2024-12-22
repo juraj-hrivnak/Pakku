@@ -10,7 +10,7 @@
 ### Technical Notes
 
 - Implemented DSL builder for export profiles.
-- Implemented error severity and make the `AlreadyAdded` error only a notice.
+- Implemented error severity and made the `AlreadyAdded` error only a notice.
 
 ## v0.22.0
 
