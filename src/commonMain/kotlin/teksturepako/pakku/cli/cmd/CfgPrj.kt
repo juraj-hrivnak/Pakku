@@ -70,52 +70,48 @@ class CfgPrj : CliktCommand("prj")
 
         val configFile = ConfigFile.readOrNew()
 
-        projectArgs.map { arg ->
-            if (lockFile.getProject(arg) != null) Ok(arg) else Err(ProjNotFound)
-        }.mapNotNull { result ->
-            result.onFailure { terminal.pError(it) }.get()
-        }.forEach { arg ->
-            val projectConfig = configFile.projects.getOrPut(arg) {
-                ConfigFile.ProjectConfig()
-            }
-
-            projectConfig.apply {
+        projectArgs.mapNotNull { projectArg ->
+            configFile.setProjectConfig(projectArg, lockFile) {
                 typeOpt?.let {
                     type = it
-                    terminal.pSuccess("'projects.$arg.type' set to '$it'.")
+                    terminal.pSuccess("'projects.$projectArg.type' set to '$it'")
                     echo()
                 }
 
                 sideOpt?.let {
                     side = it
-                    terminal.pSuccess("'projects.$arg.side' set to '$it'.")
+                    terminal.pSuccess("'projects.$projectArg.side' set to '$it'")
                     echo()
                 }
 
                 updateStrategyOpt?.let {
                     updateStrategy = it
-                    terminal.pSuccess("'projects.$arg.update_strategy' set to '$it'.")
+                    terminal.pSuccess("'projects.$projectArg.update_strategy' set to '$it'")
                     echo()
                 }
 
                 redistributableOpt?.let { opt ->
                     redistributable = opt
-                    terminal.pSuccess("'projects.$arg.redistributable' set to '$opt'.")
+                    terminal.pSuccess("'projects.$projectArg.redistributable' set to '$opt'")
                     echo()
                 }
 
                 subpathOpt?.let { opt ->
                     subpath = opt
-                    terminal.pSuccess("'projects.$arg.subpath' set to '$opt'.")
+                    terminal.pSuccess("'projects.$projectArg.subpath' set to '$opt'")
                     echo()
                 }
 
                 aliasOpt?.let { opt ->
                     if (aliases == null) aliases = mutableSetOf()
                     aliases!!.add(opt)
-                    terminal.pSuccess("'projects.$arg.aliases' add '$opt'.")
+                    terminal.pSuccess("'projects.$projectArg.aliases' add '$opt'")
                     echo()
                 }
+            }
+        }.let { actionErrors ->
+            actionErrors.forEach { error ->
+                terminal.pError(error)
             }
         }
 

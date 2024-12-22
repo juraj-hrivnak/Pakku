@@ -7,6 +7,8 @@ import com.github.michaelbull.result.fold
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjNotFound
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
@@ -121,6 +123,29 @@ data class ConfigFile(
         var subpath: String? = null,
         var aliases: MutableSet<String>? = null
     )
+
+    fun setProjectConfig(
+        projectIn: Project, lockFile: LockFile, builder: ProjectConfig.(slug: String) -> Unit
+    ): ActionError?
+    {
+        val project = lockFile.getProject(projectIn) ?: return ProjNotFound(project = projectIn)
+        val slug = project.slug.values.firstOrNull() ?: return ProjNotFound(project = projectIn)
+
+        return setProjectConfig(slug, lockFile, builder)
+    }
+
+    fun setProjectConfig(
+        projectInput: String, lockFile: LockFile, builder: ProjectConfig.(slug: String) -> Unit
+    ): ActionError?
+    {
+        lockFile.getProject(projectInput) ?: return ProjNotFound(projectInput)
+
+        val projectConfig = this.projects.getOrPut(key = projectInput, defaultValue = { ProjectConfig() })
+
+        projectConfig.builder(projectInput)
+
+        return null
+    }
 
     // -- FILE I/O --
 
