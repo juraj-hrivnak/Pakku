@@ -7,6 +7,8 @@ import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.dim
 import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.getFullMsg
+import teksturepako.pakku.cli.ui.toMsg
 import java.nio.file.Path
 
 data class DirectoryNotEmpty(val file: String) : ActionError()
@@ -69,9 +71,19 @@ data class CouldNotImport(val file: String) : ActionError()
 
 // -- PROJECT --
 
-data object ProjNotFound : ActionError()
+data class ProjNotFound(val projectInput: String? = null, val project: Project? = null) : ActionError()
 {
-    override val rawMessage = "Project not found."
+    override val rawMessage = if (project == null)
+    {
+        if (projectInput.isNullOrEmpty()) "Project not found." else "Project '$projectInput' not found."
+    }
+    else "Project ${project.type} ${project.slug} not found."
+
+    override fun message(arg: String) = if (project == null)
+    {
+        if (projectInput.isNullOrEmpty()) "Project not found." else "Project '$projectInput' not found."
+    }
+    else "Project ${project.getFullMsg()} not found."
 }
 
 data class ProjDiffTypes(val project: Project, val otherProject: Project) : ActionError()
@@ -168,5 +180,5 @@ data class ProjRequiredBy(val project: Project, val dependants: List<Project>) :
     override val severity = ErrorSeverity.WARNING
 
     override fun message(arg: String) = "${dim(project.type)} ${project.getFlavoredSlug()} is required by " +
-                "${dependants.map { it.getFlavoredSlug() }}."
+                "${dependants.map { it.getFlavoredSlug() }.toMsg()}."
 }
