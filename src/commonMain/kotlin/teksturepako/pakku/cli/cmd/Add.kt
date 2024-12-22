@@ -55,6 +55,7 @@ class Add : CliktCommand()
         this.subcommands(AddPrj())
     }
 
+    override val printHelpOnEmptyArgs = true
     override val invokeWithoutSubcommand = true
     override val allowMultipleSubcommands = true
 
@@ -91,7 +92,7 @@ class Add : CliktCommand()
                     return terminal.pError(it)
                 }
 
-                if (promptedProject == null) return terminal.pError(ProjNotFound, promptedArg.rawArg)
+                if (promptedProject == null) return terminal.pError(ProjNotFound(promptedArg.rawArg))
 
                 (error.project + promptedProject).fold( // Combine projects
                     failure = { terminal.pError(it) },

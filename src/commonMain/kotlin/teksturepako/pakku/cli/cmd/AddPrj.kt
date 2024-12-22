@@ -73,6 +73,8 @@ class AddPrj : CliktCommand("prj")
         metavar = "project type"
     ).enum<ProjectType>()
 
+    override val printHelpOnEmptyArgs = true
+
     private val flags by requireObject<Map<String, Boolean>>()
 
     override fun run(): Unit = runBlocking {
@@ -109,7 +111,7 @@ class AddPrj : CliktCommand("prj")
                     return terminal.pError(it)
                 }
 
-                if (promptedProject == null) return terminal.pError(ProjNotFound, promptedArg.rawArg)
+                if (promptedProject == null) return terminal.pError(ProjNotFound(promptedArg.rawArg))
 
                 (error.project + promptedProject).resultFold( // Combine projects
                     failure = { terminal.pError(it) },

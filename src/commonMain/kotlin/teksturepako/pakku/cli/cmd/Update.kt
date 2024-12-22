@@ -22,6 +22,8 @@ class Update : CliktCommand()
     private val projectArgs: List<String> by argument("projects", help = "Projects to update").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Update all projects").flag()
 
+    override val printHelpOnEmptyArgs = true
+
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             it.message?.let { it1 -> terminal.pDanger(it1) }

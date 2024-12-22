@@ -3,9 +3,14 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.terminal.danger
+import com.github.ajalt.mordant.widgets.Spinner
+import com.github.ajalt.mordant.widgets.progress.progressBarLayout
+import com.github.ajalt.mordant.widgets.progress.spinner
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.export.exportDefaultProfiles
@@ -41,6 +46,12 @@ class Export : CliktCommand()
             return@runBlocking
         }
 
+        val progressBar = progressBarLayout(spacing = 2) {
+            spinner(Spinner.Dots())
+        }.animateInCoroutine(terminal)
+
+        launch { progressBar.execute() }
+
         exportDefaultProfiles(
             onError = { profile, error ->
                 if (error !is AlreadyExists)
@@ -55,6 +66,8 @@ class Export : CliktCommand()
             },
             lockFile, configFile, platforms
         ).joinAll()
+
+        progressBar.clear()
 
         echo()
     }

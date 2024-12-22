@@ -25,6 +25,8 @@ class Rm : CliktCommand()
     private val allFlag: Boolean by option("-a", "--all", help = "Remove all projects").flag()
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
+    override val printHelpOnEmptyArgs = true
+
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.danger(it.message)
