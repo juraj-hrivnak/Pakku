@@ -3,6 +3,7 @@ package teksturepako.pakku
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.generatePakkuId
 import teksturepako.pakku.api.data.workingPath
+import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -16,6 +17,11 @@ open class PakkuTest
     }
 
     protected open val teardown = true
+
+    protected fun testFile(vararg path: String): Path
+    {
+        return Path(workingPath, *path)
+    }
 
     protected fun createTestFile(vararg path: String)
     {
