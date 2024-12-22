@@ -16,7 +16,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
-private fun String?.toMrModpackModel(): ModpackModel? =
+fun String?.toMrModpackModel(): MrModpackModel? =
     this?.let { json.decodeFromString<MrModpackModel>(it) }
 
 fun Path.isMrModpack(): Boolean = this.extension == MrModpackModel.EXTENSION || this.name == MrModpackModel.MANIFEST

@@ -16,7 +16,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
-private fun String?.toCfModpackModel(): ModpackModel? =
+fun String?.toCfModpackModel(): CfModpackModel? =
     this?.let { json.decodeFromString<CfModpackModel>(it) }
 
 fun Path.isCfModpack(): Boolean = this.extension == CfModpackModel.EXTENSION || this.name == CfModpackModel.MANIFEST

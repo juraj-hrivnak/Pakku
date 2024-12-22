@@ -37,7 +37,7 @@ suspend fun exportDefaultProfiles(
 ): List<Job>
 {
     return export(
-        profiles = defaultProfiles.map { it.build(exportingScope(lockFile, configFile)) },
+        profiles = defaultProfiles,
         onError = { profile, error -> onError(profile, error) },
         onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
         lockFile, configFile, platforms
@@ -45,7 +45,7 @@ suspend fun exportDefaultProfiles(
 }
 
 suspend fun export(
-    profiles: List<ExportProfile>,
+    profiles: List<ExportProfileBuilder>,
     onError: suspend (profile: ExportProfile, error: ActionError) -> Unit,
     onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
     lockFile: LockFile,
@@ -66,7 +66,7 @@ suspend fun export(
 
     profiles.map { profile ->
         launch {
-            profile.export(
+            profile.build(exportingScope(lockFile, configFile)).export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
                 lockFile, configFile, platforms, overrides, serverOverrides, clientOverrides
