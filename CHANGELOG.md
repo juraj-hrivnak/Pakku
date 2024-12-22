@@ -3,6 +3,24 @@
 
 ## Unreleased
 
+## v0.24.0
+
+### Highlights
+
+- Fixed a major bug where projects were not being exported to modpack manifests.
+- Implemented the `sync` command.
+  - This command can be used to sync your modpack with local project files.
+- Limited max number of retries for `fetch` command to 3 instead of 10.
+
+### Other
+
+- Made most command print help on empty args and added spinner progress bar to some of them.
+- Projects will now be compared with lowercase and white space filtered project names and their project file hashes.
+- Trailing commas are now allowed in config file and lock file.
+- Added a better error message to `ProjNotFound` errors.
+- `.jar.meta` is now allowed extension when removing old files on `fetch`.
+- Created tests for CurseForge and Modrinth modpack models.
+
 ## v0.23.0
 
 - Fixed that updating GitHub projects was not working properly.
