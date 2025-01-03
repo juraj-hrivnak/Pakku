@@ -80,7 +80,6 @@ import kotlinx.serialization.Serializable
  * @property updatedAt (Example: "2011-01-26T19:14:43Z")
  * @property permissions
  * @property allowRebaseMerge Whether to allow rebase merges for pull requests (Example: true)
- * @property templateRepository
  * @property tempCloneToken
  * @property allowSquashMerge Whether to allow squash merges for pull requests (Example: true)
  * @property allowAutoMerge Whether to allow Auto-merge to be used on pull requests (Example: false)
@@ -169,7 +168,6 @@ data class GhRepoModel(
     @SerialName("updated_at") val updatedAt: String? = null, // date-time
     val permissions: Permissions? = null,
     @SerialName("allow_rebase_merge") val allowRebaseMerge: Boolean = true,
-    @SerialName("template_repository") val templateRepository: GhReleaseModel? = null,
     @SerialName("temp_clone_token") val tempCloneToken: String? = null,
     @SerialName("allow_squash_merge") val allowSquashMerge: Boolean? = null,
     @SerialName("allow_auto_merge") val allowAutoMerge: Boolean? = null,
