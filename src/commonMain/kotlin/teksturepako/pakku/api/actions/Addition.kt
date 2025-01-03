@@ -9,14 +9,14 @@ import teksturepako.pakku.api.projects.Project
 data class RequestHandlers(
     val onError: suspend (error: ActionError) -> Unit,
     val onSuccess: suspend (
-        project: Project, isRecommended: Boolean, isReplacing: Boolean, reqHandlers: RequestHandlers
+        project: Project, isRecommended: Boolean, replacing: Project?, reqHandlers: RequestHandlers
     ) -> Unit
 )
 
 suspend fun Project?.createAdditionRequest(
     onError: suspend (error: ActionError) -> Unit,
     onSuccess: suspend (
-        project: Project, isRecommended: Boolean, isReplacing: Boolean, reqHandlers: RequestHandlers
+        project: Project, isRecommended: Boolean, replacing: Project?, reqHandlers: RequestHandlers
     ) -> Unit,
     lockFile: LockFile,
     platforms: List<Platform>,
@@ -29,12 +29,14 @@ suspend fun Project?.createAdditionRequest(
     var isRecommended = true
 
     // Handle already added project
-    val isReplacing = if (lockFile.isProjectAdded(this))
+    val replacing = if (lockFile.isProjectAdded(this))
     {
-        onError(AlreadyAdded(this))
-        if (lockFile.getProject(this)?.files == this.files) return else true
+        val existingProject = lockFile.getProject(this) ?: return onError(ProjNotFound())
+
+        onError(AlreadyAdded(existingProject))
+        if (existingProject.files == this.files) return else existingProject
     }
-    else false
+    else null
 
     // We do not have to check platform for GitHub only project
     if (this.slug.keys.size > 1 || this.slug.keys.firstOrNull() != GitHub.serialName)
@@ -69,5 +71,5 @@ suspend fun Project?.createAdditionRequest(
         isRecommended = false
     }
 
-    onSuccess(this, isRecommended, isReplacing, RequestHandlers(onError, onSuccess))
+    onSuccess(this, isRecommended, replacing, RequestHandlers(onError, onSuccess))
 }

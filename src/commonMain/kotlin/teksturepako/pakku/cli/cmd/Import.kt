@@ -61,10 +61,20 @@ class Import : CliktCommand()
                     onError = { error ->
                         if (error !is AlreadyAdded) terminal.pError(error)
                     },
-                    onSuccess = { project, _, isReplacing, reqHandlers ->
-                        val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
+                    onSuccess = { project, _, replacing, reqHandlers ->
+                        val projMsg = project.getFullMsg()
+                        val promptMessage = if (replacing == null)
+                        {
+                            "Do you want to add $projMsg?" to "$projMsg added"
+                        }
+                        else
+                        {
+                            val replacingMsg = replacing.getFullMsg()
+                            "Do you want to replace $replacingMsg with $projMsg?" to
+                                    "$replacingMsg replaced with $projMsg"
+                        }
 
-                        if (!isReplacing) lockFile.add(project) else lockFile.update(project)
+                        if (replacing == null) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
 
                         if (depsFlag)
