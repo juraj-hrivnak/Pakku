@@ -29,7 +29,7 @@ open class ExportProfile(
  * ```
  * val profile = exportProfile(name = "MyProfile") {
  *     rule { /* Add export rules */ }
- *     optionalRule { /* Add optional export rules */ } orElse rule { /* ... */ }
+ *     optionalRule { /* Add optional export rules */ } orElse { /* ... */ }
  * }
  * ```
  *
