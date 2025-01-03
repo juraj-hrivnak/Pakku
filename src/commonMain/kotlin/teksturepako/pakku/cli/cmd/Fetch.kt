@@ -148,7 +148,7 @@ class Fetch : CliktCommand()
                         DeletionActionType.SHELF  ->
                         {
                             val shelvedPath = Path(Dirs.shelfDir.pathString, file.fileName.pathString)
-                            terminal.pMsg("$file ${actionType.result} to $shelvedPath")
+                            terminal.pInfo("$file ${actionType.result} to $shelvedPath")
                         }
                     }
                 },
