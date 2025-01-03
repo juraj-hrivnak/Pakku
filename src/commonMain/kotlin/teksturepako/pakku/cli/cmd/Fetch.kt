@@ -3,10 +3,7 @@ package teksturepako.pakku.cli.cmd
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.help
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.optionalValue
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.colormath.Color
 import com.github.ajalt.colormath.model.RGB
@@ -22,15 +19,20 @@ import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.errors.AlreadyExists
+import teksturepako.pakku.api.actions.fetch.DeletionActionType
 import teksturepako.pakku.api.actions.fetch.deleteOldFiles
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
 import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.readProjectOverrides
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 class Fetch : CliktCommand()
 {
@@ -41,6 +43,10 @@ class Fetch : CliktCommand()
         .int()
         .optionalValue(2)
         .default(0)
+
+    private val shelveFlag: Boolean by option("--shelve")
+        .help("Moves unknown project files to a shelf instead of deleting them")
+        .flag()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
@@ -58,6 +64,12 @@ class Fetch : CliktCommand()
             }
         }
         else null
+
+        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
+            it.message?.let { message -> terminal.pDanger(message) }
+            echo()
+            return@runBlocking
+        }
 
         val projectFiles = retrieveProjectFiles(lockFile, Provider.providers).mapNotNull { result ->
             result.getOrElse {
@@ -88,8 +100,10 @@ class Fetch : CliktCommand()
                     this.total = total
                 }
             },
-            onSuccess = { path, _ ->
-                terminal.pSuccess("$path saved")
+            onSuccess = { path, projectFile ->
+                val slug = projectFile.getParentProject(lockFile)?.getFullMsg()
+
+                terminal.pSuccess("$slug saved to $path")
             },
             lockFile, configFile, retryOpt
         )
@@ -109,11 +123,15 @@ class Fetch : CliktCommand()
             )
         }
 
-        fetchJob.join()
+        syncJob.invokeOnCompletion {
+            progressBar.update {
+                context = fetchMsg("Fetched", RGB("#98c379"))
+                paused = true
+            }
 
-        progressBar.update {
-            context = fetchMsg("Fetched", RGB("#98c379"))
-            paused = true
+            runBlocking {
+                progressBar.stop()
+            }
         }
 
         // -- OLD FILES --
@@ -123,17 +141,24 @@ class Fetch : CliktCommand()
                 onError = { error ->
                     terminal.pError(error)
                 },
-                onSuccess = { file ->
-                    terminal.pDanger("$file deleted")
+                onSuccess = { file, actionType ->
+                    when (actionType)
+                    {
+                        DeletionActionType.DELETE -> terminal.pDanger("$file ${actionType.result}")
+                        DeletionActionType.SHELF  ->
+                        {
+                            val shelvedPath = Path(Dirs.shelfDir.pathString, file.fileName.pathString)
+                            terminal.pMsg("$file ${actionType.result} to $shelvedPath")
+                        }
+                    }
                 },
-                projectFiles, projectOverrides, lockFile, configFile
+                projectFiles, projectOverrides, lockFile, configFile, platforms, shelveFlag
             )
         }
 
+        fetchJob.join()
         syncJob.join()
         oldFilesJob.join()
-
-        progressBar.stop()
 
         echo()
     }

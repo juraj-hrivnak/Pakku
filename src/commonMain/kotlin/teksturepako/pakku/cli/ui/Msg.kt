@@ -52,6 +52,11 @@ fun Terminal.pDanger(message: String, offset: Int = 0)
     this.danger(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>"), offset))
 }
 
+fun Terminal.pMsg(message: String, offset: Int = 0)
+{
+    this.println(prefixed(message, prefix = this.theme.string("pakku.prefix", ">>>"), offset))
+}
+
 fun prefixed(text: String, prefix: String, offset: Int = 0): String = buildString {
     repeat(offset) { append(" ".repeat(3)) }
     append("${TextStyle(inverse = true)(prefix)} $text")
