@@ -5,6 +5,8 @@
 
 ## v0.25.0
 
+### Highlights
+
 - Implemented the `pakku fetch --shelve` flag.
 - Removed the `pakku sync` command's subpath auto-detection. (It did not work properly, and it's not worth rewriting it.)
 - Fixed error when requesting GitHub projects generated from a template repository.
@@ -16,7 +18,7 @@ This feature was implemented to help revive old modpacks that use mods outside a
 When `pakku fetch --shelve` is used, Pakku will move unknown project files to a shelf instead of deleting them.
 The shelf directory is located at `.pakku/shelf/`.
 
-This feature can be used together with the `pakku sync` command in the following way.
+This feature can be used together with the `pakku sync` command in the following way:
 
 - Run the `pakku -y sync` command to detect and add your local project files.
 - Run the `pakku fetch --shelve` command to any other project files outside any platform to the shelf.
