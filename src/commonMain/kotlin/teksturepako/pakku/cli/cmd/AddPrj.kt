@@ -128,13 +128,22 @@ class AddPrj : CliktCommand("prj")
                         handleMissingProject(error)
                     }
                 },
-                onSuccess = { project, isRecommended, isReplacing, reqHandlers ->
+                onSuccess = { project, isRecommended, replacing, reqHandlers ->
                     val projMsg = project.getFullMsg()
-                    val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
-
-                    if (terminal.ynPrompt("Do you want to ${promptMessage.first} $projMsg?", isRecommended))
+                    val promptMessage = if (replacing == null)
                     {
-                        if (!isReplacing) lockFile.add(project) else lockFile.update(project)
+                        "Do you want to add $projMsg?" to "$projMsg added"
+                    }
+                    else
+                    {
+                        val replacingMsg = replacing.getFullMsg()
+                        "Do you want to replace $replacingMsg with $projMsg?" to
+                                "$replacingMsg replaced with $projMsg"
+                    }
+
+                    if (terminal.ynPrompt(promptMessage.first, isRecommended))
+                    {
+                        if (replacing == null) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
 
                         if (!noDepsFlag)
@@ -142,7 +151,7 @@ class AddPrj : CliktCommand("prj")
                             project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
                         }
 
-                        terminal.pSuccess("$projMsg ${promptMessage.second}")
+                        terminal.pSuccess(promptMessage.second)
                     }
                 }, lockFile, platforms, strict
             )

@@ -91,25 +91,25 @@ class Sync : CliktCommand()
                     onError = { error ->
                         terminal.pError(error)
                     },
-                    onSuccess = { project, isRecommended, isReplacing, _ ->
+                    onSuccess = { project, isRecommended, replacing, _ ->
                         val projMsg = project.getFullMsg()
-                        val promptMessage = if (!isReplacing) "add" to "added" else "replace" to "replaced"
-
-                        if (terminal.ynPrompt("Do you want to ${promptMessage.first} $projMsg?", isRecommended))
+                        val promptMessage = if (replacing == null)
                         {
-                            if (!isReplacing) lockFile.add(project) else lockFile.update(project)
+                            "Do you want to add $projMsg?" to "$projMsg added"
+                        }
+                        else
+                        {
+                            val replacingMsg = replacing.getFullMsg()
+                            "Do you want to replace $replacingMsg with $projMsg?" to
+                                    "$replacingMsg replaced with $projMsg"
+                        }
+
+                        if (terminal.ynPrompt(promptMessage.first, isRecommended))
+                        {
+                            if (replacing == null) lockFile.add(project) else lockFile.update(project)
                             lockFile.linkProjectToDependents(project)
 
-                            terminal.pSuccess("$projMsg ${promptMessage.second}")
-
-                            project.getSubpath()?.onSuccess { subpath ->
-                                configFile?.setProjectConfig(projectIn, lockFile) { slug ->
-                                    this.subpath = subpath
-                                    terminal.pSuccess("'projects.$slug.subpath' set to '$subpath'")
-                                }
-                            }?.onFailure { error ->
-                                terminal.pError(error)
-                            }
+                            terminal.pSuccess(promptMessage.second)
                         }
                     },
                     lockFile, platforms
