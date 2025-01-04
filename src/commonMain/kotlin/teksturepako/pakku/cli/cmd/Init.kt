@@ -6,6 +6,10 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.input.interactiveSelectList
 import com.github.ajalt.mordant.terminal.prompt
 import com.github.ajalt.mordant.terminal.success
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
@@ -71,11 +75,18 @@ class Init : CliktCommand()
 
         // -- TARGET --
 
+
         with(
-            terminal.interactiveSelectList(
-                listOf("curseforge", "modrinth", "multiplatform"),
-                title = "? Target",
-            ) ?: return@runBlocking
+            runCatching {
+                terminal.interactiveSelectList(
+                    listOf("curseforge", "modrinth", "multiplatform"),
+                    title = "? Target",
+                )
+            }
+            .getOrElse {
+                terminal.prompt("? Target", choices = listOf("curseforge", "modrinth", "multiplatform"))
+            }
+            ?: return@runBlocking
         )
         {
             lockFile.setTarget(this)
