@@ -71,7 +71,7 @@ object CurseForge : Platform(
 
     override suspend fun requestProject(input: String, projectType: ProjectType?): Project? = when
     {
-        input.matches("[0-9]{5,6}".toRegex()) -> requestProjectFromId(input)
+        input.matches("[0-9]{5,7}".toRegex()) -> requestProjectFromId(input)
         else                                  -> requestProjectFromSlug(input)
     }.also { project -> projectType?.let { project?.type = it } }
 
@@ -96,14 +96,14 @@ object CurseForge : Platform(
         )
     }
 
-    override suspend fun requestProjectFromId(id: String): Project?
+    suspend fun requestProjectFromId(id: String): Project?
     {
         return json.decodeFromString<GetProjectResponse>(
             this.requestProjectBody("mods/$id") ?: return null
         ).data.toProject()
     }
 
-    override suspend fun requestProjectFromSlug(slug: String): Project?
+    suspend fun requestProjectFromSlug(slug: String): Project?
     {
         return json.decodeFromString<SearchProjectResponse>(
             this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug")

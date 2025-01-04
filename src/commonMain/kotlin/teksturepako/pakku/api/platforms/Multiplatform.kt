@@ -45,7 +45,7 @@ object Multiplatform : Provider
         }
         else if (mr == null && cf != null)
         {
-            mr = Modrinth.requestProjectFromSlug(cf.slug[CurseForge.serialName]!!)
+            mr = Modrinth.requestProject(cf.slug[CurseForge.serialName]!!)
         }
 
         // Combine projects or return just one of them.

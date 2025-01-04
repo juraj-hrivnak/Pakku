@@ -36,12 +36,6 @@ abstract class Platform(
     suspend fun requestProjectBody(input: String, bodyContent: () -> String): String? =
         this.requestBody("${this.getCommonRequestUrl()}/$input", bodyContent)
 
-    /** Requests a [project][Project] using its [ID][id]. */
-    abstract suspend fun requestProjectFromId(id: String): Project?
-
-    /** Requests a [project][Project] using its [slug]. */
-    abstract suspend fun requestProjectFromSlug(slug: String): Project?
-
     abstract suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
 
     // -- FILES --
