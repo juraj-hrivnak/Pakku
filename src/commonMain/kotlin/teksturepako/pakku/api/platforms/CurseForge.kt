@@ -71,7 +71,7 @@ object CurseForge : Platform(
 
     override suspend fun requestProject(input: String, projectType: ProjectType?): Project? = when
     {
-        input.matches("[0-9]{5,6}".toRegex()) -> requestProjectFromId(input)
+        input.matches("[0-9]{5,7}".toRegex()) -> requestProjectFromId(input)
         else                                  -> requestProjectFromSlug(input)
     }.also { project -> projectType?.let { project?.type = it } }
 
