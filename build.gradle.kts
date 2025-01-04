@@ -91,7 +91,8 @@ kotlin {
                 // Clikt | Apache-2.0
                 implementation("com.github.ajalt.clikt:clikt:5.0.1")
                 implementation("com.github.ajalt.clikt:clikt-markdown:5.0.1")
-                implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.0")
+                implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.1")
+                implementation("com.github.ajalt.mordant:mordant-jvm-jna:3.0.1")
 
                 // SLF4J Logging | MIT
                 implementation("org.slf4j:slf4j-api:2.0.7")
