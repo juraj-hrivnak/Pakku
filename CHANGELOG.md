@@ -23,7 +23,7 @@ This feature can be used together with the `pakku sync` command in the following
 - Run the `pakku -y sync` command to detect and add your local project files.
 - Run the `pakku fetch --shelve` command to move any other project files outside any platform to the shelf.
 - Decide what you want to do with each project file on the shelf.
-  - You can move the to the project overrides directory `.pakku/overrides/mods/`.
+  - You can move the project to the project overrides directory `.pakku/overrides/mods/`.
   - You can try to search for the project online. (For example, there is a chance that some of these files will be on GitHub.)
 
 ## v0.24.1
