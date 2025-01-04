@@ -79,12 +79,25 @@ object Modrinth : Platform(
 
     // -- PROJECT --
 
-    override suspend fun requestProject(input: String, projectType: ProjectType?): Project? = when
+    override suspend fun requestProject(input: String, projectType: ProjectType?): Project?
     {
-        input.matches("[0-9]{6}".toRegex()) -> null
-        input.matches("\b[0-9a-zA-Z]{8}\b".toRegex()) -> requestProjectFromId(input)
-        else -> requestProjectFromSlug(input)
-    }.also { project -> projectType?.let { project?.type = it } }
+        return when
+        {
+            input.matches("[0-9]{6}".toRegex())           -> null
+            input.matches("\b[0-9a-zA-Z]{8}\b".toRegex()) ->
+            {
+                json.decodeFromString<MrProjectModel>(
+                    this.requestProjectBody("project/$input") ?: return null
+                ).toProject()
+            }
+            else                                          ->
+            {
+                json.decodeFromString<MrProjectModel>(
+                    this.requestProjectBody("project/$input") ?: return null
+                ).toProject()
+            }
+        }.also { project -> projectType?.let { project?.type = it } }
+    }
 
     private fun MrProjectModel.toProject(): Project?
     {
@@ -111,20 +124,6 @@ object Modrinth : Platform(
             redistributable = license.id != "ARR",
             files = mutableSetOf(),
         )
-    }
-
-    override suspend fun requestProjectFromId(id: String): Project?
-    {
-        return json.decodeFromString<MrProjectModel>(
-            this.requestProjectBody("project/$id") ?: return null
-        ).toProject()
-    }
-
-    override suspend fun requestProjectFromSlug(slug: String): Project?
-    {
-        return json.decodeFromString<MrProjectModel>(
-            this.requestProjectBody("project/$slug") ?: return null
-        ).toProject()
     }
 
     override suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
