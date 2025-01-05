@@ -45,6 +45,8 @@
 
 With **Pakku**, you can create modpacks for **CurseForge**, **Modrinth** or **both simultaneously**.
 
+Pakku is your go-to tool for creating and managing modpacks. It integrates well with Git for version control. Pakku is also versatile and fully customizable to meet your needs.
+
 ### Multiplatform :dna: 
 
 Modpack development with the split of mod hosting platforms has become significantly harder. Pakku addresses this problem and tries to be as helpful as possible when developing a multiplatform modpack.
