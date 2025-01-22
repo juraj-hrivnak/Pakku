@@ -88,7 +88,7 @@ kotlin {
                 // Kotlin Result | ISC
                 implementation("com.michael-bull.kotlin-result:kotlin-result:2.0.0")
 
-                // Clikt | Apache-2.0
+                // Clikt & Mordant | Apache-2.0
                 implementation("com.github.ajalt.clikt:clikt:5.0.1")
                 implementation("com.github.ajalt.clikt:clikt-markdown:5.0.1")
                 implementation("com.github.ajalt.mordant:mordant-coroutines:3.0.1")
@@ -104,6 +104,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation("io.mockk:mockk:1.13.12")
+                implementation("io.strikt:strikt-core:0.34.0")
             }
         }
 
