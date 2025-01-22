@@ -12,7 +12,7 @@ open class PakkuTest
 {
     private var testName: String = ""
 
-    protected open suspend fun `on-set-up`()
+    protected open suspend fun `set-up`()
     {
     }
 
@@ -48,7 +48,7 @@ open class PakkuTest
         runCatching { Path("./build/test/$testName").createParentDirectories() }
         runCatching { Path("./build/test/$testName").createDirectory() }
 
-        runBlocking { this@PakkuTest.`on-set-up`() }
+        runBlocking { this@PakkuTest.`set-up`() }
     }
 
     @AfterTest

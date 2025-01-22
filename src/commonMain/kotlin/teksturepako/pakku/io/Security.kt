@@ -22,7 +22,7 @@ fun filterPath(path: String): Result<String, ActionError>
 {
     if (path.contains("..")
         || path.contains("[A-Z]:/".toRegex())
-        || path.contains("[A-Z]:\\".toRegex())
+        || path.contains("[A-Z]:\\\\".toRegex())
         || path.startsWith("/")
         || path.startsWith("\\")
     ) return Err(IllegalPath(path))

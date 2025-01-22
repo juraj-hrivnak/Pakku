@@ -1,19 +1,21 @@
 package teksturepako.pakku.io
 
 import kotlinx.coroutines.runBlocking
+import strikt.api.expectThat
+import strikt.assertions.contains
+import strikt.assertions.doesNotContain
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.workingPath
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.test.Test
-import kotlin.test.assertContains
 
 class GlobTest : PakkuTest()
 {
     private val testFileName = "test_file.txt"
     private val testDirName = "test_dir"
 
-    override suspend fun `on-set-up`()
+    override suspend fun `set-up`()
     {
         createTestFile(testFileName)
         createTestDir(testDirName)
@@ -21,25 +23,24 @@ class GlobTest : PakkuTest()
     }
 
     @Test
-    fun `test with basic file name`() = runBlocking {
+    fun `test with basic file name`(): Unit = runBlocking {
         val expandedGlob = listOf(testFileName).expandWithGlob(Path(workingPath))
 
-        assertContains(expandedGlob, testFileName)
+        expectThat(expandedGlob).contains(testFileName)
     }
 
     @Test
-    fun `test with negating pattern`() = runBlocking {
+    fun `test with negating pattern`(): Unit = runBlocking {
         val expandedGlob = listOf("!$testFileName").expandWithGlob(Path(workingPath))
 
-        assert(testFileName !in expandedGlob)
+        expectThat(expandedGlob).doesNotContain(testFileName)
     }
 
     @Test
-    fun `test with dir pattern`() = runBlocking {
+    fun `test with dir pattern`(): Unit = runBlocking {
         val expandedGlob = listOf("$testDirName/**").expandWithGlob(Path(workingPath))
 
-        assert(testDirName !in expandedGlob) { "$expandedGlob should not contain $testDirName" }
-
-        assertContains(expandedGlob, Path(testDirName, testFileName).pathString)
+        expectThat(expandedGlob).doesNotContain(testDirName)
+        expectThat(expandedGlob).contains(Path(testDirName, testFileName).pathString)
     }
 }

@@ -1,6 +1,9 @@
 package teksturepako.pakku.api.export
 
 import kotlinx.coroutines.runBlocking
+import strikt.api.expectThat
+import strikt.assertions.contains
+import strikt.assertions.isEqualTo
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.actions.export.export
 import teksturepako.pakku.api.actions.export.profiles.curseForgeProfile
@@ -18,8 +21,6 @@ import teksturepako.pakku.io.readPathTextOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class CfModpackModelTest : PakkuTest()
@@ -49,7 +50,7 @@ class CfModpackModelTest : PakkuTest()
     private val mcVersion = "1.12.2"
     private val forgeVersion = "xxx.xxx.xxx"
 
-    override suspend fun `on-set-up`()
+    override suspend fun `set-up`()
     {
         val lockFile = LockFile(
             target = CurseForge.serialName,
@@ -85,26 +86,9 @@ class CfModpackModelTest : PakkuTest()
             readPathTextOrNull(manifestPath).toCfModpackModel()
         }
 
-        assertNotNull(modpackModel, "Modpack model must not be null")
+        assertNotNull(modpackModel)
 
-        assertContains(
-            modpackModel.files,
-            element = CfModpackModel.CfModData(greeneryCfId, greeneryCfFileId),
-            "Modpack must contain projects"
-        )
-
-        assertEquals(
-            expected = modpackName, actual = modpackModel.name,
-            "Modpack name must equal $modpackModel, found ${modpackModel.name}"
-        )
-
-        assertEquals(
-            expected = mcVersion, actual = modpackModel.minecraft.version,
-        )
-
-        assertEquals(
-            expected = "forge-$forgeVersion", actual = modpackModel.minecraft.modLoaders.firstOrNull()?.id,
-        )
+        testModpackModel(modpackModel)
     }
 
     @Test
@@ -116,25 +100,23 @@ class CfModpackModelTest : PakkuTest()
             readPathTextFromZip(zipPath, CfModpackModel.MANIFEST).toCfModpackModel()
         }
 
-        assertNotNull(modpackModel, "Modpack model must not be null")
+        assertNotNull(modpackModel)
 
-        assertContains(
-            modpackModel.files,
-            element = CfModpackModel.CfModData(greeneryCfId, greeneryCfFileId),
-            "Modpack must contain projects"
-        )
+        testModpackModel(modpackModel)
+    }
 
-        assertEquals(
-            expected = modpackName, actual = modpackModel.name,
-            "Modpack name must equal $modpackModel, found ${modpackModel.name}"
-        )
+    private fun testModpackModel(modpackModel: CfModpackModel)
+    {
+        expectThat(modpackModel.files)
+            .contains(CfModpackModel.CfModData(greeneryCfId, greeneryCfFileId))
 
-        assertEquals(
-            expected = mcVersion, actual = modpackModel.minecraft.version,
-        )
+        expectThat(modpackName)
+            .isEqualTo(modpackModel.name)
 
-        assertEquals(
-            expected = "forge-$forgeVersion", actual = modpackModel.minecraft.modLoaders.firstOrNull()?.id,
-        )
+        expectThat(mcVersion)
+            .isEqualTo(modpackModel.minecraft.version)
+
+        expectThat("forge-$forgeVersion")
+            .isEqualTo(modpackModel.minecraft.modLoaders.firstOrNull()?.id)
     }
 }

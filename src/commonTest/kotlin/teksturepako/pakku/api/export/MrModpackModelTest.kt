@@ -1,6 +1,10 @@
 package teksturepako.pakku.api.export
 
 import kotlinx.coroutines.runBlocking
+import strikt.api.expectThat
+import strikt.assertions.contains
+import strikt.assertions.isEqualTo
+import strikt.assertions.isNotNull
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.actions.export.export
 import teksturepako.pakku.api.actions.export.profiles.modrinthProfile
@@ -69,7 +73,7 @@ class MrModpackModelTest : PakkuTest()
 
     private val platforms = lockFile.getPlatforms().getOrNull()
 
-    override suspend fun `on-set-up`()
+    override suspend fun `set-up`()
     {
         assertNotNull(platforms)
 
@@ -92,32 +96,9 @@ class MrModpackModelTest : PakkuTest()
             readPathTextOrNull(manifestPath).toMrModpackModel()
         }
 
-        assertNotNull(modpackModel, "Modpack model must not be null")
+        assertNotNull(modpackModel)
 
-        val greeneryMrFile = runBlocking {
-            greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(lockFile, configFile)
-        }
-
-        assertNotNull(greeneryMrFile, "Failed to create mr file from greenery file")
-
-        assertContains(
-            modpackModel.files,
-            element = greeneryMrFile,
-            "Modpack must contain projects"
-        )
-
-        assertEquals(
-            expected = modpackName, actual = modpackModel.name,
-            "Modpack name must equal $modpackModel, found ${modpackModel.name}"
-        )
-
-        assertEquals(
-            expected = mcVersion, actual = modpackModel.dependencies["minecraft"],
-        )
-
-        assertEquals(
-            expected = forgeVersion, actual = modpackModel.dependencies["forge"],
-        )
+        testModpackModel(modpackModel)
     }
 
     @Test
@@ -129,31 +110,32 @@ class MrModpackModelTest : PakkuTest()
             readPathTextFromZip(zipPath, MrModpackModel.MANIFEST).toMrModpackModel()
         }
 
-        assertNotNull(modpackModel, "Modpack model must not be null")
+        assertNotNull(modpackModel)
 
+        testModpackModel(modpackModel)
+    }
+
+    private fun testModpackModel(modpackModel: MrModpackModel)
+    {
         val greeneryMrFile = runBlocking {
             greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(lockFile, configFile)
         }
 
-        assertNotNull(greeneryMrFile, "Failed to create mr file from greenery file")
+        assertNotNull(greeneryMrFile)
 
-        assertContains(
-            modpackModel.files,
-            element = greeneryMrFile,
-            "Modpack must contain projects"
-        )
+        expectThat(greeneryMrFile)
+            .isNotNull()
 
-        assertEquals(
-            expected = modpackName, actual = modpackModel.name,
-            "Modpack name must equal $modpackModel, found ${modpackModel.name}"
-        )
+        expectThat(modpackModel.files)
+            .contains(greeneryMrFile)
 
-        assertEquals(
-            expected = mcVersion, actual = modpackModel.dependencies["minecraft"],
-        )
+        expectThat(modpackModel.name)
+            .isEqualTo(modpackName)
 
-        assertEquals(
-            expected = forgeVersion, actual = modpackModel.dependencies["forge"],
-        )
+        expectThat(modpackModel.dependencies["minecraft"])
+            .isEqualTo(mcVersion)
+
+        expectThat(modpackModel.dependencies["forge"])
+            .isEqualTo(forgeVersion)
     }
 }
