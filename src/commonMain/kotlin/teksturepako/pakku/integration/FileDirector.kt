@@ -38,7 +38,7 @@ fun ExportingScope.fileDirectorRule(
     fileDirectorModel: FileDirectorModel = FileDirectorModel()
 ): ExportRule?
 {
-    if (lockFile.getProject("filedirector") == null) return null
+    if (lockFile.getProject("filedirector") == null || lockFile.getProject("autopack-director") == null) return null
 
     return ExportRule {
         when (it)
