@@ -44,8 +44,8 @@ object PakkuApi
             }
             else
             {
-                requireNotNull(configuration?.curseForgeApiKey) { "curseForgeApiKey must be specified" }
-                requireNotNull(configuration?.userAgent) { "userAgent must be specified" }
+                requireNotNull(configuration?.curseForgeApiKey) { "function curseForge(apiKey: String) must be specified" }
+                requireNotNull(configuration?.userAgent) { "function withUserAgent(agent: String) must be specified" }
             }
         }
     }
