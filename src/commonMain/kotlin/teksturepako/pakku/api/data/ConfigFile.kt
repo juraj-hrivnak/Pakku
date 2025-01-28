@@ -147,6 +147,21 @@ data class ConfigFile(
         return null
     }
 
+    fun <T> getProjectConfig(projectIn: Project, lockFile: LockFile, block: (ProjectConfig) -> T): ActionError?
+    {
+        lockFile.getProject(projectIn) ?: return ProjNotFound(project = projectIn)
+
+        val projectOutput: String? = this.projects
+            .map { it.key }
+            .find { it in projectIn }
+
+        val projectConfig = this.projects[projectOutput] ?: return ProjNotFound(project = projectIn)
+
+        block(projectConfig)
+
+        return null
+    }
+
     // -- FILE I/O --
 
     companion object
