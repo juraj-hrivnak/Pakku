@@ -122,8 +122,7 @@ suspend fun ProjectFile.toMrFile(lockFile: LockFile, configFile: ConfigFile): Mr
             client = "required",
             server = serverSide,
         ),
-        // Replace ' ' in URL with '+'
-        downloads = setOf(this.url!!.replace(" ", "+")),
+        downloads = setOf(this.url!!.replace(" ", "+")), // Replace ' ' in URL with '+'
         fileSize = this.size
     )
 }
