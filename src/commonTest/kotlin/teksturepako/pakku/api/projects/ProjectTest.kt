@@ -1,9 +1,10 @@
 package teksturepako.pakku.api.projects
 
+import teksturepako.pakku.PakkuTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class ProjectTest
+class ProjectTest : PakkuTest()
 {
     @Test
     fun `test aliases`()

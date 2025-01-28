@@ -3,6 +3,7 @@ package teksturepako.pakku
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.generatePakkuId
 import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.api.initPakku
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.test.AfterTest
@@ -40,6 +41,10 @@ open class PakkuTest
     @BeforeTest
     fun `set-up-test`()
     {
+        initPakku {
+            developmentMode()
+        }
+
         testName = this::class.simpleName ?: generatePakkuId()
 
         println("Setting up test: $testName")

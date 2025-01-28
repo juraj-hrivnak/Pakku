@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.decode
+import teksturepako.pakku.api.PakkuApi
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.cf.*
 import teksturepako.pakku.api.projects.Project
@@ -41,7 +42,7 @@ object CurseForge : Platform(
 
     private const val API_KEY_HEADER = "x-api-key"
 
-    private val apiKey: String? = CURSEFORGE_API_KEY.takeIf { it.isNotBlank() }
+    private val apiKey: String? = PakkuApi.configuration?.curseForgeApiKey?.takeIf { it.isNotBlank() }
 
     fun checkApiKey()
     {
@@ -173,7 +174,7 @@ object CurseForge : Platform(
                 }
             }.toMutableMap(),
             requiredDependencies = this.dependencies
-                .filter { it.relationType == 3 }
+                .filter { it.relationType == 3 } // Filter to required dependency only
                 .map { it.modId.toString() }.toMutableSet(),
             size = this.fileLength,
             datePublished = Instant.parse(fileDate)

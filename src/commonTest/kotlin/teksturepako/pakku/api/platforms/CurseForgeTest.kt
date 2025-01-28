@@ -2,6 +2,7 @@ package teksturepako.pakku.api.platforms
 
 import io.mockk.every
 import io.mockk.mockk
+import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.models.cf.CfModModel
 import teksturepako.pakku.api.platforms.CurseForge.LOADER_VERSION_TYPE_ID
 import teksturepako.pakku.api.platforms.CurseForge.compareByLoaders
@@ -9,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
-class CurseForgeTest
+class CurseForgeTest : PakkuTest()
 {
     @Test
     fun sortByLoaders_WithValidLoaders_ShouldCompareCorrectly() {

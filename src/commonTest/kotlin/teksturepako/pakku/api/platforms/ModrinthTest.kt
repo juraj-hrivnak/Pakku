@@ -2,13 +2,14 @@ package teksturepako.pakku.api.platforms
 
 import io.mockk.every
 import io.mockk.mockk
+import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.platforms.Modrinth.compareByLoaders
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
-class ModrinthTest
+class ModrinthTest : PakkuTest()
 {
     @Test
     fun compareByLoaders_WithValidLoaders_ShouldSortCorrectly() {
