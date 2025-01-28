@@ -6,7 +6,6 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import kotlinx.serialization.json.Json
 import teksturepako.pakku.api.PakkuApi
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 val client = HttpClient(OkHttp) {
@@ -14,19 +13,19 @@ val client = HttpClient(OkHttp) {
         Json
     }
     install(HttpTimeout) {
-        val timeout = PakkuApi.configuration?.timeout?.inWholeMilliseconds
+        val timeout = PakkuApi.timeout.inWholeMilliseconds
 
         socketTimeoutMillis = timeout
         requestTimeoutMillis = timeout
         connectTimeoutMillis = timeout
     }
     install(UserAgent) {
-        PakkuApi.configuration?.userAgent?.let { agent = it }
+        PakkuApi.userAgent?.let { agent = it }
     }
     engine {
         pipelining = true
         config {
-            val timeout = PakkuApi.configuration?.timeout?.toJavaDuration() ?: 1.minutes.toJavaDuration()
+            val timeout = PakkuApi.timeout.toJavaDuration()
 
             retryOnConnectionFailure(true)
 

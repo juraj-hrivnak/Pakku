@@ -42,7 +42,7 @@ object CurseForge : Platform(
 
     private const val API_KEY_HEADER = "x-api-key"
 
-    private val apiKey: String? = PakkuApi.configuration?.curseForgeApiKey?.takeIf { it.isNotBlank() }
+    private val apiKey: String? = PakkuApi.curseForgeApiKey?.takeIf { it.isNotBlank() }
 
     fun checkApiKey()
     {

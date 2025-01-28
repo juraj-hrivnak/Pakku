@@ -3,7 +3,7 @@ package teksturepako.pakku
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.generatePakkuId
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.initPakku
+import teksturepako.pakku.api.pakku
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.test.AfterTest
@@ -41,7 +41,7 @@ open class PakkuTest
     @BeforeTest
     fun `set-up-test`()
     {
-        initPakku {
+        pakku {
             developmentMode()
         }
 
