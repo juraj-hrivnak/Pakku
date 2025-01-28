@@ -2,6 +2,8 @@
 
 package teksturepako.pakku.api.data
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.fold
 import kotlinx.serialization.SerialName
@@ -147,19 +149,19 @@ data class ConfigFile(
         return null
     }
 
-    fun <T> getProjectConfig(projectIn: Project, lockFile: LockFile, block: (ProjectConfig) -> T): ActionError?
+    fun <T> findProjectConfig(
+        projectIn: Project, lockFile: LockFile, builder: (ProjectConfig) -> T
+    ): Result<T, ActionError>
     {
-        lockFile.getProject(projectIn) ?: return ProjNotFound(project = projectIn)
+        lockFile.getProject(projectIn) ?: return Err(ProjNotFound(project = projectIn))
 
         val projectOutput: String? = this.projects
             .map { it.key }
             .find { it in projectIn }
 
-        val projectConfig = this.projects[projectOutput] ?: return ProjNotFound(project = projectIn)
+        val projectConfig = this.projects[projectOutput] ?: return Err(ProjNotFound(project = projectIn))
 
-        block(projectConfig)
-
-        return null
+        return Ok(builder(projectConfig))
     }
 
     // -- FILE I/O --
