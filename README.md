@@ -50,9 +50,7 @@ Besides package management itself, it enables support for version control, simpl
 
 ## Features
 
-### Project Management Tools 🛠
-
-A comprehensive toolkit for modpack development:
+### A Comprehensive Toolkit for Modpack Development
 
 - **Project Operations**
   - `pakku add` - Add new projects with automatic dependency resolution
@@ -64,7 +62,8 @@ A comprehensive toolkit for modpack development:
 - **Development Environment**
   - `pakku init` - Create new modpacks
   - `pakku import` - Import existing modpacks
-  - `pakku fetch` - Set up development environments
+  - `pakku fetch` - Set up or update your development environment
+  - `pakku sync` - Sync your development environment with your modpack
   - `pakku export` - Create distribution-ready packages
 
 ### Multiplatform :dna: 
