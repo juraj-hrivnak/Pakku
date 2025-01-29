@@ -45,7 +45,27 @@
 
 With **Pakku**, you can create modpacks for **CurseForge**, **Modrinth** or **both simultaneously**.
 
-Pakku is your go-to tool for creating and managing modpacks. It integrates well with Git for version control. Pakku is also versatile and fully customizable to meet your needs.
+It's a package manager that significantly simplifies Minecraft modpack development. Inspired by package managers like npm and Cargo.
+Besides package management itself, it enables support for version control, simplifies collaboration options, and adds support for CI/CD.
+
+## Features
+
+### Project Management Tools 🛠
+
+A comprehensive toolkit for modpack development:
+
+- **Project Operations**
+  - `pakku add` - Add new projects with automatic dependency resolution
+  - `pakku rm` - Remove projects safely with dependency checking
+  - `pakku update` - Update projects individually or in bulk
+  - `pakku ls` - List and inspect project details
+  - `pakku diff` - Compare different versions of your modpack
+
+- **Development Environment**
+  - `pakku init` - Create new modpacks
+  - `pakku import` - Import existing modpacks
+  - `pakku fetch` - Set up development environments
+  - `pakku export` - Create distribution-ready packages
 
 ### Multiplatform :dna: 
 
@@ -64,6 +84,31 @@ Pakku is also efficient with its HTTP requests, reducing them to a minimum. This
 Pakku utilises a design used by many well-known package managers like npm or Cargo, which consists of two files, the config file and the lock file.
 
 This allows you to fine-tune your modpack, while still being up-to-date. If any data retrieved from the platforms does not suit your requirements, you can simply override it in the config file.
+
+### Advanced Features 🎯
+
+- **Powerful Configuration Options**
+  - Platform-specific support for `overrides`, `server-overrides` and `client-overrides`
+  - Per-project support for configuring project side, update strategy, subpath, aliases and more
+
+- **Platform Migration**
+  - Convert between CurseForge and Modrinth formats
+  - Create multiplatform modpacks from single-platform sources
+  - Preserve project relationships during conversion
+
+- **File Management**
+  - `pakku sync` - Sync your local project files with your modpack
+  - Glob pattern support for file matching
+  - Automatic file syncing with the [project overrides directory](https://juraj-hrivnak.github.io/Pakku/pakku-directory.html#adding-project-overrides)
+
+### Quality of Life Features 💡
+
+- **Development Assistance**
+  - Automatic project-side and project-type detection
+  - Partial redistribution permission checking
+
+- **Integration**
+  - File Director integration
 
 ## Documentation 📚
 
