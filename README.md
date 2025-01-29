@@ -63,7 +63,6 @@ Besides package management itself, it enables support for version control, simpl
   - `pakku init` - Create new modpacks
   - `pakku import` - Import existing modpacks
   - `pakku fetch` - Set up or update your development environment
-  - `pakku sync` - Sync your development environment with your modpack
   - `pakku export` - Create distribution-ready packages
 
 ### Multiplatform :dna: 
