@@ -20,10 +20,9 @@ Command parameters should be _suffixed_ with a special abbreviation of the param
 Use: `Opt` for options, `Arg` for arguments, and `Flag` for flags (Boolean options).
 If there can be multiple parameters use the plural, e.g. `Opts`, `Args`.
 
-Defining parameters using a chain of function calls is preferred.
-
 ```kt
 // Parameters should be always private.
+// Defining parameters using a chain of function calls is preferred.
 
 private val exampleOpt by option("--example") // Consult if a short version `-e` of the option is a good idea
     .help("...") // Consider discussing the help message
