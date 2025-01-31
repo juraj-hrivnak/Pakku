@@ -100,7 +100,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation("io.mockk:mockk:1.13.12")
-                implementation("com.google.guava:guava:33.3.1-jre") // Used in diffTest to generate all combinations
             }
         }
 
