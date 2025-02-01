@@ -47,7 +47,7 @@ When creating test please extend the `PakkuTest` class.
 It will ensure every test is run separately in the `build/test/` directory,
 and also automatically handle the working path of Pakku and teardown of any created files while running the tests.
 
-For testing we use the [Strikt](https://strikt.io/) assertion library, because it is easy to use, read and debug.
+For assertions, we use the [Strikt](https://strikt.io/) library, because it is easy to use, read and debug.
 
 Example of a test:
 
