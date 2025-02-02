@@ -111,21 +111,21 @@ suspend fun ExportProfile.export(
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
         val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(
-            onError = { error -> onError(this, ErrorWhileExporting(this, modpackFileName, error)) },
+            onError = { error -> onError(this, ExportingError(error)) },
             lockFile, configFile, this.name, overrides, serverOverrides, clientOverrides
         )
 
         // Run export rules
         val cachedPaths: List<Path> = results
             .resolveResults { error ->
-                onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                onError(this, error)
             }
             .awaitAll()
             .filterNotNull()
             .plus(
                 results
                     .finishResults { error ->
-                        onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                        onError(this, error)
                     }
                     .awaitAll()
                     .filterNotNull()
@@ -138,7 +138,7 @@ suspend fun ExportProfile.export(
             .mapNotNull { file ->
                 file.tryToResult { it.readBytes() }
                     .onFailure { error ->
-                        onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                        onError(this, IOExportingError(error))
                     }
                     .get()?.let { file to it }
             }
@@ -149,7 +149,7 @@ suspend fun ExportProfile.export(
             .mapNotNull { directory ->
                 directory.tryToResult { it.toFile().walkTopDown() }
                     .onFailure { error ->
-                        onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                        onError(this, IOExportingError(error))
                     }.get()
             }
             .flatMap {
@@ -164,7 +164,7 @@ suspend fun ExportProfile.export(
 
         val fileTreeWalk = inputDirectory.tryToResult { it.toFile().walkBottomUp() }
             .onFailure {error ->
-                onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                onError(this, IOExportingError(error))
             }.get()
 
         if (fileTreeWalk != null)
@@ -178,7 +178,7 @@ suspend fun ExportProfile.export(
                 {
                     val currentDirFiles = path.tryToResult { it.toFile().listFiles() }
                         .onFailure { error ->
-                            onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                            onError(this, IOExportingError(error))
                         }.get()?.mapNotNull { it.toPath() } ?: continue
 
                     if (currentDirFiles.isNotEmpty()) continue
@@ -260,7 +260,7 @@ suspend fun List<RuleResult>.resolveResults(
                     val action = measureTimedValue {
                         async {
                             packagingAction.action()?.let {
-                                onError(it)
+                                onError(ExportingError(it))
                             }
                         }
                     }
@@ -280,7 +280,7 @@ suspend fun List<RuleResult>.resolveResults(
                     val action = measureTimedValue {
                         async(Dispatchers.IO) {
                             packagingAction.action().let { (file, error) ->
-                                if (error != null) onError(error)
+                                if (error != null) onError(IOExportingError(error))
                                 file
                             }
                         }
@@ -309,7 +309,7 @@ suspend fun List<RuleResult>.finishResults(
                 val action = measureTimedValue {
                     async {
                         ruleResult.packaging.action()?.let {
-                            onError(it)
+                            onError(ExportingError(it))
                         }
                     }
                 }
@@ -325,7 +325,7 @@ suspend fun List<RuleResult>.finishResults(
                 val action = measureTimedValue {
                     async(Dispatchers.IO) {
                         ruleResult.packaging.action().let { (file, error) ->
-                            if (error != null) onError(error)
+                            if (error != null) onError(IOExportingError(error))
                             file
                         }
                     }

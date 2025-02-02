@@ -123,20 +123,34 @@ data class NotRedistributable(val project: Project) : ActionError()
 data class CouldNotExport(val profile: ExportProfile, val modpackFileName: String, val reason: String?) : ActionError()
 {
     override val rawMessage = "Profile ${profile.name} ('$modpackFileName') could not be exported. $reason"
+    override fun message(arg: String): String = "(${dim(modpackFileName)}) could not be exported. $reason"
     override val severity = ErrorSeverity.FATAL
 }
 
-data class ErrorWhileExporting(
-    val profile: ExportProfile, val modpackFileName: String, val underlyingError: ActionError
-) : ActionError()
+data class IOExportingError(val underlyingError: ActionError) : ActionError()
 {
     override val rawMessage = message(
-        "There was an error while exporting profile ${profile.name} ('$modpackFileName'). ",
+        "There was an file IO error while exporting. ",
         underlyingError.rawMessage
     )
 
     override fun message(arg: String): String = message(
-        "There was an error while exporting profile ${profile.name} ('$modpackFileName'). ",
+        "There was an file IO error while exporting. ",
+        underlyingError.message()
+    )
+
+    override val severity = underlyingError.severity
+}
+
+data class ExportingError(val underlyingError: ActionError) : ActionError()
+{
+    override val rawMessage = message(
+        "There was an error while exporting. ",
+        underlyingError.rawMessage
+    )
+
+    override fun message(arg: String): String = message(
+        "There was an error while exporting. ",
         underlyingError.message()
     )
 
