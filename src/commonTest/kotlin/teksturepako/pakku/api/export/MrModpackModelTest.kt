@@ -23,8 +23,6 @@ import teksturepako.pakku.io.readPathTextOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class MrModpackModelTest : PakkuTest()

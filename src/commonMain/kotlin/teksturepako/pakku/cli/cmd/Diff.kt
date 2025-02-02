@@ -169,7 +169,6 @@ class Diff : CliktCommand()
             /** We only care about projects, which previously also existed **/
             val oldProject = allOldProjects.find { it.isAlmostTheSameAs(newProject) } ?: continue
 
-            /** If the project files are not identical, means that files have changed **/
             if (oldProject.files == newProject.files) continue
 
             /** On multi-loader modpacks, the mod might have been added for another loader, causing the

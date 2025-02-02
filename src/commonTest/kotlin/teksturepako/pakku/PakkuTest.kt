@@ -9,15 +9,13 @@ import kotlin.io.path.*
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
-open class PakkuTest
+open class PakkuTest(protected open val teardown: Boolean = true)
 {
     private var testName: String = ""
 
     protected open suspend fun `set-up`()
     {
     }
-
-    protected open val teardown = true
 
     protected fun testFile(vararg path: String): Path
     {
@@ -44,6 +42,8 @@ open class PakkuTest
         pakku {
             developmentMode()
         }
+        
+        debugMode = true
 
         testName = this::class.simpleName ?: generatePakkuId()
 

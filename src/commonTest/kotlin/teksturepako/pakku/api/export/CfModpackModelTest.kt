@@ -23,8 +23,33 @@ import kotlin.io.path.pathString
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
-class CfModpackModelTest : PakkuTest()
+class CfModpackModelTest : PakkuTest(teardown = false)
 {
+    private val modpackName = "CurseForgeProfileTestModpack"
+
+    private val greeneryCfId = 574029
+    private val greeneryCfFileId = 5913357
+
+    private val greeneryProject = Project(
+        type = ProjectType.MOD,
+        id = mutableMapOf(CurseForge.serialName to greeneryCfId.toString()),
+        name = mutableMapOf(CurseForge.serialName to "Greenery\uD83C\uDF3F"),
+        slug = mutableMapOf(CurseForge.serialName to "greenery"),
+        files = mutableSetOf(
+            ProjectFile(
+                type = CurseForge.serialName,
+                fileName = "Greenery-1.12.2-7.0.jar",
+                mcVersions = mutableListOf("1.12.2", "1.12.1", "1.12"),
+                loaders = mutableListOf("forge"),
+                id = greeneryCfFileId.toString(),
+                parentId = greeneryCfId.toString(),
+            )
+        )
+    )
+
+    private val mcVersion = "1.12.2"
+    private val forgeVersion = "xxx.xxx.xxx"
+
     override suspend fun `set-up`()
     {
         val lockFile = LockFile(
@@ -51,31 +76,6 @@ class CfModpackModelTest : PakkuTest()
             )
         }
     }
-
-    private val modpackName = "CurseForgeProfileTestModpack"
-
-    private val greeneryCfId = 574029
-    private val greeneryCfFileId = 5913357
-
-    private val greeneryProject = Project(
-        type = ProjectType.MOD,
-        id = mutableMapOf(CurseForge.serialName to greeneryCfId.toString()),
-        name = mutableMapOf(CurseForge.serialName to "Greenery\uD83C\uDF3F"),
-        slug = mutableMapOf(CurseForge.serialName to "greenery"),
-        files = mutableSetOf(
-            ProjectFile(
-                type = CurseForge.serialName,
-                fileName = "Greenery-1.12.2-7.0.jar",
-                mcVersions = mutableListOf("1.12.2", "1.12.1", "1.12"),
-                loaders = mutableListOf("forge"),
-                id = greeneryCfFileId.toString(),
-                parentId = greeneryCfId.toString(),
-            )
-        )
-    )
-
-    private val mcVersion = "1.12.2"
-    private val forgeVersion = "xxx.xxx.xxx"
 
     @Test
     fun `test cf modpack model in cache`()

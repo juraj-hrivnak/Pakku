@@ -61,15 +61,13 @@ class ExportProfileBuilder(
         this.lockFile = exportingScope.lockFile
         this.configFile = exportingScope.configFile
 
-        // Don't mutate this class
-        val builderCopy = ExportProfileBuilder(name, fileExtension, requiresPlatform, builder, rules)
+        this.rules = emptySequence()
+        this.apply(builder)
 
-        debug { println("Building [${builderCopy.name} profile]") }
-        debug { println("[${builderCopy.name} profile] has ${builderCopy.rules.toList().size} rule(s)") }
+        debug { println("Building [${this.name} profile]") }
+        debug { println("[${this.name} profile] has ${this.rules.toList().size} rule(s)") }
 
-        return ExportProfile(
-            builderCopy.name, builderCopy.fileExtension, builderCopy.rules.toList(), builderCopy.requiresPlatform
-        )
+        return ExportProfile(this.name, this.fileExtension, this.rules.toList(), this.requiresPlatform)
     }
 
     // -- AFTER BUILD --
