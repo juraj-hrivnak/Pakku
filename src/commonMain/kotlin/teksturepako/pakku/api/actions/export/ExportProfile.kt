@@ -61,6 +61,7 @@ class ExportProfileBuilder(
         lockFile = exportingScope.lockFile
         configFile = exportingScope.configFile
 
+        this.rules = emptySequence()
         this.apply(builder)
 
         debug { println("Building [$name profile]") }
