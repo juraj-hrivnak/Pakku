@@ -23,7 +23,7 @@ import kotlin.io.path.pathString
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
-class CfModpackModelTest : PakkuTest(teardown = false)
+class CfModpackModelTest : PakkuTest()
 {
     private val modpackName = "CurseForgeProfileTestModpack"
 

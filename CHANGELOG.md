@@ -3,6 +3,35 @@
 
 ## Unreleased
 
+## v0.26.0
+
+### Highlights
+
+- Added mod loader and MC version changes to the diff, by @Wxrlds in [#48](https://github.com/juraj-hrivnak/Pakku/pull/48).
+  - Added sections `# Minecraft` and `# Loaders` to the diff output.
+  - Added `header-size` option to specify the size of the headers in the markdown.
+- Improved already added & replacing project messages.
+- Fixed support for CurseForge projects with 7-digit IDs; Fixes [#75](https://github.com/juraj-hrivnak/Pakku/issues/75).
+- Fixed the building of Export Profiles when exporting multiple times.
+- Created the [`CONTRIBUTING.md`](https://github.com/juraj-hrivnak/Pakku/blob/main/CONTRIBUTING.md).
+
+### API
+
+- Implemented `PakkuApi` entry point for initializing the Pakku API.
+  - Example usage:
+    ```kt
+    pakku {
+        curseForge(apiKey = "<your_custom_api_key>")
+        withUserAgent("<your_custom_user_agent>")
+    }
+    ```
+- Renamed `ExportingScope` to `ExportRuleScope` for better clarity.
+- Implemented the `getProjectConfig` function. (Get "projects" configuration from the config file.)
+
+### Tests
+
+- Migrated to Strikt assertion library for more readable tests.
+
 ## v0.25.0
 
 ### Highlights
