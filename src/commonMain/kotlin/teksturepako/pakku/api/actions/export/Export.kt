@@ -111,7 +111,7 @@ suspend fun ExportProfile.export(
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
         val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(
-            onError = { error -> onError(this, ExportingError(error)) },
+            onError = { error -> onError(this, error) },
             lockFile, configFile, this.name, overrides, serverOverrides, clientOverrides
         )
 
