@@ -2,6 +2,7 @@
 
 package teksturepako.pakku.api.actions.errors
 
+import teksturepako.pakku.api.actions.export.ExportProfile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
@@ -117,6 +118,29 @@ data class NotRedistributable(val project: Project) : ActionError()
 
     override fun message(arg: String): String =
         "${dim(project.type)} ${project.getFlavoredSlug()} can not be exported, because it is not redistributable."
+}
+
+data class CouldNotExport(val profile: ExportProfile, val modpackFileName: String, val reason: String?) : ActionError()
+{
+    override val rawMessage = "Profile ${profile.name} ('$modpackFileName') could not be exported. $reason"
+    override val severity = ErrorSeverity.FATAL
+}
+
+data class ErrorWhileExporting(
+    val profile: ExportProfile, val modpackFileName: String, val underlyingError: ActionError
+) : ActionError()
+{
+    override val rawMessage = message(
+        "There was an error while exporting profile ${profile.name} ('$modpackFileName'). ",
+        underlyingError.rawMessage
+    )
+
+    override fun message(arg: String): String = message(
+        "There was an error while exporting profile ${profile.name} ('$modpackFileName'). ",
+        underlyingError.message()
+    )
+
+    override val severity = underlyingError.severity
 }
 
 // -- ADDITION --

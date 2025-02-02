@@ -5,9 +5,7 @@ import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.*
-import teksturepako.pakku.api.actions.errors.ActionError
-import teksturepako.pakku.api.actions.errors.CouldNotSave
-import teksturepako.pakku.api.actions.errors.ErrorSeverity
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.actions.export.Packaging.*
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.profiles.defaultProfiles
@@ -20,6 +18,7 @@ import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.*
+import java.lang.Exception
 import java.nio.file.Path
 import kotlin.collections.fold
 import kotlin.collections.map
@@ -98,8 +97,10 @@ suspend fun ExportProfile.export(
         } + ".${this.fileExtension}"
 
         val outputZipFile = runCatching { Path(workingPath, "build", this.name, modpackFileName) }
-            .onFailure { onError(this, CouldNotSave(null, it.message)) }
-            .get() ?: return
+            .onFailure { e: Throwable ->
+                onError(this, CouldNotExport(this, modpackFileName, e.message))
+            }
+            .get() ?: return@measureTimedValue null
 
         // Create parent directory
         cacheDir.tryOrNull {
@@ -110,13 +111,25 @@ suspend fun ExportProfile.export(
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
         val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(
-            onError = { error -> onError(this, error) },
+            onError = { error -> onError(this, ErrorWhileExporting(this, modpackFileName, error)) },
             lockFile, configFile, this.name, overrides, serverOverrides, clientOverrides
         )
 
         // Run export rules
-        val cachedPaths: List<Path> = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
-                results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
+        val cachedPaths: List<Path> = results
+            .resolveResults { error ->
+                onError(this, ErrorWhileExporting(this, modpackFileName, error))
+            }
+            .awaitAll()
+            .filterNotNull()
+            .plus(
+                results
+                    .finishResults { error ->
+                        onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                    }
+                    .awaitAll()
+                    .filterNotNull()
+            )
 
         // -- FILE CACHE --
 
@@ -124,7 +137,9 @@ suspend fun ExportProfile.export(
         val fileHashes: Map<Path, String> = cachedPaths.filterNot { it.isDirectory() }
             .mapNotNull { file ->
                 file.tryToResult { it.readBytes() }
-                    .onFailure { onError(this, it) }
+                    .onFailure { error ->
+                        onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                    }
                     .get()?.let { file to it }
             }
             .associate { it.first.absolute() to createHash("sha1", it.second) }
@@ -133,7 +148,9 @@ suspend fun ExportProfile.export(
         val dirContentHashes: Map<Path, String> = cachedPaths.filter { it.isDirectory() }
             .mapNotNull { directory ->
                 directory.tryToResult { it.toFile().walkTopDown() }
-                    .onFailure { onError(this, it) }.get()
+                    .onFailure { error ->
+                        onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                    }.get()
             }
             .flatMap {
                 it.mapNotNull { file -> file.toPath() }
@@ -146,7 +163,9 @@ suspend fun ExportProfile.export(
             .toMap()
 
         val fileTreeWalk = inputDirectory.tryToResult { it.toFile().walkBottomUp() }
-            .onFailure { onError(this, it) }.get()
+            .onFailure {error ->
+                onError(this, ErrorWhileExporting(this, modpackFileName, error))
+            }.get()
 
         if (fileTreeWalk != null)
         {
@@ -158,7 +177,9 @@ suspend fun ExportProfile.export(
                 if (path.isDirectory())
                 {
                     val currentDirFiles = path.tryToResult { it.toFile().listFiles() }
-                        .onFailure { onError(this, it) }.get()?.mapNotNull { it.toPath() } ?: continue
+                        .onFailure { error ->
+                            onError(this, ErrorWhileExporting(this, modpackFileName, error))
+                        }.get()?.mapNotNull { it.toPath() } ?: continue
 
                     if (currentDirFiles.isNotEmpty()) continue
 
@@ -179,14 +200,33 @@ suspend fun ExportProfile.export(
 
         // -- ZIP CREATION --
 
-        outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(this, it) }
+        outputZipFile
+            .tryToResult { it.createParentDirectories() }
+            .onFailure { error ->
+                if (error !is AlreadyExists)
+                {
+                    onError(this, CouldNotExport(this, modpackFileName, error.rawMessage))
+                    return@measureTimedValue null
+                }
+            }
 
-        zip(inputDirectory, outputZipFile)
+        try
+        {
+            zip(inputDirectory, outputZipFile)
+        }
+        catch (e: Exception)
+        {
+            onError(this, CouldNotExport(this, modpackFileName, e.stackTraceToString()))
+            return@measureTimedValue null
+        }
 
         outputZipFile
     }
 
-    onSuccess(this, timedValue.value, timedValue.duration)
+    if (timedValue.value != null)
+    {
+        onSuccess(this, timedValue.value!!, timedValue.duration)
+    }
 }
 
 suspend fun List<RuleResult>.resolveResults(

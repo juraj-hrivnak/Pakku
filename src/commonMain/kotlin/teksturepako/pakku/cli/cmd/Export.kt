@@ -12,7 +12,7 @@ import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.errors.AlreadyExists
+import teksturepako.pakku.api.actions.errors.ErrorWhileExporting
 import teksturepako.pakku.api.actions.export.exportDefaultProfiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
@@ -54,7 +54,7 @@ class Export : CliktCommand()
 
         exportDefaultProfiles(
             onError = { profile, error ->
-                if (error !is AlreadyExists)
+                if (error !is ErrorWhileExporting)
                 {
                     terminal.pError(error, prepend = "[${profile.name} profile]")
                 }
