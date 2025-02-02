@@ -14,16 +14,15 @@ To run tests, run the `jvmTest` Gradle task (`gradlew jvmTest`).
 Pakku uses Clikt to handle the CLI. It is advised to [check out its docs](https://ajalt.github.io/clikt/).
 
 Command classes should be called the same as the command itself.
-If the command is a subcommand, name it using in this pattern: `<parent-command><subcommand>`; example: `CfgPrj`.
+If the command is a subcommand, name it using this pattern: `<parent-command><subcommand>`; example: `CfgPrj`.
 
 Command parameters should be _suffixed_ with a special abbreviation of the parameter type. (`<parameter-name><abbrev>`)
 Use: `Opt` for options, `Arg` for arguments, and `Flag` for flags (Boolean options).
 If there can be multiple parameters use the plural, e.g. `Opts`, `Args`.
 
-Defining of parameters using a chain of function calls is preferred.
-
 ```kt
 // Parameters should be always private.
+// Defining parameters using a chain of function calls is preferred.
 
 private val exampleOpt by option("--example") // Consult if a short version `-e` of the option is a good idea
     .help("...") // Consider discussing the help message
@@ -43,18 +42,18 @@ Documentation for commands can be generated automatically by running: `pakku --g
 
 ## Testing
 
-When creating test please extend the `PakkuTest` class. 
+When creating a test please extend the `PakkuTest` class. 
 It will ensure every test is run separately in the `build/test/` directory,
 and also automatically handle the working path of Pakku and teardown of any created files while running the tests.
 
-For assertions, we use the [Strikt](https://strikt.io/) library, because it is easy to use, read and debug.
+For testing, we use the [Strikt](https://strikt.io/) assertion library because it is easy to use, read and debug.
 
 Example of a test:
 
 ```kt
 class ExampleTest : PakkuTest()
 {
-    private val testFileName = "test_file.txt" // Define test data on the top of the class
+    private val testFileName = "test_file.txt" // Define test data at the top of the class
 
     override suspend fun `set-up`() // Override this function to implement set up
     { 
