@@ -1,7 +1,7 @@
 package teksturepako.pakku.api.actions.export.rules
 
 import teksturepako.pakku.api.actions.export.ExportRule
-import teksturepako.pakku.api.actions.export.ExportingScope
+import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.actions.export.ruleResult
@@ -17,7 +17,7 @@ import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.readPathBytesOrNull
 
-fun ExportingScope.mrModpackRule(): ExportRule
+fun ExportRuleScope.mrModpackRule(): ExportRule
 {
     val modpackModel = lockFile.getFirstMcVersion()?.run {
         createMrModpackModel(this, lockFile, configFile)

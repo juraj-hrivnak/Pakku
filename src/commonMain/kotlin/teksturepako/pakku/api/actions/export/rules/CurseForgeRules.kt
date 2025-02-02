@@ -3,7 +3,7 @@ package teksturepako.pakku.api.actions.export.rules
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.actions.export.ExportRule
-import teksturepako.pakku.api.actions.export.ExportingScope
+import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.actions.export.ruleResult
@@ -23,7 +23,7 @@ data object RequiresMcVersion : ActionError()
     override val severity = ErrorSeverity.FATAL
 }
 
-fun ExportingScope.cfModpackRule(): ExportRule
+fun ExportRuleScope.cfModpackRule(): ExportRule
 {
     val modpackModel = lockFile.getFirstMcVersion()?.let { mcVersion ->
         createCfModpackModel(mcVersion, lockFile, configFile)

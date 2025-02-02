@@ -6,7 +6,7 @@ import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.NoFiles
 import teksturepako.pakku.api.actions.export.ExportRule
-import teksturepako.pakku.api.actions.export.ExportingScope
+import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.RuleContext.MissingProject
@@ -33,7 +33,7 @@ data class FileDirectorModel(
     )
 }
 
-fun ExportingScope.fileDirectorRule(
+fun ExportRuleScope.fileDirectorRule(
     excludedProviders: Set<Provider> = setOf(),
     fileDirectorModel: FileDirectorModel = FileDirectorModel()
 ): ExportRule?

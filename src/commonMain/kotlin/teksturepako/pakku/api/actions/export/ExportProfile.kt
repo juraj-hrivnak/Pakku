@@ -51,29 +51,31 @@ class ExportProfileBuilder(
     private val requiresPlatform: Platform? = null,
     private val builder: (ExportProfileBuilder.() -> Unit),
     private var rules: Sequence<ExportRule> = sequenceOf(),
-) : ExportingScope
+) : ExportRuleScope
 {
     override lateinit var lockFile: LockFile
     override lateinit var configFile: ConfigFile
 
-    fun build(exportingScope: ExportingScope): ExportProfile
+    fun build(exportingScope: ExportRuleScope): ExportProfile
     {
-        lockFile = exportingScope.lockFile
-        configFile = exportingScope.configFile
+        this.lockFile = exportingScope.lockFile
+        this.configFile = exportingScope.configFile
 
-        this.rules = emptySequence()
-        this.apply(builder)
+        // Don't mutate this class
+        val builderCopy = ExportProfileBuilder(name, fileExtension, requiresPlatform, builder, rules)
 
-        debug { println("Building [$name profile]") }
-        debug { println("[$name profile] has ${rules.toList().size} rule(s)") }
+        debug { println("Building [${builderCopy.name} profile]") }
+        debug { println("[${builderCopy.name} profile] has ${builderCopy.rules.toList().size} rule(s)") }
 
-        return ExportProfile(name, fileExtension, rules.toList(), requiresPlatform)
+        return ExportProfile(
+            builderCopy.name, builderCopy.fileExtension, builderCopy.rules.toList(), builderCopy.requiresPlatform
+        )
     }
 
     // -- AFTER BUILD --
 
     /** Adds an export rule to the profile. */
-    fun rule(exportRule: (ExportingScope) -> ExportRule): ExportRule
+    fun rule(exportRule: (ExportRuleScope) -> ExportRule): ExportRule
     {
         val rule = exportRule(this)
 
@@ -82,7 +84,7 @@ class ExportProfileBuilder(
     }
 
     /** Adds an optional export rule to the profile. */
-    fun optionalRule(exportRule: (ExportingScope) -> ExportRule?): ExportRule?
+    fun optionalRule(exportRule: (ExportRuleScope) -> ExportRule?): ExportRule?
     {
         val rule = exportRule(this)
 
@@ -95,7 +97,7 @@ class ExportProfileBuilder(
     }
 
     /** Provides a fallback mechanism when an optional rule is null. */
-    infix fun ExportRule?.orElse(exportRule: (ExportingScope) -> ExportRule?): ExportRule?
+    infix fun ExportRule?.orElse(exportRule: (ExportRuleScope) -> ExportRule?): ExportRule?
     {
         if (this == null)
         {
@@ -112,7 +114,7 @@ class ExportProfileBuilder(
     }
 }
 
-interface ExportingScope
+interface ExportRuleScope
 {
     /** The lock file associated with the exporting scope. */
     val lockFile: LockFile
@@ -121,7 +123,7 @@ interface ExportingScope
     val configFile: ConfigFile
 }
 
-fun exportingScope(lockFile: LockFile, configFile: ConfigFile): ExportingScope = object : ExportingScope
+fun exportingScope(lockFile: LockFile, configFile: ConfigFile): ExportRuleScope = object : ExportRuleScope
 {
     override val lockFile: LockFile = lockFile
     override val configFile: ConfigFile = configFile
