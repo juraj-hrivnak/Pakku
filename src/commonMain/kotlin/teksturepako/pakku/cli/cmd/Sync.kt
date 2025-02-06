@@ -40,7 +40,7 @@ class Sync : CliktCommand()
 
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            it.message?.let { message -> terminal.pDanger(message) }
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -56,7 +56,7 @@ class Sync : CliktCommand()
         else null
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            it.message?.let { message -> terminal.pDanger(message) }
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

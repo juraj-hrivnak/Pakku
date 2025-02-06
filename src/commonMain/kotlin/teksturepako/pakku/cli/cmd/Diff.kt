@@ -8,13 +8,16 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.ajalt.clikt.parameters.types.path
 import com.github.ajalt.clikt.parameters.types.restrictTo
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.terminal.success
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.ui.pError
 import java.io.File
 import kotlin.collections.Set
 
@@ -22,8 +25,8 @@ class Diff : CliktCommand()
 {
     override fun help(context: Context) = "Diff projects in modpack"
 
-    private val oldPathArg by argument("old-lock-file")
-    private val newPathArg by argument("current-lock-file")
+    private val oldPathArg by argument("old-lock-file").path()
+    private val newPathArg by argument("current-lock-file").path()
     private val markdownDiffOpt by option(
         "--markdown-diff", metavar = "<path>", help = "Export a `.md` file formatted as a diff code block"
     )
@@ -39,17 +42,21 @@ class Diff : CliktCommand()
 
     override fun run(): Unit = runBlocking {
         val oldLockFile = LockFile.readToResultFrom(oldPathArg).getOrElse {
-            terminal.danger("${it.message}\n")
+            terminal.pError(it)
+            echo()
             return@runBlocking
         }
+
         val allOldMCVersions = oldLockFile.getMcVersions().toSet()
         val allOldModLoadersAndVersions = oldLockFile.getLoadersWithVersions().toSet()
         val allOldProjects = oldLockFile.getAllProjects()
 
         val newLockFile = LockFile.readToResultFrom(newPathArg).getOrElse {
-            terminal.danger("${it.message}\n")
+            terminal.pError(it)
+            echo()
             return@runBlocking
         }
+
         val allNewMCVersions = newLockFile.getMcVersions().toSet()
         val allNewModLoadersAndVersions = newLockFile.getLoadersWithVersions().toSet()
         val allNewProjects = newLockFile.getAllProjects()

@@ -6,7 +6,6 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.rendering.TextAlign
 import com.github.ajalt.mordant.table.grid
-import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.widgets.Spinner
 import com.github.ajalt.mordant.widgets.progress.progressBarLayout
 import com.github.ajalt.mordant.widgets.progress.spinner
@@ -27,7 +26,7 @@ class Status: CliktCommand()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -39,7 +38,7 @@ class Status: CliktCommand()
         }
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

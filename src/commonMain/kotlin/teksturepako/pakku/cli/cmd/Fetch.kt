@@ -9,7 +9,6 @@ import com.github.ajalt.colormath.Color
 import com.github.ajalt.colormath.model.RGB
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.rendering.TextStyle
-import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.widgets.Spinner
 import com.github.ajalt.mordant.widgets.progress.percentage
 import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
@@ -50,7 +49,7 @@ class Fetch : CliktCommand()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -66,7 +65,7 @@ class Fetch : CliktCommand()
         else null
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            it.message?.let { message -> terminal.pDanger(message) }
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

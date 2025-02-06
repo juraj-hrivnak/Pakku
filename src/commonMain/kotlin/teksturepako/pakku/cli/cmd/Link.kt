@@ -4,10 +4,11 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.getFullMsg
-import teksturepako.pakku.cli.ui.pDanger
+import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 
 class Link : CliktCommand()
@@ -19,7 +20,7 @@ class Link : CliktCommand()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.pDanger(it.message.toString())
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

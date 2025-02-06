@@ -7,7 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
-import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -39,16 +39,16 @@ class Import : CliktCommand()
             return@runBlocking
         }
 
-        val lockFile = LockFile.readToResult().getOrNull() ?: modpackModel.toLockFile()
+        val lockFile = LockFile.readToResult().get() ?: modpackModel.toLockFile()
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
 
         val projectProvider = lockFile.getProjectProvider().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
