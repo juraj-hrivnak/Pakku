@@ -9,19 +9,19 @@ To run tests, run the `jvmTest` Gradle task (`gradlew jvmTest`).
 
 ## Creating Commands & Parameters (Clikt)
 
-### Introduction to commands
+### Introduction
 
 Pakku uses Clikt to handle the CLI. It is advised to [check out its docs](https://ajalt.github.io/clikt/).
 
 Command classes should be called the same as the command itself.
 If the command is a subcommand, name it using this pattern: `<parent-command><subcommand>`; example: `CfgPrj`.
 
-Command parameters should be _suffixed_ with a special abbreviation of the parameter type. (`<parameter-name><abbrev>`)
+Command parameters should be _suffixed_ with an abbreviation of the parameter type. (`<parameter-name><abbrev>`)
 Use: `Opt` for options, `Arg` for arguments, and `Flag` for flags (Boolean options).
-If there can be multiple parameters use the plural, e.g. `Opts`, `Args`.
+If multiple parameters exist, use the plural, e.g., `Opts`, `Args`.
 
 ```kt
-// Parameters should be always private.
+// Parameters should always be private.
 // Defining parameters using a chain of function calls is preferred.
 
 private val exampleOpt by option("--example") // Consult if a short version `-e` of the option is a good idea
@@ -36,17 +36,17 @@ private val exampleArg by argument("example")
 private val exampleFlag by option("-e").flag()
 ```
 
-### Documenting commands
+### Documenting Commands
 
 Documentation for commands can be generated automatically by running: `pakku --generate-docs`.
 
-## Testing
+## Writing Tests
 
 When creating a test please extend the `PakkuTest` class. 
-It will ensure every test is run separately in the `build/test/` directory,
-and also automatically handle the working path of Pakku and teardown of any created files while running the tests.
+It will ensure every test is run separately in the `build/test/` directory
+and automatically handle the working path of Pakku and teardown of any created files while running the tests.
 
-For testing, we use the [Strikt](https://strikt.io/) assertion library because it is easy to use, read and debug.
+For assertions, we use the [Strikt](https://strikt.io/) library because it is easy to use, read and debug.
 
 Example of a test:
 
