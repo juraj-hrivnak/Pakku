@@ -2,7 +2,10 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.testing.test
 import kotlinx.coroutines.runBlocking
+import strikt.api.expectThat
+import strikt.assertions.contains
 import teksturepako.pakku.PakkuTest
+import teksturepako.pakku.api.actions.errors.FileNotFound
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
@@ -10,8 +13,9 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -23,7 +27,8 @@ class CfgPrjTest : PakkuTest()
         val cmd = CfgPrj()
         val output = cmd.test("test --subpath test-subpath").output
 
-        assertContains(output, "Could not read '$workingPath/${LockFile.FILE_NAME}'")
+        expectThat(output)
+            .contains(FileNotFound(Path(workingPath, LockFile.FILE_NAME).pathString).rawMessage)
     }
 
     @Test

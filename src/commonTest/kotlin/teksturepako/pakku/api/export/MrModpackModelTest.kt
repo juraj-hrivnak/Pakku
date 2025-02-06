@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.export
 
+import com.github.michaelbull.result.get
 import kotlinx.coroutines.runBlocking
 import strikt.api.expectThat
 import strikt.assertions.contains
@@ -69,7 +70,7 @@ class MrModpackModelTest : PakkuTest()
         name = modpackName
     )
 
-    private val platforms = lockFile.getPlatforms().getOrNull()
+    private val platforms = lockFile.getPlatforms().get()
 
     override suspend fun `set-up`()
     {
