@@ -100,11 +100,12 @@ suspend fun ExportProfile.export(
             .onFailure { e: Throwable ->
                 onError(this, CouldNotExport(this, modpackFileName, e.message))
             }
-            .get() ?: return@measureTimedValue null
+            .get()
+            ?: return@measureTimedValue null
 
         // Create parent directory
         cacheDir.tryOrNull {
-            it.createDirectory()
+            it.createDirectories()
             it.setAttribute("dos:hidden", true)
         }
 
@@ -117,19 +118,16 @@ suspend fun ExportProfile.export(
 
         // Run export rules
         val cachedPaths: List<Path> = results
-            .resolveResults { error ->
+            .runEffects { error ->
                 onError(this, error)
             }
             .awaitAll()
-            .filterNotNull()
-            .plus(
-                results
-                    .finishResults { error ->
-                        onError(this, error)
-                    }
-                    .awaitAll()
-                    .filterNotNull()
-            )
+            .filterNotNull() + results
+                .runEffectsOnFinished { error ->
+                    onError(this, error)
+                }
+                .awaitAll()
+                .filterNotNull()
 
         // -- FILE CACHE --
 
@@ -229,10 +227,10 @@ suspend fun ExportProfile.export(
     }
 }
 
-suspend fun List<RuleResult>.resolveResults(
+suspend fun List<RuleResult>.runEffects(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
-    this@resolveResults.mapNotNull { ruleResult ->
+    this@runEffects.mapNotNull { ruleResult ->
         when (val packagingAction = ruleResult.packaging)
         {
             is Error        ->
@@ -298,10 +296,10 @@ suspend fun List<RuleResult>.resolveResults(
     }
 }
 
-suspend fun List<RuleResult>.finishResults(
+suspend fun List<RuleResult>.runEffectsOnFinished(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
-    this@finishResults.mapNotNull { ruleResult ->
+    this@runEffectsOnFinished.mapNotNull { ruleResult ->
         when
         {
             ruleResult.ruleContext is Finished && ruleResult.packaging is Action    ->
