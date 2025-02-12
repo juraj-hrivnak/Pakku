@@ -39,8 +39,6 @@ suspend fun Path.walk(globPatterns: List<String>): Sequence<Pair<Path, Boolean>>
 
 suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
 {
-    val paths = mutableSetOf<String>()
-
     val walk = inputPath.walk(this).toList().debug {
         for ((path, negating) in it)
         {
@@ -48,14 +46,17 @@ suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
         }
     }
 
-    for ((path, _) in walk)
-    {
-        paths += path.toString()
-    }
+    val paths = walk.fold(mutableSetOf<String>()) { acc, (path, negating) ->
+        if (negating)
+        {
+            acc -= path.toString()
+        }
+        else
+        {
+            acc += path.toString()
+        }
 
-    for ((path, negating) in walk)
-    {
-        if (negating) paths -= path.toString()
+        acc
     }
 
     return paths.toList().debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }
