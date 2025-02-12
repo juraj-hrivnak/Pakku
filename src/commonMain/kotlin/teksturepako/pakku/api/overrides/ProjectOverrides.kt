@@ -45,7 +45,7 @@ suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> 
         println("readProjectOverrides = ${it.map { projectOverride -> projectOverride.path }}")
     }
 
-suspend fun copyProjectOverrides(inputPath: Path, outputPath: Path) = OverrideType.entries
+suspend fun copyProjectOverrideDirectories(inputPath: Path, outputPath: Path) = OverrideType.entries
     .map { ovType ->
         Path(inputPath.pathString, PAKKU_DIR, ovType.folderName) to Path(outputPath.pathString, PAKKU_DIR, ovType.folderName)
     }
