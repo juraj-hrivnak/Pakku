@@ -17,6 +17,8 @@ import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.*
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 /**
  * A config file (`pakku.json`) is a file used by the user to configure properties needed for modpack export.
@@ -114,6 +116,15 @@ data class ConfigFile(
     suspend fun getAllClientOverrides(): List<Result<String, ActionError>> =
         this.clientOverrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
 
+    suspend fun getAllOverridesFrom(path: Path): List<Result<String, ActionError>> =
+        this.overrides.expandWithGlob(path).map { filterPath(it) }
+
+    suspend fun getAllServerOverridesFrom(path: Path): List<Result<String, ActionError>> =
+        this.serverOverrides.expandWithGlob(path).map { filterPath(it) }
+
+    suspend fun getAllClientOverridesFrom(path: Path): List<Result<String, ActionError>> =
+        this.clientOverrides.expandWithGlob(path).map { filterPath(it) }
+
     // -- PROJECTS --
 
     @Serializable
@@ -170,7 +181,8 @@ data class ConfigFile(
     {
         const val FILE_NAME = "pakku.json"
 
-        fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
+        fun exists(): Boolean = Path(workingPath, FILE_NAME).exists()
+        fun existsAt(path: Path): Boolean = Path(path.pathString, FILE_NAME).exists()
 
         fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), "$workingPath/$FILE_NAME")
 
@@ -178,13 +190,13 @@ data class ConfigFile(
 
         /**
          * Reads [LockFile] and parses it, or returns an exception.
-         * Use [Result.fold] to map it's success and failure values.
+         * Use [Result.fold] to map its success and failure values.
          */
         suspend fun readToResult(): Result<ConfigFile, ActionError> =
             decodeToResult<ConfigFile>(Path(workingPath, FILE_NAME))
 
         suspend fun readToResultFrom(path: Path): Result<ConfigFile, ActionError> =
-            decodeToResult<ConfigFile>(path)
+            decodeToResult<ConfigFile>(Path(path.pathString, FILE_NAME))
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = json)

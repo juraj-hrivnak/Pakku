@@ -28,7 +28,7 @@ fun serverPackRule() = ExportRule {
             }
             else
             {
-                it.export(overridesDir = null)
+                it.copy(overridesDir = null)
             }
         }
         is ExportingProjectOverride ->

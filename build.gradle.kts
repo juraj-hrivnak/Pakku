@@ -97,6 +97,10 @@ kotlin {
                 // SLF4J Logging | MIT
                 implementation("org.slf4j:slf4j-api:2.0.7")
                 implementation("org.slf4j:slf4j-simple:2.0.7")
+
+                // JGit | BSD 3-clause OR EDL 1.0
+                // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
+                implementation("org.eclipse.jgit:org.eclipse.jgit:7.1.0.202411261347-r")
             }
         }
 
@@ -154,6 +158,9 @@ tasks.withType<Jar> {
                 "Main-Class" to "teksturepako.pakku.MainKt",
             )
         }
+
+        // Fix "Invalid signature file"
+        exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
 
         if ("sources" !in classifier)
         {

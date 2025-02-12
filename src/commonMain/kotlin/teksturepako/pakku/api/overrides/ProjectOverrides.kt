@@ -11,7 +11,9 @@ import teksturepako.pakku.debug
 import teksturepako.pakku.debugIf
 import teksturepako.pakku.io.tryOrNull
 import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> = OverrideType.entries
     .flatMap { ovType ->
@@ -41,4 +43,12 @@ suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> 
     .toSet()
     .debugIf({ it.isNotEmpty() }) {
         println("readProjectOverrides = ${it.map { projectOverride -> projectOverride.path }}")
+    }
+
+suspend fun copyProjectOverrides(inputPath: Path, outputPath: Path) = OverrideType.entries
+    .map { ovType ->
+        Path(inputPath.pathString, PAKKU_DIR, ovType.folderName) to Path(outputPath.pathString, PAKKU_DIR, ovType.folderName)
+    }
+    .forEach { (input, output) ->
+        input.tryOrNull { toFile().copyRecursively(output.toFile(), overwrite = true) }
     }
