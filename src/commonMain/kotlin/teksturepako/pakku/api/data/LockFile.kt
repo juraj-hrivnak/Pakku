@@ -17,10 +17,10 @@ import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.decodeOrNew
 import teksturepako.pakku.io.decodeToResult
-import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.writeToFile
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 /**
  * A lock file (`pakku-lock.json`) is an automatically generated file used by Pakku
@@ -267,7 +267,8 @@ data class LockFile(
     {
         const val FILE_NAME = "pakku-lock.json"
 
-        fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
+        fun exists(): Boolean = Path(workingPath, FILE_NAME).exists()
+        fun existsAt(path: Path): Boolean = path.exists()
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
         fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")

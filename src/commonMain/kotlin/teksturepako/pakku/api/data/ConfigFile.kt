@@ -18,7 +18,6 @@ import teksturepako.pakku.io.*
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
-import kotlin.io.path.pathString
 
 /**
  * A config file (`pakku.json`) is a file used by the user to configure properties needed for modpack export.
@@ -182,7 +181,7 @@ data class ConfigFile(
         const val FILE_NAME = "pakku.json"
 
         fun exists(): Boolean = Path(workingPath, FILE_NAME).exists()
-        fun existsAt(path: Path): Boolean = Path(path.pathString, FILE_NAME).exists()
+        fun existsAt(path: Path): Boolean = path.exists()
 
         fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), "$workingPath/$FILE_NAME")
 
@@ -196,7 +195,7 @@ data class ConfigFile(
             decodeToResult<ConfigFile>(Path(workingPath, FILE_NAME))
 
         suspend fun readToResultFrom(path: Path): Result<ConfigFile, ActionError> =
-            decodeToResult<ConfigFile>(Path(path.pathString, FILE_NAME))
+            decodeToResult<ConfigFile>(path)
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true, format = json)
