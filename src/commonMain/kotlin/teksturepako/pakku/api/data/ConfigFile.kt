@@ -5,7 +5,6 @@ package teksturepako.pakku.api.data
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.fold
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.errors.ActionError
@@ -187,13 +186,11 @@ data class ConfigFile(
 
         fun readOrNull() = decodeToResult<ConfigFile>("$workingPath/$FILE_NAME").getOrNull()
 
-        /**
-         * Reads [LockFile] and parses it, or returns an exception.
-         * Use [Result.fold] to map its success and failure values.
-         */
+        /** Reads [ConfigFile] and parses it to a [Result]. */
         suspend fun readToResult(): Result<ConfigFile, ActionError> =
             decodeToResult<ConfigFile>(Path(workingPath, FILE_NAME))
 
+        /** Reads [ConfigFile] from a specified [path] and parses it to a [Result]. */
         suspend fun readToResultFrom(path: Path): Result<ConfigFile, ActionError> =
             decodeToResult<ConfigFile>(path)
     }

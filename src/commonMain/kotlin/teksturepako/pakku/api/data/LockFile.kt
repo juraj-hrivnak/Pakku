@@ -274,15 +274,15 @@ data class LockFile(
         fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
             .also { it.inheritConfig(ConfigFile.readOrNull()) }
 
-        /**
-         * Reads [LockFile] and parses it, or returns an exception.
-         * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
-         */
-        suspend fun readToResult(): Result<LockFile, ActionError> = decodeToResult<LockFile>(Path("$workingPath/$FILE_NAME"))
-            .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
+        /** Reads [LockFile] and parses it to a [Result]. */
+        suspend fun readToResult(): Result<LockFile, ActionError> =
+            decodeToResult<LockFile>(Path("$workingPath/$FILE_NAME"))
+                .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
 
-        suspend fun readToResultFrom(path: Path): Result<LockFile, ActionError> = decodeToResult<LockFile>(path)
-            .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
+        /** Reads [LockFile] from a specified [path] and parses it to a [Result]. */
+        suspend fun readToResultFrom(path: Path): Result<LockFile, ActionError> =
+            decodeToResult<LockFile>(path)
+                .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true)

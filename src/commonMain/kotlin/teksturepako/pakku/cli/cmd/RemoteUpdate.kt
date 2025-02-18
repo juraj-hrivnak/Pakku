@@ -4,11 +4,6 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.help
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.optionalValue
-import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.MultiProgressBarAnimation
 import com.github.ajalt.mordant.animation.progress.ProgressTask
@@ -22,31 +17,27 @@ import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
-import teksturepako.pakku.api.actions.remote.remoteInstall
+import teksturepako.pakku.api.actions.remote.remoteUpdate
 import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.overrides.readProjectOverrides
+import teksturepako.pakku.api.overrides.readProjectOverridesFrom
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 
-class RemoteInstall : CliktCommand("install")
+class RemoteUpdate : CliktCommand("update")
 {
-    override fun help(context: Context) = "install modpacks from remote"
+    override fun help(context: Context) = "update the modpack from its remote"
 
-    private val args by requireObject<MutableList<Remote.Args>>()
-
-    private val retryOpt: Int? by option("-r", "--retry", metavar = "<n>")
-        .help("Retries downloading when it fails, with optional number of times to retry (Defaults to 2)")
-        .int()
-        .optionalValue(2)
-        .default(0)
+    private val argObjects by requireObject<MutableList<Remote.Args>>()
 
     override fun run() = runBlocking {
-        coroutineScope {
-
-            val (url, branch) = args.first()
+        coroutineScope x@ {
+            val args = argObjects.first()
 
             terminal.cursor.hide()
 
@@ -59,48 +50,45 @@ class RemoteInstall : CliktCommand("install")
             }
 
             val gitProgress = MultiProgressBarAnimation(terminal).animateInCoroutine()
-            val tasks = mutableListOf<ProgressTask<String>>()
+            val tasks = mutableMapOf<String, ProgressTask<String>>()
 
             val remoteJob = async {
-                remoteInstall(url, branch) { (taskName, percentDone) ->
-                    if (taskName != null && taskName !in tasks.map { it.context })
-                    {
-                        tasks += gitProgress.addTask(gitProgressLayout, taskName, total = 100)
-                    }
+                remoteUpdate(
+                    onProgress = { taskName, percentDone ->
+                        val id = taskName?.lowercase()?.filterNot { it.isWhitespace() }
 
-                    for (task in tasks)
-                    {
-                        if (task.context == taskName) runBlocking {
-                            task.update {
+                        if (id != null && id !in tasks.values.map { text ->
+                            text.context.lowercase().filterNot { it.isWhitespace() }
+                        })
+                        {
+                            tasks[id] = gitProgress.addTask(gitProgressLayout, taskName, total = 100)
+                        }
+
+                        runBlocking {
+                            tasks[id]?.update {
                                 this.completed = percentDone.toLong()
                             }
                         }
                     }
-
-                    launch {
-                        gitProgress.refresh()
-                    }
-                }
+                )
             }
 
-//            launch { gitProgress.execute() }
+            launch {
+                if (tasks.isNotEmpty()) gitProgress.execute()
+            }
 
             remoteJob.await()?.onError {
                 terminal.pError(it)
                 echo()
-                return@coroutineScope
+                return@x
             }
+
+            echo(tasks)
 
             remoteJob.join()
 
             launch {
                 delay(1.seconds)
-                for (task in tasks)
-                {
-                    task.update {
-                        this.completed = 100
-                    }
-                }
                 runBlocking {
                     gitProgress.stop()
                 }
@@ -108,19 +96,21 @@ class RemoteInstall : CliktCommand("install")
 
             terminal.cursor.show()
 
-            val lockFile = LockFile.readToResult().getOrElse {
-                terminal.pError(it)
-                echo()
-                return@coroutineScope
-            }
-
-            val configFile = if (ConfigFile.exists())
-            {
-                ConfigFile.readToResult().getOrElse {
+            val lockFile = LockFile.readToResultFrom(Path(Dirs.remoteDir.pathString, LockFile.FILE_NAME))
+                .getOrElse {
                     terminal.pError(it)
                     echo()
-                    return@coroutineScope
+                    return@x
                 }
+
+            val configFile = if (ConfigFile.existsAt(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME)))
+            {
+                ConfigFile.readToResultFrom(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME))
+                    .getOrElse {
+                        terminal.pError(it)
+                        echo()
+                        return@x
+                    }
             }
             else null
 
@@ -141,36 +131,43 @@ class RemoteInstall : CliktCommand("install")
 
             launch { progressBar.execute() }
 
-            val fetchJob = projectFiles.fetch(onError = { error ->
-                if (error !is AlreadyExists) terminal.pError(error)
-            }, onProgress = { completed, total ->
-                progressBar.update {
-                    this.completed = completed
-                    this.total = total
-                }
-            }, onSuccess = { path, projectFile ->
-                val slug = projectFile.getParentProject(lockFile)?.getFullMsg()
+            val fetchJob = projectFiles.fetch(
+                onError = { error ->
+                    if (error !is AlreadyExists) terminal.pError(error)
+                },
+                onProgress = { completed, total ->
+                    progressBar.update {
+                        this.completed = completed
+                        this.total = total
+                    }
+                },
+                onSuccess = { path, projectFile ->
+                    val slug = projectFile.getParentProject(lockFile)?.getFullMsg()
 
-                terminal.pSuccess("$slug saved to $path")
-            }, lockFile, configFile, retryOpt
+                    terminal.pSuccess("$slug saved to $path")
+                },
+                lockFile, configFile, args.retryOpt
             )
 
             // -- OVERRIDES --
 
-            val projectOverrides = readProjectOverrides(configFile)
+            val projectOverrides = readProjectOverridesFrom(Dirs.remoteDir, configFile)
 
             val syncJob = launch {
-                projectOverrides.sync(onError = { error ->
-                    if (error !is AlreadyExists) terminal.pError(error)
-                }, onSuccess = { projectOverride ->
-                    terminal.pInfo("${projectOverride.fullOutputPath} synced")
-                })
+                projectOverrides.sync(
+                    onError = { error ->
+                        if (error !is AlreadyExists) terminal.pError(error)
+                    },
+                    onSuccess = { projectOverride ->
+                        terminal.pInfo("${projectOverride.fullOutputPath} synced")
+                    }
+                )
             }
 
             fetchJob.join()
 
             launch {
-                delay(1.seconds)
+                delay(3.seconds)
                 progressBar.update {
                     if (this.total != null)
                     {
