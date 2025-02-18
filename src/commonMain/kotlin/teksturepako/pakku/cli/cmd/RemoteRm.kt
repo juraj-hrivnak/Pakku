@@ -23,7 +23,7 @@ class RemoteRm : CliktCommand("rm")
                 return@coroutineScope
             }
 
-            async(Dispatchers.IO) { Dirs.remoteDir.tryToResult { toFile().deleteRecursively() } }.await().fold(
+            Dirs.remoteDir.tryToResult { toFile().deleteRecursively() }.fold(
                 success = { terminal.pDanger("Remote removed") },
                 failure = {
                     terminal.pDanger("Failed to remove the remote.")
