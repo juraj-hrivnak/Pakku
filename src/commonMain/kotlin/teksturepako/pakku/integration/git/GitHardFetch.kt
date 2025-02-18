@@ -28,6 +28,10 @@ suspend fun gitHardFetch(
     {
         val git = Git.open(dir.toFile())
 
+        git.clean()
+            .setForce(true)
+            .call()
+
         git.fetch()
             .setProgressMonitor(progressMonitor)
             .call()
