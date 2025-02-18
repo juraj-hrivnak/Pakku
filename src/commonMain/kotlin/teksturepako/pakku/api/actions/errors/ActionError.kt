@@ -17,16 +17,18 @@ abstract class ActionError
         }
         else
         {
-            args.joinToString("") {
-                when (it)
+            args.joinToString("") { arg ->
+                when (arg)
                 {
                     null      -> ""
-                    is String -> it
-                    else      -> "$it "
+                    is String -> arg
+                    else      -> "$arg "
                 }
             }
         }
     }
+
+    protected fun optionalArg(arg: Any?): String = if (arg != null) " '$arg'" else ""
 
     inline fun <T> onError(action: (ActionError) -> T): T = action(this)
 }

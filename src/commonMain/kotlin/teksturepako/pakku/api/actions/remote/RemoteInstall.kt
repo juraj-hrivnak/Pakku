@@ -2,6 +2,8 @@ package teksturepako.pakku.api.actions.remote
 
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.Dirs
+import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.cli.ui.hint
 import teksturepako.pakku.debug
 import teksturepako.pakku.integration.git.gitClone
 import kotlin.io.path.exists
@@ -12,6 +14,9 @@ suspend fun remoteInstall(
     branch: String? = null,
 ): ActionError?
 {
+    if (LockFile.exists()) return CanNotInstallRemote(remoteUrl)
+    if (Dirs.remoteDir.exists()) return RemoteAlreadyExists(remoteUrl)
+
     return when
     {
         remoteUrl.endsWith(".git") || remoteUrl.contains("github.com") ->
@@ -22,11 +27,12 @@ suspend fun remoteInstall(
     }
 }
 
-data class CanNotInstallRemote(val url: String): ActionError()
+data class RemoteAlreadyExists(val url: String): ActionError()
 {
     override val rawMessage = message(
-        "Can not install remote: '$url'",
-        "Only one remote can be installed at once.",
+        "Can not install remote: '$url'.",
+        "A remote for this modpack already exists.",
+        hint("use \"pakku remote rm\" to remove the remote from your modpack"),
         newline = true,
     )
 }
@@ -42,8 +48,6 @@ private suspend fun handleGit(
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
 ): ActionError?
 {
-    if (Dirs.remoteDir.exists()) return CanNotInstallRemote(uri)
-
     debug { println("starting git & cloning the repo") }
 
     gitClone(uri, Dirs.remoteDir, branch) { taskName, percentDone -> onProgress(taskName, percentDone) }
