@@ -17,7 +17,10 @@ import teksturepako.pakku.api.overrides.getOverridesAsync
 import teksturepako.pakku.api.overrides.readProjectOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
-import teksturepako.pakku.io.*
+import teksturepako.pakku.io.cleanUpDirectory
+import teksturepako.pakku.io.tryOrNull
+import teksturepako.pakku.io.tryToResult
+import teksturepako.pakku.io.zip
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.time.Duration
@@ -99,7 +102,6 @@ suspend fun ExportProfile.export(
             .filterNotNull()
             .produceRuleResults(lockFile, configFile, this.name, overrides)
 
-        // Run export rules
         val cachedPaths: List<Path> = results
             .runEffects { error ->
                 onError(this, error)
@@ -112,74 +114,11 @@ suspend fun ExportProfile.export(
                 .awaitAll()
                 .filterNotNull()
 
-        // -- FILE CACHE --
-
-        /** Map of _absolute paths_ to their _hashes_ for every path not in a directory */
-        val fileHashes: Map<Path, String> = cachedPaths.filterNot { it.isDirectory() }
-            .mapNotNull { file ->
-                file.tryToResult { it.readBytes() }
-                    .onFailure { error ->
-                        onError(this, IOExportingError(error))
-                    }
-                    .get()?.let { file to it }
-            }
-            .associate { it.first.absolute() to createHash("sha1", it.second) }
-
-        /** Map of _absolute paths_ to their _hashes_ for every path in a directory */
-        val dirContentHashes: Map<Path, String> = cachedPaths.filter { it.isDirectory() }
-            .mapNotNull { directory ->
-                directory.tryToResult { it.toFile().walkTopDown() }
-                    .onFailure { error ->
-                        onError(this, IOExportingError(error))
-                    }.get()
-            }
-            .flatMap {
-                it.mapNotNull { file -> file.toPath() }
-            }
-            .mapNotNull { path ->
-                path.readAndCreateSha1FromBytes()?.let {
-                    path.absolute() to it
-                }
-            }
-            .toMap()
-
-        val fileTreeWalk = inputDirectory.tryToResult { it.toFile().walkBottomUp() }
-            .onFailure {error ->
-                onError(this, IOExportingError(error))
-            }.get()
-
-        if (fileTreeWalk != null)
-        {
-            for (file in fileTreeWalk)
-            {
-                val path = file.toPath()
-                if (path == inputDirectory) continue
-
-                if (path.isDirectory())
-                {
-                    val currentDirFiles = path.tryToResult { it.toFile().listFiles() }
-                        .onFailure { error ->
-                            onError(this, IOExportingError(error))
-                        }.get()?.mapNotNull { it.toPath() } ?: continue
-
-                    if (currentDirFiles.isNotEmpty()) continue
-
-                    val deleted = path.deleteIfExists()
-                    if (deleted) debug { println("[${this.name}] CleanUp delete empty directory $path") }
-                }
-                else
-                {
-                    val hash = path.readAndCreateSha1FromBytes() ?: continue
-                    if ((path.absolute() in fileHashes.keys && hash in fileHashes.values) ||
-                        (path.absolute() in dirContentHashes.keys && hash in dirContentHashes.values)) continue
-
-                    val deleted = path.deleteIfExists()
-                    if (deleted) debug { println("[${this.name}] CleanUp delete file $path") }
-                }
-            }
-        }
-
-        // -- ZIP CREATION --
+        cleanUpDirectory(
+            inputDirectory, cachedPaths,
+            onError = { onError(this, IOExportingError(it)) },
+            onAction = { action -> debug { println("[${this.name}] CleanUp $action") } }
+        )
 
         outputZipFile
             .tryToResult { it.createParentDirectories() }
@@ -336,7 +275,7 @@ suspend fun List<ExportRule>.produceRuleResults(
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().map {
             rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + overrides.awaitAllAndGet().map { (overridePath, overrideType) ->
+        } + overrides.awaitAll().map { (overridePath, overrideType) ->
             rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir)
         } + readProjectOverrides(configFile).map {
             rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)

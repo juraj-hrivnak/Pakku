@@ -8,6 +8,8 @@ import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.errors.CouldNotSave
 import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.debug
+import teksturepako.pakku.io.cleanUpDirectoryRelative
 import teksturepako.pakku.io.tryToResult
 import java.nio.file.Path
 import kotlin.io.path.copyTo
@@ -53,7 +55,7 @@ data class OverridesDeferred(
     val clientOverrides: Deferred<List<Result<String, ActionError>>>,
 )
 {
-    suspend fun awaitAllAndGet(): List<Pair<String, OverrideType>>
+    suspend fun awaitAll(): List<Pair<String, OverrideType>>
     {
         val results = listOf(
             overrides.await() to OverrideType.OVERRIDE,
@@ -70,7 +72,10 @@ data class OverridesDeferred(
     }
 }
 
-suspend fun copyOverride(inputPath: Path, outputPath: Path): Result<Path, ActionError>
+suspend fun copyOverride(
+    inputPath: Path, outputPath: Path,
+    cleanUpDirectory: Boolean = false
+): Result<Pair<Path, Path>, ActionError>
 {
     return when
     {
@@ -83,7 +88,7 @@ suspend fun copyOverride(inputPath: Path, outputPath: Path): Result<Path, Action
 
             inputPath.tryToResult { copyTo(outputPath, overwrite = true) }
                 .fold(
-                    success = { Ok(outputPath) },
+                    success = { Ok(inputPath to outputPath) },
                     failure = { Err(it) }
                 )
         }
@@ -95,11 +100,22 @@ suspend fun copyOverride(inputPath: Path, outputPath: Path): Result<Path, Action
                     if (error !is AlreadyExists) return Err(error)
                 }
 
-            inputPath.tryToResult { toFile().copyRecursively(outputPath.toFile(), overwrite = true) }
+            val result = inputPath.tryToResult { toFile().copyRecursively(outputPath.toFile(), overwrite = true) }
                 .fold(
-                    success = { Ok(outputPath) },
+                    success = { Ok(inputPath to outputPath) },
                     failure = { Err(it) }
                 )
+
+            if (cleanUpDirectory)
+            {
+                cleanUpDirectoryRelative(
+                    outputPath, listOf(inputPath),
+                    onError = { debug { println(it.rawMessage) } },
+                    onAction = { debug { println(it) } },
+                )
+            }
+
+            result
         }
 
         else                      ->
