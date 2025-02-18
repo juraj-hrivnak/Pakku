@@ -45,13 +45,15 @@ suspend fun gitHardFetch(
         debug { e.stackTraceToString() }
         return@coroutineScope GitHardFetchError(dir, e.stackTraceToString())
     }
+    finally
+    {
+        withContext(Dispatchers.IO) {
+            writer.close()
+            outputStream.close()
+        }
+    }
 
     launch { git.close() }.join()
-
-    withContext(Dispatchers.IO) {
-        writer.close()
-        outputStream.close()
-    }
 
     return@coroutineScope null
 }
