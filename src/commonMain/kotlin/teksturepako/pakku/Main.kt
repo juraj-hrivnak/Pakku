@@ -37,7 +37,7 @@ fun main(args: Array<String>)
         terminal = cliConfig?.toTerminal() ?: Terminal(theme = CliThemes.Default)
     }.subcommands(
         Init(), Import(), Add(), Rm(), Cfg(), Set(), Status(), Update(), Ls(), Fetch(), Sync(), Link(), Export(),
-        Diff()
+        Diff(), Remote()
     ).main(args)
 
     // Check Modrinth's rate limit

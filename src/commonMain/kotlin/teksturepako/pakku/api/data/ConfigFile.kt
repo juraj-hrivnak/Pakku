@@ -5,7 +5,6 @@ package teksturepako.pakku.api.data
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.fold
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.errors.ActionError
@@ -17,6 +16,7 @@ import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.io.*
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 /**
  * A config file (`pakku.json`) is a file used by the user to configure properties needed for modpack export.
@@ -114,6 +114,15 @@ data class ConfigFile(
     suspend fun getAllClientOverrides(): List<Result<String, ActionError>> =
         this.clientOverrides.expandWithGlob(Path(workingPath)).map { filterPath(it) }
 
+    suspend fun getAllOverridesFrom(path: Path): List<Result<String, ActionError>> =
+        this.overrides.expandWithGlob(path).map { filterPath(it) }
+
+    suspend fun getAllServerOverridesFrom(path: Path): List<Result<String, ActionError>> =
+        this.serverOverrides.expandWithGlob(path).map { filterPath(it) }
+
+    suspend fun getAllClientOverridesFrom(path: Path): List<Result<String, ActionError>> =
+        this.clientOverrides.expandWithGlob(path).map { filterPath(it) }
+
     // -- PROJECTS --
 
     @Serializable
@@ -170,19 +179,18 @@ data class ConfigFile(
     {
         const val FILE_NAME = "pakku.json"
 
-        fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
+        fun exists(): Boolean = Path(workingPath, FILE_NAME).exists()
+        fun existsAt(path: Path): Boolean = path.exists()
 
         fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), "$workingPath/$FILE_NAME")
 
         fun readOrNull() = decodeToResult<ConfigFile>("$workingPath/$FILE_NAME").getOrNull()
 
-        /**
-         * Reads [LockFile] and parses it, or returns an exception.
-         * Use [Result.fold] to map it's success and failure values.
-         */
+        /** Reads [ConfigFile] and parses it to a [Result]. */
         suspend fun readToResult(): Result<ConfigFile, ActionError> =
             decodeToResult<ConfigFile>(Path(workingPath, FILE_NAME))
 
+        /** Reads [ConfigFile] from a specified [path] and parses it to a [Result]. */
         suspend fun readToResultFrom(path: Path): Result<ConfigFile, ActionError> =
             decodeToResult<ConfigFile>(path)
     }

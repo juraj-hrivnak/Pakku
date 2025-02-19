@@ -24,13 +24,13 @@ fun Throwable.toActionError(path: Path): ActionError = when (this)
     else                          -> ErrorWhileReading(path.toString(), this.stackTraceToString())
 }
 
-suspend fun <T> Path.tryOrNull(action: (path: Path) -> T): T? = coroutineScope {
+suspend fun <T> Path.tryOrNull(action: Path.(path: Path) -> T): T? = coroutineScope {
     withContext(Dispatchers.IO) {
         return@withContext runCatching { action(this@tryOrNull) }.get()
     }
 }
 
-suspend fun <T> Path.tryToResult(action: (path: Path) -> T): Result<T, ActionError> = coroutineScope {
+suspend fun <T> Path.tryToResult(action: Path.(path: Path) -> T): Result<T, ActionError> = coroutineScope {
     withContext(Dispatchers.IO) {
         return@withContext runCatching { action(this@tryToResult) }.fold(
             success = { Ok(it) },
@@ -72,7 +72,7 @@ suspend fun readPathBytesToResult(path: Path): Result<ByteArray, ActionError> = 
     }
 }
 
-suspend fun Path.readAndCreateSha1FromBytes() = this.tryToResult { it.readBytes() }.get()
+suspend fun Path.readAndCreateSha1FromBytes() = this.tryToResult { readBytes() }.get()
     ?.let { createHash("sha1", it) }
 
 @Suppress("unused")
