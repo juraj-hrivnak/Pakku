@@ -13,9 +13,9 @@ import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.Http
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.ProjectOverride
-import teksturepako.pakku.api.overrides.copyOverride
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.io.copyRecursivelyTo
 import teksturepako.pakku.io.tryToResult
 import kotlin.io.path.*
 
@@ -154,7 +154,7 @@ sealed class RuleContext(
             val message = "export $type '$inputPath' to '$outputPath'"
 
             return ruleResult(message, Packaging.FileAction {
-                outputPath to copyOverride(inputPath, outputPath).getError()
+                outputPath to inputPath.copyRecursivelyTo(outputPath)
             })
         }
     }

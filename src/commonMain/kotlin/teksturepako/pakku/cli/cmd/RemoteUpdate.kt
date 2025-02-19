@@ -12,12 +12,8 @@ import com.github.ajalt.mordant.widgets.progress.percentage
 import com.github.ajalt.mordant.widgets.progress.progressBar
 import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
 import com.github.ajalt.mordant.widgets.progress.text
-import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrElse
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
 import kotlinx.coroutines.*
-import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
@@ -29,7 +25,6 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.readProjectOverridesFrom
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
-import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
@@ -75,10 +70,8 @@ class RemoteUpdate : CliktCommand("update")
                             }
                         }
                     },
-                    onSync = { result: Result<Pair<Path, Path>, ActionError> ->
-                        result
-                            .onSuccess { (input, output) -> terminal.pSuccess("$input copied to $output") }
-                            .onFailure { terminal.pError(it) }
+                    onSync = {
+                        terminal.pSuccess(it.description)
                     },
                 )
             }

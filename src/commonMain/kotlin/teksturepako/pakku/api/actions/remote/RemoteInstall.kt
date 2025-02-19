@@ -1,6 +1,5 @@
 package teksturepako.pakku.api.actions.remote
 
-import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.FileNotFound
 import teksturepako.pakku.api.data.Dirs
@@ -8,14 +7,14 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.hint
 import teksturepako.pakku.debug
 import teksturepako.pakku.integration.git.gitClone
-import java.nio.file.Path
+import teksturepako.pakku.io.FileAction
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 suspend fun remoteInstall(
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
-    onSync: suspend (Result<Pair<Path, Path>, ActionError>) -> Unit,
+    onSync: suspend (FileAction) -> Unit,
     remoteUrl: String,
     branch: String? = null,
 ): ActionError?
@@ -27,11 +26,7 @@ suspend fun remoteInstall(
     {
         remoteUrl.endsWith(".git") || remoteUrl.contains("github.com") ->
         {
-            handleGit(
-                remoteUrl, branch,
-                onProgress = { taskName, percentDone -> onProgress(taskName, percentDone) },
-                onSync = { result -> onSync(result) },
-            )
+            handleGit(remoteUrl, branch, onProgress, onSync)
         }
         else -> InvalidUrl(remoteUrl)
     }
@@ -57,7 +52,7 @@ private suspend fun handleGit(
     uri: String,
     branch: String?,
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
-    onSync: suspend (Result<Pair<Path, Path>, ActionError>) -> Unit
+    onSync: suspend (FileAction) -> Unit,
 ): ActionError?
 {
     debug { println("starting git & cloning the repo") }
@@ -74,7 +69,7 @@ private suspend fun handleGit(
         return FileNotFound(Path(Dirs.remoteDir.pathString, LockFile.FILE_NAME).pathString)
     }
 
-    syncRemoteDirectory { result -> onSync(result) }
+    syncRemoteDirectory(onSync)
         ?.onError { return it }
 
     return null
