@@ -33,14 +33,14 @@ abstract class ActionError
     inline fun <T> onError(action: (ActionError) -> T): T = action(this)
 }
 
-class MultipleError(vararg val errors: ActionError) : ActionError()
+class MultipleErrors(vararg val errors: ActionError) : ActionError()
 {
     override val rawMessage: String = errors.joinToString("\n") { it.rawMessage }
     override fun message(arg: String): String = errors.joinToString("\n") { it.message(arg) }
 }
 
-fun Collection<ActionError?>.toMultipleError(): MultipleError? = this
+fun Collection<ActionError?>.toMultipleError(): MultipleErrors? = this
     .filterNotNull()
     .ifEmpty { null }
     ?.toTypedArray()
-    ?.let { MultipleError(*it) }
+    ?.let { MultipleErrors(*it) }
