@@ -10,12 +10,12 @@ import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.debug
 import java.nio.file.Path
 
-data class GitHardFetchError(val dir: Path, val reason: String? = null): ActionError()
+data class GitUpdateError(val dir: Path, val reason: String? = null): ActionError()
 {
-    override val rawMessage = message("Failed to hard fetch a repository, $reason")
+    override val rawMessage = message("Failed to fetch a repository, $reason")
 }
 
-suspend fun gitHardFetch(
+suspend fun gitUpdate(
     dir: Path,
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
 ): ActionError? = coroutineScope {
@@ -47,7 +47,7 @@ suspend fun gitHardFetch(
     catch (e: Exception)
     {
         debug { e.stackTraceToString() }
-        return@coroutineScope GitHardFetchError(dir, e.stackTraceToString())
+        return@coroutineScope GitUpdateError(dir, e.stackTraceToString())
     }
     finally
     {
