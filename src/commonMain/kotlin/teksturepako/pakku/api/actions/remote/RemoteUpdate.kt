@@ -5,7 +5,7 @@ import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.debug
-import teksturepako.pakku.integration.git.gitHardFetch
+import teksturepako.pakku.integration.git.gitUpdate
 import teksturepako.pakku.integration.git.gitStatus
 import teksturepako.pakku.io.FileAction
 import kotlin.io.path.exists
@@ -24,7 +24,7 @@ suspend fun remoteUpdate(
     {
         debug { println("starting git & fetching the repo") }
 
-        gitHardFetch(Dirs.remoteDir) { taskName, percentDone -> onProgress(taskName, percentDone) }
+        gitUpdate(Dirs.remoteDir) { taskName, percentDone -> onProgress(taskName, percentDone) }
             ?.onError { return it }
     }
 
