@@ -4,13 +4,13 @@ import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.FileNotFound
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.cli.ui.hint
 import teksturepako.pakku.debug
 import teksturepako.pakku.integration.git.gitClone
 import teksturepako.pakku.io.FileAction
-import kotlin.io.path.Path
-import kotlin.io.path.exists
-import kotlin.io.path.pathString
+import teksturepako.pakku.io.tryOrNull
+import kotlin.io.path.*
 
 suspend fun remoteInstall(
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
@@ -19,7 +19,7 @@ suspend fun remoteInstall(
     branch: String? = null,
 ): ActionError?
 {
-    if (LockFile.exists()) return CanNotInstallRemote(remoteUrl)
+    if (!modpackDirIsEmpty() || LockFile.exists()) return CanNotInstallRemote(remoteUrl)
     if (Dirs.remoteDir.exists()) return RemoteAlreadyExists(remoteUrl)
 
     return when
@@ -74,3 +74,16 @@ private suspend fun handleGit(
 
     return null
 }
+
+private suspend fun modpackDirIsEmpty(): Boolean = Path(workingPath)
+    .tryOrNull {
+        if (!exists()) return@tryOrNull true // Path doesn't exist, consider it empty
+
+        if (!isDirectory()) return@tryOrNull false // Not a directory
+
+        // If no files found, directory is empty
+        return@tryOrNull listDirectoryEntries()
+            .filterNot { it.name == "pakku.jar" }
+            .none { it.isRegularFile() || it.isDirectory() && it.listDirectoryEntries().isNotEmpty() }
+    }
+    ?: false

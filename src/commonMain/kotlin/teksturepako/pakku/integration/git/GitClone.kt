@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.api.CloneCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.ProgressMonitor
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.debug
 import java.nio.file.Path
@@ -34,7 +35,7 @@ suspend fun gitClone(
             .setBranchIfPossible(branch)
             .setDirectory(dir.toFile())
             .setDepth(1)
-            .setProgressMonitor(progressMonitor)
+            .setProgressMonitorIfPossible(progressMonitor)
             .call()
     }
     catch (e: Exception)
@@ -57,3 +58,6 @@ suspend fun gitClone(
 
 private fun CloneCommand.setBranchIfPossible(branch: String?): CloneCommand =
     if (branch == null) this else this.setBranch(branch)
+
+private fun CloneCommand.setProgressMonitorIfPossible(progressMonitor: ProgressMonitor?): CloneCommand =
+    if (progressMonitor == null) this else this.setProgressMonitor(progressMonitor)

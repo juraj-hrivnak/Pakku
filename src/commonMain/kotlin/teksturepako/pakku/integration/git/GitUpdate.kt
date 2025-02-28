@@ -4,8 +4,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.eclipse.jgit.api.FetchCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ResetCommand
+import org.eclipse.jgit.lib.ProgressMonitor
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.debug
 import java.nio.file.Path
@@ -33,11 +35,11 @@ suspend fun gitUpdate(
             .call()
 
         git.fetch()
-            .setProgressMonitor(progressMonitor)
+            .setProgressMonitorIfPossible(progressMonitor)
             .call()
 
         git.reset()
-            .setProgressMonitor(progressMonitor)
+            .setProgressMonitorIfPossible(progressMonitor)
             .setMode(ResetCommand.ResetType.HARD)
             .setRef("origin/${git.repository.branch}")
             .call()
@@ -61,3 +63,9 @@ suspend fun gitUpdate(
 
     return@coroutineScope null
 }
+
+private fun FetchCommand.setProgressMonitorIfPossible(progressMonitor: ProgressMonitor?): FetchCommand =
+    if (progressMonitor == null) this else this.setProgressMonitor(progressMonitor)
+
+private fun ResetCommand.setProgressMonitorIfPossible(progressMonitor: ProgressMonitor?): ResetCommand =
+    if (progressMonitor == null) this else this.setProgressMonitor(progressMonitor)

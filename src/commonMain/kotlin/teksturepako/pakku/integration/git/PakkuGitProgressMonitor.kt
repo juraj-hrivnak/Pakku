@@ -1,5 +1,6 @@
 package teksturepako.pakku.integration.git
 
+import com.github.michaelbull.result.get
 import com.github.michaelbull.result.runCatching
 import org.eclipse.jgit.lib.TextProgressMonitor
 import java.io.BufferedWriter
@@ -10,21 +11,23 @@ import java.time.Duration
 
 fun pakkuGitProgressMonitor(
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
-): Triple<TextProgressMonitor, ByteArrayOutputStream, BufferedWriter>
+): Triple<TextProgressMonitor?, ByteArrayOutputStream, BufferedWriter>
 {
     val outputStream = ByteArrayOutputStream()
     val writer = BufferedWriter(OutputStreamWriter(outputStream, StandardCharsets.UTF_8))
 
-    val progressMonitor = object : TextProgressMonitor(writer)
-    {
-        override fun onUpdate(taskName: String?, workCurr: Int, workTotal: Int, percentDone: Int, duration: Duration?)
+    val progressMonitor = runCatching {
+        object : TextProgressMonitor(writer)
         {
-            super.onUpdate(taskName, workCurr, workTotal, percentDone, duration)
-            runCatching { writer.flush() }
-            onProgress(taskName, percentDone)
-            outputStream.reset()
+            override fun onUpdate(taskName: String?, workCurr: Int, workTotal: Int, percentDone: Int, duration: Duration?)
+            {
+                super.onUpdate(taskName, workCurr, workTotal, percentDone, duration)
+                runCatching { writer.flush() }
+                onProgress(taskName, percentDone)
+                outputStream.reset()
+            }
         }
-    }
+    }.get() ?: return Triple(null, outputStream, writer)
 
     return Triple(progressMonitor, outputStream, writer)
 }
