@@ -3,6 +3,40 @@
 
 ## Unreleased
 
+### Highlights
+
+- Implemented the `pakku remote` command and subcommands. It works in the following way:
+  1. `pakku remote` - Running the command without any arguments will show you the status of the remote.
+  2. `pakku remote <url>` will install the remote from the provided `<url>`.
+    - A remote modpack can only be installed on a modpack with a non-initialized Pakku dev environment.
+  3. `pakku remote update` will update the modpack from the remote.
+  4. `pakku remote rm` will remove the remote from your modpack.
+- Fixed system output encoding on Windows systems to properly handle UTF-8 characters.
+  - If Pakku fails to enable the UTF-8 encoding in your console, the `ASCII` theme will be used.
+- Implemented better error handling for the export action.
+- Added support for additional representations of hash algorithm names.
+  - For example: "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
+
+### `pakku remote` command
+
+Pakku does the following when running `pakku remote <url>`:
+1. Clone the repo to the `<working_path>/.pakku/remote/` directory. (`git clone <repository> <working_path>/.pakku/remote/`)
+2. Read the config file from the `<working_path>/.pakku/remote/pakku.json)`.
+3. Copy all overrides specified in the config file from `<working_path>/.pakku/remote/` to `<working_path>`.
+4. Copy the `.pakku/overrides`, `.pakku/server-overrides`, and `.pakku/client-overrides` to `<working_path>`
+5. Read the lock file from the `<working_path>/.pakku/remote/pakku-lock.json`
+6. Fetch the project files.
+7. Sync project overrides.
+
+Under the hood, Pakku uses JGit and remains compatible with Java 8
+
+### Technical Notes
+
+- Refactored glob pattern matching.
+  - Prefix "`!`", which negates the pattern, will now exclude any matching file included by a _previous pattern_, not all patterns as it worked before.
+- Refactored the `LockFile` to use the `kotlin-result` monad.
+- Refactored action error messages to use the new `message()` function.
+
 ## v0.26.0
 
 ### Highlights
