@@ -7,4 +7,5 @@ object Dirs
     const val PAKKU_DIR = ".pakku"
     val cacheDir = Path(workingPath, "build", ".cache")
     val shelfDir = Path(workingPath, PAKKU_DIR, "shelf")
+    val remoteDir = Path(workingPath, PAKKU_DIR, "remote")
 }

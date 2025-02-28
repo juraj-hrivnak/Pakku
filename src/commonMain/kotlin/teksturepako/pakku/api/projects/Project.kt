@@ -235,7 +235,7 @@ data class Project(
             this.subpath = it
             null
         },
-        failure = { it}
+        failure = { it }
     )
 
     fun getSubpath(): Result<String, ActionError>? = subpath?.let { subpath ->

@@ -11,16 +11,21 @@ import teksturepako.pakku.debug
 import teksturepako.pakku.debugIf
 import teksturepako.pakku.io.tryOrNull
 import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
-suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> = OverrideType.entries
+suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> =
+    readProjectOverridesFrom(Path(workingPath), configFile)
+
+suspend fun readProjectOverridesFrom(path: Path, configFile: ConfigFile?): Set<ProjectOverride> = OverrideType.entries
     .flatMap { ovType ->
         ProjectType.entries.map { projType ->
-            Path(workingPath, PAKKU_DIR, ovType.folderName, projType.getPathString(configFile))
+            Path(path.pathString, PAKKU_DIR, ovType.folderName, projType.getPathString(configFile))
         }
     }
-    .mapNotNull { path ->
-        path.tryOrNull {
+    .mapNotNull { dir ->
+        dir.tryOrNull {
             it.toFile().walkTopDown().map { file: File ->
                 file.toPath()
             }
@@ -41,4 +46,13 @@ suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> 
     .toSet()
     .debugIf({ it.isNotEmpty() }) {
         println("readProjectOverrides = ${it.map { projectOverride -> projectOverride.path }}")
+    }
+
+@Suppress("unused")
+suspend fun copyProjectOverrideDirectories(inputPath: Path, outputPath: Path) = OverrideType.entries
+    .map { ovType ->
+        Path(inputPath.pathString, PAKKU_DIR, ovType.folderName) to Path(outputPath.pathString, PAKKU_DIR, ovType.folderName)
+    }
+    .forEach { (input, output) ->
+        input.tryOrNull { toFile().copyRecursively(output.toFile(), overwrite = true) }
     }

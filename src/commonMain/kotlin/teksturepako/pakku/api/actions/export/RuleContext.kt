@@ -1,6 +1,7 @@
 package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.getError
+import com.github.michaelbull.result.onFailure
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.errors.*
@@ -14,6 +15,7 @@ import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.ProjectOverride
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.io.copyRecursivelyTo
 import teksturepako.pakku.io.tryToResult
 import kotlin.io.path.*
 
@@ -42,13 +44,16 @@ sealed class RuleContext(
         value: T, path: String, vararg subpath: String, format: StringFormat = json
     ): RuleResult
     {
-        val file = getPath(path, *subpath)
+        val outputPath = getPath(path, *subpath)
 
-        return ruleResult("createJsonFile '$file'", Packaging.FileAction {
-            file to file.tryToResult {
-                it.createParentDirectories()
-                it.writeText(format.encodeToString(value))
-            }.getError()
+        return ruleResult("createJsonFile '$outputPath'", Packaging.FileAction {
+            outputPath.tryToResult { createParentDirectories() }
+                .onFailure { error ->
+                    if (error !is AlreadyExists) return@FileAction outputPath to error
+                }
+
+            outputPath to outputPath.tryToResult { writeText(format.encodeToString(value)) }
+                .getError()
         })
     }
 
@@ -56,13 +61,16 @@ sealed class RuleContext(
     @Suppress("unused")
     fun createFile(bytes: ByteArray, path: String, vararg subpath: String): RuleResult
     {
-        val file = getPath(path, *subpath)
+        val outputPath = getPath(path, *subpath)
 
-        return ruleResult("createFile '$file'", Packaging.FileAction {
-            file to file.tryToResult {
-                it.createParentDirectories()
-                it.writeBytes(bytes)
-            }.getError()
+        return ruleResult("createFile '$outputPath'", Packaging.FileAction {
+            outputPath.tryToResult { createParentDirectories() }
+                .onFailure { error ->
+                    if (error !is AlreadyExists) return@FileAction outputPath to error
+                }
+
+            outputPath to outputPath.tryToResult { writeBytes(bytes) }
+                .getError()
         })
     }
 
@@ -76,17 +84,20 @@ sealed class RuleContext(
         vararg subpath: String
     ): RuleResult
     {
-        val file = getPath(path, *subpath)
+        val outputPath = getPath(path, *subpath)
 
-        return ruleResult("createFile '$file'", Packaging.FileAction {
-            if (file.exists()) return@FileAction file to AlreadyExists(file.pathString)
+        return ruleResult("createFile '$outputPath'", Packaging.FileAction {
+            if (outputPath.exists()) return@FileAction outputPath to AlreadyExists(outputPath.pathString)
 
-            val bytes = bytesCallback.invoke() ?: return@FileAction file to DownloadFailed(file)
+            val bytes = bytesCallback.invoke() ?: return@FileAction outputPath to DownloadFailed(outputPath)
 
-            file to file.tryToResult {
-                it.createParentDirectories()
-                it.writeBytes(bytes)
-            }.getError()
+            outputPath.tryToResult { createParentDirectories() }
+                .onFailure { error ->
+                    if (error !is AlreadyExists) return@FileAction outputPath to error
+                }
+
+            outputPath to outputPath.tryToResult { writeBytes(bytes) }
+                .getError()
         })
     }
 
@@ -99,9 +110,8 @@ sealed class RuleContext(
     ) : RuleContext(workingSubDir, lockFile, configFile)
     {
         /** Sets the [project entry][RuleContext.ExportingProject] missing. */
-        fun setMissing(): RuleResult = MissingProject(
-            project, lockFile, configFile, workingSubDir
-        ).ruleResult("missing ${project.slug}", Packaging.EmptyAction)
+        fun setMissing(): RuleResult = MissingProject(project, lockFile, configFile, workingSubDir)
+            .ruleResult("missing ${project.slug}", Packaging.EmptyAction)
         
         suspend fun exportAsOverride(
             force: Boolean = false,
@@ -114,8 +124,7 @@ sealed class RuleContext(
         {
             if (!project.redistributable && !force) return error(NotRedistributable(project))
 
-            val projectFile =
-                project.getLatestFile(Provider.providers) ?: return error(NoFiles(project, lockFile))
+            val projectFile = project.getLatestFile(Provider.providers) ?: return error(NoFiles(project, lockFile))
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
@@ -137,7 +146,7 @@ sealed class RuleContext(
         override val workingSubDir: String
     ) : RuleContext(workingSubDir, lockFile, configFile)
     {
-        fun export(overridesDir: String? = type.folderName): RuleResult
+        fun copy(overridesDir: String? = type.folderName): RuleResult
         {
             val inputPath = Path(workingPath, path)
             val outputPath = overridesDir?.let { getPath(it, path) } ?: getPath(path)
@@ -145,29 +154,7 @@ sealed class RuleContext(
             val message = "export $type '$inputPath' to '$outputPath'"
 
             return ruleResult(message, Packaging.FileAction {
-                when
-                {
-                    inputPath.isRegularFile() ->
-                    {
-                        outputPath to inputPath.tryToResult {
-                            outputPath.createParentDirectories()
-                            it.copyTo(outputPath, overwrite = true)
-                        }.getError()
-                    }
-
-                    inputPath.isDirectory()   ->
-                    {
-                        outputPath to inputPath.tryToResult {
-                            outputPath.createParentDirectories()
-                            it.toFile().copyRecursively(outputPath.toFile(), overwrite = true)
-                        }.getError()
-                    }
-
-                    else                      ->
-                    {
-                        outputPath to CouldNotSave(inputPath)
-                    }
-                }
+                outputPath to inputPath.copyRecursivelyTo(outputPath)
             })
         }
     }
@@ -182,22 +169,25 @@ sealed class RuleContext(
     {
         fun export(overridesDir: String? = projectOverride.type.folderName): RuleResult
         {
-            val file = overridesDir?.let {
-                getPath(it, projectOverride.relativeOutputPath.pathString)
-            } ?: getPath(projectOverride.relativeOutputPath.pathString)
+            val outputPath = overridesDir
+                ?.let { getPath(it, projectOverride.relativeOutputPath.pathString) }
+                ?: getPath(projectOverride.relativeOutputPath.pathString)
 
-            val message = "export ${projectOverride.type} '${projectOverride.path}' to '$file'"
+            val message = "export ${projectOverride.type} '${projectOverride.path}' to '$outputPath'"
 
             return ruleResult(message, Packaging.FileAction {
-                if (file.exists())
+                if (outputPath.exists())
                 {
-                    return@FileAction file to AlreadyExists(file.toString())
+                    return@FileAction outputPath to AlreadyExists(outputPath.toString())
                 }
 
-                file to file.tryToResult {
-                    it.createParentDirectories()
-                    it.writeBytes(projectOverride.bytes)
-                }.getError()
+                outputPath.tryToResult { createParentDirectories() }
+                    .onFailure { error ->
+                        if (error !is AlreadyExists) return@FileAction outputPath to error
+                    }
+
+                outputPath to outputPath.tryToResult { writeBytes(projectOverride.bytes) }
+                    .getError()
             })
         }
     }
