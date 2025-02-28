@@ -7,7 +7,6 @@ import java.io.BufferedWriter
 import java.io.ByteArrayOutputStream
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
-import java.time.Duration
 
 fun pakkuGitProgressMonitor(
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
@@ -19,11 +18,11 @@ fun pakkuGitProgressMonitor(
     val progressMonitor = runCatching {
         object : TextProgressMonitor(writer)
         {
-            override fun onUpdate(taskName: String?, workCurr: Int, workTotal: Int, percentDone: Int, duration: Duration?)
+            override fun onUpdate(taskName: String?, cmp: Int, totalWork: Int, pcnt: Int)
             {
-                super.onUpdate(taskName, workCurr, workTotal, percentDone, duration)
+                super.onUpdate(taskName, cmp, totalWork, pcnt)
                 runCatching { writer.flush() }
-                onProgress(taskName, percentDone)
+                onProgress(taskName, pcnt)
                 outputStream.reset()
             }
         }

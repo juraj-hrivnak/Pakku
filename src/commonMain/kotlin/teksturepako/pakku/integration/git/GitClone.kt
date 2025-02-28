@@ -34,7 +34,6 @@ suspend fun gitClone(
             .setURI(uri)
             .setBranchIfPossible(branch)
             .setDirectory(dir.toFile())
-            .setDepth(1)
             .setProgressMonitorIfPossible(progressMonitor)
             .call()
     }
