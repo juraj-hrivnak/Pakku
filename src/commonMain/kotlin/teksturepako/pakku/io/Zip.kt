@@ -9,11 +9,12 @@ import okio.Path.Companion.toOkioPath
 import okio.Path.Companion.toPath
 import okio.openZip
 import java.io.BufferedOutputStream
-import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.absolute
+import kotlin.io.path.invariantSeparatorsPathString
 
 fun readPathTextFromZip(zipPath: Path, filePath: Path): String? = runCatching {
     FileSystem.SYSTEM.openZip(zipPath.toOkioPath()).read(filePath.toOkioPath()) { readUtf8() }
@@ -29,7 +30,9 @@ suspend fun zip(inputDirectory: Path, outputZipFile: Path) = withContext(Dispatc
     ZipOutputStream(BufferedOutputStream(FileOutputStream(outputZipFile.toFile()))).use { zos ->
         for (file in inputFile.walkTopDown())
         {
-            val zipFileName = file.absolutePath.removePrefix(inputFile.absolutePath).removePrefix(File.separator)
+            val zipFileName = file.toPath().absolute().invariantSeparatorsPathString
+                .removePrefix(file.toPath().absolute().invariantSeparatorsPathString)
+                .removePrefix("/")
 
             if (zipFileName.isBlank()) continue
 
