@@ -50,16 +50,16 @@ Besides package management itself, it enables support for version control, simpl
 
 ## Features
 
-### A Comprehensive Toolkit for Modpack Development
+A Comprehensive Toolkit for Modpack Development:
 
-- **Project Operations**
+- Project operations
   - `pakku add` - Add new projects with automatic dependency resolution
   - `pakku rm` - Remove projects safely with dependency checking
   - `pakku update` - Update projects individually or in bulk
   - `pakku ls` - List and inspect project details
   - `pakku diff` - Compare different versions of your modpack
 
-- **Development Environment**
+- Development environment
   - `pakku init` - Create new modpacks
   - `pakku import` - Import existing modpacks
   - `pakku fetch` - Set up or update your development environment
@@ -107,6 +107,7 @@ This allows you to fine-tune your modpack, while still being up-to-date. If any 
 
 - **Integration**
   - File Director integration
+  - Syntra Connector support
 
 ## Documentation 📚
 
