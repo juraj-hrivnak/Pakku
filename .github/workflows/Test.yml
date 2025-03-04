@@ -1,0 +1,63 @@
+name: Test
+run-name: "Test #${{ github.run_number }}"
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - run: ./gradlew jvmTest --stacktrace
+
+      - name: Upload the build report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report
+          path: '**/build/reports'
+
+  build-jvm-jar:
+    name: Build JVM Jar
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - run: ./gradlew jvmJar
+
+      - name: Upload JVM Jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-jar
+          path: build/libs/pakku.jar

@@ -26,6 +26,16 @@ enum class OverrideType(val prettyName: String, val folderName: String)
                 }
             }
             ProjectType.RESOURCE_PACK  -> CLIENT_OVERRIDE
+            ProjectType.DATA_PACK      ->
+            {
+                when (project.side)
+                {
+                    ProjectSide.CLIENT -> CLIENT_OVERRIDE
+                    ProjectSide.SERVER -> SERVER_OVERRIDE
+                    ProjectSide.BOTH   -> OVERRIDE
+                    null               -> OVERRIDE
+                }
+            }
             ProjectType.WORLD          -> SERVER_OVERRIDE
             ProjectType.SHADER         -> CLIENT_OVERRIDE
         }

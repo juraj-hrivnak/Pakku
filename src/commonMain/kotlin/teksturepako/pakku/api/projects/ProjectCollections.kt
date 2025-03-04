@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.projects
 
+import com.github.michaelbull.result.get
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.platforms.Platform
 
@@ -7,15 +8,8 @@ fun Collection<Project>.inheritPropertiesFrom(configFile: ConfigFile?): MutableL
 {
     if (configFile == null) return this.toMutableList()
 
-    configFile.getProjects().forEach { (input, config) ->
-        this.forEach { project ->
-            if (input in project || project.files.any { input in it.fileName })
-            {
-                project.side = config.side
-                config.updateStrategy?.let { project.updateStrategy = it }
-                config.redistributable?.let { project.redistributable = it }
-            }
-        }
+    this.forEach { project ->
+        project.inheritPropertiesFrom(configFile)
     }
 
     return this.toMutableList()
@@ -33,11 +27,11 @@ fun Collection<Project>.assignFiles(projectFiles: Collection<ProjectFile>, platf
     }
 }
 
-infix fun Collection<Project>.containsProject(project: Project): Boolean =
+infix fun Collection<Project>.containProject(project: Project): Boolean =
     this.any { it isAlmostTheSameAs project }
 
-infix fun Collection<Project>.containsNotProject(project: Project): Boolean =
-    !this.containsProject(project)
+infix fun Collection<Project>.containNotProject(project: Project): Boolean =
+    !this.containProject(project)
 
 fun MutableCollection<Project>.removeIf(predicate: (Project) -> Boolean): Boolean
 {
@@ -45,12 +39,11 @@ fun MutableCollection<Project>.removeIf(predicate: (Project) -> Boolean): Boolea
 }
 
 /** Combines (or zips) projects with other projects. */
-fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project>
-{
-    return this.map { project ->
+infix fun Collection<Project>.combineWith(otherProjects: Collection<Project>): Set<Project> = this
+    .map { project ->
         otherProjects.find { project isAlmostTheSameAs it }?.let {
-            if (project.type == it.type) project + it else project
+            if (project.type == it.type) (project + it).get() else project
         } ?: project
-    }.toSet()
-}
+    }
+    .toSet()
 

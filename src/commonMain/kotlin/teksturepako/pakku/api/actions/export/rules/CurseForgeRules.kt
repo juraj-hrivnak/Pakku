@@ -1,6 +1,9 @@
 package teksturepako.pakku.api.actions.export.rules
 
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.actions.export.ExportRule
+import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.actions.export.ruleResult
@@ -11,37 +14,54 @@ import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.cf.CfModpackModel.*
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 
-fun ruleOfCfModpack(modpackModel: CfModpackModel) = ExportRule {
-    when (it)
-    {
-        is ExportingProject         ->
-        {
-            val projectFile = it.project.getFilesForPlatform(CurseForge).firstOrNull()
-                ?: return@ExportRule it.setMissing()
+data object RequiresMcVersion : ActionError()
+{
+    override val rawMessage = "Modpack requires a minimum of one version of Minecraft."
+    override val severity = ErrorSeverity.FATAL
+}
 
-            it.addToCfModpackModel(projectFile, modpackModel)
-        }
-        is ExportingOverride        -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
-        is ExportingProjectOverride -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
-        is Finished                 ->
+fun ExportRuleScope.cfModpackRule(): ExportRule
+{
+    val modpackModel = lockFile.getFirstMcVersion()?.let { mcVersion ->
+        createCfModpackModel(mcVersion, lockFile, configFile)
+    }
+
+    return ExportRule {
+        when (it)
         {
-            it.createJsonFile(modpackModel, CfModpackModel.MANIFEST, format = jsonEncodeDefaults)
+            is ExportingProject         ->
+            {
+                val projectFile = it.project.getFilesForPlatform(CurseForge).firstOrNull()
+                    ?: return@ExportRule it.setMissing()
+
+                it.addToCfModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
+            }
+            is ExportingOverride        -> it.copy(overridesDir = OverrideType.OVERRIDE.folderName)
+            is ExportingProjectOverride -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
+            is Finished                 ->
+            {
+                it.createJsonFile(modpackModel, CfModpackModel.MANIFEST, format = jsonEncodeDefaults)
+            }
+            else -> it.ignore()
         }
-        else -> it.ignore()
     }
 }
 
-fun ruleOfCfMissingProjects(platform: Platform) = ExportRule {
+fun cfMissingProjectsRule() = ExportRule {
     when (it)
     {
         is MissingProject ->
         {
-            it.exportAsOverrideFrom(platform) { bytesCallback, fileName, _ ->
-                it.createFile(bytesCallback, OverrideType.OVERRIDE.folderName, it.project.type.folderName, fileName)
+            it.exportAsOverride(excludedProviders = setOf(CurseForge)) { bytesCallback, fileName, _ ->
+                it.createFile(
+                    bytesCallback,
+                    OverrideType.OVERRIDE.folderName,
+                    it.project.getPathStringWithSubpath(it.configFile),
+                    fileName
+                )
             }
         }
         else -> it.ignore()

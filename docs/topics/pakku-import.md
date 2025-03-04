@@ -17,7 +17,7 @@ Import modpack
 <snippet id="snippet-args">
 
 `<path>`
-: The `path` argument
+: The path to the modpack file
 
 </snippet>
 
@@ -33,6 +33,6 @@ Import modpack
 </snippet>
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

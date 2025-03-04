@@ -1,6 +1,6 @@
 # pakku set
 
-Set various properties of your modpack or projects
+Set properties of the lock file
 
 ## Usage
 
@@ -17,7 +17,7 @@ Set various properties of your modpack or projects
 <snippet id="snippet-args">
 
 `[<projects>]...`
-: The `projects` argument
+: Use the config file (pakku.json) or 'cfg' command instead.
 
 </snippet>
 
@@ -48,6 +48,6 @@ Set various properties of your modpack or projects
 </snippet>
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

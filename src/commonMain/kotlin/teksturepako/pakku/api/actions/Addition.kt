@@ -1,73 +1,75 @@
 package teksturepako.pakku.api.actions
 
-import teksturepako.pakku.api.actions.ActionError.*
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.debug
-import teksturepako.pakku.toPrettyString
 
 data class RequestHandlers(
     val onError: suspend (error: ActionError) -> Unit,
-    val onRetry: suspend (platform: Platform, project: Project) -> Project?,
-    val onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit
+    val onSuccess: suspend (
+        project: Project, isRecommended: Boolean, replacing: Project?, reqHandlers: RequestHandlers
+    ) -> Unit
 )
 
 suspend fun Project?.createAdditionRequest(
     onError: suspend (error: ActionError) -> Unit,
-    onRetry: suspend (platform: Platform, project: Project) -> Project?,
-    onSuccess: suspend (project: Project, isRecommended: Boolean, ctx: RequestHandlers) -> Unit,
+    onSuccess: suspend (
+        project: Project, isRecommended: Boolean, replacing: Project?, reqHandlers: RequestHandlers
+    ) -> Unit,
     lockFile: LockFile,
-    platforms: List<Platform>
+    platforms: List<Platform>,
+    strict: Boolean = false
 )
 {
     // Exist
-    var project = this ?: return onError(ProjNotFound())
+    if (this == null) return onError(ProjNotFound())
+
     var isRecommended = true
 
-    // Already added
-    if (lockFile.isProjectAdded(project))
+    // Handle already added project
+    val replacing = if (lockFile.isProjectAdded(this))
     {
-        return onError(AlreadyAdded(project))
+        val existingProject = lockFile.getProject(this) ?: return onError(ProjNotFound())
+
+        onError(AlreadyAdded(existingProject))
+        if (existingProject.files == this.files) return else existingProject
     }
+    else null
 
-    for (platform in platforms)
+    // We do not have to check platform for GitHub only project
+    if (this.slug.keys.size > 1 || this.slug.keys.firstOrNull() != GitHub.serialName)
     {
-        // Check if project is on each platform
-        if (project.isNotOnPlatform(platform))
+        for (platform in platforms)
         {
-            onError(NotFoundOnPlatform(project, platform))
+            // Check if project is on each platform
+            if (this.isNotOnPlatform(platform))
+            {
+                if (!strict) continue else return onError(NotFoundOn(this, platform))
+            }
 
-            debug { println(project.toPrettyString()) }
-
-            // Retry
-            val project2 = onRetry(platform, project)
-            if (project2 != null && project2.hasFilesOnPlatform(platform)) project += project2
-            debug { println(project2?.toPrettyString()) }
-            continue
-        }
-
-        // Check if project has files on each platform
-        if (project.hasNoFilesOnPlatform(platform))
-        {
-            onError(NoFilesOnPlatform(project, platform))
-            isRecommended = false
+            // Check if project has files on each platform
+            if (this.hasNoFilesOnPlatform(platform))
+            {
+                onError(NoFilesOn(this, platform))
+                isRecommended = false
+            }
         }
     }
 
     // Check if project has any files at all
-    if (project.hasNoFiles())
+    if (this.hasNoFiles())
     {
-        onError(NoFiles(project, lockFile))
-        isRecommended = false
+        return onError(NoFiles(this, lockFile))
     }
 
     // Check if project files match across platforms
-    if (project.fileNamesDoNotMatchAcrossPlatforms(platforms))
+    if (this.fileNamesDoNotMatchAcrossPlatforms(platforms))
     {
-        onError(FileNamesDoNotMatch(project))
+        onError(FileNamesDoNotMatch(this))
         isRecommended = false
     }
 
-    onSuccess(project, isRecommended, RequestHandlers(onError, onRetry, onSuccess))
+    onSuccess(this, isRecommended, replacing, RequestHandlers(onError, onSuccess))
 }

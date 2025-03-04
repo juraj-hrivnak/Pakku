@@ -3,8 +3,8 @@ package teksturepako.pakku.api.actions.import
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.FileNotFound
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.FileNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.models.mr.MrModpackModel
@@ -16,7 +16,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
-private fun String?.toMrModpackModel(): ModpackModel? =
+fun String?.toMrModpackModel(): MrModpackModel? =
     this?.let { json.decodeFromString<MrModpackModel>(it) }
 
 fun Path.isMrModpack(): Boolean = this.extension == MrModpackModel.EXTENSION || this.name == MrModpackModel.MANIFEST

@@ -6,9 +6,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.serializer
-import teksturepako.pakku.api.actions.ActionError
-import teksturepako.pakku.api.actions.ActionError.*
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.json
+import java.nio.file.DirectoryNotEmptyException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -20,16 +20,17 @@ fun Throwable.toActionError(path: Path): ActionError = when (this)
 {
     is FileAlreadyExistsException -> AlreadyExists(path.toString())
     is NoSuchFileException        -> FileNotFound(path.toString())
-    else -> ErrorWhileReading(path.toString(), this.stackTraceToString())
+    is DirectoryNotEmptyException -> DirectoryNotEmpty(path.toString())
+    else                          -> ErrorWhileReading(path.toString(), this.stackTraceToString())
 }
 
-suspend fun <T> Path.tryOrNull(action: (path: Path) -> T): T? = coroutineScope {
+suspend fun <T> Path.tryOrNull(action: Path.(path: Path) -> T): T? = coroutineScope {
     withContext(Dispatchers.IO) {
         return@withContext runCatching { action(this@tryOrNull) }.get()
     }
 }
 
-suspend fun <T> Path.tryToResult(action: (path: Path) -> T): Result<T, ActionError> = coroutineScope {
+suspend fun <T> Path.tryToResult(action: Path.(path: Path) -> T): Result<T, ActionError> = coroutineScope {
     withContext(Dispatchers.IO) {
         return@withContext runCatching { action(this@tryToResult) }.fold(
             success = { Ok(it) },
@@ -70,6 +71,9 @@ suspend fun readPathBytesToResult(path: Path): Result<ByteArray, ActionError> = 
         else Err(FileNotFound(path.toString()))
     }
 }
+
+suspend fun Path.readAndCreateSha1FromBytes() = this.tryToResult { readBytes() }.get()
+    ?.let { createHash("sha1", it) }
 
 @Suppress("unused")
 suspend inline fun <reified T> decodeToResult(inputPath: Path, format: StringFormat = json): Result<T, ActionError>

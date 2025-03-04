@@ -8,45 +8,109 @@ On this page, you will learn how to:
 
 ## Adding Projects
 
-To add a project, run the [`pakku add`](pakku-add.md) command:
+To add a project, you can use the [`pakku add`](pakku-add.md) command:
 
 <include from="pakku-add.md" element-id="snippet-cmd"/>
 
-The `<projects>...` argument accepts only the project slug or ID;
-plus optionally specified file ID (using `:` as separator)
-and allows multiple projects to be added.
+The `<projects>...` argument _accepts multiple_ `<project>` arguments which can be:
+  - the CurseForge project slug or ID; 
+    - optionally: `<project>:<file_id>` for specifying the file ID.
+  - the Modrinth project slug or ID;
+    - optionally: `<project>:<version_id>` for specifying the version ID.
+  - the GitHub `<owner>/<repo>` or repository URL; 
+    - optionally: `<owner>/<repo>@<tag>` for specifying the tag.
 
-Adding the latest version of a project.
+For more precision, consider using the [`pakku add prj`](pakku-add-prj.md) subcommand:
+
+<include from="pakku-add-prj.md" element-id="snippet-cmd"/>
+
+With its options:
+
+<include from="pakku-add-prj.md" element-id="snippet-options"/>
+
+### Examples
+
+<procedure title="Using Project Slugs" type="choices">
+
+<step>
+
+For CurseForge or Modrinth:
 
 <var name="params"></var>
 <var name="arg">jei</var>
 <include from="pakku-add.md" element-id="snippet-cmd"/>
 
-Adding the latest version of a project using its
-CurseForge and Modrinth ID: 
+</step>
+<step>
 
-```
-%pakku% add 238222
-%pakku% add u6dRKJwZ
-```
+For GitHub:
+
+<var name="params"></var>
+<var name="arg">CaffeineMC/sodium</var>
+<include from="pakku-add.md" element-id="snippet-cmd"/>
+
+</step>
+<step>
+
+For complicated slugs:
+
+<var name="params"></var>
+<var name="arg">--cf ferritecore --mr ferrite-core</var>
+<include from="pakku-add-prj.md" element-id="snippet-cmd"/>
+
+</step>
+</procedure>
+
+<procedure title="Using Project IDs" type="choices">
+<step>
+
+For CurseForge:
 
 <var name="params"></var>
 <var name="arg">238222</var>
 <include from="pakku-add.md" element-id="snippet-cmd"/>
 
-Adding multiple projects:
+</step>
+<step>
 
-```
-%pakku% add jei terrafirmacraft appleskin
-```
+For Modrinth:
 
-Adding a project with its
-CurseForge and Modrinth file ID specified:
+<var name="params"></var>
+<var name="arg">u6dRKJwZ</var>
+<include from="pakku-add.md" element-id="snippet-cmd"/>
 
-```
-%pakku% add jei:5101366
-%pakku% add jei:PeYsGsQy
-```
+</step>
+</procedure>
+
+<procedure title="With Project File IDs Specified" type="choices">
+<step>
+
+For CurseForge:
+
+<var name="params"></var>
+<var name="arg">jei:5101366</var>
+<include from="pakku-add.md" element-id="snippet-cmd"/>
+
+</step>
+<step>
+
+For Modrinth:
+
+<var name="params"></var>
+<var name="arg">jei:PeYsGsQy</var>
+<include from="pakku-add.md" element-id="snippet-cmd"/>
+
+</step>
+<step>
+
+For GitHub:
+
+<var name="params"></var>
+<var name="arg">CaffeineMC/sodium@mc1.20.1-0.5.11</var>
+<include from="pakku-add.md" element-id="snippet-cmd"/>
+
+</step>
+</procedure>
 
 ## Removing Projects
 

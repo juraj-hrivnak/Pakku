@@ -1,28 +1,36 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.ActionError.ProjNotFound
 import teksturepako.pakku.api.actions.createRemovalRequest
+import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.typoSuggester
 
-class Rm : CliktCommand("Remove projects")
+class Rm : CliktCommand()
 {
-    private val projectArgs: List<String> by argument("projects").multiple()
+    override fun help(context: Context) = "Remove projects"
+
+    private val projectArgs: List<String> by argument("projects", help = "Projects to remove").multiple()
     private val allFlag: Boolean by option("-a", "--all", help = "Remove all projects").flag()
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
 
-    override fun run() = runBlocking {
+    override val printHelpOnEmptyArgs = true
+
+    override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -35,10 +43,10 @@ class Rm : CliktCommand("Remove projects")
 
                     if (error is ProjNotFound)
                     {
-                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values }
+                        val slugs = lockFile.getAllProjects().flatMap { it.slug.values + it.name.values }
 
                         typoSuggester(arg, slugs).firstOrNull()?.let { realArg ->
-                            if (ynPrompt("Do you mean '$realArg'?", terminal))
+                            if (terminal.ynPrompt("Do you mean '$realArg'?"))
                             {
                                 remove(lockFile.getProject(realArg), realArg)
                             }
@@ -46,24 +54,26 @@ class Rm : CliktCommand("Remove projects")
                     }
                 },
                 onRemoval = { project, isRecommended ->
-                    val slugMsg = project.getFlavoredSlug()
+                    val projMsg = project.getFullMsg()
 
-                    if (ynPrompt("Do you want to remove $slugMsg?", terminal, isRecommended))
+                    if (terminal.ynPrompt("Do you want to remove $projMsg?", isRecommended))
                     {
                         lockFile.remove(project)
                         lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
-                        terminal.pDanger("$slugMsg removed")
+                        terminal.pDanger("$projMsg removed")
                     }
                 },
                 onDepRemoval = { dependency, isRecommended ->
                     if (noDepsFlag) return@createRemovalRequest
-                    val slugMsg = dependency.getFlavoredSlug()
+                    val projMsg = dependency.getFullMsg()
 
-                    if (isRecommended || ynPrompt("Do you want to remove $slugMsg?", terminal, false))
+                    val question = offset(text = "Do you want to remove $projMsg?", offset = 1)
+
+                    if (terminal.ynPrompt(question, default = isRecommended))
                     {
                         lockFile.remove(dependency)
                         lockFile.removePakkuLinkFromAllProjects(dependency.pakkuId!!)
-                        terminal.pInfo("$slugMsg removed")
+                        terminal.pInfo("$projMsg removed", offset = 1)
                     }
                 },
                 lockFile
@@ -72,7 +82,7 @@ class Rm : CliktCommand("Remove projects")
 
         if (allFlag)
         {
-            if (ynPrompt("Do you really want to remove all projects?", terminal))
+            if (terminal.ynPrompt("Do you really want to remove all projects?"))
             {
                 echo()
                 lockFile.removeAllProjects()
@@ -88,6 +98,6 @@ class Rm : CliktCommand("Remove projects")
             echo()
         }
 
-        lockFile.write()
+        lockFile.write()?.let { terminal.pError(it) }
     }
 }

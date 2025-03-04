@@ -1,18 +1,35 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.input.interactiveSelectList
+import com.github.ajalt.mordant.terminal.prompt
+import com.github.ajalt.mordant.terminal.success
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.cli.ui.hint
+import teksturepako.pakku.cli.ui.pDanger
 
-class Init : CliktCommand("Initialize modpack")
+class Init : CliktCommand()
 {
+    override fun help(context: Context) = "Initialize modpack"
+
     override fun run() = runBlocking {
         if (LockFile.exists())
         {
-            terminal.danger("Modpack is already initialized")
-            terminal.info("To change already initialized properties, use the command: \"set\"")
+            terminal.pDanger("Modpack is already initialized.")
+            echo(
+                hint(
+                    "use \"pakku set\" or \"pakku cfg\" to change",
+                    " already configured properties of your modpack"
+                )
+            )
             echo()
             return@runBlocking
         }
@@ -58,12 +75,20 @@ class Init : CliktCommand("Initialize modpack")
 
         // -- TARGET --
 
+
         with(
-            terminal.prompt("? Target", choices = listOf("curseforge", "modrinth", "multiplatform"))
+            runCatching {
+                terminal.interactiveSelectList(
+                    listOf("curseforge", "modrinth", "multiplatform"),
+                    title = "? Target",
+                )
+            }
+            .getOrElse {
+                terminal.prompt("? Target", choices = listOf("curseforge", "modrinth", "multiplatform"))
+            }
             ?: return@runBlocking
         )
         {
-
             lockFile.setTarget(this)
             terminal.success("'target' set to '$this'")
         }

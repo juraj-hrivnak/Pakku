@@ -17,7 +17,7 @@ Remove projects
 <snippet id="snippet-args">
 
 `[<projects>]...`
-: The `projects` argument
+: Projects to remove
 
 </snippet>
 
@@ -36,6 +36,6 @@ Remove projects
 </snippet>
 
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

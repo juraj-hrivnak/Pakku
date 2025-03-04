@@ -4,7 +4,7 @@ import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.overrides.OverrideType
 
-fun exportServerPack() = ExportRule {
+fun serverPackRule() = ExportRule {
     when (it)
     {
         is ExportingProject         ->
@@ -16,7 +16,7 @@ fun exportServerPack() = ExportRule {
             else
             {
                 it.exportAsOverride(force = true) { bytesCallback, fileName, _ ->
-                    it.createFile(bytesCallback, it.project.type.folderName, fileName)
+                    it.createFile(bytesCallback, it.project.getPathStringWithSubpath(it.configFile), fileName)
                 }
             }
         }
@@ -28,7 +28,7 @@ fun exportServerPack() = ExportRule {
             }
             else
             {
-                it.export(overridesDir = null)
+                it.copy(overridesDir = null)
             }
         }
         is ExportingProjectOverride ->

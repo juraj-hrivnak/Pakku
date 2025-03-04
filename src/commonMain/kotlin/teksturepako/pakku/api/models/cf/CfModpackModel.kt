@@ -25,32 +25,28 @@ data class CfModpackModel(
 {
     @Serializable
     data class CfMinecraftData(
-        val version: String,
-        val modLoaders: List<CfModLoaderData>
+        val version: String, val modLoaders: List<CfModLoaderData>
     )
 
     @Serializable
     data class CfModLoaderData(
-        val id: String,
-        val primary: Boolean
+        val id: String, val primary: Boolean
     )
 
     @Serializable
     data class CfModData(
-        val projectID: Int,
-        val fileID: Int,
-        val required: Boolean = true
+        val projectID: Int, val fileID: Int, val required: Boolean = true
     )
 
     override suspend fun toSetOfProjects(
-        lockFile: LockFile,
-        platforms: List<Platform>
+        lockFile: LockFile, platforms: List<Platform>
     ): Set<Project>
     {
         val projects = CurseForge.requestMultipleProjects(this.files.map { it.projectID.toString() })
-        val projectFiles = CurseForge.requestMultipleProjectFiles(
-            lockFile.getMcVersions(), lockFile.getLoaders(), this.files.map { it.fileID.toString() }
-        )
+        val projectFiles = CurseForge.requestMultipleProjectFiles(lockFile.getMcVersions(),
+            lockFile.getLoaders(),
+            projects.mapNotNull { project -> project.slug[CurseForge.serialName]?.let { it to project.type } }.toMap(),
+            this.files.map { it.fileID.toString() })
 
         projects.assignFiles(projectFiles, CurseForge)
 
@@ -60,8 +56,8 @@ data class CfModpackModel(
             debug { println("Modrinth sub-import") }
 
             val slugs = projects.mapNotNull { project ->
-                project.slug[CurseForge.serialName]
-            }
+                project.slug[CurseForge.serialName]?.let { it to project.type }
+            }.toMap()
 
             val mrProjects = Modrinth.requestMultipleProjectsWithFiles(
                 lockFile.getMcVersions(), lockFile.getLoaders(), slugs, 1

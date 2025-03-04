@@ -10,6 +10,7 @@ val json = Json {
     ignoreUnknownKeys = true
     classDiscriminator = "_internal"
     explicitNulls = false
+    allowTrailingComma = true
 }
 
 val jsonEncodeDefaults = Json {
@@ -17,4 +18,3 @@ val jsonEncodeDefaults = Json {
     classDiscriminator = "_internal"
     encodeDefaults = true
 }
-

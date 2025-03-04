@@ -1,6 +1,6 @@
 package teksturepako.pakku.api.actions.export
 
-import teksturepako.pakku.api.actions.ActionError
+import teksturepako.pakku.api.actions.errors.ActionError
 import java.nio.file.Path
 
 /** Packaging class is used to store the action of a [rule result][RuleResult]. */

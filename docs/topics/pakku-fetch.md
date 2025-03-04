@@ -1,6 +1,6 @@
 # pakku fetch
 
-Fetch projects to your modpack folder
+Download project files to your modpack folder
 
 ## Usage
 
@@ -16,7 +16,17 @@ Fetch projects to your modpack folder
 
 <snippet id="snippet-options-all">
 
+<snippet id="snippet-options">
+
+`-r`, `--retry`
+: Retries downloading when it fails, with optional number of times to retry (Defaults to 2)
+
+`--shelve`
+: Moves unknown project files to a shelf instead of deleting them
+
+</snippet>
+
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

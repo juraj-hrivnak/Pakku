@@ -1,7 +1,8 @@
 package teksturepako.pakku.api.actions
 
-import teksturepako.pakku.api.actions.ActionError.ProjNotFound
-import teksturepako.pakku.api.actions.ActionError.ProjRequiredBy
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjNotFound
+import teksturepako.pakku.api.actions.errors.ProjRequiredBy
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.Project
 
@@ -26,9 +27,9 @@ suspend fun Project?.createRemovalRequest(
         onRemoval(this, false)
     }
 
-    x@ for (pakkuLink in this.pakkuLinks)
+    for (pakkuLink in this.pakkuLinks)
     {
-        val dependency = lockFile.getProjectByPakkuId(pakkuLink) ?: continue@x
+        val dependency = lockFile.getProjectByPakkuId(pakkuLink) ?: continue
         val depDependants = lockFile.getLinkedProjects(dependency.pakkuId!!)
 
         if (depDependants.isNotEmpty())

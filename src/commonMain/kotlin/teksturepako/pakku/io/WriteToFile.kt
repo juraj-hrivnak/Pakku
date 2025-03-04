@@ -1,22 +1,33 @@
 package teksturepako.pakku.io
 
+import com.github.michaelbull.result.getError
+import com.github.michaelbull.result.onFailure
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.json
 import kotlin.io.path.*
 
-inline fun <reified T> writeToFile(
+suspend inline fun <reified T> writeToFile(
     value: T,
     path: String,
     overrideText: Boolean = false,
     format: StringFormat = json
-) = runCatching {
+): ActionError?
+{
     val file = Path(path)
+    val backup = file.tryOrNull { it.readBytes() }
 
-    // Override file text
-    if (overrideText && file.exists()) file.deleteIfExists()
+    return file.tryToResult {
+        if (overrideText) it.deleteIfExists()
 
-    // Write to file
-    file.parent.createParentDirectories()
-    file.writeText(format.encodeToString(value))
+        runCatching { it.parent.createParentDirectories() }
+        it.writeText(format.encodeToString(value))
+    }.onFailure {
+        // Restore backup if there was an error
+        backup?.let { bytes ->
+            file.deleteIfExists()
+            file.tryOrNull { it.writeBytes(bytes) }
+        }
+    }.getError()
 }

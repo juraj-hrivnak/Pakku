@@ -1,13 +1,16 @@
 package teksturepako.pakku.api.platforms
 
-import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.projects.IProjectProvider
+import com.github.michaelbull.result.get
 import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.api.projects.inheritPropertiesFrom
+import teksturepako.pakku.api.projects.ProjectType
 
-object Multiplatform : IProjectProvider
+object Multiplatform : Provider
 {
+    override val name = "Multiplatform"
+    override val serialName = "multiplatform"
+    override val shortName = "mp"
+    override val siteUrl = null
+
     /** List of registered platforms. */
     val platforms = listOf(
         CurseForge,
@@ -27,12 +30,13 @@ object Multiplatform : IProjectProvider
      * project is found on either platform.
      *
      * @param input The project ID or slug.
+     * @param projectType The type of project.
      * @return A [project][Project] containing data retrieved from all platforms, or null if no data is found.
      */
-    override suspend fun requestProject(input: String): Project?
+    override suspend fun requestProject(input: String, projectType: ProjectType?): Project?
     {
-        var cf = CurseForge.requestProject(input)
-        var mr = Modrinth.requestProject(input)
+        var cf = CurseForge.requestProject(input, projectType)
+        var mr = Modrinth.requestProject(input, projectType)
 
         // Retrieve project from another platform if it's missing.
         if (cf == null && mr != null)
@@ -41,13 +45,15 @@ object Multiplatform : IProjectProvider
         }
         else if (mr == null && cf != null)
         {
-            mr = Modrinth.requestProjectFromSlug(cf.slug[CurseForge.serialName]!!)
+            mr = Modrinth.requestProject(cf.slug[CurseForge.serialName]!!)
         }
 
         // Combine projects or return just one of them.
         return cf?.let { c ->
+            projectType?.let { c.type = it }
             mr?.let { m ->
-                c + m // Combine projects if project is available from both platforms.
+                projectType?.let { m.type = it }
+                (c + m).get() // Combine projects if project is available from both platforms.
             } ?: c // Return the CurseForge project if Modrinth project is missing.
         } ?: mr // Return the Modrinth project if CurseForge project is missing.
     }
@@ -63,33 +69,34 @@ object Multiplatform : IProjectProvider
      * @return A [project][Project] with files from all platforms or null if the initial project request is unsuccessful.
      */
     override suspend fun requestProjectWithFiles(
-        mcVersions: List<String>, loaders: List<String>, input: String, fileId: String?, numberOfFiles: Int
+         mcVersions: List<String>,
+         loaders: List<String>,
+         input: String,
+         fileId: String?,
+         numberOfFiles: Int ,
+         projectType: ProjectType?
     ): Project?
     {
-        val project = requestProject(input) ?: return null
+        val project = requestProject(input, projectType) ?: return null
 
         if (fileId == null)
         {
             for (platform in platforms)
             {
-                project.files.addAll(platform.requestFilesForProject(mcVersions, loaders, project, null, numberOfFiles))
+                project.files.addAll(platform.requestFilesForProject(mcVersions, loaders, project, null, numberOfFiles, projectType))
             }
         }
         else
         {
             if (project.isOnPlatform(CurseForge))
             {
-                val cfFile =
-                    CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId)
-                        .firstOrNull()
+                val cfFile = CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId, projectType).firstOrNull()
 
                 val hash = cfFile?.hashes?.get("sha1")
 
                 if (hash != null)
                 {
-                    val mrFile =
-                        Modrinth.requestMultipleProjectFilesFromHashes(listOf(hash), "sha1")
-                            .firstOrNull()
+                    val mrFile = Modrinth.requestMultipleProjectFilesFromHashes(listOf(hash), "sha1").firstOrNull()
 
                     if (mrFile != null)
                     {
@@ -102,17 +109,13 @@ object Multiplatform : IProjectProvider
 
             if (project.isOnPlatform(Modrinth))
             {
-                val mrFile =
-                    Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId)
-                        .firstOrNull()
+                val mrFile = Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId, projectType).firstOrNull()
 
                 val bytes = mrFile?.url?.let { Modrinth.requestByteArray(it) }
 
                 if (bytes != null)
                 {
-                    val cfFile =
-                        CurseForge.requestMultipleProjectFilesFromBytes(mcVersions, listOf(bytes))
-                            .firstOrNull()
+                    val cfFile = CurseForge.requestMultipleProjectFilesFromBytes(mcVersions, listOf(bytes)).firstOrNull()
 
                     if (cfFile != null)
                     {
@@ -125,41 +128,5 @@ object Multiplatform : IProjectProvider
         }
 
         return project
-    }
-
-    /**
-     * Requests new data for provided [projects] from all platforms and updates them based on platform-specific slugs,
-     * with optional [number of files][numberOfFiles] to take.
-     * Projects are also filtered using their [update strategy][UpdateStrategy].
-     */
-    suspend fun updateMultipleProjectsWithFiles(
-        mcVersions: List<String>,
-        loaders: List<String>,
-        projects: MutableSet<Project>,
-        configFile: ConfigFile?,
-        numberOfFiles: Int
-    ): MutableSet<Project>
-    {
-        return platforms.fold(projects.map { it.copy(files = mutableSetOf()) }.toMutableSet()) { acc, platform ->
-
-            val listOfIds = projects.mapNotNull { it.id[platform.serialName] }
-
-            platform.requestMultipleProjectsWithFiles(mcVersions, loaders, listOfIds, numberOfFiles)
-                .inheritPropertiesFrom(configFile)
-                .forEach { newProject ->
-                    acc.find { accProject ->
-                        accProject.slug[platform.serialName] == newProject.slug[platform.serialName]
-                    }?.let { accProject ->
-                        acc -= accProject
-                        acc += accProject + newProject
-                    }
-                }
-
-            acc
-        }.filter { newProject ->
-            projects.none { oldProject ->
-                oldProject == newProject
-            } && newProject.updateStrategy == UpdateStrategy.LATEST
-        }.toMutableSet()
     }
 }

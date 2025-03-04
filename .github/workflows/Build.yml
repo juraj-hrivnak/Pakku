@@ -10,10 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
 
 jobs:
   get-changelog:
@@ -37,8 +33,8 @@ jobs:
           name: changelog
           path: ${{ github.workspace }}/NEW_CHANGELOG.md
 
-  build-jvm-jar:
-    name: Build JVM Jar
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -50,17 +46,43 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: 📦 Build JVM Jar
-        uses: burrunan/gradle-cache-action@v1
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: wrapper
-          arguments: jvmJar
-          properties: |
-            org.gradle.vfs.watch=false
-            org.gradle.vfs.verbose=false
-          gradle-distribution-sha-256-sum-warning: false
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - run: ./gradlew jvmTest --stacktrace
+
+      - name: Upload the build report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report
+          path: '**/build/reports'
+
+  build-jvm-jar:
+    name: Build JVM Jar
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: 📦 Build JVM Jar
+        run: ./gradlew jvmJar
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
 
       - name: Upload JVM Jar
         uses: actions/upload-artifact@v4
@@ -70,6 +92,7 @@ jobs:
 
   build-jvm-dist-zip:
     name: Build JVM ZIP Distribution
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -81,17 +104,15 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: 📦 Build JVM distZip
-        uses: burrunan/gradle-cache-action@v1
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: wrapper
-          arguments: distZip
-          properties: |
-            org.gradle.vfs.watch=false
-            org.gradle.vfs.verbose=false
-          gradle-distribution-sha-256-sum-warning: false
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: 📦 Build JVM distZip
+        run: ./gradlew distZip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
 
       - name: Upload JVM ZIP Distribution
         uses: actions/upload-artifact@v4
@@ -101,6 +122,7 @@ jobs:
 
   build-jvm-dist-tar:
     name: Build JVM Tar Distribution
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -112,17 +134,15 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: 📦 Build JVM distTar
-        uses: burrunan/gradle-cache-action@v1
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: wrapper
-          arguments: distTar
-          properties: |
-            org.gradle.vfs.watch=false
-            org.gradle.vfs.verbose=false
-          gradle-distribution-sha-256-sum-warning: false
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: 📦 Build JVM distTar
+        run: ./gradlew distTar
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
 
       - name: Upload JVM Tar Distribution
         uses: actions/upload-artifact@v4
@@ -133,7 +153,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [get-changelog, build-jvm-jar, build-jvm-dist-zip, build-jvm-dist-tar]
+    needs: [get-changelog, test, build-jvm-jar, build-jvm-dist-zip, build-jvm-dist-tar]
     permissions:
       contents: write
     if: startsWith(github.ref, 'refs/tags/v')
@@ -171,20 +191,3 @@ jobs:
             jar/pakku.jar
             dist/*.zip
             dist/*.tar
-            
-  close-fixed-issues:
-    name: Close Fixed Issues
-    runs-on: ubuntu-latest
-    needs: [release]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: close-fixed-in-dev
-        uses: juraj-hrivnak/close-issues-based-on-label@master
-        env:
-          LABEL: "fixed in dev"
-          VERSION: ${{ github.ref_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-env:
-  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dkotlin.incremental=false -Dorg.gradle.project.kotlin.incremental.multiplatform=false -Dorg.gradle.project.kotlin.native.disableCompilerDaemon=true -Dorg.gradle.jvmargs="-Xmx5g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"

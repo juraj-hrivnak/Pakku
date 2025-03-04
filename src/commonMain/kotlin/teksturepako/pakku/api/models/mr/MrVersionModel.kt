@@ -40,7 +40,8 @@ data class MrVersionModel(
     @SerialName("date_published") val datePublished: String,
     val downloads: Int,
     val files: List<VersionFile> = listOf()
-) {
+)
+{
     /**
      * @property versionId The ID of the version that this version depends on (nullable)
      * @property projectId The ID of the project that this version depends on (nullable)
@@ -71,11 +72,11 @@ data class MrVersionModel(
         val primary: Boolean,
         val size: Int,
         @SerialName("file_type") val fileType: String? = null
-    ) {
+    )
+    {
         @Serializable
         data class VersionFileHashes(
-            val sha512: String,
-            val sha1: String
+            val sha512: String, val sha1: String
         )
     }
 }

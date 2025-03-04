@@ -1,23 +1,29 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.table.grid
+import com.github.ajalt.mordant.terminal.info
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
+import teksturepako.pakku.cli.ui.pError
 
-class Ls : CliktCommand("List projects")
+class Ls : CliktCommand()
 {
+    override fun help(context: Context) = "List projects"
+
     private val checkUpdatesFlag by option("-c", "--check-updates", help = "Add update info for projects").flag()
     private val nameMaxLengthOpt by option(
         "--name-max-length",
@@ -26,7 +32,7 @@ class Ls : CliktCommand("List projects")
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -34,7 +40,7 @@ class Ls : CliktCommand("List projects")
         val projects = lockFile.getAllProjects()
 
         val newProjects = if (checkUpdatesFlag) async {
-            Multiplatform.updateMultipleProjectsWithFiles(
+            updateMultipleProjectsWithFiles(
                 lockFile.getMcVersions(),
                 lockFile.getLoaders(),
                 projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1

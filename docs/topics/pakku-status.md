@@ -16,14 +16,7 @@ Get status of your modpack
 
 <snippet id="snippet-options-all">
 
-<snippet id="snippet-options">
-
-`-v`, `--verbose`
-: Give the output in the verbose-format
-
-</snippet>
-
 `-h`, `--help`
-: Show this message and exit
+: Show the help message and exit
 
 </snippet>

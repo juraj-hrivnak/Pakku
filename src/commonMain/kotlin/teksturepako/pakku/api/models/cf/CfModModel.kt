@@ -60,7 +60,8 @@ data class CfModModel(
     val allowModDistribution: Boolean? = null,
     val gamePopularityRank: Int,
     val isAvailable: Boolean,
-) {
+)
+{
     @Serializable
     data class ModLinks(
         val websiteUrl: String,
@@ -86,9 +87,7 @@ data class CfModModel(
 
     @Serializable
     data class ModAuthor(
-        val id: Int,
-        val name: String,
-        val url: String
+        val id: Int, val name: String, val url: String
     )
 
     @Serializable
@@ -127,11 +126,11 @@ data class CfModModel(
         val serverPackFileId: Int? = null,
         val isEarlyAccessContent: Boolean? = null,
         val earlyAccessEndDate: String? = null,
-    ) {
+    )
+    {
         @Serializable
         data class FileHash(
-            val value: String,
-            val algo: Int
+            val value: String, val algo: Int
         )
 
         @Serializable
@@ -145,8 +144,7 @@ data class CfModModel(
 
         @Serializable
         data class FileDependency(
-            val modId: Int,
-            val relationType: Int
+            val modId: Int, val relationType: Int
         )
     }
 

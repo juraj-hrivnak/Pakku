@@ -1,13 +1,10 @@
 package teksturepako.pakku.api.actions.export.profiles
 
-import teksturepako.pakku.api.actions.export.ExportProfile
-import teksturepako.pakku.api.actions.export.rules.exportServerPack
+import teksturepako.pakku.api.actions.export.exportProfile
 import teksturepako.pakku.api.actions.export.rules.replacementRule
+import teksturepako.pakku.api.actions.export.rules.serverPackRule
 
-class ServerPackProfile : ExportProfile(
-    name = "serverpack",
-    rules = listOf(
-        exportServerPack(),
-        replacementRule()
-    )
-)
+fun serverPackProfile() = exportProfile(name = "serverpack") {
+    rule { serverPackRule() }
+    rule { replacementRule() }
+}
