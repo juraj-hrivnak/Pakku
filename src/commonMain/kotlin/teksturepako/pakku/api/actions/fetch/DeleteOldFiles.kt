@@ -138,16 +138,16 @@ suspend fun deleteOldFiles(
                 }.onFailure { error ->
                     if (error !is DirectoryNotEmpty) onError(error)
                 }
-
-                return@launch
             }
-
-            path.tryToResult {
-                it.deleteIfExists()
-            }.onSuccess {
-                onSuccess(path, DeletionActionType.DELETE)
-            }.onFailure { error ->
-                if (error !is DirectoryNotEmpty) onError(error)
+            else
+            {
+                path.tryToResult {
+                    it.deleteIfExists()
+                }.onSuccess {
+                    onSuccess(path, DeletionActionType.DELETE)
+                }.onFailure { error ->
+                    if (error !is DirectoryNotEmpty) onError(error)
+                }
             }
         }
     }

@@ -14,7 +14,7 @@ open class Http
      */
     open suspend fun requestByteArray(
         url: String,
-        onDownload: suspend (bytesSentTotal: Long, contentLength: Long?) -> Unit = { _: Long, _: Long? ->}
+        onDownload: suspend (bytesSentTotal: Long, contentLength: Long?) -> Unit = { _: Long, _: Long? -> }
     ): ByteArray?
     {
         return try
