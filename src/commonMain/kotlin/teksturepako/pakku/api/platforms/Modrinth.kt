@@ -189,7 +189,7 @@ object Modrinth : Platform(
         } + loaders
 
         // Chunk requests if there are too many ids; Also do this in parallel
-        val files = ids.chunked(1_000).map { list ->
+        val files = ids.chunked(300).map { list ->
             async {
                 val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
