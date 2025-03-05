@@ -64,9 +64,7 @@ suspend fun Terminal.promptForCurseForgeApiKey(): ActionError?
         3. Copy your API key
     """.trimIndent()))
 
-    this.println()
-
-    val prompt: String? = StringPrompt("Please enter the CurseForge API key", this, hideInput = true).ask()
+    val prompt: String? = StringPrompt(" 4. Enter the CurseForge API key", this, hideInput = true).ask()
 
     if (prompt.isNullOrBlank()) return EmptyArg("CurseForge API key")
 
