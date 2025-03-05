@@ -1,6 +1,7 @@
 package teksturepako.pakku.api.platforms
 
 import com.github.michaelbull.result.*
+import io.ktor.http.*
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -10,6 +11,7 @@ import teksturepako.pakku.api.PakkuApi
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.http.RequestError
 import teksturepako.pakku.api.http.requestBody
 import teksturepako.pakku.api.http.tryRequest
 import teksturepako.pakku.api.models.cf.*
@@ -40,6 +42,11 @@ object CurseForge : Platform(
     }
 
     // -- API KEY --
+
+    class Unauthenticated : ActionError()
+    {
+        override val rawMessage = "CurseForge target requires the CurseForge API key."
+    }
 
     private const val API_KEY_HEADER = "x-api-key"
 
@@ -83,7 +90,13 @@ object CurseForge : Platform(
     suspend fun requestProjectFromId(id: String): Result<Project, ActionError> = tryRequest {
 
         val responseString = this.requestProjectBody("mods/$id")
-            .getOrElse { return Err(it) }
+            .getOrElse { error ->
+                if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+                {
+                    return Err(Unauthenticated())
+                }
+                return Err(error)
+            }
 
         val project = json.decodeFromString<GetProjectResponse>(responseString).data.toProject()
             .getOrElse { return Err(it) }
@@ -94,7 +107,13 @@ object CurseForge : Platform(
     suspend fun requestProjectFromSlug(slug: String): Result<Project, ActionError> = tryRequest {
 
         val responseString = this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug")
-            .getOrElse { return Err(it) }
+            .getOrElse { error ->
+                if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+                {
+                    return Err(Unauthenticated())
+                }
+                return Err(error)
+            }
 
         val project = json.decodeFromString<SearchProjectResponse>(responseString).data.firstOrNull()?.toProject()
             ?.getOrElse { return Err(it) } ?: return Err(ProjNotFound())
@@ -106,7 +125,13 @@ object CurseForge : Platform(
     {
         val responseString = this.requestProjectBody("mods") {
             Json.encodeToString(MultipleProjectsRequest(ids.map(String::toInt)))
-        }.getOrElse { return Err(it) }
+        }.getOrElse { error ->
+            if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+            {
+                return Err(Unauthenticated())
+            }
+            return Err(error)
+        }
 
         val projects = json.decodeFromString<GetMultipleProjectsResponse>(responseString).data
             .mapNotNull { it.toProject().get() }.toMutableSet()
@@ -196,7 +221,13 @@ object CurseForge : Platform(
 
         return if (fileId == null) // Multiple files
         {
-            val responseString = this.requestProjectBody(requestUrl).getOrElse { return Err(it) }
+            val responseString = this.requestProjectBody(requestUrl).getOrElse { error ->
+                if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+                {
+                    return Err(Unauthenticated())
+                }
+                return Err(error)
+            }
 
             val files = json.decodeFromString<GetMultipleFilesResponse>(responseString).data
                 .filterFileModels(mcVersions, loaders)
@@ -211,7 +242,13 @@ object CurseForge : Platform(
         }
         else // One file
         {
-            val responseString = this.requestProjectBody(requestUrl).getOrElse { return Err(it) }
+            val responseString = this.requestProjectBody(requestUrl).getOrElse { error ->
+                if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+                {
+                    return Err(Unauthenticated())
+                }
+                return Err(error)
+            }
 
             val files = mutableSetOf(
                 json.decodeFromString<GetFileResponse>(responseString).data.toProjectFile(gameVersionTypeIds)
@@ -232,7 +269,13 @@ object CurseForge : Platform(
 
         val responseString = this.requestProjectBody("mods/files") {
             Json.encodeToString(MultipleFilesRequest(ids.map(String::toInt)))
-        }.getOrElse { return Err(it) }
+        }.getOrElse { error ->
+            if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+            {
+                return Err(Unauthenticated())
+            }
+            return Err(error)
+        }
 
         val files = json.decodeFromString<GetMultipleFilesResponse>(responseString).data
             .filterFileModels(mcVersions, loaders)
@@ -252,7 +295,13 @@ object CurseForge : Platform(
     {
         val responseString = this.requestProjectBody("mods") {
             Json.encodeToString(MultipleProjectsRequest(projectIdsToTypes.keys.map(String::toInt)))
-        }.getOrElse { return Err(it) }
+        }.getOrElse { error ->
+            if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+            {
+                return Err(Unauthenticated())
+            }
+            return Err(error)
+        }
 
         val response = json.decodeFromString<GetMultipleProjectsResponse>(responseString).data
 
@@ -283,7 +332,13 @@ object CurseForge : Platform(
 
         val responseString = this.requestProjectBody("fingerprints/432") {
             Json.encodeToString(GetFingerprintsMatches(murmurs))
-        }.getOrElse { return Err(it) }
+        }.getOrElse { error ->
+            if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+            {
+                return Err(Unauthenticated())
+            }
+            return Err(error)
+        }
 
         val response = json.decodeFromString<GetFingerprintsMatchesResponse>(responseString).data.exactMatches
 
@@ -313,7 +368,13 @@ object CurseForge : Platform(
 
         val responseString = this.requestProjectBody("fingerprints/432") {
             Json.encodeToString(GetFingerprintsMatches(murmurs))
-        }.getOrElse { return Err(it) }
+        }.getOrElse { error ->
+            if (error is RequestError && error.response.status == HttpStatusCode.Forbidden)
+            {
+                return Err(Unauthenticated())
+            }
+            return Err(error)
+        }
 
         return Ok(json.decodeFromString<GetFingerprintsMatchesResponse>(responseString).data.exactMatches
             .filter { it.file.isAvailable }

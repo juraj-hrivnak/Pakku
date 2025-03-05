@@ -8,9 +8,9 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.CredentialsFile
 import teksturepako.pakku.api.http.pakkuClient
 import teksturepako.pakku.api.pakku
-import teksturepako.pakku.api.platforms.CURSEFORGE_API_KEY
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
 import teksturepako.pakku.cli.fixSystemOutEncoding
@@ -22,8 +22,12 @@ fun main(args: Array<String>)
 {
     println()
 
+    val credentials = runBlocking { CredentialsFile.readToResult() }
+        .onFailure { error -> debug { println(error.rawMessage) } }
+        .get()
+
     pakku {
-        curseForge(apiKey = System.getenv("CURSEFORGE_API_KEY") ?: CURSEFORGE_API_KEY)
+        curseForge(apiKey = System.getenv("CURSEFORGE_API_KEY") ?: credentials?.curseForgeApiKey)
         withUserAgent("Pakku/$VERSION (github.com/juraj-hrivnak/Pakku)")
     }
 
@@ -39,7 +43,7 @@ fun main(args: Array<String>)
             ?: Terminal(theme = if (utf8Supported) CliThemes.Default else CliThemes.Ascii)
     }.subcommands(
         Init(), Import(), Add(), Rm(), Cfg(), Set(), Status(), Update(), Ls(), Fetch(), Sync(), Link(), Export(),
-        Diff(), Remote()
+        Diff(), Remote(), Credentials()
     ).main(args)
 
     debug { println("Program arguments: ${args.joinToString()}") }

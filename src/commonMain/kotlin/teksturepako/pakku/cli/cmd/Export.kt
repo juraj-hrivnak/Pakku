@@ -18,7 +18,9 @@ import teksturepako.pakku.api.actions.errors.IOExportingError
 import teksturepako.pakku.api.actions.export.exportDefaultProfiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.cli.ui.shortForm
@@ -60,6 +62,11 @@ class Export : CliktCommand()
 
         exportDefaultProfiles(
             onError = { profile, error ->
+                if (error is CurseForge.Unauthenticated)
+                {
+                    terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
+                }
+
                 if (showIOErrors || error !is IOExportingError)
                 {
                     terminal.pError(error, prepend = "[${profile.name} profile]")

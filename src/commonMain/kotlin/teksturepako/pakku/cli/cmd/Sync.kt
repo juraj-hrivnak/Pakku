@@ -21,7 +21,9 @@ import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.actions.sync.syncProjects
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
 import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.ui.*
 
@@ -90,6 +92,11 @@ class Sync : CliktCommand()
                 projectIn.createAdditionRequest(
                     onError = { error ->
                         terminal.pError(error)
+
+                        if (error is CurseForge.Unauthenticated)
+                        {
+                            terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
+                        }
                     },
                     onSuccess = { project, isRecommended, replacing, _ ->
                         val projMsg = project.getFullMsg()

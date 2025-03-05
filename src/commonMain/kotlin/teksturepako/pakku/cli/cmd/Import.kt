@@ -16,7 +16,9 @@ import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.errors.AlreadyAdded
 import teksturepako.pakku.api.actions.import.importModpackModel
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
@@ -62,7 +64,15 @@ class Import : CliktCommand()
             launch {
                 projectIn.createAdditionRequest(
                     onError = { error ->
-                        if (error !is AlreadyAdded) terminal.pError(error)
+                        if (error !is AlreadyAdded)
+                        {
+                            terminal.pError(error)
+
+                            if (error is CurseForge.Unauthenticated)
+                            {
+                                terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
+                            }
+                        }
                     },
                     onSuccess = { project, _, replacing, reqHandlers ->
                         val projMsg = project.getFullMsg()

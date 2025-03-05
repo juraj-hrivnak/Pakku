@@ -56,7 +56,7 @@ data class HashMismatch(val path: Path?, val originalHash: String, val newHash: 
         "Failed to math hash for file '$path'.",
         "Original hash: $originalHash",
         "New hash: $newHash",
-        newline = true,
+        newlines = true,
     )
 }
 
@@ -94,13 +94,13 @@ data class ProjDiffTypes(val project: Project, val otherProject: Project) : Acti
     override val rawMessage = message(
         "Can not combine two projects of different types:",
         "${project.slug} ${project.type} + ${otherProject.slug} ${otherProject.type}",
-        newline = true
+        newlines = true
     )
 
     override fun message(arg: String): String = message(
         "Can not combine two projects of different types:",
         "${project.getFlavoredSlug()} ${dim(project.type)} + ${otherProject.getFlavoredSlug()} ${dim(otherProject.type)}",
-        newline = true
+        newlines = true
     )
 }
 
@@ -109,13 +109,13 @@ data class ProjDiffPLinks(val project: Project, val otherProject: Project) : Act
     override val rawMessage = message(
         "Can not combine two projects with different pakku links:",
         "${project.slug} ${project.type} + ${otherProject.slug} ${otherProject.type}",
-        newline = true
+        newlines = true
     )
 
     override fun message(arg: String): String = message(
         "Can not combine two projects with different pakku links:",
         "${project.getFlavoredSlug()} ${dim(project.type)} + ${otherProject.getFlavoredSlug()} ${dim(otherProject.type)}",
-        newline = true
+        newlines = true
     )
 }
 
@@ -199,14 +199,14 @@ data class NoFiles(val project: Project, val lockFile: LockFile) : ActionError()
         "No files found for ${project.type} ${project.slug}.",
         "Your modpack requires Minecraft versions: ${lockFile.getMcVersions()} and loaders: ${lockFile.getLoaders()}.",
         "Make sure the project complies these requirements.",
-        newline = true
+        newlines = true
     )
 
     override fun message(arg: String) = message(
         "No files found for ${dim(project.type)} ${project.getFlavoredSlug()}.",
         "Your modpack requires Minecraft versions: ${lockFile.getMcVersions()} and loaders: ${lockFile.getLoaders()}.",
         "Make sure the project complies these requirements.",
-        newline = true
+        newlines = true
     )
 }
 
@@ -215,13 +215,13 @@ data class FileNamesDoNotMatch(val project: Project) : ActionError()
     override val rawMessage = message(
         project.type, project.slug, "versions do not match across platforms.",
         project.files.map { "${it.type}: ${it.fileName}" }.toString(),
-        newline = true
+        newlines = true
     )
 
     override fun message(arg: String) = message(
         "${dim(project.type)} ${project.getFlavoredSlug()} versions do not match across platforms.",
         project.files.map { "${it.type}: ${it.fileName}" }.toString(),
-        newline = true
+        newlines = true
     )
 }
 

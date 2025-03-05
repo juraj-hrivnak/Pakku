@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.errors.NotFoundOn
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
@@ -23,6 +24,7 @@ import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pErrorOrPrompt
 import teksturepako.pakku.cli.ui.pSuccess
 
 class Add : CliktCommand()
@@ -83,12 +85,12 @@ class Add : CliktCommand()
         {
             suspend fun handleMissingProject(error: NotFoundOn, arg: ProjectArg)
             {
-                val (promptedProject, promptedArg) = promptForProject(
-                    error.provider, terminal, lockFile, arg.fold({it.fileId}, {it.tag}), projectType = projectTypeOpt
+                val (promptedProject, promptedArg) = terminal.promptForProject(
+                    error.provider, lockFile, arg.fold({it.fileId}, {it.tag}), projectType = projectTypeOpt
                 ).onFailure {
                     if (it is EmptyArg) return add(projectIn, arg, strict = false)
                 }.getOrElse {
-                    return terminal.pError(it)
+                    return terminal.pErrorOrPrompt(it)
                 }
 
                 (error.project + promptedProject).fold( // Combine projects
@@ -99,7 +101,12 @@ class Add : CliktCommand()
 
             projectIn.createAdditionRequest(
                 onError = { error ->
-                    terminal.pError(error, arg = arg.rawArg)
+                    terminal.pError(error)
+
+                    if (error is CurseForge.Unauthenticated)
+                    {
+                        terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
+                    }
 
                     if (error is NotFoundOn && strict)
                     {
@@ -151,15 +158,15 @@ class Add : CliktCommand()
             )
         })
         {
-            if (projectIn.isErr)
-            {
-                terminal.pError(projectIn.error)
-                echo()
-                continue
-            }
-
-            add(projectIn.get(), arg)
-            echo()
+            projectIn.fold(
+                success = {
+                    add(projectIn.get(), arg)
+                    echo()
+                },
+                failure = { error ->
+                    terminal.pErrorOrPrompt(error)
+                }
+            )
         }
 
         lockFile.write()?.let { terminal.pError(it) }

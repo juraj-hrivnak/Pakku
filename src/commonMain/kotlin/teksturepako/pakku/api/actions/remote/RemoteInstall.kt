@@ -39,7 +39,7 @@ data class RemoteAlreadyExists(val url: String): ActionError()
         "A remote for this modpack already exists.",
         hint("use \"pakku remote rm\" to remove the remote from your modpack"),
         hint("use \"pakku remote update\" to update the remote"),
-        newline = true,
+        newlines = true,
     )
 }
 

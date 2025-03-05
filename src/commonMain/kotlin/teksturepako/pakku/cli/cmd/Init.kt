@@ -8,11 +8,12 @@ import com.github.ajalt.mordant.terminal.prompt
 import com.github.ajalt.mordant.terminal.success
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
-import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
 import teksturepako.pakku.cli.ui.hint
 import teksturepako.pakku.cli.ui.pDanger
 
@@ -75,7 +76,6 @@ class Init : CliktCommand()
 
         // -- TARGET --
 
-
         with(
             runCatching {
                 terminal.interactiveSelectList(
@@ -91,6 +91,12 @@ class Init : CliktCommand()
         {
             lockFile.setTarget(this)
             terminal.success("'target' set to '$this'")
+        }
+
+        if (lockFile.getPlatforms().get()?.contains(CurseForge) == true)
+        {
+            terminal.println("? CurseForge API key")
+            terminal.promptForCurseForgeApiKey()
         }
 
         // -- OVERRIDES --

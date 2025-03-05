@@ -5,8 +5,8 @@ import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.debug
-import teksturepako.pakku.integration.git.gitUpdate
 import teksturepako.pakku.integration.git.gitStatus
+import teksturepako.pakku.integration.git.gitUpdate
 import teksturepako.pakku.io.FileAction
 import kotlin.io.path.exists
 
@@ -41,6 +41,6 @@ class CanNotUpdateRemote: ActionError()
     override val rawMessage = message(
         "Can not update remote.",
         "No remote was found.",
-        newline = true,
+        newlines = true,
     )
 }

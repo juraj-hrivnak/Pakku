@@ -26,10 +26,12 @@ import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pErrorOrPrompt
 import teksturepako.pakku.cli.ui.pSuccess
 import kotlin.collections.fold
 import kotlin.system.exitProcess
 import com.github.michaelbull.result.fold as resultFold
+import com.github.michaelbull.result.fold as resultFold1
 
 class AddPrj : CliktCommand("prj")
 {
@@ -103,15 +105,15 @@ class AddPrj : CliktCommand("prj")
         {
             suspend fun handleMissingProject(error: NotFoundOn)
             {
-                val (promptedProject, promptedArg) = promptForProject(
-                    error.provider, terminal, lockFile, projectType = projectTypeOpt
+                val (promptedProject, _) = terminal.promptForProject(
+                    error.provider, lockFile, projectType = projectTypeOpt
                 ).onFailure {
                     if (it is EmptyArg) return add(projectIn, strict = false)
                 }.getOrElse {
-                    return terminal.pError(it)
+                    return terminal.pErrorOrPrompt(it)
                 }
 
-                (error.project + promptedProject).resultFold( // Combine projects
+                (error.project + promptedProject).resultFold1( // Combine projects
                     failure = { terminal.pError(it) },
                     success = { add(it) }
                 )
@@ -120,6 +122,11 @@ class AddPrj : CliktCommand("prj")
             projectIn.createAdditionRequest(
                 onError = { error ->
                     terminal.pError(error)
+
+                    if (error is CurseForge.Unauthenticated)
+                    {
+                        terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
+                    }
 
                     if (error is NotFoundOn && strict)
                     {
@@ -194,16 +201,15 @@ class AddPrj : CliktCommand("prj")
             } ?: acc
         }
 
-        if (combinedProject.isErr)
-        {
-            terminal.pError(combinedProject.error)
-            echo()
-
-            return@runBlocking
-        }
-
-        add(combinedProject.get())
-        echo()
+        combinedProject.resultFold(
+            success = {
+                add(combinedProject.get())
+                echo()
+            },
+            failure = { error ->
+                terminal.pErrorOrPrompt(error)
+            }
+        )
 
         lockFile.write()?.let { terminal.pError(it) }
     }

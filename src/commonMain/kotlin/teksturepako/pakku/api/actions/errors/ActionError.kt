@@ -1,5 +1,7 @@
 package teksturepako.pakku.api.actions.errors
 
+import teksturepako.pakku.cli.ui.offset
+
 abstract class ActionError
 {
     abstract val rawMessage: String
@@ -9,9 +11,9 @@ abstract class ActionError
     /** A message dedicated for the CLI. It should not be used outside of terminal. */
     open fun message(arg: String = ""): String = rawMessage
 
-    protected fun message(vararg args: Any?, newline: Boolean = false): String
+    protected fun message(vararg args: Any?, newlines: Boolean = false, offset: Int = 0): String
     {
-        return if (newline)
+        val text = if (newlines)
         {
             args.joinToString("\n") { it?.toString() ?: "" }
         }
@@ -26,6 +28,8 @@ abstract class ActionError
                 }
             }
         }
+
+        return text.split("\n").joinToString("\n") { offset(it, offset) }
     }
 
     protected fun optionalArg(arg: Any?): String = if (arg != null) " '$arg'" else ""

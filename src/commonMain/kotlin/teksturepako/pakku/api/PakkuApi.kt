@@ -6,10 +6,10 @@ import kotlin.time.Duration.Companion.minutes
 object PakkuApi
 {
     data class Configuration(
-        var developmentMode: Boolean = false,
-        var curseForgeApiKey: String? = null,
-        var userAgent: String? = null,
-        var timeout: Duration = 3.minutes,
+        internal var developmentMode: Boolean = false,
+        internal var curseForgeApiKey: String? = null,
+        internal var userAgent: String? = null,
+        internal var timeout: Duration = 3.minutes,
     )
     {
         /** Enables development mode for testing purposes. */
@@ -19,7 +19,7 @@ object PakkuApi
         }
 
         /** Sets the CurseForge API key for authentication. */
-        fun curseForge(apiKey: String)
+        fun curseForge(apiKey: String?)
         {
             this.curseForgeApiKey = apiKey
         }
@@ -36,7 +36,7 @@ object PakkuApi
             this.timeout = timeout
         }
 
-        internal fun init()
+        internal fun verify()
         {
             if (configuration?.developmentMode == true)
             {
@@ -44,7 +44,6 @@ object PakkuApi
             }
             else
             {
-                requireNotNull(configuration?.curseForgeApiKey) { "function curseForge(apiKey: String) must be specified" }
                 requireNotNull(configuration?.userAgent) { "function withUserAgent(agent: String) must be specified" }
             }
         }
@@ -58,13 +57,16 @@ object PakkuApi
         if (configuration == null)
         {
             configuration = Configuration().apply(block)
-            configuration!!.init()
+            configuration!!.verify()
+        }
+        else
+        {
+            configuration = configuration!!.copy().apply(block)
+            configuration!!.verify()
         }
     }
 
-    /** Indicates whether development mode is enabled. */
-    internal val developmentMode: Boolean
-        get() = configuration?.developmentMode ?: false
+
 
     /** The CurseForge API key used for authentication. */
     internal val curseForgeApiKey: String?
