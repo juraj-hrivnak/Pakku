@@ -45,16 +45,6 @@ object CurseForge : Platform(
 
     private val apiKeyHeader = PakkuApi.curseForgeApiKey?.takeIf { it.isNotBlank() }?.let { API_KEY_HEADER to it }
 
-    override fun getCommonRequestUrl(apiUrl: String, apiVersion: Int): String
-    {
-        return super.getCommonRequestUrl("https://cfproxy.bmpm.workers.dev", apiVersion)
-    }
-
-    fun checkApiKey()
-    {
-        if (apiKeyHeader != null) println("CurseForge: Using embedded API key.")
-    }
-
     override suspend fun requestProjectBody(input: String): Result<String, ActionError> =
         requestBody("${this.getCommonRequestUrl()}/$input", apiKeyHeader)
 
