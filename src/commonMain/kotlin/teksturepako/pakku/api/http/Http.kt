@@ -16,7 +16,7 @@ import teksturepako.pakku.debug
 class RequestError(val response: HttpResponse) : ActionError()
 {
     override val rawMessage = message(
-        "HTTP request error ",
+        "(${response.call.request.url.host}) HTTP request error ",
         "returned ${response.status.value} ",
         response.status.description
     )
@@ -32,6 +32,8 @@ suspend inline fun <reified T> tryRequest(block: () -> HttpResponse): Result<T, 
     return try
     {
         val response = block()
+
+        debug { println(response.call) }
 
         when (response.status)
         {

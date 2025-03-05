@@ -98,7 +98,7 @@ object Multiplatform : Provider
             } ?: c // Return the CurseForge project if Modrinth project is missing.
         } ?: mr // Return the Modrinth project if CurseForge project is missing.
 
-        if (combinedProject == null) return Err(ProjNotFound())
+        if (combinedProject == null) return Err(ProjNotFound(input))
 
         return Ok(combinedProject)
     }

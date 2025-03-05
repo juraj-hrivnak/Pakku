@@ -8,12 +8,14 @@ import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.michaelbull.result.*
+import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.NotFoundOn
 import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.http.RequestError
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
@@ -176,13 +178,20 @@ class AddPrj : CliktCommand("prj")
         val combinedProject: Result<Project, ActionError> = projects.fold(
             Err(ProjNotFound()) as Result<Project, ActionError>
         ) { acc, currentProject ->
+            acc.onFailure { error ->
+                if (error !is ProjNotFound && !(error is RequestError && error.response.status == HttpStatusCode.NotFound))
+                {
+                    return@fold Err(error)
+                }
+            }
+
             currentProject?.flatMap { project ->
                 acc.map { accProject ->
                     accProject + project
                 }.getOrElse {
                     Ok(project)
                 }
-            } ?: Err(ProjNotFound())
+            } ?: acc
         }
 
         if (combinedProject.isErr)
