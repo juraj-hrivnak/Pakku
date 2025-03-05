@@ -11,7 +11,6 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.http.pakkuClient
 import teksturepako.pakku.api.pakku
 import teksturepako.pakku.api.platforms.CURSEFORGE_API_KEY
-import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
 import teksturepako.pakku.cli.fixSystemOutEncoding
@@ -42,8 +41,6 @@ fun main(args: Array<String>)
         Init(), Import(), Add(), Rm(), Cfg(), Set(), Status(), Update(), Ls(), Fetch(), Sync(), Link(), Export(),
         Diff(), Remote()
     ).main(args)
-
-    debug { CurseForge.checkApiKey() }
 
     debug { println("Program arguments: ${args.joinToString()}") }
 
