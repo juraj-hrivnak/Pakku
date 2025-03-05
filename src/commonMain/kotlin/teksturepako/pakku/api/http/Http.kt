@@ -11,6 +11,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.debug
 
 class RequestError(val response: HttpResponse) : ActionError()
@@ -23,7 +24,7 @@ class RequestError(val response: HttpResponse) : ActionError()
 
 class ConnectionError(val exception: Exception) : ActionError()
 {
-    override val rawMessage = "HTTP connection error ${exception.message}"
+    override val rawMessage = "HTTP connection error: ${exception.message}"
 }
 
 suspend inline fun <reified T> tryRequest(block: () -> HttpResponse): Result<T, ActionError>
@@ -36,8 +37,9 @@ suspend inline fun <reified T> tryRequest(block: () -> HttpResponse): Result<T, 
 
         when (response.status)
         {
-            HttpStatusCode.OK -> Ok(response.body<T>())
-            else              -> Err(RequestError(response))
+            HttpStatusCode.OK       -> Ok(response.body<T>())
+            HttpStatusCode.NotFound -> Err(ProjNotFound())
+            else                    -> Err(RequestError(response))
         }
     }
     catch (e: Exception)
