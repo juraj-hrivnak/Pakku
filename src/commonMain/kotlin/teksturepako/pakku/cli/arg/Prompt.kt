@@ -62,7 +62,6 @@ suspend fun Terminal.promptForCurseForgeApiKey(): ActionError?
         1. Login to the developer console
         2. Go to the "API keys" tab
         3. Copy your API key
-        4. Paste your API key here
     """.trimIndent()))
 
     this.println()
