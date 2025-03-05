@@ -12,10 +12,7 @@ import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.http.tryRequest
 import teksturepako.pakku.api.models.cf.*
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
-import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.api.projects.assignFiles
+import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.toMurmur2
@@ -59,11 +56,6 @@ object CurseForge : Platform(
         input.matches("[0-9]{5,7}".toRegex()) -> requestProjectFromId(input)
         else                                  -> requestProjectFromSlug(input)
     }.also { project -> projectType?.let { project.get()?.type = it } }
-
-    class ProjectTypeNotSupported(slug: String, projectType: String) : ActionError()
-    {
-        override val rawMessage = "$slug: Project type $projectType from CurseForge isn't supported"
-    }
 
     private fun CfModModel.toProject(): Result<Project, ActionError>
     {
