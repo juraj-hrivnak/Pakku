@@ -1,16 +1,22 @@
 package teksturepako.pakku.api.platforms
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.getOrElse
 import kotlinx.datetime.Instant
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.json
-import teksturepako.pakku.api.http.Http
+import teksturepako.pakku.api.http.requestBody
+import teksturepako.pakku.api.http.tryRequest
 import teksturepako.pakku.api.models.gh.GhReleaseModel
 import teksturepako.pakku.api.models.gh.GhRepoModel
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
 
-object GitHub : Http(), Provider
+object GitHub : Provider
 {
     override val name = "GitHub"
     override val serialName = "github"
@@ -29,11 +35,14 @@ object GitHub : Http(), Provider
         )
     }
 
-    override suspend fun requestProject(input: String, projectType: ProjectType?): Project?
-    {
-        return json.decodeFromString<GhRepoModel>(
-            this.requestBody("https://api.github.com/repos/$input") ?: return null
-        ).toProject().also { project -> projectType?.let { project.type = it } }
+    override suspend fun requestProject(input: String, projectType: ProjectType?): Result<Project, ActionError> = tryRequest {
+        val responseString = requestBody("https://api.github.com/repos/$input").getOrElse { return Err(it) }
+
+        val project = json.decodeFromString<GhRepoModel>(responseString)
+            .toProject()
+            .also { project -> projectType?.let { project.type = it } }
+
+        return Ok(project)
     }
 
     private fun GhReleaseModel.toProjectFiles(parentId: String): List<ProjectFile>
@@ -68,28 +77,29 @@ object GitHub : Http(), Provider
         fileId: String?,
         numberOfFiles: Int,
         projectType: ProjectType?
-    ): Project?
-    {
-        val project = requestProject(input, projectType) ?: return null
+    ): Result<Project, ActionError> = tryRequest {
+        val project = requestProject(input, projectType).getOrElse { return Err(it) }
 
-        val projectFiles = if (fileId == null)
+        val projectFiles = if (fileId == null) // Multiple files
         {
-            // Multiple files
-            json.decodeFromString<List<GhReleaseModel>>(
-                this.requestBody("https://api.github.com/repos/$input/releases") ?: return null
-            )
+            val responseString = requestBody("https://api.github.com/repos/$input/releases")
+                .getOrElse { return Err(it) }
+
+            json.decodeFromString<List<GhReleaseModel>>(responseString)
                 .flatMap { it.toProjectFiles(project.id[this.serialName]!!).take(1) }
                 .take(numberOfFiles)
         }
-        else
+        else // One file
         {
-            // One file
-            json.decodeFromString<GhReleaseModel>(
-                this.requestBody("https://api.github.com/repos/$input/releases/tags/$fileId") ?: return null
-            ).toProjectFiles(project.id[this.serialName]!!).take(numberOfFiles)
+            val responseString = requestBody("https://api.github.com/repos/$input/releases/tags/$fileId")
+                .getOrElse { return Err(it) }
+
+            json.decodeFromString<GhReleaseModel>(responseString)
+                .toProjectFiles(project.id[this.serialName]!!)
+                .take(numberOfFiles)
         }
 
-        return project.apply { files.addAll(projectFiles) }
+        return Ok(project.apply { files.addAll(projectFiles) })
     }
 
 }

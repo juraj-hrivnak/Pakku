@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.actions.sync
 
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -23,6 +24,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
+import com.github.michaelbull.result.fold as resultFold
 
 suspend fun detectProjects(
     lockFile: LockFile,
@@ -65,30 +67,34 @@ suspend fun detectProjects(
             println(it.map { (path, _) -> path.pathString }.toPrettyString())
         }
 
-    val cfProjectsDeferred = async {
+    val cfProjectsDeferred: Deferred<Set<Project>> = async {
         if (CurseForge in platforms)
         {
-            CurseForge.requestMultipleProjectsWithFilesFromBytes(lockFile.getMcVersions(), files.map { it.second })
-                .inheritPropertiesFrom(configFile)
+            CurseForge.requestMultipleProjectsWithFilesFromBytes(lockFile.getMcVersions(), files.map { it.second }).resultFold(
+                success = { it.inheritPropertiesFrom(configFile).toSet() },
+                failure = { mutableSetOf() }
+            )
         }
         else mutableSetOf()
     }
 
-    val mrProjectsDeferred = async {
+    val mrProjectsDeferred: Deferred<Set<Project>> = async {
         if (Modrinth in platforms)
         {
-            Modrinth.requestMultipleProjectsWithFilesFromHashes(files.map { it.third }, "sha1")
-                .inheritPropertiesFrom(configFile)
+            Modrinth.requestMultipleProjectsWithFilesFromHashes(files.map { it.third }, "sha1").resultFold(
+                success = { it.inheritPropertiesFrom(configFile).toSet() },
+                failure = { mutableSetOf() }
+            )
         }
         else mutableSetOf()
     }
 
-    val deferredPlatformsToProjects = async {
+    val platformsToProjects = async {
         listOf(CurseForge to cfProjectsDeferred.await(), Modrinth to mrProjectsDeferred.await())
-    }
+    }.await()
 
-    val detectedProjects = deferredPlatformsToProjects.await()
-        .fold(deferredPlatformsToProjects.await().flatMap { it.second }) { accProjects, (platform, platformProjects) ->
+    val detectedProjects = platformsToProjects
+        .fold(platformsToProjects.flatMap { it.second }) { accProjects, (platform, platformProjects) ->
             accProjects.map { accProject ->
                 platformProjects.find { it isAlmostTheSameAs accProject }
                     ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, 1) }

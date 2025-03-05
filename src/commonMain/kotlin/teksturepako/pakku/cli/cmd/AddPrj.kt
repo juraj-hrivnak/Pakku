@@ -7,11 +7,10 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
-import com.github.michaelbull.result.get
-import com.github.michaelbull.result.getOrElse
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.*
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.NotFoundOn
 import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.LockFile
@@ -174,18 +173,29 @@ class AddPrj : CliktCommand("prj")
             )
         }
 
-        val projects: List<Project?> = listOf(cf, mr, gh)
+        val projects = listOf(cf, mr, gh)
 
-        val combinedProject: Project? = projects.fold(null as Project?) { acc, project ->
-            when
-            {
-                acc == null     -> project
-                project == null -> acc
-                else            -> (acc + project).get()
-            }
+        val combinedProject: Result<Project, ActionError> = projects.fold(
+            Err(ProjNotFound()) as Result<Project, ActionError>
+        ) { acc, currentProject ->
+            currentProject?.flatMap { project ->
+                acc.map { accProject ->
+                    accProject + project
+                }.getOrElse {
+                    Ok(project)
+                }
+            } ?: Err(ProjNotFound())
         }
 
-        add(combinedProject)
+        if (combinedProject.isErr)
+        {
+            terminal.pError(combinedProject.error)
+            echo()
+
+            return@runBlocking
+        }
+
+        add(combinedProject.get())
         echo()
 
         lockFile.write()?.let { terminal.pError(it) }

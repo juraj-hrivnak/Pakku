@@ -1,6 +1,6 @@
 package teksturepako.pakku.api.platforms
 
-import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.*
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.http.requestBody
 import teksturepako.pakku.api.projects.Project
@@ -58,7 +58,6 @@ abstract class Platform(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
     ): Result<MutableSet<ProjectFile>, ActionError>
 
-
     /**
      * [Requests project files][requestProjectFiles] for provided [project][Project], with optional
      * [number of files][numberOfFiles] to take.
@@ -70,11 +69,13 @@ abstract class Platform(
         fileId: String? = null,
         numberOfFiles: Int = 1,
         projectType: ProjectType? = null
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
     {
-        return project.id[this.serialName]?.let { projectId ->
-            this.requestProjectFiles(mcVersions, loaders, projectId, fileId, projectType).take(numberOfFiles).toMutableSet()
-        } ?: mutableSetOf()
+        return Ok(project.id[this.serialName]?.let { projectId ->
+            this.requestProjectFiles(mcVersions, loaders, projectId, fileId, projectType)
+                .getOrElse { return Err(it) }
+                .take(numberOfFiles).toMutableSet()
+        } ?: mutableSetOf())
     }
 
     /**
@@ -88,11 +89,19 @@ abstract class Platform(
         fileId: String?,
         numberOfFiles: Int,
         projectType: ProjectType?
-    ): Project?
+    ): Result<Project, ActionError>
     {
-        return requestProject(input, projectType)?.apply {
-            files.addAll(requestFilesForProject(mcVersions, loaders, this, fileId, numberOfFiles, projectType))
-        }
+        return Ok(requestProject(input, projectType)
+            .getOrElse { return Err(it) }
+            .apply {
+                val files = requestFilesForProject(mcVersions, loaders, this, fileId, numberOfFiles, projectType).get()
+
+                if (files != null)
+                {
+                    this.files.addAll(files)
+                }
+            }
+        )
     }
 
     abstract suspend fun requestMultipleProjectsWithFiles(

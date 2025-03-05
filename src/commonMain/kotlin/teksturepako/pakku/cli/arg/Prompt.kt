@@ -16,7 +16,7 @@ import teksturepako.pakku.api.projects.ProjectType
 
 suspend fun promptForProject(
     provider: Provider, terminal: Terminal, lockFile: LockFile, fileId: String? = null, projectType: ProjectType? = null
-): Result<Pair<Project?, ProjectArg>, ActionError>
+): Result<Pair<Project, ProjectArg>, ActionError>
 {
     val prompt: String? = StringPrompt("Specify ${provider.name}", terminal).ask()
 
@@ -25,15 +25,19 @@ suspend fun promptForProject(
     val arg: ProjectArg = mapProjectArg(prompt).getOrElse { return Err(it) }
 
     return arg.fold(
-        commonArg = {
-            Ok(provider.requestProjectWithFiles(
-                lockFile.getMcVersions(), lockFile.getLoaders(), it.input, it.fileId ?: fileId, projectType = projectType
-            ) to it)
+        commonArg = { commonArg ->
+            val project = provider.requestProjectWithFiles(
+                lockFile.getMcVersions(), lockFile.getLoaders(), commonArg.input, commonArg.fileId ?: fileId, projectType = projectType
+            ).getOrElse { return@fold Err(it) }
+
+            Ok(project to commonArg)
         },
-        gitHubArg = {
-            Ok(GitHub.requestProjectWithFiles(
-                listOf(), listOf(), "${it.owner}/${it.repo}", it.tag ?: fileId, projectType = projectType
-            ) to it)
+        gitHubArg = { gitHubArg ->
+            val project = GitHub.requestProjectWithFiles(
+                listOf(), listOf(), "${gitHubArg.owner}/${gitHubArg.repo}", gitHubArg.tag ?: fileId, projectType = projectType
+            ).getOrElse { return@fold Err(it) }
+
+            Ok( project to gitHubArg)
         }
     )
 }

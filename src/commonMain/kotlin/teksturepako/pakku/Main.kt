@@ -12,7 +12,6 @@ import teksturepako.pakku.api.http.pakkuClient
 import teksturepako.pakku.api.pakku
 import teksturepako.pakku.api.platforms.CURSEFORGE_API_KEY
 import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
 import teksturepako.pakku.cli.fixSystemOutEncoding
@@ -43,9 +42,6 @@ fun main(args: Array<String>)
         Init(), Import(), Add(), Rm(), Cfg(), Set(), Status(), Update(), Ls(), Fetch(), Sync(), Link(), Export(),
         Diff(), Remote()
     ).main(args)
-
-    // Check Modrinth's rate limit
-    Modrinth.checkRateLimit()
 
     debug { CurseForge.checkApiKey() }
 

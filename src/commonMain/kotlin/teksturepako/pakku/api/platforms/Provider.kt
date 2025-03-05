@@ -49,5 +49,5 @@ interface Provider
         fileId: String? = null,
         numberOfFiles: Int = 1,
         projectType: ProjectType? = null
-    ): Project?
+    ): Result<Project, ActionError>
 }

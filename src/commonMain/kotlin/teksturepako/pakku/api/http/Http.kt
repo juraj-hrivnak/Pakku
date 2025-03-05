@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package teksturepako.pakku.api.http
 
 import com.github.michaelbull.result.Err
@@ -9,10 +11,20 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.debug
 
-class HttpError : ActionError()
+class RequestError(val response: HttpResponse) : ActionError()
 {
-    override val rawMessage = ""
+    override val rawMessage = message(
+        "HTTP request error ",
+        "returned ${response.status.value} ",
+        response.status.description
+    )
+}
+
+class ConnectionError(val exception: Exception) : ActionError()
+{
+    override val rawMessage = "HTTP connection error ${exception.message}"
 }
 
 suspend inline fun <reified T> tryRequest(block: () -> HttpResponse): Result<T, ActionError>
@@ -23,24 +35,23 @@ suspend inline fun <reified T> tryRequest(block: () -> HttpResponse): Result<T, 
 
         when (response.status)
         {
-            HttpStatusCode.OK           -> Ok(response.body<T>())
-            HttpStatusCode.Unauthorized -> Err(HttpError())
-
-            else                        -> Err(HttpError())
+            HttpStatusCode.OK -> Ok(response.body<T>())
+            else              -> Err(RequestError(response))
         }
     }
     catch (e: Exception)
     {
-        Err(HttpError())
+        debug { e.printStackTrace() }
+        Err(ConnectionError(e))
     }
 }
 
 /**
  * @return A body [ByteArray] of a https request or null if status code is not OK.
  */
-suspend inline fun requestByteArray(
+suspend fun requestByteArray(
     url: String,
-    crossinline onDownload: (bytesSentTotal: Long, contentLength: Long?) -> Unit = { _: Long, _: Long? -> }
+    onDownload: suspend (bytesSentTotal: Long, contentLength: Long?) -> Unit = { _: Long, _: Long? -> }
 ): Result<ByteArray, ActionError> = tryRequest {
     pakkuClient.get(url) {
         onDownload { bytesSentTotal, contentLength -> onDownload(bytesSentTotal, contentLength) }

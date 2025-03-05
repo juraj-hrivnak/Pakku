@@ -1,6 +1,11 @@
 package teksturepako.pakku.api.platforms
 
-import com.github.michaelbull.result.get
+import com.github.michaelbull.result.*
+import io.ktor.http.*
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjNotFound
+import teksturepako.pakku.api.http.RequestError
+import teksturepako.pakku.api.http.requestByteArray
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectType
 
@@ -33,29 +38,69 @@ object Multiplatform : Provider
      * @param projectType The type of project.
      * @return A [project][Project] containing data retrieved from all platforms, or null if no data is found.
      */
-    override suspend fun requestProject(input: String, projectType: ProjectType?): Project?
+    override suspend fun requestProject(input: String, projectType: ProjectType?): Result<Project, ActionError>
     {
-        var cf = CurseForge.requestProject(input, projectType)
-        var mr = Modrinth.requestProject(input, projectType)
+        var cf = CurseForge.requestProject(input, projectType).fold(
+            success = { it },
+            failure = { error ->
+                if (error is ProjNotFound || (error is RequestError && error.response.status == HttpStatusCode.NotFound))
+                {
+                    null
+                }
+                else return Err(error)
+            }
+        )
+        var mr = Modrinth.requestProject(input, projectType).fold(
+            success = { it },
+            failure = { error ->
+                if (error is ProjNotFound || (error is RequestError && error.response.status == HttpStatusCode.NotFound))
+                {
+                    null
+                }
+                else return Err(error)
+            }
+        )
 
         // Retrieve project from another platform if it's missing.
         if (cf == null && mr != null)
         {
-            cf = CurseForge.requestProjectFromSlug(mr.slug[Modrinth.serialName]!!)
+            cf = CurseForge.requestProjectFromSlug(mr.slug[Modrinth.serialName]!!).fold(
+                success = { it },
+                failure = { error ->
+                    if (error is ProjNotFound || (error is RequestError && error.response.status == HttpStatusCode.NotFound))
+                    {
+                        null
+                    }
+                    else return Err(error)
+                }
+            )
         }
         else if (mr == null && cf != null)
         {
-            mr = Modrinth.requestProject(cf.slug[CurseForge.serialName]!!)
+            mr = Modrinth.requestProject(cf.slug[CurseForge.serialName]!!).fold(
+                success = { it },
+                failure = { error ->
+                    if (error is ProjNotFound || (error is RequestError && error.response.status == HttpStatusCode.NotFound))
+                    {
+                        null
+                    }
+                    else return Err(error)
+                }
+            )
         }
 
         // Combine projects or return just one of them.
-        return cf?.let { c ->
+        val combinedProject = cf?.let { c ->
             projectType?.let { c.type = it }
             mr?.let { m ->
                 projectType?.let { m.type = it }
                 (c + m).get() // Combine projects if project is available from both platforms.
             } ?: c // Return the CurseForge project if Modrinth project is missing.
         } ?: mr // Return the Modrinth project if CurseForge project is missing.
+
+        if (combinedProject == null) return Err(ProjNotFound())
+
+        return Ok(combinedProject)
     }
 
      /**
@@ -75,28 +120,34 @@ object Multiplatform : Provider
          fileId: String?,
          numberOfFiles: Int ,
          projectType: ProjectType?
-    ): Project?
+    ): Result<Project, ActionError>
     {
-        val project = requestProject(input, projectType) ?: return null
+        val project = requestProject(input, projectType).getOrElse { return Err(it) }
 
         if (fileId == null)
         {
             for (platform in platforms)
             {
-                project.files.addAll(platform.requestFilesForProject(mcVersions, loaders, project, null, numberOfFiles, projectType))
+                val files = platform.requestFilesForProject(mcVersions, loaders, project, null, numberOfFiles, projectType)
+                    .get() ?: mutableSetOf()
+
+                project.files.addAll(files)
             }
         }
         else
         {
             if (project.isOnPlatform(CurseForge))
             {
-                val cfFile = CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId, projectType).firstOrNull()
+                val cfFile = CurseForge.requestProjectFiles(mcVersions, loaders, project.id[CurseForge.serialName]!!, fileId, projectType)
+                    .get()?.firstOrNull()
+
 
                 val hash = cfFile?.hashes?.get("sha1")
 
                 if (hash != null)
                 {
-                    val mrFile = Modrinth.requestMultipleProjectFilesFromHashes(listOf(hash), "sha1").firstOrNull()
+                    val mrFile = Modrinth.requestMultipleProjectFilesFromHashes(listOf(hash), "sha1")
+                        .get()?.firstOrNull()
 
                     if (mrFile != null)
                     {
@@ -109,13 +160,15 @@ object Multiplatform : Provider
 
             if (project.isOnPlatform(Modrinth))
             {
-                val mrFile = Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId, projectType).firstOrNull()
+                val mrFile = Modrinth.requestProjectFiles(mcVersions, loaders, project.id[Modrinth.serialName]!!, fileId, projectType)
+                    .get()?.firstOrNull()
 
-                val bytes = mrFile?.url?.let { Modrinth.requestByteArray(it) }
+                val bytes = mrFile?.url?.let { requestByteArray(it).get() }
 
                 if (bytes != null)
                 {
-                    val cfFile = CurseForge.requestMultipleProjectFilesFromBytes(mcVersions, listOf(bytes)).firstOrNull()
+                    val cfFile = CurseForge.requestMultipleProjectFilesFromBytes(mcVersions, listOf(bytes))
+                        .get()?.firstOrNull()
 
                     if (cfFile != null)
                     {
@@ -127,6 +180,6 @@ object Multiplatform : Provider
             }
         }
 
-        return project
+        return Ok(project)
     }
 }

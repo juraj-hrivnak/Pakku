@@ -1,5 +1,7 @@
 package teksturepako.pakku.api.actions.export
 
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
 import com.github.michaelbull.result.onFailure
 import kotlinx.serialization.StringFormat
@@ -10,7 +12,7 @@ import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.http.Http
+import teksturepako.pakku.api.http.requestByteArray
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.ProjectOverride
 import teksturepako.pakku.api.platforms.Provider
@@ -79,7 +81,7 @@ sealed class RuleContext(
      * if it does not already exist, and returns a result.
      */
     fun createFile(
-        bytesCallback: suspend () -> ByteArray?,
+        bytesCallback: suspend () -> Result<ByteArray, ActionError>?,
         path: String,
         vararg subpath: String
     ): RuleResult
@@ -89,7 +91,7 @@ sealed class RuleContext(
         return ruleResult("createFile '$outputPath'", Packaging.FileAction {
             if (outputPath.exists()) return@FileAction outputPath to AlreadyExists(outputPath.pathString)
 
-            val bytes = bytesCallback.invoke() ?: return@FileAction outputPath to DownloadFailed(outputPath)
+            val bytes = bytesCallback.invoke()?.get() ?: return@FileAction outputPath to DownloadFailed(outputPath)
 
             outputPath.tryToResult { createParentDirectories() }
                 .onFailure { error ->
@@ -116,7 +118,7 @@ sealed class RuleContext(
         suspend fun exportAsOverride(
             force: Boolean = false,
             onExport: suspend (
-                bytesCallback: suspend () -> ByteArray?,
+                bytesCallback: suspend () -> Result<ByteArray, ActionError>?,
                 fileName: String,
                 overridesFolder: String
             ) -> RuleResult
@@ -128,7 +130,7 @@ sealed class RuleContext(
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
-                { projectFile.url?.let { url -> Http().requestByteArray(url) } },
+                { projectFile.url?.let { url -> requestByteArray(url) } },
                 projectFile.fileName,
                 OverrideType.fromProject(project).folderName
             )
@@ -203,7 +205,7 @@ sealed class RuleContext(
         suspend fun exportAsOverrideFrom(
             provider: Provider,
             onExport: suspend (
-                bytesCallback: suspend () -> ByteArray?,
+                bytesCallback: suspend () -> Result<ByteArray, ActionError>?,
                 fileName: String,
                 overridesDir: String
             ) -> RuleResult
@@ -216,7 +218,7 @@ sealed class RuleContext(
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
-                { projectFile.url?.let { url -> Http().requestByteArray(url) } },
+                { projectFile.url?.let { url -> requestByteArray(url) } },
                 projectFile.fileName,
                 OverrideType.fromProject(project).folderName
             )
@@ -231,7 +233,7 @@ sealed class RuleContext(
             force: Boolean = false,
             excludedProviders: Set<Provider> = setOf(),
             onExport: suspend (
-                bytesCallback: suspend () -> ByteArray?,
+                bytesCallback: suspend () -> Result<ByteArray, ActionError>?,
                 fileName: String,
                 overridesFolder: String
             ) -> RuleResult
@@ -244,7 +246,7 @@ sealed class RuleContext(
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
-                { projectFile.url?.let { url -> Http().requestByteArray(url) } },
+                { projectFile.url?.let { url -> requestByteArray(url) } },
                 projectFile.fileName,
                 OverrideType.fromProject(project).folderName
             )
