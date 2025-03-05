@@ -32,10 +32,10 @@ abstract class Platform(
         apiVersion: Int = this.apiVersion
     ) = "$apiUrl/v$apiVersion"
 
-    suspend fun requestProjectBody(input: String): Result<String, ActionError> =
+    open suspend fun requestProjectBody(input: String): Result<String, ActionError> =
         requestBody("${this.getCommonRequestUrl()}/$input")
 
-    suspend fun requestProjectBody(input: String, bodyContent: () -> String): Result<String, ActionError> =
+    open suspend fun requestProjectBody(input: String, bodyContent: () -> String): Result<String, ActionError> =
         requestBody("${this.getCommonRequestUrl()}/$input", bodyContent)
 
     abstract suspend fun requestMultipleProjects(ids: List<String>): Result<MutableSet<Project>, ActionError>

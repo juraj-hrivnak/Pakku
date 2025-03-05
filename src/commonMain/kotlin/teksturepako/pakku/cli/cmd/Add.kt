@@ -154,6 +154,7 @@ class Add : CliktCommand()
             if (projectIn.isErr)
             {
                 terminal.pError(projectIn.error)
+                echo()
                 continue
             }
 

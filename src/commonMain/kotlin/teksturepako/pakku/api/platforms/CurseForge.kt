@@ -10,6 +10,7 @@ import teksturepako.pakku.api.PakkuApi
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.http.requestBody
 import teksturepako.pakku.api.http.tryRequest
 import teksturepako.pakku.api.models.cf.*
 import teksturepako.pakku.api.projects.*
@@ -42,12 +43,23 @@ object CurseForge : Platform(
 
     private const val API_KEY_HEADER = "x-api-key"
 
-    private val apiKey: String? = PakkuApi.curseForgeApiKey?.takeIf { it.isNotBlank() }
+    private val apiKeyHeader = PakkuApi.curseForgeApiKey?.takeIf { it.isNotBlank() }?.let { API_KEY_HEADER to it }
+
+    override fun getCommonRequestUrl(apiUrl: String, apiVersion: Int): String
+    {
+        return super.getCommonRequestUrl("https://cfproxy.bmpm.workers.dev", apiVersion)
+    }
 
     fun checkApiKey()
     {
-        if (apiKey != null) println("CurseForge: Using embedded API key.")
+        if (apiKeyHeader != null) println("CurseForge: Using embedded API key.")
     }
+
+    override suspend fun requestProjectBody(input: String): Result<String, ActionError> =
+        requestBody("${this.getCommonRequestUrl()}/$input", apiKeyHeader)
+
+    override suspend fun requestProjectBody(input: String, bodyContent: () -> String): Result<String, ActionError> =
+        requestBody("${this.getCommonRequestUrl()}/$input", bodyContent, apiKeyHeader)
 
     // -- PROJECT --
 

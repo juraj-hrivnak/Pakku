@@ -59,39 +59,25 @@ suspend fun requestByteArray(
 }
 
 /**
- * @return A body [String] of a https request or null if status code is not OK.
- */
-suspend inline fun requestBody(url: String): Result<String, ActionError> = tryRequest { pakkuClient.get(url) }
-
-/**
  * @return A body [String] of a https request, with headers provided or null if status code is not OK.
  */
 suspend inline fun requestBody(
     url: String,
-    vararg headers: Pair<String, String>
+    vararg headers: Pair<String, String>?
 ): Result<String, ActionError> = tryRequest {
-    pakkuClient.get(url) { headers.forEach { this.headers.append(it.first, it.second) } }
-}
-
-suspend inline fun requestBody(
-    url: String,
-    bodyContent: () -> String
-): Result<String, ActionError> = tryRequest {
-    pakkuClient.post(url) {
-        contentType(ContentType.Application.Json)
-        setBody(bodyContent()) // Do not use pretty print
-    }
+    pakkuClient.get(url) { headers.filterNotNull().forEach { this.headers.append(it.first, it.second) } }
 }
 
 /**
  * @return A body [String] of a https request, with headers provided or null if status code is not OK.
  */
 suspend inline fun requestBody(
-    url: String, bodyContent: () -> String,
-    vararg headers: Pair<String, String>
+    url: String,
+    bodyContent: () -> String,
+    vararg headers: Pair<String, String>?
 ): Result<String, ActionError> = tryRequest {
     pakkuClient.post(url) {
-        headers.forEach { this.headers.append(it.first, it.second) }
+        headers.filterNotNull().forEach { this.headers.append(it.first, it.second) }
 
         contentType(ContentType.Application.Json)
         setBody(bodyContent()) // Do not use pretty print

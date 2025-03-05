@@ -200,11 +200,11 @@ data class Project(
      * Requests [projects with files][Provider.requestProjectWithFiles] for all dependencies of this project.
      * @return List of [dependencies][Project].
      */
-    suspend fun requestDependencies(projectProvider: Provider, lockFile: LockFile): List<Project>
+    suspend fun requestDependencies(projectProvider: Provider, lockFile: LockFile): List<Result<Project, ActionError>>
     {
         return this.files
             .flatMap { it.requiredDependencies ?: emptyList() }
-            .mapNotNull {
+            .map {
                 projectProvider.requestProjectWithFiles(lockFile.getMcVersions(), lockFile.getLoaders(), it)
             }
     }

@@ -52,7 +52,11 @@ class Import : CliktCommand()
             return@runBlocking
         }
 
-        val importedProjects = modpackModel.toSetOfProjects(lockFile, platforms)
+        val importedProjects = modpackModel.toSetOfProjects(lockFile, platforms).getOrElse {
+            terminal.pError(it)
+            echo()
+            return@runBlocking
+        }
 
         importedProjects.map { projectIn ->
             launch {

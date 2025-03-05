@@ -1,6 +1,11 @@
 package teksturepako.pakku.api.models.cf
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.getOrElse
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.platforms.CurseForge
@@ -40,13 +45,17 @@ data class CfModpackModel(
 
     override suspend fun toSetOfProjects(
         lockFile: LockFile, platforms: List<Platform>
-    ): Set<Project>
+    ): Result<Set<Project>, ActionError>
     {
         val projects = CurseForge.requestMultipleProjects(this.files.map { it.projectID.toString() })
-        val projectFiles = CurseForge.requestMultipleProjectFiles(lockFile.getMcVersions(),
+            .getOrElse { return Err(it) }
+
+        val projectFiles = CurseForge.requestMultipleProjectFiles(
+            lockFile.getMcVersions(),
             lockFile.getLoaders(),
             projects.mapNotNull { project -> project.slug[CurseForge.serialName]?.let { it to project.type } }.toMap(),
-            this.files.map { it.fileID.toString() })
+            this.files.map { it.fileID.toString() }
+        ).getOrElse { return Err(it) }
 
         projects.assignFiles(projectFiles, CurseForge)
 
@@ -61,11 +70,11 @@ data class CfModpackModel(
 
             val mrProjects = Modrinth.requestMultipleProjectsWithFiles(
                 lockFile.getMcVersions(), lockFile.getLoaders(), slugs, 1
-            )
+            ).getOrElse { return Err(it) }
 
-            projects.combineWith(mrProjects)
+            Ok(projects.combineWith(mrProjects))
         }
-        else projects
+        else Ok(projects)
     }
 
     override suspend fun toLockFile() = LockFile(
