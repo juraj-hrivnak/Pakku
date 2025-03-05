@@ -7,7 +7,7 @@ object CliThemes
     /** Default theme for Pakku that extends the Mordant default theme. */
     val Default: Theme = Theme(Theme.Default) {
         strings["pakku.prefix"] = "❯❯❯"
-        strings["pakku.warning_sign"] = "⚠"
+        strings["pakku.warning_sign"] = "⚠\uFE0F"
 
         strings["pakku.update_strategy.latest"] = "^"
         strings["pakku.update_strategy.same_latest"] = "★^"
