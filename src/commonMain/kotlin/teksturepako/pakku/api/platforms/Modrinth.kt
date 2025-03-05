@@ -182,11 +182,11 @@ object Modrinth : Platform(
     override suspend fun requestMultipleProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
     ): Result<MutableSet<ProjectFile>, ActionError> = coroutineScope {
-        val loadersWithType = (when
+        val loadersWithType = when
         {
             projectIdsToTypes.values.any { it == ProjectType.DATA_PACK } -> listOf(DATAPACK_LOADER)
             else                                                         -> listOf()
-        }) + loaders
+        } + loaders
 
         // Chunk requests if there are too many ids; Also do this in parallel
         val files = ids.chunked(1_000).map { list ->
