@@ -8,12 +8,11 @@
 - Implemented the `pakku remote` command and subcommands. It works in the following way:
   1. `pakku remote` without any arguments will show you the status of the remote.
   2. `pakku remote <url>` will install the remote from the provided `<url>`.
-     - A remote modpack can only be installed on a modpack with a non-initialized Pakku dev environment.
+     - A remote modpack can only be installed in directory with non-initialized Pakku dev environment.
   3. `pakku remote update` will update the modpack from the remote.
   4. `pakku remote rm` will remove the remote from your modpack.
 - Fixed system output encoding on Windows systems to properly handle UTF-8 characters.
   - If Pakku fails to enable the UTF-8 encoding in your console, the `ASCII` theme will be used.
-- Implemented better error handling for the export action.
 - Added support for additional representations of hash algorithm names.
   - For example: "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
 
@@ -36,6 +35,7 @@ Under the hood, Pakku uses JGit and remains compatible with Java 8
   - Prefix "`!`", which negates the pattern, will now exclude any matching file included by a _previous pattern_, not all patterns as it worked before.
 - Refactored the `LockFile` to use the `kotlin-result` monad.
 - Refactored action error messages to use the new `message()` function.
+- Implemented better error handling for the export action.
 
 ## v0.26.0
 

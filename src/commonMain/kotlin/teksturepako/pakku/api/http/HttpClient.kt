@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 import teksturepako.pakku.api.PakkuApi
 import kotlin.time.toJavaDuration
 
-val client = HttpClient(OkHttp) {
+val pakkuClient = HttpClient(OkHttp) {
     install(ContentNegotiation) {
         Json
     }
@@ -35,3 +35,4 @@ val client = HttpClient(OkHttp) {
         }
     }
 }
+

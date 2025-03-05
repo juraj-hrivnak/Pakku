@@ -8,11 +8,9 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.http.client
+import teksturepako.pakku.api.http.pakkuClient
 import teksturepako.pakku.api.pakku
 import teksturepako.pakku.api.platforms.CURSEFORGE_API_KEY
-import teksturepako.pakku.api.platforms.CurseForge
-import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.cli.cmd.*
 import teksturepako.pakku.cli.cmd.Set
 import teksturepako.pakku.cli.fixSystemOutEncoding
@@ -44,13 +42,8 @@ fun main(args: Array<String>)
         Diff(), Remote()
     ).main(args)
 
-    // Check Modrinth's rate limit
-    Modrinth.checkRateLimit()
-
-    debug { CurseForge.checkApiKey() }
-
     debug { println("Program arguments: ${args.joinToString()}") }
 
-    client.close()
+    pakkuClient.close()
     exitProcess(0)
 }

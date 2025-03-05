@@ -1,9 +1,14 @@
 package teksturepako.pakku.api.models.mr
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.platforms.CurseForge
@@ -42,11 +47,11 @@ data class MrModpackModel(
 
     override suspend fun toSetOfProjects(
         lockFile: LockFile, platforms: List<Platform>
-    ): Set<Project>
+    ): Result<Set<Project>, ActionError>
     {
         val projects = Modrinth.requestMultipleProjectsWithFilesFromHashes(
             this.files.map { it.hashes.sha1 }, "sha1"
-        )
+        ).getOrElse { return Err(it) }
 
         // CurseForge
         return if (CurseForge in platforms)
@@ -60,18 +65,23 @@ data class MrModpackModel(
 
                 val cfProjects = projectToSlugs.map { (project, slug) ->
                     async {
-                        CurseForge.requestProjectFromSlug(slug)?.apply {
-                            files += CurseForge.requestFilesForProject(
-                                lockFile.getMcVersions(), lockFile.getLoaders(), this, projectType = project.type
-                            )
-                        }
+                        Ok(CurseForge.requestProjectFromSlug(slug)
+                            .getOrElse { return@async Err(it) }
+                            .apply {
+                                files += CurseForge.requestFilesForProject(
+                                    lockFile.getMcVersions(), lockFile.getLoaders(), this, projectType = project.type
+                                ).getOrElse { return@async Err(it) }
+                            }
+                        )
                     }
-                }.awaitAll().filterNotNull()
+                }.awaitAll().map { result ->
+                    result.getOrElse { return@runBlocking Err(it) }
+                }
 
-                projects.combineWith(cfProjects).debug { println(it.map { p -> p.slug }) }
+                Ok(projects.combineWith(cfProjects))
             }
         }
-        else projects
+        else Ok(projects)
     }
 
     override suspend fun toLockFile() = LockFile(

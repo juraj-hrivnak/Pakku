@@ -1,18 +1,19 @@
 package teksturepako.pakku.api.platforms
 
+import com.github.michaelbull.result.*
 import kotlinx.datetime.Instant
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.decode
 import teksturepako.pakku.api.PakkuApi
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.http.requestBody
+import teksturepako.pakku.api.http.tryRequest
 import teksturepako.pakku.api.models.cf.*
-import teksturepako.pakku.api.projects.Project
-import teksturepako.pakku.api.projects.ProjectFile
-import teksturepako.pakku.api.projects.ProjectType
-import teksturepako.pakku.api.projects.assignFiles
+import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfEmpty
 import teksturepako.pakku.io.toMurmur2
@@ -42,43 +43,25 @@ object CurseForge : Platform(
 
     private const val API_KEY_HEADER = "x-api-key"
 
-    private val apiKey: String? = PakkuApi.curseForgeApiKey?.takeIf { it.isNotBlank() }
+    private val apiKeyHeader = PakkuApi.curseForgeApiKey?.takeIf { it.isNotBlank() }?.let { API_KEY_HEADER to it }
 
-    fun checkApiKey()
-    {
-        if (apiKey != null) println("CurseForge: Using embedded API key.")
-    }
+    override suspend fun requestProjectBody(input: String): Result<String, ActionError> =
+        requestBody("${this.getCommonRequestUrl()}/$input", apiKeyHeader)
 
-    override fun getCommonRequestUrl(apiUrl: String, apiVersion: Int): String
-    {
-        // In dev environment
-        return if (apiKey == null) super.getCommonRequestUrl("https://cfproxy.bmpm.workers.dev", apiVersion)
-        else super.getCommonRequestUrl(apiUrl, apiVersion)
-    }
-
-    override suspend fun requestBody(url: String): String?
-    {
-        return if (apiKey == null) super.requestBody(url)
-        else super.requestBody(url, Pair(API_KEY_HEADER, apiKey))
-    }
-
-    override suspend fun requestBody(url: String, bodyContent: () -> String): String?
-    {
-        return if (apiKey == null) super.requestBody(url, bodyContent)
-        else super.requestBody(url, bodyContent, Pair(API_KEY_HEADER, apiKey))
-    }
+    override suspend fun requestProjectBody(input: String, bodyContent: () -> String): Result<String, ActionError> =
+        requestBody("${this.getCommonRequestUrl()}/$input", bodyContent, apiKeyHeader)
 
     // -- PROJECT --
 
-    override suspend fun requestProject(input: String, projectType: ProjectType?): Project? = when
+    override suspend fun requestProject(input: String, projectType: ProjectType?): Result<Project, ActionError> = when
     {
         input.matches("[0-9]{5,7}".toRegex()) -> requestProjectFromId(input)
         else                                  -> requestProjectFromSlug(input)
-    }.also { project -> projectType?.let { project?.type = it } }
+    }.also { project -> projectType?.let { project.get()?.type = it } }
 
-    private fun CfModModel.toProject(): Project?
+    private fun CfModModel.toProject(): Result<Project, ActionError>
     {
-        return Project(
+        return Ok(Project(
             name = mutableMapOf(serialName to name),
             slug = mutableMapOf(serialName to slug),
             type = when (classId)
@@ -89,36 +72,46 @@ object CurseForge : Platform(
                 6552 -> ProjectType.SHADER
                 6945 -> ProjectType.DATA_PACK
 
-                else -> return null.also { println("$slug: Project type $classId from CurseForge isn't supported") }
+                else -> return Err(ProjectTypeNotSupported(slug, classId.toString()))
             },
             id = mutableMapOf(serialName to id.toString()),
             redistributable = allowModDistribution ?: isAvailable,
             files = mutableSetOf(),
-        )
+        ))
     }
 
-    suspend fun requestProjectFromId(id: String): Project?
-    {
-        return json.decodeFromString<GetProjectResponse>(
-            this.requestProjectBody("mods/$id") ?: return null
-        ).data.toProject()
+    suspend fun requestProjectFromId(id: String): Result<Project, ActionError> = tryRequest {
+
+        val responseString = this.requestProjectBody("mods/$id")
+            .getOrElse { return Err(it) }
+
+        val project = json.decodeFromString<GetProjectResponse>(responseString).data.toProject()
+            .getOrElse { return Err(it) }
+
+        return Ok(project)
     }
 
-    suspend fun requestProjectFromSlug(slug: String): Project?
-    {
-        return json.decodeFromString<SearchProjectResponse>(
-            this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug")
-                ?: return null
-        ).data.firstOrNull()?.toProject()
+    suspend fun requestProjectFromSlug(slug: String): Result<Project, ActionError> = tryRequest {
+
+        val responseString = this.requestProjectBody("mods/search?gameId=432&pageSize=1&sortField=6&sortOrder=desc&slug=$slug")
+            .getOrElse { return Err(it) }
+
+        val project = json.decodeFromString<SearchProjectResponse>(responseString).data.firstOrNull()?.toProject()
+            ?.getOrElse { return Err(it) } ?: return Err(ProjNotFound())
+
+        return Ok(project)
     }
 
-    override suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
+    override suspend fun requestMultipleProjects(ids: List<String>): Result<MutableSet<Project>, ActionError>
     {
-        return json.decodeFromString<GetMultipleProjectsResponse>(
-            this.requestProjectBody("mods") {
-                Json.encodeToString(MultipleProjectsRequest(ids.map(String::toInt)))
-            } ?: return mutableSetOf()
-        ).data.mapNotNull { it.toProject() }.toMutableSet()
+        val responseString = this.requestProjectBody("mods") {
+            Json.encodeToString(MultipleProjectsRequest(ids.map(String::toInt)))
+        }.getOrElse { return Err(it) }
+
+        val projects = json.decodeFromString<GetMultipleProjectsResponse>(responseString).data
+            .mapNotNull { it.toProject().get() }.toMutableSet()
+
+        return Ok(projects)
     }
 
     // -- FILES --
@@ -183,7 +176,7 @@ object CurseForge : Platform(
 
     override suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?, projectType: ProjectType?
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
     {
         // Handle optional fileId
         val fileIdSuffix = if (fileId == null) "" else "/$fileId"
@@ -201,12 +194,11 @@ object CurseForge : Platform(
         // Handle loaders
         requestUrl += "&modLoaderTypes=${loaders.joinToString(",")}"
 
-        return if (fileId == null)
+        return if (fileId == null) // Multiple files
         {
-            // Multiple files
-            json.decodeFromString<GetMultipleFilesResponse>(
-                this.requestProjectBody(requestUrl) ?: return mutableSetOf()
-            ).data
+            val responseString = this.requestProjectBody(requestUrl).getOrElse { return Err(it) }
+
+            val files = json.decodeFromString<GetMultipleFilesResponse>(responseString).data
                 .filterFileModels(mcVersions, loaders)
                 .sortedWith(compareBy(compareByLoaders(loaders)))
                 .map { it.toProjectFile(gameVersionTypeIds) }
@@ -214,32 +206,35 @@ object CurseForge : Platform(
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
                 }
                 .toMutableSet()
+
+            Ok(files)
         }
-        else
+        else // One file
         {
-            // One file
-            mutableSetOf(
-                json.decodeFromString<GetFileResponse>(
-                    this.requestProjectBody(requestUrl) ?: return mutableSetOf()
-                ).data.toProjectFile(gameVersionTypeIds)
+            val responseString = this.requestProjectBody(requestUrl).getOrElse { return Err(it) }
+
+            val files = mutableSetOf(
+                json.decodeFromString<GetFileResponse>(responseString).data.toProjectFile(gameVersionTypeIds)
             )
+
+            Ok(files)
         }
     }
 
     override suspend fun requestMultipleProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
     {
         // Handle mcVersions
         val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
             requestGameVersionTypeId(version)
         }
 
-        return json.decodeFromString<GetMultipleFilesResponse>(
-            this.requestProjectBody("mods/files") {
-                Json.encodeToString(MultipleFilesRequest(ids.map(String::toInt)))
-            } ?: return mutableSetOf()
-        ).data
+        val responseString = this.requestProjectBody("mods/files") {
+            Json.encodeToString(MultipleFilesRequest(ids.map(String::toInt)))
+        }.getOrElse { return Err(it) }
+
+        val files = json.decodeFromString<GetMultipleFilesResponse>(responseString).data
             .filterFileModels(mcVersions, loaders)
             .sortedWith(compareByDescending<CfModModel.File> { Instant.parse(it.fileDate) }.thenBy(compareByLoaders(loaders)))
             .map { it.toProjectFile(gameVersionTypeIds) }
@@ -247,33 +242,37 @@ object CurseForge : Platform(
                 println("${this::class.simpleName}#requestMultipleProjectFiles: file is null")
             }
             .toMutableSet()
+
+        return Ok(files)
     }
 
     override suspend fun requestMultipleProjectsWithFiles(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, numberOfFiles: Int
-    ): MutableSet<Project>
+    ): Result<MutableSet<Project>, ActionError>
     {
-        val response = json.decodeFromString<GetMultipleProjectsResponse>(
-            this.requestProjectBody("mods") {
-                Json.encodeToString(MultipleProjectsRequest(projectIdsToTypes.keys.map(String::toInt)))
-            } ?: return mutableSetOf()
-        ).data
+        val responseString = this.requestProjectBody("mods") {
+            Json.encodeToString(MultipleProjectsRequest(projectIdsToTypes.keys.map(String::toInt)))
+        }.getOrElse { return Err(it) }
+
+        val response = json.decodeFromString<GetMultipleProjectsResponse>(responseString).data
 
         val fileIds = response.flatMap { model ->
             model.latestFilesIndexes.map { it.fileId.toString() }
         }
 
         val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectIdsToTypes, fileIds)
-        val projects = response.mapNotNull { it.toProject() }
+            .getOrElse { return Err(it) }
+
+        val projects = response.mapNotNull { it.toProject().get() }
 
         projects.assignFiles(projectFiles, this)
 
-        return projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet()
+        return Ok(projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet())
     }
 
     suspend fun requestMultipleProjectsWithFilesFromBytes(
         mcVersions: List<String>, bytes: List<ByteArray>
-    ): MutableSet<Project>
+    ): Result<MutableSet<Project>, ActionError>
     {
         // Handle mcVersions
         val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
@@ -282,26 +281,28 @@ object CurseForge : Platform(
 
         val murmurs = bytes.map { it.toMurmur2() }
 
-        val response = json.decodeFromString<GetFingerprintsMatchesResponse>(
-            this.requestProjectBody("fingerprints/432") {
-                Json.encodeToString(GetFingerprintsMatches(murmurs))
-            } ?: return mutableSetOf()
-        ).data.exactMatches
+        val responseString = this.requestProjectBody("fingerprints/432") {
+            Json.encodeToString(GetFingerprintsMatches(murmurs))
+        }.getOrElse { return Err(it) }
+
+        val response = json.decodeFromString<GetFingerprintsMatchesResponse>(responseString).data.exactMatches
 
         val projectFiles = response
             .filter { it.file.isAvailable }
             .map { match -> match.file.toProjectFile(gameVersionTypeIds) }
         val projectIds = projectFiles.map { it.parentId }
+
         val projects = requestMultipleProjects(projectIds)
+            .getOrElse { return Err(it) }
 
         projects.assignFiles(projectFiles, this)
 
-        return projects
+        return Ok(projects)
     }
 
     suspend fun requestMultipleProjectFilesFromBytes(
         mcVersions: List<String>, bytes: List<ByteArray>
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
     {
         // Handle mcVersions
         val gameVersionTypeIds = mcVersions.mapNotNull { version: String ->
@@ -310,20 +311,20 @@ object CurseForge : Platform(
 
         val murmurs = bytes.map { it.toMurmur2() }
 
-        return json.decodeFromString<GetFingerprintsMatchesResponse>(
-            this.requestProjectBody("fingerprints/432") {
-                Json.encodeToString(GetFingerprintsMatches(murmurs))
-            } ?: return mutableSetOf()
-        ).data.exactMatches
+        val responseString = this.requestProjectBody("fingerprints/432") {
+            Json.encodeToString(GetFingerprintsMatches(murmurs))
+        }.getOrElse { return Err(it) }
+
+        return Ok(json.decodeFromString<GetFingerprintsMatchesResponse>(responseString).data.exactMatches
             .filter { it.file.isAvailable }
             .map { match -> match.file.toProjectFile(gameVersionTypeIds) }
-            .toMutableSet()
+            .toMutableSet())
     }
 
     suspend fun requestGameVersionTypeId(mcVersion: String): Int?
     {
         return json.decodeFromString<JsonObject>(
-            this.requestProjectBody("minecraft/version/$mcVersion") ?: return null
+            this.requestProjectBody("minecraft/version/$mcVersion").get() ?: return null
         )["data"]!!.jsonObject["gameVersionTypeId"].toString().toInt()
             .debug { println("${this::class.simpleName}#requestGameVersionTypeId: $it") }
     }

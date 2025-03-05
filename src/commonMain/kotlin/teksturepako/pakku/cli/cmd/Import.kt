@@ -16,7 +16,6 @@ import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.errors.AlreadyAdded
 import teksturepako.pakku.api.actions.import.importModpackModel
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
@@ -53,7 +52,11 @@ class Import : CliktCommand()
             return@runBlocking
         }
 
-        val importedProjects = modpackModel.toSetOfProjects(lockFile, platforms)
+        val importedProjects = modpackModel.toSetOfProjects(lockFile, platforms).getOrElse {
+            terminal.pError(it)
+            echo()
+            return@runBlocking
+        }
 
         importedProjects.map { projectIn ->
             launch {
@@ -83,7 +86,6 @@ class Import : CliktCommand()
                         }
 
                         terminal.pSuccess("${project.getFullMsg()} ${promptMessage.second}")
-                        Modrinth.checkRateLimit()
                     },
                     lockFile, platforms
                 )

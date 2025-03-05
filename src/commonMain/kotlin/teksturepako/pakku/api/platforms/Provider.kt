@@ -1,5 +1,7 @@
 package teksturepako.pakku.api.platforms
 
+import com.github.michaelbull.result.Result
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectType
 
@@ -28,7 +30,7 @@ interface Provider
     val siteUrl: String?
 
     /** Requests a [project][Project] based on provided [input]. */
-    suspend fun requestProject(input: String, projectType: ProjectType? = null): Project?
+    suspend fun requestProject(input: String, projectType: ProjectType? = null): Result<Project, ActionError>
 
     /**
      * Requests project with files for specified combinations of Minecraft versions and mod loaders.
@@ -47,5 +49,5 @@ interface Provider
         fileId: String? = null,
         numberOfFiles: Int = 1,
         projectType: ProjectType? = null
-    ): Project?
+    ): Result<Project, ActionError>
 }
