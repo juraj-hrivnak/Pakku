@@ -132,7 +132,8 @@ data class ConfigFile(
         @SerialName("update_strategy") var updateStrategy: UpdateStrategy? = null,
         @SerialName("redistributable") var redistributable: Boolean? = null,
         var subpath: String? = null,
-        var aliases: MutableSet<String>? = null
+        var aliases: MutableSet<String>? = null,
+        var export: Boolean? = null
     )
 
     fun setProjectConfig(

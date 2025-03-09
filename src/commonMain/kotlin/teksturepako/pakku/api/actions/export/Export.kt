@@ -273,12 +273,16 @@ suspend fun List<ExportRule>.produceRuleResults(
 ): List<RuleResult> = coroutineScope {
 
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
-        acc + lockFile.getAllProjects().map {
-            rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
+        acc + lockFile.getAllProjects().mapNotNull { project ->
+            // Projects
+            if (project.export == false) return@mapNotNull null
+            rule to RuleContext.ExportingProject(project, lockFile, configFile, workingSubDir)
         } + overrides.awaitAll().map { (overridePath, overrideType) ->
+            // Overrides
             rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir)
-        } + readProjectOverrides(configFile).map {
-            rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
+        } + readProjectOverrides(configFile).map { projectOverride ->
+            // Project overrides
+            rule to RuleContext.ExportingProjectOverride(projectOverride, lockFile, configFile, workingSubDir)
         }
     }.map { (exportRule, ruleContext) ->
         exportRule.getResult(ruleContext)

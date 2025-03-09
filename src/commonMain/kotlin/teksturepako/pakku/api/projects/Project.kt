@@ -41,6 +41,7 @@ data class Project(
 
     private var subpath: String? = null,
     var aliases: MutableSet<String>? = null,
+    var export: Boolean? = null,
 
     var files: MutableSet<ProjectFile>,
 )
@@ -80,6 +81,12 @@ data class Project(
 
                 subpath = this.subpath ?: other.subpath,
                 aliases = this.aliases?.plus(other.aliases ?: emptySet())?.toMutableSet() ?: other.aliases,
+                export = when
+                {
+                    this.export != null -> this.export
+                    this.export != null -> other.export
+                    else                -> null
+                },
 
                 files = (this.files + other.files).toMutableSet(),
             )
@@ -222,6 +229,7 @@ data class Project(
                 config.redistributable?.let { this.redistributable = it }
                 config.subpath?.let { this.subpath = it }
                 config.aliases?.let { this.aliases = it }
+                config.export?.let { this.export = it }
             }
         }
 
