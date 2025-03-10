@@ -33,7 +33,7 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
 
                 it.addToMrModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
             }
-            is ExportingOverride        -> it.copy()
+            is ExportingOverride        -> it.export()
             is ExportingProjectOverride -> it.export()
             is Finished                 ->
             {

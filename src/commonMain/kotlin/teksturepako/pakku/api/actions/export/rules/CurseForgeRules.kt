@@ -39,8 +39,14 @@ fun ExportRuleScope.cfModpackRule(): ExportRule
 
                 it.addToCfModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
             }
-            is ExportingOverride        -> it.copy(overridesDir = OverrideType.OVERRIDE.folderName)
-            is ExportingProjectOverride -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
+            is ExportingOverride        -> it.export(
+                overridesDir = OverrideType.OVERRIDE.folderName,
+                allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
+            )
+            is ExportingProjectOverride -> it.export(
+                overridesDir = OverrideType.OVERRIDE.folderName,
+                allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
+            )
             is Finished                 ->
             {
                 it.createJsonFile(modpackModel, CfModpackModel.MANIFEST, format = jsonEncodeDefaults)

@@ -148,8 +148,13 @@ sealed class RuleContext(
         override val workingSubDir: String
     ) : RuleContext(workingSubDir, lockFile, configFile)
     {
-        fun copy(overridesDir: String? = type.folderName): RuleResult
+        fun export(
+            overridesDir: String? = type.folderName,
+            allowedTypes: Set<OverrideType>? = null
+        ): RuleResult
         {
+            if (allowedTypes != null && type !in allowedTypes) return ignore()
+
             val inputPath = Path(workingPath, path)
             val outputPath = overridesDir?.let { getPath(it, path) } ?: getPath(path)
 
@@ -169,8 +174,13 @@ sealed class RuleContext(
         override val workingSubDir: String
     ) : RuleContext(workingSubDir, lockFile, configFile)
     {
-        fun export(overridesDir: String? = projectOverride.type.folderName): RuleResult
+        fun export(
+            overridesDir: String? = projectOverride.type.folderName,
+            allowedTypes: Set<OverrideType>? = null
+        ): RuleResult
         {
+            if (allowedTypes != null && projectOverride.type !in allowedTypes) return ignore()
+
             val outputPath = overridesDir
                 ?.let { getPath(it, projectOverride.relativeOutputPath.pathString) }
                 ?: getPath(projectOverride.relativeOutputPath.pathString)
