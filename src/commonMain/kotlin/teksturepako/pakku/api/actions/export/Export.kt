@@ -269,24 +269,17 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
  * [RuleContext.MissingProject] and [RuleContext.Finished] are applied last.
  */
 suspend fun List<ExportRule>.produceRuleResults(
-    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String, overrides: OverridesDeferred?
+    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String, overrides: OverridesDeferred
 ): List<RuleResult> = coroutineScope {
-
-    suspend fun List<Pair<ExportRule, RuleContext>>.optionalAdd(
-        action: suspend () -> List<Pair<ExportRule, RuleContext>>?,
-    ): List<Pair<ExportRule, RuleContext>> = action() ?: this
 
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().mapNotNull { project ->
             // Projects
             if (project.export == false) return@mapNotNull null
             rule to RuleContext.ExportingProject(project, lockFile, configFile, workingSubDir)
-
-        }.optionalAdd {
-            overrides?.awaitAll()?.map { (overridePath, overrideType) ->
-                // Overrides
-                rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir)
-            }
+        } + overrides.awaitAll().map { (overridePath, overrideType) ->
+            // Overrides
+            rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir)
         } + readProjectOverrides(configFile).map { projectOverride ->
             // Project overrides
             rule to RuleContext.ExportingProjectOverride(projectOverride, lockFile, configFile, workingSubDir)
