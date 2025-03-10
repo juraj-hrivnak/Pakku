@@ -17,6 +17,8 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.errors.AlreadyExists
+import teksturepako.pakku.api.actions.fetch.DeletionActionType
+import teksturepako.pakku.api.actions.fetch.deleteOldFiles
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
 import teksturepako.pakku.api.actions.remote.remoteUpdate
@@ -24,7 +26,9 @@ import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.readProjectOverridesFrom
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
 import kotlin.io.path.Path
@@ -92,6 +96,7 @@ class RemoteUpdate : CliktCommand("update")
                     onSync = {
                         terminal.pSuccess(it.description)
                     },
+                    if (args.serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
                 )
             }
 
@@ -119,6 +124,12 @@ class RemoteUpdate : CliktCommand("update")
                     return@x
                 }
 
+            val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
+                terminal.pError(it)
+                echo()
+                return@x
+            }
+
             val configFile = if (ConfigFile.existsAt(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME)))
             {
                 ConfigFile.readToResultFrom(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME))
@@ -130,7 +141,10 @@ class RemoteUpdate : CliktCommand("update")
             }
             else null
 
-            val projectFiles = retrieveProjectFiles(lockFile, Provider.providers).mapNotNull { result ->
+            val projectFiles = retrieveProjectFiles(
+                lockFile, Provider.providers,
+                if (args.serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
+            ).mapNotNull { result ->
                 result.getOrElse {
                     terminal.pError(it)
                     null
@@ -167,7 +181,10 @@ class RemoteUpdate : CliktCommand("update")
 
             // -- OVERRIDES --
 
-            val projectOverrides = readProjectOverridesFrom(Dirs.remoteDir, configFile)
+            val projectOverrides = readProjectOverridesFrom(
+                Dirs.remoteDir, configFile,
+                if (args.serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
+            )
 
             val syncJob = launch {
                 projectOverrides.sync(
@@ -177,6 +194,28 @@ class RemoteUpdate : CliktCommand("update")
                     onSuccess = { projectOverride ->
                         terminal.pInfo("${projectOverride.fullOutputPath} synced")
                     }
+                )
+            }
+
+            // -- OLD FILES --
+
+            val oldFilesJob = launch {
+                deleteOldFiles(
+                    onError = { error ->
+                        terminal.pError(error)
+                    },
+                    onSuccess = { file, actionType ->
+                        when (actionType)
+                        {
+                            DeletionActionType.DELETE -> terminal.pDanger("$file ${actionType.result}")
+                            DeletionActionType.SHELF  ->
+                            {
+                                val shelvedPath = Path(Dirs.shelfDir.pathString, file.fileName.pathString)
+                                terminal.pInfo("$file ${actionType.result} to $shelvedPath")
+                            }
+                        }
+                    },
+                    projectFiles, projectOverrides, lockFile, configFile, platforms,
                 )
             }
 
@@ -196,6 +235,7 @@ class RemoteUpdate : CliktCommand("update")
             }.join()
 
             syncJob.join()
+            oldFilesJob.join()
 
             echo()
         }

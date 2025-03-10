@@ -43,7 +43,7 @@ class MultipleErrors(vararg val errors: ActionError) : ActionError()
     override fun message(arg: String): String = errors.joinToString("\n") { it.message(arg) }
 }
 
-fun Collection<ActionError?>.toMultipleError(): MultipleErrors? = this
+fun Collection<ActionError?>.toMultipleErrors(): MultipleErrors? = this
     .filterNotNull()
     .ifEmpty { null }
     ?.toTypedArray()

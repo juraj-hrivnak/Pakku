@@ -10,6 +10,7 @@ import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.http.requestByteArray
+import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.ProjectFile
 import java.nio.file.Path
@@ -19,8 +20,11 @@ import kotlin.io.path.writeBytes
 
 fun retrieveProjectFiles(
     lockFile: LockFile,
-    providers: List<Provider>
-) : List<Result<ProjectFile, ActionError>> = lockFile.getAllProjects().map { project ->
+    providers: List<Provider>,
+    allowedTypes: Set<OverrideType>? = null,
+) : List<Result<ProjectFile, ActionError>> = lockFile.getAllProjects().mapNotNull { project ->
+    if (allowedTypes != null && OverrideType.fromProject(project) !in allowedTypes) return@mapNotNull null
+
     val file = project.getLatestFile(providers)
 
     if (file == null) Err(NoFiles(project, lockFile)) else Ok(file)

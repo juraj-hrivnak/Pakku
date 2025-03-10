@@ -4,6 +4,7 @@ import com.github.michaelbull.result.getOrElse
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.debug
 import teksturepako.pakku.integration.git.gitStatus
 import teksturepako.pakku.integration.git.gitUpdate
@@ -13,6 +14,7 @@ import kotlin.io.path.exists
 suspend fun remoteUpdate(
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
     onSync: suspend (FileAction) -> Unit,
+    allowedTypes: Set<OverrideType>?,
 ): ActionError?
 {
     if (LockFile.exists()) return CanNotInstallRemote()
@@ -30,7 +32,7 @@ suspend fun remoteUpdate(
 
     debug { println("syncing overrides") }
 
-    syncRemoteDirectory(onSync)
+    syncRemoteDirectory(onSync, allowedTypes)
         ?.onError { return it }
 
     return null

@@ -5,6 +5,7 @@ import teksturepako.pakku.api.actions.errors.FileNotFound
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.cli.ui.hint
 import teksturepako.pakku.debug
 import teksturepako.pakku.integration.git.gitClone
@@ -17,6 +18,7 @@ suspend fun remoteInstall(
     onSync: suspend (FileAction) -> Unit,
     remoteUrl: String,
     branch: String? = null,
+    allowedTypes: Set<OverrideType>?,
 ): ActionError?
 {
     if (!modpackDirIsEmpty() || LockFile.exists()) return CanNotInstallRemote(remoteUrl)
@@ -26,7 +28,7 @@ suspend fun remoteInstall(
     {
         remoteUrl.endsWith(".git") || remoteUrl.contains("github.com") ->
         {
-            handleGit(remoteUrl, branch, onProgress, onSync)
+            handleGit(remoteUrl, branch, allowedTypes, onProgress, onSync)
         }
         else -> InvalidUrl(remoteUrl)
     }
@@ -51,6 +53,7 @@ data class InvalidUrl(val url: String): ActionError()
 private suspend fun handleGit(
     uri: String,
     branch: String?,
+    allowedTypes: Set<OverrideType>?,
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
     onSync: suspend (FileAction) -> Unit,
 ): ActionError?
@@ -69,7 +72,7 @@ private suspend fun handleGit(
         return FileNotFound(Path(Dirs.remoteDir.pathString, LockFile.FILE_NAME).pathString)
     }
 
-    syncRemoteDirectory(onSync)
+    syncRemoteDirectory(onSync, allowedTypes)
         ?.onError { return it }
 
     return null

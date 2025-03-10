@@ -15,10 +15,16 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
-suspend fun readProjectOverrides(configFile: ConfigFile?): Set<ProjectOverride> =
-    readProjectOverridesFrom(Path(workingPath), configFile)
+suspend fun readProjectOverrides(
+    configFile: ConfigFile?,
+    allowedTypes: Set<OverrideType>? = null,
+): Set<ProjectOverride> = readProjectOverridesFrom(Path(workingPath), configFile, allowedTypes)
 
-suspend fun readProjectOverridesFrom(path: Path, configFile: ConfigFile?): Set<ProjectOverride> = OverrideType.entries
+suspend fun readProjectOverridesFrom(
+    path: Path,
+    configFile: ConfigFile?,
+    allowedTypes: Set<OverrideType>? = null,
+): Set<ProjectOverride> = (allowedTypes ?: OverrideType.entries)
     .flatMap { ovType ->
         ProjectType.entries.map { projType ->
             Path(path.pathString, PAKKU_DIR, ovType.folderName, projType.getPathString(configFile))

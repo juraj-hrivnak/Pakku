@@ -51,9 +51,7 @@ suspend fun deleteOldFiles(
 
                     val path = projectFile.getPath(parentProject, configFile)
 
-                    readPathBytesToResult(path)
-                        .onFailure { onError(it) }
-                        .get()?.let { path to it }
+                    readPathBytesToResult(path).get()?.let { path to it }
                 }
             }
             .awaitAll()
@@ -132,7 +130,7 @@ suspend fun deleteOldFiles(
                 path.tryToResult {
                     Dirs.shelfDir.createDirectories()
                     val newFile = Path(Dirs.shelfDir.pathString, it.fileName.pathString)
-                    it.moveTo(newFile)
+                    moveTo(newFile)
                 }.onSuccess {
                     onSuccess(path, DeletionActionType.SHELF)
                 }.onFailure { error ->
@@ -142,7 +140,7 @@ suspend fun deleteOldFiles(
             else
             {
                 path.tryToResult {
-                    it.deleteIfExists()
+                    deleteIfExists()
                 }.onSuccess {
                     onSuccess(path, DeletionActionType.DELETE)
                 }.onFailure { error ->

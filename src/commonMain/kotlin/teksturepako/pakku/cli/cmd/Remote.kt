@@ -4,10 +4,7 @@ import com.github.ajalt.clikt.core.*
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.arguments.optional
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.help
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.optionalValue
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.MultiProgressBarAnimation
@@ -30,6 +27,7 @@ import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.readProjectOverridesFrom
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
@@ -47,7 +45,7 @@ class Remote : CliktCommand()
         .optional()
 
     private val branchOpt: String? by option("-b", "--branch")
-        .help("checkout <branch> instead of the remote's HEAD")
+        .help("Checkout <branch> instead of the remote's HEAD")
 
     private val retryOpt: Int? by option("-r", "--retry", metavar = "<n>")
         .help("Retries downloading when it fails, with optional number of times to retry (Defaults to 2)")
@@ -55,10 +53,15 @@ class Remote : CliktCommand()
         .optionalValue(2)
         .default(0)
 
+    private val serverPackFlag by option("-S", "--server-pack")
+        .help("Install the server pack")
+        .flag()
+
     data class Args(
         val urlArg: String?,
         val branchOpt: String?,
-        val retryOpt: Int?
+        val retryOpt: Int?,
+        val serverPackFlag: Boolean
     )
 
     private val args by findOrSetObject { mutableListOf<Args>() }
@@ -75,7 +78,7 @@ class Remote : CliktCommand()
         coroutineScope {
             // Pass args to the context
             args.clear()
-            args += Args(urlArg, branchOpt, retryOpt)
+            args += Args(urlArg, branchOpt, retryOpt, serverPackFlag)
 
             // Return if any subcommand is used.
             if (currentContext.invokedSubcommands.isNotEmpty()) return@coroutineScope
@@ -132,7 +135,7 @@ class Remote : CliktCommand()
                         onSync = {
                             terminal.pSuccess(it.description)
                         },
-                        url, branch
+                        url, branch, if (serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
                     )
                 }
 
@@ -171,7 +174,10 @@ class Remote : CliktCommand()
                 }
                 else null
 
-                val projectFiles = retrieveProjectFiles(lockFile, Provider.providers).mapNotNull { result ->
+                val projectFiles = retrieveProjectFiles(
+                    lockFile, Provider.providers,
+                    if (serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
+                ).mapNotNull { result ->
                     result.getOrElse {
                         terminal.pError(it)
                         null
@@ -208,7 +214,10 @@ class Remote : CliktCommand()
 
                 // -- OVERRIDES --
 
-                val projectOverrides = readProjectOverridesFrom(Dirs.remoteDir, configFile)
+                val projectOverrides = readProjectOverridesFrom(
+                    Dirs.remoteDir, configFile,
+                    if (serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
+                )
 
                 val syncJob = launch {
                     projectOverrides.sync(
