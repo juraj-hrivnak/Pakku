@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.FetchCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ResetCommand
@@ -19,6 +20,7 @@ data class GitUpdateError(val dir: Path, val reason: String? = null): ActionErro
 
 suspend fun gitUpdate(
     dir: Path,
+    branch: String? = null,
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
 ): ActionError? = coroutineScope {
 
@@ -29,6 +31,14 @@ suspend fun gitUpdate(
     val git = try
     {
         val git = Git.open(dir.toFile())
+
+        if (branch != null)
+        {
+            git.checkout()
+                .setProgressMonitorIfPossible(progressMonitor)
+                .setName(branch)
+                .call()
+        }
 
         git.clean()
             .setForce(true)
@@ -41,7 +51,7 @@ suspend fun gitUpdate(
         git.reset()
             .setProgressMonitorIfPossible(progressMonitor)
             .setMode(ResetCommand.ResetType.HARD)
-            .setRef("origin/${git.repository.branch}")
+            .setRef(git.repository.getRemoteName(git.repository.branch))
             .call()
 
         git
@@ -63,6 +73,9 @@ suspend fun gitUpdate(
 
     return@coroutineScope null
 }
+
+private fun CheckoutCommand.setProgressMonitorIfPossible(progressMonitor: ProgressMonitor?): CheckoutCommand =
+    if (progressMonitor == null) this else this.setProgressMonitor(progressMonitor)
 
 private fun FetchCommand.setProgressMonitorIfPossible(progressMonitor: ProgressMonitor?): FetchCommand =
     if (progressMonitor == null) this else this.setProgressMonitor(progressMonitor)

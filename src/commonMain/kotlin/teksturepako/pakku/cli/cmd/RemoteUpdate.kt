@@ -96,6 +96,7 @@ class RemoteUpdate : CliktCommand("update")
                     onSync = {
                         terminal.pSuccess(it.description)
                     },
+                    args.branchOpt,
                     if (args.serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
                 )
             }

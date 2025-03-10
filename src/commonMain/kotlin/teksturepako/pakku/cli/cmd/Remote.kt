@@ -259,7 +259,7 @@ class Remote : CliktCommand()
                 val (status, repo) = gitStatus(Dirs.remoteDir).get()
                     ?: return@coroutineScope
 
-                terminal.pMsg("On branch ${repo.branch}")
+                echo("On branch ${repo.branch}")
 
                 if (status.isClean)
                 {
@@ -267,7 +267,7 @@ class Remote : CliktCommand()
                 }
                 else
                 {
-                    terminal.pMsg("There are changes in")
+                    terminal.pMsg("There are changes on the remote")
                 }
 
                 echo()
