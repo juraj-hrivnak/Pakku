@@ -25,38 +25,3 @@ Pakku also does not limit you to how many mod loaders or Minecraft versions you 
 ## Prepared for the Future
 
 Pakku is designed to account for the possibility of new platforms to arise if that ever happens.
-
-[//]: # (## Simple Workflow)
-
-[//]: # ()
-[//]: # (Pakku includes many features to make your life easier as a modpack developer, including:)
-
-[//]: # ()
-[//]: # (- Create a new modpack using: [`pakku init`]&#40;pakku-init.md&#41;.)
-
-[//]: # (- Import a modpack using: [`pakku import`]&#40;pakku-import.md&#41;.)
-
-[//]: # (- Choose between CurseForge, Modrinth or Multiplatform target.)
-
-[//]: # (- Add [projects] using: [`pakku add`]&#40;pakku-add.md&#41;.)
-
-[//]: # (    - Dependencies are handled automatically.)
-
-[//]: # (    - Pakku also tries to detect the project side and redistribution permission options.)
-
-[//]: # (- Remove [projects] using: [`pakku rm`]&#40;pakku-rm.md&#41;.)
-
-[//]: # (- Update a [project] or all [projects] using: [`pakku update`]&#40;pakku-update.md&#41;)
-
-[//]: # (or [`pakku update --all`]&#40;pakku-update.md#options&#41;.)
-
-[//]: # (    - Use [`pakku set <project> -u`]&#40;pakku-set.md&#41; to change the update strategy.)
-
-[//]: # (- Prepare your development environment using: [`pakku fetch`]&#40;pakku-fetch.md&#41;.)
-
-[//]: # (- List all [projects] in your modpack using: [`pakku ls`]&#40;pakku-ls.md&#41;.)
-
-[//]: # (- Export the modpack using [`pakku export`]&#40;pakku-export.md&#41;.)
-
-[project]: Pakku-Terminology.md#project
-[projects]: Pakku-Terminology.md#project

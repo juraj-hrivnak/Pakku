@@ -1,16 +1,22 @@
-# pakku export
+# pakku credentials
 
-Export modpack
+Configure credentials
 
 ## Usage
 
 <snippet id="snippet-cmd">
 
-<var name="cmd">export</var>
+<var name="cmd">credentials</var>
 <var name="params">[&lt;options&gt;] </var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
 </snippet>
+
+
+## Subcommands
+
+[`set`](pakku-credentials-set.md)
+: Set a credential
 
 ## Options
 
@@ -18,8 +24,8 @@ Export modpack
 
 <snippet id="snippet-options">
 
-`--show-io-errors`
-: Show file IO error on exporting. (These can be ignored most of the time.)
+`--delete`
+: delete all credentials
 
 </snippet>
 

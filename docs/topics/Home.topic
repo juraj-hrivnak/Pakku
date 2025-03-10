@@ -51,6 +51,8 @@
                 <a href="pakku-link.md"/>
                 <a href="pakku-export.md"/>
                 <a href="pakku-diff.md"/>
+                <a href="pakku-remote.md"/>
+                <a href="pakku-credentials.md"/>
             </cards>
         </misc>
     </section-starting-page>

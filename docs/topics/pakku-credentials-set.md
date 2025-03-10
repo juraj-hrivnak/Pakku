@@ -1,12 +1,12 @@
-# pakku export
+# pakku credentials set
 
-Export modpack
+Set a credential
 
 ## Usage
 
 <snippet id="snippet-cmd">
 
-<var name="cmd">export</var>
+<var name="cmd">credentials set</var>
 <var name="params">[&lt;options&gt;] </var>
 <include from="_template_cmd.md" element-id="template-cmd"/>
 
@@ -18,8 +18,8 @@ Export modpack
 
 <snippet id="snippet-options">
 
-`--show-io-errors`
-: Show file IO error on exporting. (These can be ignored most of the time.)
+`--cf-api-key`, `--curseforge-api-key`
+: the CurseForge API key credential
 
 </snippet>
 

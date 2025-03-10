@@ -57,16 +57,5 @@ If not, install it from [here](https://www.java.com/en/download/).
    {style="note"}
 
 </procedure>
-
-<note>
-Currently, the only option to run Pakku is using Java.
-This requires Java Runtime to be installed on your computer.
-
-It is not possible to release Pakku as native executable
-because there is no library for compression for Kotlin Native.
-If this ever changes in the future, there might be release of Pakku
-as native executable.
-</note>
-
    
 [GitHub releases]: https://github.com/juraj-hrivnak/Pakku/releases/latest
