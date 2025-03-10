@@ -16,8 +16,11 @@ import kotlin.io.path.writeBytes
 suspend fun Set<ProjectOverride>.sync(
     onError: suspend (error: ActionError) -> Unit,
     onSuccess: suspend (projectOverride: ProjectOverride) -> Unit,
+    syncPrimaryDirectories: Boolean = false,
 ): List<Job> = coroutineScope {
-    this@sync.map { projectOverride ->
+    this@sync.mapNotNull { projectOverride ->
+        if (projectOverride.isInPrimaryDirectory && !syncPrimaryDirectories) return@mapNotNull null
+
         launch {
             if (projectOverride.fullOutputPath.exists())
             {
@@ -26,8 +29,8 @@ suspend fun Set<ProjectOverride>.sync(
             }
 
             projectOverride.fullOutputPath.tryToResult {
-                it.createParentDirectories()
-                it.writeBytes(projectOverride.bytes)
+                createParentDirectories()
+                writeBytes(projectOverride.bytes)
             }.onSuccess {
                 onSuccess(projectOverride)
             }.onFailure {

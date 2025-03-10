@@ -194,7 +194,8 @@ class RemoteUpdate : CliktCommand("update")
                     },
                     onSuccess = { projectOverride ->
                         terminal.pInfo("${projectOverride.fullOutputPath} synced")
-                    }
+                    },
+                    syncPrimaryDirectories = true
                 )
             }
 

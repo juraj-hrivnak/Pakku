@@ -226,7 +226,8 @@ class Remote : CliktCommand()
                         },
                         onSuccess = { projectOverride ->
                             terminal.pInfo("${projectOverride.fullOutputPath} synced")
-                        }
+                        },
+                        syncPrimaryDirectories = true
                     )
                 }
 
