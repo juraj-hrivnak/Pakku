@@ -19,6 +19,8 @@ import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
 import com.github.ajalt.mordant.widgets.progress.text
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.fetch.fetch
@@ -91,23 +93,39 @@ class Remote : CliktCommand()
                 }
 
                 val gitProgress = MultiProgressBarAnimation(terminal).animateInCoroutine()
-                val tasks = mutableMapOf<String, ProgressTask<String>>()
+                val tasks = atomic(mutableMapOf<String, ProgressTask<String>>())
 
                 val remoteJob = async {
                     remoteInstall(
                         onProgress = { taskName, percentDone ->
                             val id = taskName?.lowercase()?.filterNot { it.isWhitespace() }
-
-                            if (id != null && id !in tasks.values.map { text ->
-                                text.context.lowercase().filterNot { it.isWhitespace() }
-                            })
+                            if (id != null)
                             {
-                                tasks[id] = gitProgress.addTask(gitProgressLayout, taskName, total = 100)
-                            }
+                                // Start progress animation when first task is added
+                                if (tasks.value.isEmpty()) {
+                                    launch { gitProgress.execute() }
+                                }
 
-                            runBlocking {
-                                tasks[id]?.update {
-                                    this.completed = percentDone.toLong()
+                                // Atomically update tasks map
+                                tasks.update { currentTasks ->
+                                    if (id !in currentTasks)
+                                    {
+                                        currentTasks[id] = gitProgress.addTask(gitProgressLayout, taskName, total = 100)
+                                        currentTasks
+                                    }
+                                    else
+                                    {
+                                        currentTasks
+                                    }
+                                }
+
+                                // Update the task progress
+                                tasks.value[id]?.let { task ->
+                                    runBlocking {
+                                        task.update {
+                                            this.completed = percentDone.toLong()
+                                        }
+                                    }
                                 }
                             }
                         },
@@ -116,10 +134,6 @@ class Remote : CliktCommand()
                         },
                         url, branch
                     )
-                }
-
-                launch {
-                    if (tasks.isNotEmpty()) gitProgress.execute()
                 }
 
                 remoteJob.await()?.onError {

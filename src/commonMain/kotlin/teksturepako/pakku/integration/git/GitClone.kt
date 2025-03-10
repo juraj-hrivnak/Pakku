@@ -39,7 +39,7 @@ suspend fun gitClone(
     }
     catch (e: Exception)
     {
-        debug { e.stackTraceToString() }
+        debug { e.printStackTrace() }
         return@coroutineScope GitCloneError(uri)
     }
     finally

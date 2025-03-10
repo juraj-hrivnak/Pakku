@@ -48,8 +48,8 @@ suspend fun gitUpdate(
     }
     catch (e: Exception)
     {
-        debug { e.stackTraceToString() }
-        return@coroutineScope GitUpdateError(dir, e.stackTraceToString())
+        debug { e.printStackTrace() }
+        return@coroutineScope GitUpdateError(dir)
     }
     finally
     {

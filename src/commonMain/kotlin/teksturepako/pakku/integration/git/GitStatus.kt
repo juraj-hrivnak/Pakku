@@ -30,8 +30,8 @@ suspend fun gitStatus(dir: Path): Result<Pair<Status, Repository>, GitStatusErro
     }
     catch (e: Exception)
     {
-        debug { e.stackTraceToString() }
-        return@coroutineScope Err(GitStatusError(dir, e.stackTraceToString()))
+        debug { e.printStackTrace() }
+        return@coroutineScope Err(GitStatusError(dir))
     }
 
     launch { git.close() }.join()
