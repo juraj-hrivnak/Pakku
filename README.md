@@ -52,22 +52,28 @@ In addition to package management itself, it enables support for version control
 
 **A comprehensive toolkit for modpack development:**
 
-- Project operations
-  - `pakku add` - Add new projects with automatic dependency resolution
-  - `pakku rm` - Remove projects safely with dependency checking
-  - `pakku update` - Update projects individually or in bulk
-  - `pakku ls` - List and inspect project details
-  - `pakku diff` - Compare different versions of your modpack
+Project operations
+<pre>
+ <kbd>pakku add</kbd> &#9;» Add new projects with automatic dependency resolution
+ <kbd>pakku rm</kbd> &#9;» Remove projects safely with dependency checking
+ <kbd>pakku update</kbd> &#9;» Update projects individually or in bulk
+ <kbd>pakku ls</kbd> &#9;» List and inspect project details
+ <kbd>pakku diff</kbd> &#9;» Compare different versions of your modpack
+</pre>
 
-- Development environment
-  - `pakku init` - Create a new modpack
-  - `pakku import` - Import existing modpacks
-  - `pakku fetch` - Set up or update your development environment
-  - `pakku sync` - Sync your local project files with the modpack
+Development environment
+<pre>
+ <kbd>pakku init</kbd> &#9;» Create a new modpack
+ <kbd>pakku import</kbd> &#9;» Import existing modpacks
+ <kbd>pakku fetch</kbd> &#9;» Set up or update your development environment
+ <kbd>pakku sync</kbd> &#9;» Sync your local project files with the modpack
+</pre>
 
-- Modpack distribution
-  - `pakku export` - Create distribution-ready packages
-  - `pakku remote` - Install a modpack from a Git URL (great for server owners)
+Modpack distribution
+<pre>
+ <kbd>pakku export</kbd> &#9;» Create distribution-ready packages
+ <kbd>pakku remote</kbd> &#9;» Install a modpack from a Git URL (great for server owners)
+</pre>
 
 ## Documentation 📚
 
@@ -89,7 +95,7 @@ Visit the [**Documentation**](https://juraj-hrivnak.github.io/Pakku) for install
 
 ## Development
 
-For a complete development and setup guide, check out our [Contributing Guide](CONTRIBUTING.md).
+For a development and setup guide, check out our [Contributing Guide](CONTRIBUTING.md).
 
 Contributions are very welcomed, from code to documentation improvements!
 
