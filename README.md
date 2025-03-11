@@ -66,7 +66,7 @@ Development environment
  <kbd>pakku init</kbd> &#9;» Create a new modpack
  <kbd>pakku import</kbd> &#9;» Import existing modpacks
  <kbd>pakku fetch</kbd> &#9;» Set up or update your development environment
- <kbd>pakku sync</kbd> &#9;» Sync your local project files with the modpack
+ <kbd>pakku sync</kbd> &#9;» Sync your local project files with your modpack
 </pre>
 
 Modpack distribution
