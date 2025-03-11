@@ -76,19 +76,15 @@ Visit the [**Documentation**](https://juraj-hrivnak.github.io/Pakku) for install
 ## Images
 
 <p align="center">
-  <a href="https://github.com/juraj-hrivnak/pakku">
-    <img
-      src="docs/images/screenshot_export.png"
-      alt="Exporting a Modpack"
-    />
-  </a>
-  <a href="https://github.com/juraj-hrivnak/pakku">
-    <img
-      src="docs/images/screenshot_ls.png"
-      alt="Listing Projects"
-      width="800"
-    />
-  </a>
+  <img
+    src="docs/images/screenshot_export.png"
+    alt="Exporting a Modpack"
+  />
+  <img
+    src="docs/images/screenshot_ls.png"
+    alt="Listing Projects"
+    width="800"
+  />
 </p>
 
 ## Development
@@ -97,7 +93,7 @@ For a complete development and setup guide, check out our [Contributing Guide](C
 
 Contributions are very welcomed, from code to documentation improvements!
 
-_Join our [Discord](https://discord.com/invite/dtAyqdzTMj) if you have any questions._
+Join our [Discord](https://discord.com/invite/dtAyqdzTMj) if you have any questions.
 
 ## License
 
