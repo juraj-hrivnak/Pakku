@@ -52,7 +52,7 @@ In addition to package management itself, it enables support for version control
 
 **A comprehensive toolkit for modpack development:**
 
-Project operations
+##### Project operations
 <pre>
  <kbd>pakku add</kbd> &#9;» Add new projects with automatic dependency resolution
  <kbd>pakku rm</kbd> &#9;» Remove projects safely with dependency checking
@@ -61,7 +61,7 @@ Project operations
  <kbd>pakku diff</kbd> &#9;» Compare different versions of your modpack
 </pre>
 
-Development environment
+##### Development environment
 <pre>
  <kbd>pakku init</kbd> &#9;» Create a new modpack
  <kbd>pakku import</kbd> &#9;» Import existing modpacks
@@ -69,7 +69,7 @@ Development environment
  <kbd>pakku sync</kbd> &#9;» Sync your local project files with your modpack
 </pre>
 
-Modpack distribution
+##### Modpack distribution
 <pre>
  <kbd>pakku export</kbd> &#9;» Create distribution-ready packages
  <kbd>pakku remote</kbd> &#9;» Install a modpack from a Git URL (great for server owners)
