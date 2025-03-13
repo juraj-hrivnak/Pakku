@@ -45,7 +45,7 @@ object CurseForge : Platform(
 
     class Unauthenticated : ActionError()
     {
-        override val rawMessage = "CurseForge requires the CurseForge API key."
+        override val rawMessage = "Accessing CurseForge requires the CurseForge API key."
     }
 
     private const val API_KEY_HEADER = "x-api-key"
