@@ -31,13 +31,14 @@ To import an existing modpack, run the [`pakku import`](pakku-import.md) command
 <include from="pakku-import.md" element-id="snippet-cmd"></include>
 
 The `<path>` argument will only accept:
-- CurseForge's modpack with the `.zip` extension or the `manifest.json`.
-- Modrinth's modpack with the `.mrpack` extension or the `modrinth.index.json`.
+- CurseForge's modpack with the `.zip` extension or the CurseForge's `manifest.json` file.
+- Modrinth's modpack with the `.mrpack` extension or the Modrinth's `modrinth.index.json` file.
 
-Pakku automatically sets the targeted platform of your modpack based on the file you import,
-and imports [projects](Pakku-Terminology.md#project).
+Pakku automatically sets the targeted platform of your modpack based on the file you import.
 
-Pakku does not import [overrides](Pakku-Terminology.md#override).
+> Pakku imports projects only!
+> [Overrides](Pakku-Terminology.md#override) have to be copied over manually.
+{style="note"}
 
 ## Migrating Modpack's Platform or Importing as Multiplatform Modpack
 

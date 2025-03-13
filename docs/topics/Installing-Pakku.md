@@ -6,7 +6,7 @@ or [manually](#install-manually).
 
 Pakku also requires Java to be installed on your computer,
 so please, before installing, check whether you have Java installed on your computer.
-If not, install it from [here](https://www.java.com/en/download/).
+If not, you _can_ install it from [here](https://www.java.com/en/download/).
 
 <procedure title="Install Pakku using Scoop for Windows" id="install-scoop">
 

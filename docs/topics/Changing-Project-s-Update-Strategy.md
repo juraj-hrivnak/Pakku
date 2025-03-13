@@ -1,0 +1,3 @@
+# Changing Project&#39;s Update Strategy (Version Pinning)
+
+Start typing here...
