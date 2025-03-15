@@ -13,8 +13,8 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.requestByteArray
+import teksturepako.pakku.api.overrides.ManualOverride
 import teksturepako.pakku.api.overrides.OverrideType
-import teksturepako.pakku.api.overrides.ProjectOverride
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.io.copyRecursivelyTo
@@ -166,26 +166,26 @@ sealed class RuleContext(
         }
     }
 
-    /** Rule context representing a [project override][ProjectOverride]. */
-    data class ExportingProjectOverride(
-        val projectOverride: ProjectOverride,
+    /** Rule context representing a [manual override][ManualOverride]. */
+    data class ExportingManualOverride(
+        val manualOverride: ManualOverride,
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
         override val workingSubDir: String
     ) : RuleContext(workingSubDir, lockFile, configFile)
     {
         fun export(
-            overridesDir: String? = projectOverride.type.folderName,
+            overridesDir: String? = manualOverride.type.folderName,
             allowedTypes: Set<OverrideType>? = null
         ): RuleResult
         {
-            if (allowedTypes != null && projectOverride.type !in allowedTypes) return ignore()
+            if (allowedTypes != null && manualOverride.type !in allowedTypes) return ignore()
 
             val outputPath = overridesDir
-                ?.let { getPath(it, projectOverride.relativeOutputPath.pathString) }
-                ?: getPath(projectOverride.relativeOutputPath.pathString)
+                ?.let { getPath(it, manualOverride.relativeOutputPath.pathString) }
+                ?: getPath(manualOverride.relativeOutputPath.pathString)
 
-            val message = "export ${projectOverride.type} '${projectOverride.path}' to '$outputPath'"
+            val message = "export ${manualOverride.type} '${manualOverride.path}' to '$outputPath'"
 
             return ruleResult(message, Packaging.FileAction {
                 if (outputPath.exists())
@@ -198,7 +198,7 @@ sealed class RuleContext(
                         if (error !is AlreadyExists) return@FileAction outputPath to error
                     }
 
-                outputPath to outputPath.tryToResult { writeBytes(projectOverride.bytes) }
+                outputPath to outputPath.tryToResult { writeBytes(manualOverride.bytes) }
                     .getError()
             })
         }

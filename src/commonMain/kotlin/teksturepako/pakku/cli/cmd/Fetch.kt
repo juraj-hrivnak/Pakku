@@ -26,7 +26,7 @@ import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.overrides.readProjectOverrides
+import teksturepako.pakku.api.overrides.readManualOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
@@ -109,7 +109,7 @@ class Fetch : CliktCommand()
 
         // -- OVERRIDES --
 
-        val projectOverrides = readProjectOverrides(configFile)
+        val projectOverrides = readManualOverrides(configFile)
 
         val syncJob = launch {
             projectOverrides.sync(

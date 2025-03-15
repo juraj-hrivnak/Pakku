@@ -13,7 +13,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.overrides.ProjectOverride
+import teksturepako.pakku.api.overrides.ManualOverride
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -32,7 +32,7 @@ suspend fun deleteOldFiles(
     onError: suspend (error: ActionError) -> Unit,
     onSuccess: suspend (file: Path, actionType: DeletionActionType) -> Unit,
     projectFiles: List<ProjectFile>,
-    projectOverrides: Set<ProjectOverride>,
+    manualOverrides: Set<ManualOverride>,
     lockFile: LockFile,
     configFile: ConfigFile?,
     platforms: List<Platform>,
@@ -79,7 +79,7 @@ suspend fun deleteOldFiles(
             path.absolute() to createHash("sha1", bytes)
         }
         .plus(
-            projectOverrides.associate { projectOverride ->
+            manualOverrides.associate { projectOverride ->
                 projectOverride.fullOutputPath.absolute() to createHash("sha1", projectOverride.bytes)
             }
         )

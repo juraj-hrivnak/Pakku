@@ -20,7 +20,7 @@ fun serverPackRule() = ExportRule {
                 }
             }
         }
-        is ExportingOverride        ->
+        is ExportingOverride       ->
         {
             if (it.type !in listOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE))
             {
@@ -31,9 +31,9 @@ fun serverPackRule() = ExportRule {
                 it.export(overridesDir = null)
             }
         }
-        is ExportingProjectOverride ->
+        is ExportingManualOverride ->
         {
-            if (it.projectOverride.type !in listOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE))
+            if (it.manualOverride.type !in listOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE))
             {
                 it.ignore()
             }

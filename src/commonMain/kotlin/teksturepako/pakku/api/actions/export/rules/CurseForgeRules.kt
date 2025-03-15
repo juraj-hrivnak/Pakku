@@ -37,17 +37,18 @@ fun ExportRuleScope.cfModpackRule(): ExportRule
                 val projectFile = it.project.getFilesForPlatform(CurseForge).firstOrNull()
                     ?: return@ExportRule it.setMissing()
 
-                it.addToCfModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
+                it.addToCfModpackModel(projectFile, modpackModel
+                    ?: return@ExportRule it.error(RequiresMcVersion))
             }
-            is ExportingOverride        -> it.export(
+            is ExportingOverride       -> it.export(
                 overridesDir = OverrideType.OVERRIDE.folderName,
                 allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
             )
-            is ExportingProjectOverride -> it.export(
+            is ExportingManualOverride -> it.export(
                 overridesDir = OverrideType.OVERRIDE.folderName,
                 allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
             )
-            is Finished                 ->
+            is Finished                ->
             {
                 it.createJsonFile(modpackModel, CfModpackModel.MANIFEST, format = jsonEncodeDefaults)
             }

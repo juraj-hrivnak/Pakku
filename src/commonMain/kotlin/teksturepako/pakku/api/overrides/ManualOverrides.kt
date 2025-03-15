@@ -14,16 +14,16 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
-suspend fun readProjectOverrides(
+suspend fun readManualOverrides(
     configFile: ConfigFile?,
     allowedTypes: Set<OverrideType>? = null,
-): Set<ProjectOverride> = readProjectOverridesFrom(Path(workingPath), configFile, allowedTypes)
+): Set<ManualOverride> = readManualOverridesFrom(Path(workingPath), configFile, allowedTypes)
 
-suspend fun readProjectOverridesFrom(
+suspend fun readManualOverridesFrom(
     path: Path,
     configFile: ConfigFile?,
     allowedTypes: Set<OverrideType>? = null,
-): Set<ProjectOverride> = (allowedTypes ?: OverrideType.entries)
+): Set<ManualOverride> = (allowedTypes ?: OverrideType.entries)
     .map { ovType ->
         Path(path.pathString, PAKKU_DIR, ovType.folderName)
     }
@@ -38,7 +38,7 @@ suspend fun readProjectOverridesFrom(
         coroutineScope {
             pathSequence.toSet().map { path ->
                 async {
-                    ProjectOverride.fromPath(path, configFile)
+                    ManualOverride.fromPath(path, configFile)
                 }
             }
         }
@@ -46,12 +46,12 @@ suspend fun readProjectOverridesFrom(
     .awaitAll()
     .filterNotNull()
     .debugIfNotEmpty {
-        println("readProjectOverrides = ${it.toPrettyString()}")
+        println("readManualOverrides = ${it.toPrettyString()}")
     }
     .toSet()
 
 @Suppress("unused")
-suspend fun copyProjectOverrideDirectories(inputPath: Path, outputPath: Path) = OverrideType.entries
+suspend fun copyManualOverrideDirectories(inputPath: Path, outputPath: Path) = OverrideType.entries
     .map { ovType ->
         Path(inputPath.pathString, PAKKU_DIR, ovType.folderName) to Path(outputPath.pathString, PAKKU_DIR, ovType.folderName)
     }

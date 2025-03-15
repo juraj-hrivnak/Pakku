@@ -28,7 +28,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.OverrideType
-import teksturepako.pakku.api.overrides.readProjectOverridesFrom
+import teksturepako.pakku.api.overrides.readManualOverridesFrom
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.integration.git.gitStatus
@@ -214,7 +214,7 @@ class Remote : CliktCommand()
 
                 // -- OVERRIDES --
 
-                val projectOverrides = readProjectOverridesFrom(
+                val projectOverrides = readManualOverridesFrom(
                     Dirs.remoteDir, configFile,
                     if (serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
                 )

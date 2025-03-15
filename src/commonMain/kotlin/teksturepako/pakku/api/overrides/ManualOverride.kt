@@ -12,7 +12,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 
-data class ProjectOverride(
+data class ManualOverride(
     val type: OverrideType,
     val path: Path,
     val fullOutputPath: Path,
@@ -23,7 +23,7 @@ data class ProjectOverride(
 {
     companion object
     {
-        suspend fun fromPath(path: Path, configFile: ConfigFile?): ProjectOverride?
+        suspend fun fromPath(path: Path, configFile: ConfigFile?): ManualOverride?
         {
             val separator = File.separator
 
@@ -61,7 +61,7 @@ data class ProjectOverride(
 
             return if (prjTypePathString != null)
             {
-                ProjectOverride(
+                ManualOverride(
                     type = type,
                     path = path,
                     fullOutputPath = Path(workingPath, prjTypePathString, relativePath),
@@ -72,7 +72,7 @@ data class ProjectOverride(
             }
             else
             {
-                ProjectOverride(
+                ManualOverride(
                     type = type,
                     path = path,
                     fullOutputPath = Path(workingPath, relativePath),
@@ -89,7 +89,7 @@ data class ProjectOverride(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ProjectOverride
+        other as ManualOverride
 
         if (type != other.type) return false
         if (path != other.path) return false

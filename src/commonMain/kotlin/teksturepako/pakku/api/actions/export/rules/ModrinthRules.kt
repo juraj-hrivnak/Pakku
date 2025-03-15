@@ -33,9 +33,9 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
 
                 it.addToMrModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
             }
-            is ExportingOverride        -> it.export()
-            is ExportingProjectOverride -> it.export()
-            is Finished                 ->
+            is ExportingOverride       -> it.export()
+            is ExportingManualOverride -> it.export()
+            is Finished                ->
             {
                 it.createJsonFile(modpackModel, MrModpackModel.MANIFEST, format = jsonEncodeDefaults)
             }

@@ -14,7 +14,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.OverridesDeferred
 import teksturepako.pakku.api.overrides.getOverridesAsync
-import teksturepako.pakku.api.overrides.readProjectOverrides
+import teksturepako.pakku.api.overrides.readManualOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.cleanUpDirectory
@@ -280,9 +280,9 @@ suspend fun List<ExportRule>.produceRuleResults(
         } + overrides.awaitAll().map { (overridePath, overrideType) ->
             // Overrides
             rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir)
-        } + readProjectOverrides(configFile).map { projectOverride ->
-            // Project overrides
-            rule to RuleContext.ExportingProjectOverride(projectOverride, lockFile, configFile, workingSubDir)
+        } + readManualOverrides(configFile).map { projectOverride ->
+            // Manual overrides
+            rule to RuleContext.ExportingManualOverride(projectOverride, lockFile, configFile, workingSubDir)
         }
     }.map { (exportRule, ruleContext) ->
         exportRule.getResult(ruleContext)
