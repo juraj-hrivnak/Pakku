@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.NoFiles
-import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.ExportRuleScope
+import teksturepako.pakku.api.actions.export.OptionalExportRule
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.RuleContext.MissingProject
@@ -36,25 +36,21 @@ data class FileDirectorModel(
 fun ExportRuleScope.fileDirectorRule(
     excludedProviders: Set<Provider> = setOf(),
     fileDirectorModel: FileDirectorModel = FileDirectorModel()
-): ExportRule?
-{
-    if (lockFile.getProject("filedirector") == null) return null
-
-    return ExportRule {
-        when (it)
+) = OptionalExportRule(requiresProject = "filedirector") {
+    when (it)
+    {
+        is MissingProject ->
         {
-            is MissingProject ->
-            {
-                it.addToFileDirector(fileDirectorModel, excludedProviders)
-            }
-            is Finished       ->
-            {
-                it.createJsonFile(fileDirectorModel, "overrides/config/mod-director/.bundle.json")
-            }
-            else              -> it.ignore()
+            it.addToFileDirector(fileDirectorModel, excludedProviders)
         }
+        is Finished       ->
+        {
+            it.createJsonFile(fileDirectorModel, "overrides/config/mod-director/.bundle.json")
+        }
+        else              -> it.ignore()
     }
 }
+
 
 data class CanNotAddToFileDirector(val project: Project) : ActionError()
 {
