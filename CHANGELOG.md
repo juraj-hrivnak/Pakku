@@ -5,10 +5,15 @@
 
 ## v1.0.0
 
-> [!WARNING]  
+> [!IMPORTANT]  
 > Pakku now requires users to provide their own CurseForge API key when accessing CurseForge.  
-> The embedded API key used in older versions of Pakku will be revoked in a month.  
+> The embedded API key used in older versions of Pakku will be revoked in a month.
+> 
 > The transition is simple and can be done in two minutes. Please, see the docs for more info.
+
+> [!WARNING]  
+> Removed the deprecated argument and options from the `pakku set` command.  
+> `[<projects>]...` argument and `-s`, `-u` and `-r` options were removed.
 
 ### Highlights
 
