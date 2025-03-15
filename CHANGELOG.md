@@ -3,6 +3,8 @@
 
 ## Unreleased
 
+## v1.0.0
+
 > [!WARNING]  
 > Pakku now requires users to provide their own CurseForge API key when accessing CurseForge.  
 > The embedded API key used in older versions of Pakku will be revoked in a month.  
