@@ -3,7 +3,7 @@
 If a project has a property that is not correct
 (marked with a wrong side or as not redistributable,
 even though you have explicit permission to redistribute it)
-you can override it in the [config file](Config-File.md).
+you can override it using the [config file](Config-File.md).
 
 <procedure title="Changing project side to `CLIENT`">
 <step>
@@ -36,11 +36,11 @@ And finally, add the property with the value you want to override.
 In our example, we will override JEI's project side to `CLIENT`:
 ```JSON
 {
-  "projects": {
-    "jei": {
-      "side": "CLIENT"
+    "projects": {
+        "jei": {
+            "side": "CLIENT"
+        }
     }
-  }
 }
 ```
 

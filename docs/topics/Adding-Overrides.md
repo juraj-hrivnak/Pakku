@@ -6,10 +6,11 @@ For example, this can be the `config` directory, or CraftTweaker/KubeJS script d
 
 An override can also be a single file, in the case that you want to bundle a `README.md` or other files with your modpack.
 
-Overrides must be added to the [config file's](Config-File.md) `overrides`, `server_overrides` or `client_overrides`
+Overrides must be added to the [config file's](Config-File.md) [`overrides`](Config-File.md#overrides),
+[`server_overrides`](Config-File.md#server_overrides) or [`client_overrides`](Config-File.md#client_overrides)
 properties for Pakku to be able to recognize them.
 
-<procedure title="To add an override:">
+<procedure title="Adding the `config` directory as an override">
 <step>
 
 Open the [config file](Config-File.md) (`pakku.json`)
@@ -24,9 +25,9 @@ For example, if we want to add the `config` directory,
 it will look like this:
 ```JSON
 {
-  "overrides": [
-    "config"
-  ]
+    "overrides": [
+        "config"
+    ]
 }
 ```
 

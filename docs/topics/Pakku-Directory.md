@@ -15,11 +15,11 @@ Pakku directory must be located in your modpack directory and must be named: `.p
     <def>
         <title><code>server-overrides</code></title>
         <p>Directory for adding manual server overrides.</p>
-    </def>    
+    </def>
     <def>
         <title><code>client-overrides</code></title>
         <p>Directory for adding manual client overrides.</p>
-    </def> 
+    </def>
     <def>
         <title><code>remote</code></title>
         <p>Directory containing the local Git repository when a remote modpack is installed.</p>

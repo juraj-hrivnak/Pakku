@@ -7,7 +7,7 @@ or when you need to use some of Pakku's more advanced functionalities.
 
 ## Properties
 
-<deflist type="medium">
+<deflist>
     <def id="name">
         <title><code>name</code></title>
         <p>The name of the modpack.</p>
@@ -77,7 +77,7 @@ or when you need to use some of Pakku's more advanced functionalities.
             with <a href="#project_properties">properties</a> you want to change.
         </p>
         <h2 id="project_properties">Properties</h2>
-        <deflist type="wide">
+        <deflist>
             <def id="project_type">
                 <title><code>type</code></title>
                 <p>
