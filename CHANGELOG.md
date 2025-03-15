@@ -3,31 +3,33 @@
 
 ## Unreleased
 
+> [!WARNING]  
+> Pakku now requires users to provide their own CurseForge API key when accessing CurseForge.  
+> The embedded API key used in older versions of Pakku will be revoked in a month.  
+> The transition is simple and can be done in two minutes. Please, see the docs for more info.
+
 ### Highlights
 
-- Implemented the `pakku remote` command and subcommands. It works in the following way:
-  1. `pakku remote` without any arguments will show you the status of the remote.
-  2. `pakku remote <url>` will install the remote from the provided `<url>`.
-     - A remote modpack can only be installed in directory with non-initialized Pakku dev environment.
-  3. `pakku remote update` will update the modpack from the remote.
-  4. `pakku remote rm` will remove the remote from your modpack.
+- Added the `pakku remote` command, for remote modpack installations.
+
+- Implemented more robust error handling.
+
+- Pakku now requires users to provide a CurseForge API key when accessing CurseForge.
+  - `pakku credentials` command has been added. Which can be used for your credentials' management.
+
 - Fixed system output encoding on Windows systems to properly handle UTF-8 characters.
   - If Pakku fails to enable the UTF-8 encoding in your console, the `ASCII` theme will be used.
+
 - Added support for additional representations of hash algorithm names.
   - For example: "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
 
 ### `pakku remote` command
 
-Pakku does the following when running `pakku remote <url>`:
-1. Clone the repo to the `<working_path>/.pakku/remote/` directory. (`git clone <repository> <working_path>/.pakku/remote/`)
-2. Read the config file from the `<working_path>/.pakku/remote/pakku.json)`.
-3. Copy all overrides specified in the config file from `<working_path>/.pakku/remote/` to `<working_path>`.
-4. Copy the `.pakku/overrides`, `.pakku/server-overrides`, and `.pakku/client-overrides` to `<working_path>`
-5. Read the lock file from the `<working_path>/.pakku/remote/pakku-lock.json`
-6. Fetch the project files.
-7. Sync project overrides.
-
-Under the hood, Pakku uses JGit and remains compatible with Java 8
+- `pakku remote` without any arguments will show you the status of the remote.
+- `pakku remote <url>` will install the remote from the provided Git URL argument: `<url>`.
+  - A remote modpack can only be installed in directory with non-initialized Pakku dev environment.
+- `pakku remote update` will update the modpack from the remote.
+- `pakku remote rm` will remove the remote from your modpack.
 
 ### Technical Notes
 
