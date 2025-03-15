@@ -23,6 +23,9 @@
 - Added support for additional representations of hash algorithm names.
   - For example: "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
 
+- Removed the deprecated argument and options from the `pakku set` command.
+  - `[<projects>]...` argument and `-s`, `-u` and `-r` options were removed.
+
 ### `pakku remote` command
 
 - `pakku remote` without any arguments will show you the status of the remote.
