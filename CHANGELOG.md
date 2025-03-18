@@ -19,12 +19,14 @@
 
 - Added the `pakku remote` command, for remote modpack installations.
 
-- Implemented more robust error handling.
+- Implemented more robust error handling for HTTP requests.
 
 - Pakku now requires users to provide a CurseForge API key when accessing CurseForge.
   - `pakku credentials` command has been added. Which can be used for your credentials' management.
 
-- On Windows Pakku now tries to set your console output to use the UTF-8 encoding (code page 65001). If this fails Pakku will use the `ACSII` CLI theme.
+- On Windows, Pakku now tries to set your console output to use the UTF-8 encoding (code page 65001). If this fails Pakku will use the `ACSII` CLI theme.
+
+- Fixed Pakku incorrectly using backslash path separators in exported ZIP files when exporting on Windows.
 
 - Fixed errors with various representations of hash algorithm names. "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
 
