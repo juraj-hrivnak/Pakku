@@ -23,11 +23,13 @@ Pakku uses Clikt to handle the CLI. It is advised to [check out its docs](https:
 ##### Command Classes
 
 Command classes should be named the same as the command itself.  
-If the command is a subcommand, the class should be named like this: `<parent-command><subcommand>`; example: `CfgPrj`.  
+If the command is a subcommand, the class should be named `<parent-command><subcommand>`.  
+
+For example: `CfgPrj`
 
 ##### Command Parameters
 
-All variable names for command parameters (options, arguments, and flags (`Boolean` options)) should end with:
+All variable names for command parameters (options, arguments, and flags) should end with:
 - `Opt` for options
 - `Arg` for arguments
 - `Flag` for flags (`Boolean` options).
