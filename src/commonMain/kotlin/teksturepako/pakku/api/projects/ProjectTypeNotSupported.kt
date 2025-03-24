@@ -4,5 +4,5 @@ import teksturepako.pakku.api.actions.errors.ActionError
 
 class ProjectTypeNotSupported(slug: String, projectType: String) : ActionError()
 {
-    override val rawMessage = "$slug: Project type $projectType from CurseForge isn't supported"
+    override val rawMessage = "$slug: Project type $projectType is not supported"
 }

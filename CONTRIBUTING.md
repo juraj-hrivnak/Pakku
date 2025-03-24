@@ -7,21 +7,37 @@ To build the `pakku.jar` run the `jvmJar` Gradle task (`gradlew jvmJar`).
 
 To run tests, run the `jvmTest` Gradle task (`gradlew jvmTest`).
 
+## Important Info
+
+When making a pull request, make sure also to:
+
+- Write your changes to the [CHANGELOG's "Unreleased" section](CHANGELOG.md#unreleased), in a **human-readable** form.
+- Update the documentation to reflect your changes.
+
 ## Creating Commands & Parameters (Clikt)
 
 ### Introduction
 
 Pakku uses Clikt to handle the CLI. It is advised to [check out its docs](https://ajalt.github.io/clikt/).
 
-Command classes should be called the same as the command itself.
-If the command is a subcommand, name it using this pattern: `<parent-command><subcommand>`; example: `CfgPrj`.
+##### Command Classes
 
-Command parameters should be _suffixed_ with an abbreviation of the parameter type. (`<parameter-name><abbrev>`)
-Use: `Opt` for options, `Arg` for arguments, and `Flag` for flags (Boolean options).
-If multiple parameters exist, use the plural, e.g., `Opts`, `Args`.
+Command classes should be named the same as the command itself.  
+If the command is a subcommand, the class should be named like this: `<parent-command><subcommand>`; example: `CfgPrj`.  
+
+##### Command Parameters
+
+All variable names for command parameters (options, arguments, and flags (`Boolean` options)) should end with:
+- `Opt` for options
+- `Arg` for arguments
+- `Flag` for flags (`Boolean` options).
+
+They should also be read-only (`val`) and `private`.  
+
+If the parameter accepts multiple inputs, use the plural. (e.g.: `Opts`, `Args`)
 
 ```kt
-// Parameters should always be private.
+// Parameters should always be read-only and private.
 // Defining parameters using a chain of function calls is preferred.
 
 private val exampleOpt by option("--example") // Consult if a short version `-e` of the option is a good idea

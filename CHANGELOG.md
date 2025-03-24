@@ -19,16 +19,16 @@
 
 - Added the `pakku remote` command, for remote modpack installations.
 
-- Implemented more robust error handling.
+- Implemented more robust error handling for HTTP requests.
 
 - Pakku now requires users to provide a CurseForge API key when accessing CurseForge.
   - `pakku credentials` command has been added. Which can be used for your credentials' management.
 
-- Fixed system output encoding on Windows systems to properly handle UTF-8 characters.
-  - If Pakku fails to enable the UTF-8 encoding in your console, the `ASCII` theme will be used.
+- On Windows, Pakku now tries to set your console output to use the UTF-8 encoding (code page 65001). If this fails Pakku will use the `ACSII` CLI theme.
 
-- Added support for additional representations of hash algorithm names.
-  - For example: "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
+- Fixed Pakku incorrectly using backslash path separators in exported ZIP files when exporting on Windows.
+
+- Fixed errors with various representations of hash algorithm names. "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
 
 - Removed the deprecated argument and options from the `pakku set` command.
   - `[<projects>]...` argument and `-s`, `-u` and `-r` options were removed.
@@ -37,17 +37,18 @@
 
 - `pakku remote` without any arguments will show you the status of the remote.
 - `pakku remote <url>` will install the remote from the provided Git URL argument: `<url>`.
-  - A remote modpack can only be installed in directory with non-initialized Pakku dev environment.
+  - A remote modpack can only be installed in a directory with a non-initialized Pakku dev environment.
 - `pakku remote update` will update the modpack from the remote.
 - `pakku remote rm` will remove the remote from your modpack.
 
 ### Technical Notes
 
-- Refactored glob pattern matching.
-  - Prefix "`!`", which negates the pattern, will now exclude any matching file included by a _previous pattern_, not all patterns as it worked before.
+- "Project Overrides" have been renamed to "Manual Overrides".
+- The prefix "`!`" in glob pattern matching, which negates the pattern, will now exclude any matching file included by a **previous pattern**, and not a matching file included by any pattern, as it worked before.
 - Refactored the `LockFile` to use the `kotlin-result` monad.
 - Refactored action error messages to use the new `message()` function.
-- Implemented better error handling for the export action.
+- Improved error handling for the export action.
+- Implemented `OptionalExportRule`.
 
 ## v0.26.0
 
