@@ -115,7 +115,7 @@ fun ProjectFile.toCfModData(parentProject: Project): CfModData?
     if (this.type != CurseForge.serialName) return null
 
     return CfModData(
-        projectID = parentProject.id[CurseForge.serialName]!!.toInt(),
+        projectID = parentProject.id[CurseForge.serialName]?.toInt() ?: return null,
         fileID = this.id.toInt()
     )
 }
