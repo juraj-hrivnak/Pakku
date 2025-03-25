@@ -1,6 +1,6 @@
 # pakku remote update
 
-update the modpack from its remote
+Update the modpack from its remote
 
 ## Usage
 

@@ -1,6 +1,6 @@
 # pakku remote
 
-Install modpacks from a remote repository
+Install modpack from a Git URL
 
 ## Usage
 
@@ -16,14 +16,14 @@ Install modpacks from a remote repository
 ## Subcommands
 
 [`update`](pakku-remote-update.md)
-: update the modpack from its remote
+: Update the modpack from its remote
 
 ## Arguments
 
 <snippet id="snippet-args">
 
 `[<url>]`
-: URL of the remote Git repository
+: URL of the remote Git repository to install
 
 </snippet>
 
@@ -33,9 +33,6 @@ Install modpacks from a remote repository
 
 <snippet id="snippet-options">
 
-`--rm`, `--remove`
-: Remove the remote from this modpack
-
 `-b`, `--branch`
 : Checkout <branch> instead of the remote's HEAD
 
@@ -44,6 +41,9 @@ Install modpacks from a remote repository
 
 `-S`, `--server-pack`
 : Install the server pack
+
+`--rm`, `--remove`
+: Remove the remote from this modpack
 
 </snippet>
 
