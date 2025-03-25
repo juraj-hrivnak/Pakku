@@ -1,6 +1,6 @@
 # pakku remote
 
-Create and install modpacks from remote
+Install modpacks from a remote repository
 
 ## Usage
 
@@ -18,15 +18,12 @@ Create and install modpacks from remote
 [`update`](pakku-remote-update.md)
 : update the modpack from its remote
 
-[`rm`](pakku-remote-rm.md)
-: remove the remote from this modpack
-
 ## Arguments
 
 <snippet id="snippet-args">
 
 `[<url>]`
-: URL of the remote package or Git repository
+: URL of the remote Git repository
 
 </snippet>
 
@@ -35,6 +32,9 @@ Create and install modpacks from remote
 <snippet id="snippet-options-all">
 
 <snippet id="snippet-options">
+
+`--rm`, `--remove`
+: Remove the remote from this modpack
 
 `-b`, `--branch`
 : Checkout <branch> instead of the remote's HEAD

@@ -48,7 +48,6 @@
             <toc-element topic="pakku-diff.md"/>
             <toc-element topic="pakku-remote.md"/>
             <toc-element topic="pakku-remote-update.md"/>
-            <toc-element topic="pakku-remote-rm.md"/>
             <toc-element topic="pakku-credentials.md"/>
             <toc-element topic="pakku-credentials-set.md"/>
         </toc-element>

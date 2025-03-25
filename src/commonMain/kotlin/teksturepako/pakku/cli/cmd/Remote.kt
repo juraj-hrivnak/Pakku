@@ -14,6 +14,7 @@ import com.github.ajalt.mordant.widgets.progress.percentage
 import com.github.ajalt.mordant.widgets.progress.progressBar
 import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
 import com.github.ajalt.mordant.widgets.progress.text
+import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
 import kotlinx.atomicfu.atomic
@@ -23,6 +24,7 @@ import teksturepako.pakku.api.actions.errors.AlreadyExists
 import teksturepako.pakku.api.actions.fetch.fetch
 import teksturepako.pakku.api.actions.fetch.retrieveProjectFiles
 import teksturepako.pakku.api.actions.remote.remoteInstall
+import teksturepako.pakku.api.actions.remote.remoteRemove
 import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs
@@ -30,6 +32,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.overrides.readManualOverridesFrom
 import teksturepako.pakku.api.platforms.Provider
+import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.ui.*
 import teksturepako.pakku.integration.git.gitStatus
 import kotlin.io.path.Path
@@ -38,10 +41,30 @@ import kotlin.time.Duration.Companion.seconds
 
 class Remote : CliktCommand()
 {
-    override fun help(context: Context) = "Create and install modpacks from remote"
+    override fun help(context: Context) = "Install modpacks from a remote repository"
+
+    init
+    {
+        eagerOption("--rm", "--remove", help = "Remove the remote from this modpack") {
+            runBlocking {
+                if (!terminal.ynPrompt("Do you really want to remove the remote?"))
+                {
+                    echo()
+                    return@runBlocking
+                }
+
+                remoteRemove().fold(
+                    success = { terminal.pDanger("Remote removed") },
+                    failure = { terminal.pError(it) }
+                )
+
+                echo()
+            }
+        }
+    }
 
     private val urlArg: String? by argument("url")
-        .help("URL of the remote package or Git repository")
+        .help("URL of the remote Git repository")
         .optional()
 
     private val branchOpt: String? by option("-b", "--branch")
@@ -68,7 +91,7 @@ class Remote : CliktCommand()
 
     init
     {
-        this.subcommands(RemoteUpdate(), RemoteRm())
+        this.subcommands(RemoteUpdate())
     }
 
     override val invokeWithoutSubcommand = true
@@ -257,8 +280,7 @@ class Remote : CliktCommand()
             }
             else
             {
-                val (status, repo) = gitStatus(Dirs.remoteDir).get()
-                    ?: return@coroutineScope
+                val (status, repo) = gitStatus(Dirs.remoteDir).get() ?: return@coroutineScope
 
                 echo("On branch ${repo.branch}")
 
