@@ -13,6 +13,8 @@ import teksturepako.pakku.io.FileAction
 import teksturepako.pakku.io.tryOrNull
 import kotlin.io.path.*
 
+suspend fun canInstallRemote(): Boolean = !(!modpackDirIsEmpty() || LockFile.exists() || Dirs.remoteDir.exists())
+
 suspend fun remoteInstall(
     onProgress: (taskName: String?, percentDone: Int) -> Unit,
     onSync: suspend (FileAction) -> Unit,
@@ -21,8 +23,10 @@ suspend fun remoteInstall(
     allowedTypes: Set<OverrideType>?,
 ): ActionError?
 {
-    if (!modpackDirIsEmpty() || LockFile.exists()) return CanNotInstallRemote(remoteUrl)
     if (Dirs.remoteDir.exists()) return RemoteAlreadyExists(remoteUrl)
+    if (!modpackDirIsEmpty() || LockFile.exists()) return CouldNotInstallRemote(remoteUrl)
+
+    debug { println("remoteInstall") }
 
     return when
     {
@@ -37,9 +41,9 @@ suspend fun remoteInstall(
 data class RemoteAlreadyExists(val url: String): ActionError()
 {
     override val rawMessage = message(
-        "Can not install remote: '$url'.",
+        "Could not install remote: '$url'.",
         "A remote for this modpack already exists.",
-        hint("use \"pakku remote rm\" to remove the remote from your modpack"),
+        hint("use \"pakku remote --rm\" to remove the remote from your modpack"),
         hint("use \"pakku remote update\" to update the remote"),
         newlines = true,
     )

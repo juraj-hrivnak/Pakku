@@ -16,9 +16,10 @@ suspend fun remoteUpdate(
     allowedTypes: Set<OverrideType>?,
 ): ActionError?
 {
-    if (LockFile.exists()) return CanNotInstallRemote()
+    if (LockFile.exists()) return CouldNotInstallRemote()
     if (!Dirs.remoteDir.exists()) return CanNotUpdateRemote()
 
+    debug { println("remoteUpdate") }
     debug { println("starting git & fetching the repo") }
 
     gitUpdate(Dirs.remoteDir, branch) { taskName, percentDone -> onProgress(taskName, percentDone) }
@@ -34,9 +35,5 @@ suspend fun remoteUpdate(
 
 class CanNotUpdateRemote: ActionError()
 {
-    override val rawMessage = message(
-        "Can not update remote.",
-        "No remote was found.",
-        newlines = true,
-    )
+    override val rawMessage = "Could not update the remote. No remote was found."
 }

@@ -41,33 +41,13 @@ import kotlin.time.Duration.Companion.seconds
 
 class Remote : CliktCommand()
 {
-    override fun help(context: Context) = "Install modpacks from a remote repository"
-
-    init
-    {
-        eagerOption("--rm", "--remove", help = "Remove the remote from this modpack") {
-            runBlocking {
-                if (!terminal.ynPrompt("Do you really want to remove the remote?"))
-                {
-                    echo()
-                    return@runBlocking
-                }
-
-                remoteRemove().fold(
-                    success = { terminal.pDanger("Remote removed") },
-                    failure = { terminal.pError(it) }
-                )
-
-                echo()
-            }
-        }
-    }
+    override fun help(context: Context) = "Install modpack from a Git URL"
 
     private val urlArg: String? by argument("url")
-        .help("URL of the remote Git repository")
+        .help("URL of the remote Git repository to install")
         .optional()
 
-    private val branchOpt: String? by option("-b", "--branch")
+    private val branchOpt: String? by option("-b", "--branch", metavar = "<branch>")
         .help("Checkout <branch> instead of the remote's HEAD")
 
     private val retryOpt: Int? by option("-r", "--retry", metavar = "<n>")
@@ -92,6 +72,23 @@ class Remote : CliktCommand()
     init
     {
         this.subcommands(RemoteUpdate())
+
+        eagerOption("--rm", "--remove", help = "Remove the remote from this modpack") {
+            runBlocking {
+                if (!terminal.ynPrompt("Do you really want to remove the remote?"))
+                {
+                    echo()
+                    return@runBlocking
+                }
+
+                remoteRemove().fold(
+                    success = { terminal.pDanger("Remote removed") },
+                    failure = { terminal.pError(it) }
+                )
+
+                echo()
+            }
+        }
     }
 
     override val invokeWithoutSubcommand = true
@@ -103,184 +100,19 @@ class Remote : CliktCommand()
             args.clear()
             args += Args(urlArg, branchOpt, retryOpt, serverPackFlag)
 
-            // Return if any subcommand is used.
+            // Do not run this command when subcommands are used
             if (currentContext.invokedSubcommands.isNotEmpty()) return@coroutineScope
-
-            suspend fun install(url: String, branch: String?)
-            {
-                terminal.cursor.hide()
-
-                val gitProgressLayout = progressBarContextLayout(spacing = 2) {
-                    text(align = TextAlign.LEFT) {
-                        prefixed(context, prefix = terminal.theme.string("pakku.prefix", ">>>"))
-                    }
-                    percentage()
-                    progressBar()
-                }
-
-                val gitProgress = MultiProgressBarAnimation(terminal).animateInCoroutine()
-                val tasks = atomic(mutableMapOf<String, ProgressTask<String>>())
-
-                val remoteJob = async {
-                    remoteInstall(
-                        onProgress = { taskName, percentDone ->
-                            val id = taskName?.lowercase()?.filterNot { it.isWhitespace() }
-                            if (id != null)
-                            {
-                                // Start progress animation when first task is added
-                                if (tasks.value.isEmpty()) {
-                                    launch { gitProgress.execute() }
-                                }
-
-                                // Atomically update tasks map
-                                tasks.update { currentTasks ->
-                                    if (id !in currentTasks)
-                                    {
-                                        currentTasks[id] = gitProgress.addTask(gitProgressLayout, taskName, total = 100)
-                                        currentTasks
-                                    }
-                                    else
-                                    {
-                                        currentTasks
-                                    }
-                                }
-
-                                // Update the task progress
-                                tasks.value[id]?.let { task ->
-                                    runBlocking {
-                                        task.update {
-                                            this.completed = percentDone.toLong()
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        onSync = {
-                            terminal.pSuccess(it.description)
-                        },
-                        url, branch, if (serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
-                    )
-                }
-
-                remoteJob.await()?.onError {
-                    terminal.pError(it)
-                    echo()
-                    return
-                }
-
-                remoteJob.join()
-
-                launch {
-                    delay(1.seconds)
-                    runBlocking {
-                        gitProgress.stop()
-                    }
-                }.join()
-
-                terminal.cursor.show()
-
-                val lockFile = LockFile.readToResultFrom(Path(Dirs.remoteDir.pathString, LockFile.FILE_NAME))
-                    .getOrElse {
-                        terminal.pError(it)
-                        echo()
-                        return
-                    }
-
-                val configFile = if (ConfigFile.existsAt(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME)))
-                {
-                    ConfigFile.readToResultFrom(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME))
-                        .getOrElse {
-                            terminal.pError(it)
-                            echo()
-                            return
-                        }
-                }
-                else null
-
-                val projectFiles = retrieveProjectFiles(
-                    lockFile, Provider.providers,
-                    if (serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
-                ).mapNotNull { result ->
-                    result.getOrElse {
-                        terminal.pError(it)
-                        null
-                    }
-                }
-
-                val progressBar = progressBarContextLayout(spacing = 2) {
-                    text {
-                        prefixed(context, prefix = terminal.theme.string("pakku.prefix", ">>>"))
-                    }
-                    percentage()
-                    progressBar()
-                }.animateInCoroutine(terminal, "Fetching")
-
-                launch { progressBar.execute() }
-
-                val fetchJob = projectFiles.fetch(
-                    onError = { error ->
-                        if (error !is AlreadyExists) terminal.pError(error)
-                    },
-                    onProgress = { completed, total ->
-                        progressBar.update {
-                            this.completed = completed
-                            this.total = total
-                        }
-                    },
-                    onSuccess = { path, projectFile ->
-                        val slug = projectFile.getParentProject(lockFile)?.getFullMsg()
-
-                        terminal.pSuccess("$slug saved to $path")
-                    },
-                    lockFile, configFile, retryOpt
-                )
-
-                // -- OVERRIDES --
-
-                val projectOverrides = readManualOverridesFrom(
-                    Dirs.remoteDir, configFile,
-                    if (serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
-                )
-
-                val syncJob = launch {
-                    projectOverrides.sync(
-                        onError = { error ->
-                            if (error !is AlreadyExists) terminal.pError(error)
-                        },
-                        onSuccess = { projectOverride ->
-                            terminal.pInfo("${projectOverride.fullOutputPath} synced")
-                        },
-                        syncPrimaryDirectories = true
-                    )
-                }
-
-                fetchJob.join()
-
-                launch {
-                    delay(3.seconds)
-                    progressBar.update {
-                        if (this.total != null)
-                        {
-                            this.completed = this.total!!
-                        }
-                    }
-                    runBlocking {
-                        progressBar.stop()
-                    }
-                }.join()
-
-                syncJob.join()
-
-                echo()
-            }
 
             if (urlArg != null)
             {
-                install(urlArg!!, branchOpt)
+                remoteInstallImpl(args.first())
             }
             else
             {
-                val (status, repo) = gitStatus(Dirs.remoteDir).get() ?: return@coroutineScope
+                val (status, repo) = gitStatus(Dirs.remoteDir).get() ?: run {
+                    echoFormattedHelp()
+                    return@coroutineScope
+                }
 
                 echo("On branch ${repo.branch}")
 
@@ -297,4 +129,176 @@ class Remote : CliktCommand()
             }
         }
     }
+}
+
+suspend fun CliktCommand.remoteInstallImpl(args: Remote.Args) = coroutineScope {
+
+    val url = args.urlArg ?: return@coroutineScope
+
+    terminal.cursor.hide()
+
+    terminal.pMsg("Installing remote '$url'")
+
+    val gitProgressLayout = progressBarContextLayout(spacing = 2) {
+        text(align = TextAlign.LEFT) {
+            prefixed(context, prefix = terminal.theme.string("pakku.prefix", ">>>"))
+        }
+        percentage()
+        progressBar()
+    }
+
+    val gitProgress = MultiProgressBarAnimation(terminal).animateInCoroutine()
+    val tasks = atomic(mutableMapOf<String, ProgressTask<String>>())
+
+    val remoteJob = async {
+        remoteInstall(
+            onProgress = { taskName, percentDone ->
+                val id = taskName?.lowercase()?.filterNot { it.isWhitespace() }
+                if (id != null)
+                {
+                    // Start progress animation when first task is added
+                    if (tasks.value.isEmpty()) {
+                        launch { gitProgress.execute() }
+                    }
+
+                    // Atomically update tasks map
+                    tasks.update { currentTasks ->
+                        if (id !in currentTasks)
+                        {
+                            currentTasks[id] = gitProgress.addTask(gitProgressLayout, taskName, total = 100)
+                            currentTasks
+                        }
+                        else
+                        {
+                            currentTasks
+                        }
+                    }
+
+                    // Update the task progress
+                    tasks.value[id]?.let { task ->
+                        runBlocking {
+                            task.update {
+                                this.completed = percentDone.toLong()
+                            }
+                        }
+                    }
+                }
+            },
+            onSync = {
+                terminal.pSuccess(it.description)
+            },
+            url, args.branchOpt, if (args.serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
+        )
+    }
+
+    remoteJob.await()?.onError {
+        terminal.pError(it)
+        echo()
+        return@coroutineScope
+    }
+
+    remoteJob.join()
+
+    launch {
+        delay(1.seconds)
+        runBlocking {
+            gitProgress.stop()
+        }
+    }.join()
+
+    terminal.cursor.show()
+
+    val lockFile = LockFile.readToResultFrom(Path(Dirs.remoteDir.pathString, LockFile.FILE_NAME))
+        .getOrElse {
+            terminal.pError(it)
+            echo()
+            return@coroutineScope
+        }
+
+    val configFile = if (ConfigFile.existsAt(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME)))
+    {
+        ConfigFile.readToResultFrom(Path(Dirs.remoteDir.pathString, ConfigFile.FILE_NAME))
+            .getOrElse {
+                terminal.pError(it)
+                echo()
+                return@coroutineScope
+            }
+    }
+    else null
+
+    val projectFiles = retrieveProjectFiles(
+        lockFile, Provider.providers,
+        if (args.serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
+    ).mapNotNull { result ->
+        result.getOrElse {
+            terminal.pError(it)
+            null
+        }
+    }
+
+    val progressBar = progressBarContextLayout(spacing = 2) {
+        text {
+            prefixed(context, prefix = terminal.theme.string("pakku.prefix", ">>>"))
+        }
+        percentage()
+        progressBar()
+    }.animateInCoroutine(terminal, "Fetching")
+
+    launch { progressBar.execute() }
+
+    val fetchJob = projectFiles.fetch(
+        onError = { error ->
+            if (error !is AlreadyExists) terminal.pError(error)
+        },
+        onProgress = { completed, total ->
+            progressBar.update {
+                this.completed = completed
+                this.total = total
+            }
+        },
+        onSuccess = { path, projectFile ->
+            val slug = projectFile.getParentProject(lockFile)?.getFullMsg()
+
+            terminal.pSuccess("$slug saved to $path")
+        },
+        lockFile, configFile, args.retryOpt
+    )
+
+    // -- OVERRIDES --
+
+    val projectOverrides = readManualOverridesFrom(
+        Dirs.remoteDir, configFile,
+        if (args.serverPackFlag) setOf(OverrideType.OVERRIDE, OverrideType.SERVER_OVERRIDE) else null
+    )
+
+    val syncJob = launch {
+        projectOverrides.sync(
+            onError = { error ->
+                if (error !is AlreadyExists) terminal.pError(error)
+            },
+            onSuccess = { projectOverride ->
+                terminal.pInfo("${projectOverride.fullOutputPath} synced")
+            },
+            syncPrimaryDirectories = true
+        )
+    }
+
+    fetchJob.join()
+
+    launch {
+        delay(3.seconds)
+        progressBar.update {
+            if (this.total != null)
+            {
+                this.completed = this.total!!
+            }
+        }
+        runBlocking {
+            progressBar.stop()
+        }
+    }.join()
+
+    syncJob.join()
+
+    echo()
 }
