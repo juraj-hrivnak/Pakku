@@ -39,7 +39,7 @@
     ```
 - Deprecated argument and options from the `pakku set` command (namely: `[<projects>]...`, `-s`, `-u` and `-r`) have been removed.
 - Fixed errors with various representations of hash algorithm names. For example, "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
-- Improved docs. Mainly the "Configuring Pakku" chapter. Added a new "Server Management" chapter and a better explanation of types in the reference section.
+- Improved docs and the readme. Mainly the "Configuring Pakku" chapter. Added a new "Server Management" chapter and a better explanation of types in the reference section.
 
 ### `pakku remote` Explanation
 
