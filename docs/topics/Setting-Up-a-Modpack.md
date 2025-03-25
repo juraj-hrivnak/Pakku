@@ -89,10 +89,29 @@ Set the target to the `multiplatform` target.
 </step>
 </procedure>
 
+## Configuring CurseForge Access
+
+Pakku requires users to provide their own CurseForge API key when accessing CurseForge.
+
+According to [CurseForge for Studios REST API documentation](https://docs.curseforge.com/rest-api/#authentication), 
+the API key can be generated in the [CurseForge for Studios developer console](https://console.curseforge.com/).
+
+Follow these steps to configure the access:
+
+1. Login to the [developer console](https://console.curseforge.com/#/login).
+2. Go to the "API keys" tab: ![dev_console.png](dev_console.png)
+3. Copy your API key.
+4. Enter your API key to the prompt provided by Pakku,
+or use the [`pakku credentials set`](pakku-credentials-set.md) command:
+    
+    <var name="params">--cf-api-key *********************</var>
+    <include from="pakku-credentials-set.md" element-id="snippet-cmd"></include>
+
 <seealso style="cards">
    <category ref="related">
        <a href="Config-File.md"/>
        <a href="Lock-File.md"/>
+       <a href="Credentials-File.md"/>
    </category>
 </seealso>
 
