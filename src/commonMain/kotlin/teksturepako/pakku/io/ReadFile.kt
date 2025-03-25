@@ -5,17 +5,11 @@ import kotlinx.serialization.serializer
 import teksturepako.pakku.api.data.PakkuException
 import teksturepako.pakku.api.data.json
 import kotlin.io.path.Path
-import kotlin.io.path.readBytes
 import kotlin.io.path.readText
 
 fun readPathTextOrNull(path: String): String?
 {
     return runCatching { Path(path).readText() }.getOrNull()
-}
-
-fun readPathBytesOrNull(path: String): ByteArray?
-{
-    return runCatching { Path(path).readBytes() }.getOrNull()
 }
 
 inline fun <reified T> decodeOrNew(

@@ -5,14 +5,10 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.int
-import com.github.ajalt.colormath.Color
-import com.github.ajalt.colormath.model.RGB
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
-import com.github.ajalt.mordant.rendering.TextStyle
-import com.github.ajalt.mordant.widgets.Spinner
 import com.github.ajalt.mordant.widgets.progress.percentage
+import com.github.ajalt.mordant.widgets.progress.progressBar
 import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
-import com.github.ajalt.mordant.widgets.progress.spinner
 import com.github.ajalt.mordant.widgets.progress.text
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.launch
@@ -77,15 +73,13 @@ class Fetch : CliktCommand()
             }
         }
 
-        fun fetchMsg(text: String, color: Color? = null) = TextStyle(color = color)(
-            prefixed(text, prefix = terminal.theme.string("pakku.prefix", ">>>"))
-        )
-
         val progressBar = progressBarContextLayout(spacing = 2) {
-            text { context }
-            spinner(Spinner.Dots())
+            text {
+                prefixed(context, prefix = terminal.theme.string("pakku.prefix", ">>>"))
+            }
             percentage()
-        }.animateInCoroutine(terminal, fetchMsg("Fetching"))
+            progressBar()
+        }.animateInCoroutine(terminal, "Fetching")
 
         launch { progressBar.execute() }
 
@@ -124,7 +118,7 @@ class Fetch : CliktCommand()
 
         syncJob.invokeOnCompletion {
             progressBar.update {
-                context = fetchMsg("Fetched", RGB("#98c379"))
+                context = "Fetched"
                 paused = true
             }
 

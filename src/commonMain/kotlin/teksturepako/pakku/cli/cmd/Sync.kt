@@ -173,6 +173,8 @@ class Sync : CliktCommand()
             if (removedProjects.isNotEmpty()) echo()
         }
 
+        // -- UPDATES -
+
         if (!flagsUsed || updatesFlag)
         {
             updatedProjects.takeIf { it.isNotEmpty() }?.run {
