@@ -128,17 +128,6 @@ class Init : CliktCommand()
             terminal.success("'target' set to '$this'")
         }
 
-        if (lockFile.getPlatforms().get()?.contains(CurseForge) == true
-            && CredentialsFile.readToResult().get()?.curseForgeApiKey == null)
-        {
-            terminal.println("? CurseForge API key")
-            echo()
-            terminal.pMsg("Accessing CurseForge requires the CurseForge API key.")
-            terminal.promptForCurseForgeApiKey()?.onError { error ->
-                terminal.pError(error)
-            }
-        }
-
         // -- OVERRIDES --
 
         configFile.addOverride("config")
@@ -154,6 +143,20 @@ class Init : CliktCommand()
         configFile.write()?.onError {
             terminal.pError(it)
         }
+
+        // -- API KEY --
+
+        if (lockFile.getPlatforms().get()?.contains(CurseForge) == true
+            && CredentialsFile.readToResult().get()?.curseForgeApiKey == null)
+        {
+            terminal.println("? CurseForge API key")
+            echo()
+            terminal.pMsg("Accessing CurseForge requires the CurseForge API key.")
+            terminal.promptForCurseForgeApiKey()?.onError { error ->
+                terminal.pError(error)
+            }
+        }
+
         terminal.success("Modpack successfully initialized")
         echo()
     }
