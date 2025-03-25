@@ -12,43 +12,63 @@
 > The transition is simple and can be done in two minutes. Please, see the docs for more info.
 
 > [!WARNING]  
-> Removed the deprecated argument and options from the `pakku set` command.  
-> `[<projects>]...` argument and `-s`, `-u` and `-r` options were removed.
-
+> Deprecated argument and options from the `pakku set` command (namely: `[<projects>]...`, `-s`, `-u` and `-r`) have been removed.
+> Please, use the `pakku cfg prj` command as the alternative.
 ### Highlights
 
-- Added the `pakku remote` command, for remote modpack installations.
-
+- Added the `pakku remote` command.
+  - This command can be used to install Pakku modpacks from secure remote Git repositories.
+  - Example usage for "autoupdating" installation: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update`
 - Implemented more robust error handling for HTTP requests.
-
 - Pakku now requires users to provide a CurseForge API key when accessing CurseForge.
-  - `pakku credentials` command has been added. Which can be used for your credentials' management.
-
-- On Windows, Pakku now tries to set your console output to use the UTF-8 encoding (code page 65001). If this fails Pakku will use the `ACSII` CLI theme.
-
+  - `pakku credentials` command has been added. Which can be used for your credentials management.
+- On Windows, Pakku now tries to configure your console output to use the UTF-8 encoding (code page 65001). If this fails, Pakku will use the `ASCII` CLI theme.
 - Fixed Pakku incorrectly using backslash path separators in exported ZIP files when exporting on Windows.
+- Pakku now allows adding files directly to the `.pakku/overrides`, `.pakku/server-overrides` or `.pakku/client-overrides` directories. This can be used, for example, to bundle your server installer with the server pack.
+  - Due to this change, "Project Overrides" have been renamed to "Manual Overrides".
+- Added the `export` property for projects in the config file, which can be used to exclude projects from being exported.
+  - Example usage: 
+    ```json5
+    {
+        "projects": {
+            "spark": {
+                "export": false // If you don't want Spark to be in the exported modpack 😉
+            }
+        }
+    }
+    ```
+- Deprecated argument and options from the `pakku set` command (namely: `[<projects>]...`, `-s`, `-u` and `-r`) have been removed.
+- Fixed errors with various representations of hash algorithm names. For example, "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
+- Improved docs. Mainly the "Configuring Pakku" chapter. Added a new "Server Management" chapter and a better explanation of types in the reference section.
 
-- Fixed errors with various representations of hash algorithm names. "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
+### `pakku remote` Explanation
 
-- Removed the deprecated argument and options from the `pakku set` command.
-  - `[<projects>]...` argument and `-s`, `-u` and `-r` options were removed.
+The `pakku remote` command can used to install Pakku modpacks from secure remote Git repositories.
 
-### `pakku remote` command
+It is based on Git, but using this command does't require Git to be installed on your computer. This is because Pakku uses the Java implementation of Git named [JGit](https://git-scm.com/book/en/v2/Appendix-B:-Embedding-Git-in-your-Applications-JGit).
 
-- `pakku remote` without any arguments will show you the status of the remote.
-- `pakku remote <url>` will install the remote from the provided Git URL argument: `<url>`.
-  - A remote modpack can only be installed in a directory with a non-initialized Pakku dev environment.
-- `pakku remote update` will update the modpack from the remote.
-- `pakku remote rm` will remove the remote from your modpack.
+A remote modpack can only be installed in a directory with a non-initialized Pakku dev environment. Meaning, the directory must be empty, or must only contain empty directories.
 
-### Technical Notes
+To install a remote modpack, use the `pakku remote` command with the `<url>` argument provided.  
+Example usage: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git`
 
-- "Project Overrides" have been renamed to "Manual Overrides".
+`pakku remote` without any arguments will show you the status of the remote or show the help message when no remote is installed.  
+
+To update your modpack from the remote modpack repository, run the `pakku remote update` subcommand.  
+
+`pakku remote <url>` and the `update` subcommand can be used together for an autoupdating modpack instalation.  
+Example usage: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update` - This will install or update the modpack as needed.
+
+### Other
+
 - The prefix "`!`" in glob pattern matching, which negates the pattern, will now exclude any matching file included by a **previous pattern**, and not a matching file included by any pattern, as it worked before.
 - Refactored the `LockFile` to use the `kotlin-result` monad.
 - Refactored action error messages to use the new `message()` function.
+- Modrinth `MultipleProjectFiles` requests are now chunked every 300 IDs instead of 1000.
 - Improved error handling for the export action.
+- Improved and unified error handling when writing the lock file and the config file to disk.
 - Implemented `OptionalExportRule`.
+- Fixed rare crash when converting `ProjectFile` to `CfModData` on exporting.
 
 ## v0.26.0
 
