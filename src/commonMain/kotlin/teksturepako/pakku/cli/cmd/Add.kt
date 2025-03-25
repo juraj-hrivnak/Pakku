@@ -169,6 +169,9 @@ class Add : CliktCommand()
             )
         }
 
-        lockFile.write()?.let { terminal.pError(it) }
+        lockFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
+        }
     }
 }

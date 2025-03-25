@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -98,6 +99,9 @@ class Rm : CliktCommand()
             echo()
         }
 
-        lockFile.write()?.let { terminal.pError(it) }
+        lockFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
+        }
     }
 }

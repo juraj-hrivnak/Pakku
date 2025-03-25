@@ -11,6 +11,7 @@ import com.github.ajalt.mordant.widgets.progress.progressBar
 import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
 import com.github.ajalt.mordant.widgets.progress.text
 import com.github.michaelbull.result.getOrElse
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.errors.AlreadyExists
@@ -28,6 +29,7 @@ import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.seconds
 
 class Fetch : CliktCommand()
 {
@@ -116,17 +118,6 @@ class Fetch : CliktCommand()
             )
         }
 
-        syncJob.invokeOnCompletion {
-            progressBar.update {
-                context = "Fetched"
-                paused = true
-            }
-
-            runBlocking {
-                progressBar.stop()
-            }
-        }
-
         // -- OLD FILES --
 
         val oldFilesJob = launch {
@@ -150,6 +141,14 @@ class Fetch : CliktCommand()
         }
 
         fetchJob.join()
+
+        launch {
+            delay(3.seconds)
+            runBlocking {
+                progressBar.stop()
+            }
+        }
+
         syncJob.join()
         oldFilesJob.join()
 

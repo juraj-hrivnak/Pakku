@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.help
@@ -110,10 +111,9 @@ class CfgPrj : CliktCommand("prj")
             }
         }
 
-        configFile.write()?.let {
-            terminal.pError(it)
-            echo()
-            return@runBlocking
+        configFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
         }
     }
 }

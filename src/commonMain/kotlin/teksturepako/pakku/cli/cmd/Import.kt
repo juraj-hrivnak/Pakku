@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
@@ -33,7 +34,7 @@ class Import : CliktCommand()
     private val pathArg: Path by argument("path", help = "The path to the modpack file").path(mustExist = true)
     private val depsFlag: Boolean by option("-D", "--deps", help = "Resolve dependencies").flag()
 
-    override fun run() = runBlocking {
+    override fun run(): Unit = runBlocking {
         val modpackModel = importModpackModel(pathArg).getOrElse {
             terminal.pError(it, pathArg.pathString)
             echo()
@@ -102,6 +103,9 @@ class Import : CliktCommand()
             }
         }.joinAll()
 
-        lockFile.write()
+        lockFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
+        }
     }
 }

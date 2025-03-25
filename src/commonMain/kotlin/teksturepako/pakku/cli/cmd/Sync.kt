@@ -206,11 +206,11 @@ class Sync : CliktCommand()
             if (updatedProjects.isNotEmpty()) echo()
         }
 
-        lockFile.write()?.let { error ->
+        lockFile.write()?.onError { error ->
             terminal.pError(error)
             throw ProgramResult(1)
         }
-        configFile?.write()?.let { error ->
+        configFile?.write()?.onError { error ->
             terminal.pError(error)
             throw ProgramResult(1)
         }
