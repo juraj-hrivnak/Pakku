@@ -76,7 +76,7 @@ or when you need to use some of Pakku's more advanced functionalities.
             A list of project slugs, names, or IDs from the <a href="Lock-File.md">lock file</a>
             with <a href="#project_properties">properties</a> you want to change.
         </p>
-        <h2 id="project_properties">Properties</h2>
+        <h2 id="project_properties">Project Properties</h2>
         <deflist>
             <def id="project_type">
                 <title><code>type</code></title>
