@@ -159,35 +159,3 @@ or when you need to use some of Pakku's more advanced functionalities.
         </deflist>
     </def>
 </deflist>
-
-## Example
-
-```JSON5
-{
-    "[[[name|#name]]]": "Example-Modpack",
-    "[[[version|#version]]]": "1.0.0",
-    "[[[overrides|#overrides]]]": [
-        "config", // Adding the 'config' folder as override.
-        "README.md", // Adding files as overrides.
-        "LICENSE"
-    ],
-    "[[[client_overrides|#client_overrides]]]": [
-       /**
-        * The 'resources' folder is added to the
-        * [[[client_overrides|#client_overrides]]] because we don't  
-        * want it to be included in the server pack.
-        */
-        "resources" 
-    ],
-    "[[[projects|#projects]]]": {
-        "particles-mod-3000": {
-           /**
-            * From testing, we learned that this mod crashes
-            * on the server, so we changed its project side
-            * to 'CLIENT', so it won't be included in the server pack.
-            */
-            "[[[side|#project_side]]]": "CLIENT"
-        }
-    }
-}
-```

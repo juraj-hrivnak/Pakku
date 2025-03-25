@@ -1,6 +1,6 @@
 # Adding Overrides
 
-[Overrides](Pakku-Terminology.md#override) are directories or files that you want to bundle with your modpack.
+[Overrides](Pakku-Terminology.md#override) are directories or files that will be bundled with your modpack.
 
 For example, this can be the `config` directory, or CraftTweaker/KubeJS script directories.
 

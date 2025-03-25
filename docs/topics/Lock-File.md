@@ -7,8 +7,8 @@ This file is not intended to be modified manually.
 
 ## Properties
 
-<deflist type="medium">
-    <def>
+<deflist>
+    <def id="target">
         <title><code>target</code></title>
         <p>The targeted platform of the modpack.</p>
         <table>
@@ -39,14 +39,14 @@ This file is not intended to be modified manually.
             Type: <code>String</code>
         </p>
     </def>
-    <def>
+    <def id="mc_versions">
         <title><code>mc_versions</code></title>
         <p>The Minecraft versions supported by the modpack.</p>
         <p>
             Type: <code>List&lt;String&gt;</code>
         </p>
     </def>
-    <def>
+    <def id="loaders">
         <title><code>loaders</code></title>
         <p>A map of loader names to loader versions supported by the modpack.</p>
         <p>
@@ -56,7 +56,7 @@ This file is not intended to be modified manually.
             Provided loader names are always formated to lowercase.
         </note>
     </def>
-    <def>
+    <def id="projects">
         <title><code>projects</code></title>
         <p>A list of projects included in the modpack.</p>
         <p>
@@ -69,7 +69,7 @@ This file is not intended to be modified manually.
             </code>
         </p>
     </def>
-    <def>
+    <def id="lockfile_version">
         <title><code>lockfile_version</code></title>
         <p>The version of the lock file.</p>
         <p>

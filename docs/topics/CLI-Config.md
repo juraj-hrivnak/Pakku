@@ -7,8 +7,8 @@ The `cli-config.json` must be located in the [Pakku directory (`.pakku`)](Pakku-
 
 ## Properties
 
-<deflist type="narrow">
-    <def>
+<deflist>
+    <def id="theme">
         <title><code>theme</code></title>
         <p>
             (By default it is automatically detected based on your terminal/CMD.)
@@ -37,7 +37,7 @@ The `cli-config.json` must be located in the [Pakku directory (`.pakku`)](Pakku-
             </tr>
         </table>
     </def>
-    <def>
+    <def id="ansi_level">
         <title><code>ansi_level</code></title>
         <p>
             (By default it is automatically detected based on your terminal/CMD.)

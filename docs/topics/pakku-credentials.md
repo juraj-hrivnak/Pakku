@@ -1,6 +1,6 @@
 # pakku credentials
 
-Configure credentials
+Manage your credentials
 
 ## Usage
 
@@ -25,7 +25,7 @@ Configure credentials
 <snippet id="snippet-options">
 
 `--delete`
-: delete all credentials
+: Delete all credentials
 
 </snippet>
 

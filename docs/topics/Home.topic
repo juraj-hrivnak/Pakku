@@ -32,8 +32,10 @@
         <misc>
             <cards narrow="false">
                 <title>Configuring Pakku</title>
-                <a href="Config-File.md"/>
-                <a href="Pakku-Directory.md"/>
+                <a href="Adding-Overrides.md"/>
+                <a href="Changing-Project-s-Update-Strategy.md"/>
+                <a href="Overriding-Projects-Properties.md"/>
+                <a href="Adding-Manual-Overrides.md"/>
             </cards>
             <cards narrow="true">
                 <title>CLI Commands</title>
