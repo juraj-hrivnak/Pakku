@@ -9,16 +9,16 @@
 > Pakku now requires users to provide their own CurseForge API key when accessing CurseForge.  
 > The embedded API key used in older versions of Pakku will be revoked in a month.
 > 
-> The transition is simple and can be done in two minutes. Please, see the docs for more info.
+> The transition is simple and can be done in two minutes. Please, [see the docs](https://juraj-hrivnak.github.io/Pakku/setting-up-a-modpack.html#configuring-curseforge-access) for more info.
 
 > [!WARNING]  
 > Deprecated argument and options from the `pakku set` command (namely: `[<projects>]...`, `-s`, `-u` and `-r`) have been removed.
 > Please, use the `pakku cfg prj` command as the alternative.
 ### Highlights
 
-- Added the `pakku remote` command.
-  - This command can be used to install Pakku modpacks from secure remote Git repositories.
+- Pakku now allows you to install Pakku modpacks from secure remote Git repositories using the `pakku remote` command.
   - Example usage for "autoupdating" installation: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update`
+  - [More info below...](#pakku-remote-explanation)
 - Implemented more robust error handling for HTTP requests.
 - Pakku now requires users to provide a CurseForge API key when accessing CurseForge.
   - `pakku credentials` command has been added. Which can be used for your credentials' management.
