@@ -4,10 +4,7 @@ import com.github.ajalt.mordant.markdown.Markdown
 import com.github.ajalt.mordant.terminal.StringPrompt
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.*
 import teksturepako.pakku.api.CredentialsFile
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.LockFile
@@ -64,7 +61,9 @@ suspend fun Terminal.promptForCurseForgeApiKey(): ActionError?
         3. Copy your API key
     """.trimIndent()))
 
-    val prompt: String? = StringPrompt(" 4. Enter the CurseForge API key", this, hideInput = true).ask()
+    val prompt: String? = runCatching {
+        StringPrompt(" 4. Enter the CurseForge API key", this, hideInput = true, allowBlank = false).ask()
+    }.get()
 
     if (prompt.isNullOrBlank()) return EmptyArg("CurseForge API key")
 
