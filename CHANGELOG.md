@@ -16,9 +16,9 @@
 > Please, use the `pakku cfg prj` command as the alternative.
 ### Highlights
 
-- Pakku now allows you to install Pakku modpacks from secure remote Git repositories using the `pakku remote` command.
-  - Example usage for "autoupdating" installation: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update`
-  - [More info below...](#pakku-remote-explanation)
+- Pakku now allows you to install Pakku modpacks from **secure remote Git repositories** using the `pakku remote` command.
+  - Example usage for *"autoupdating"* installation: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update`
+  - More information can be found below.
 - Implemented more robust error handling for HTTP requests.
 - Pakku now requires users to provide a CurseForge API key when accessing CurseForge.
   - `pakku credentials` command has been added. Which can be used for your credentials' management.
@@ -43,11 +43,11 @@
 
 ### `pakku remote` Explanation
 
-The `pakku remote` command can used to install Pakku modpacks from secure remote Git repositories.
+The `pakku remote` command can be used to install Pakku modpacks from secure remote Git repositories.
 
 It is based on Git, but using this command doesn't require Git to be installed on your computer. This is because Pakku uses the Java implementation of Git named [JGit](https://git-scm.com/book/en/v2/Appendix-B:-Embedding-Git-in-your-Applications-JGit).
 
-A remote modpack can only be installed in a directory with a non-initialized Pakku dev environment. Meaning, the directory must be empty, or must only contain empty directories.
+A remote modpack can only be installed in a directory with a non-initialized Pakku dev environment, meaning the directory must be empty or must contain empty directories only.
 
 To install a remote modpack, use the `pakku remote` command with the `<url>` argument provided.  
 Example usage: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git`
@@ -56,7 +56,7 @@ Example usage: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.g
 
 To update your modpack from the remote modpack repository, run the `pakku remote update` subcommand.  
 
-`pakku remote <url>` and the `update` subcommand can be used together for an autoupdating modpack instalation.  
+`pakku remote <url>` and the `update` subcommand can be used together for an autoupdating modpack installation.  
 Example usage: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update` - This will install or update the modpack as needed.
 
 Server installation can be achieved by using the `-S` or `--server-pack` flag when running the `pakku remote` command.
@@ -70,7 +70,7 @@ Server installation can be achieved by using the `-S` or `--server-pack` flag wh
 - Improved error handling for the export action.
 - Improved and unified error handling when writing the lock file and the config file to disk.
 - Implemented `OptionalExportRule`.
-- Fixed rare crash when converting `ProjectFile` to `CfModData` on exporting.
+- Fixed a rare crash when converting `ProjectFile` to `CfModData` on exporting.
 
 ## v0.26.0
 
