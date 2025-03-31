@@ -13,27 +13,24 @@ import java.nio.file.PathMatcher
 import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
-suspend fun Path.walk(globPatterns: List<String>): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO) {
+suspend fun Path.walk(globPatterns: List<String>): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO)
+{
     val matchers: List<Pair<PathMatcher, Boolean>> = globPatterns.mapNotNull { input ->
         val negating = input.startsWith("!")
         val glob = (if (negating) input.removePrefix("!") else input).removePrefix("./")
-
         val globPattern = "glob:${this@walk.invariantSeparatorsPathString}/$glob"
         runCatching { FileSystems.getDefault().getPathMatcher(globPattern) to negating }.get()
     }
 
     return@withContext this@walk.walk(PathWalkOption.INCLUDE_DIRECTORIES)
         .mapNotNull { path ->
-            val matcher = matchers.filter { (matcher) -> matcher.matches(path) }
-
-            if (matcher.isEmpty()) return@mapNotNull null
-
-            matcher to path
-        }.map { (matchers, path) ->
+            val lastMatcher = matchers.findLast { (matcher) -> matcher.matches(path) }
+            if (lastMatcher == null) return@mapNotNull null
+            lastMatcher to path
+        }
+        .map { (matcher, path) ->
             val resultPath = Path(path.absolutePathString().removePrefix(this@walk.absolutePathString()).removePrefix(File.separator))
-            val negating = matchers.any { it.second }
-
-            resultPath to negating
+            resultPath to matcher.second // Negating
         }
 }
 
@@ -61,4 +58,3 @@ suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
 
     return paths.toList().debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }
 }
-
