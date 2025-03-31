@@ -56,7 +56,7 @@ class GlobTest : PakkuTest(teardown = true)
     }
 
     @Test
-    fun `test negating nested dirs`(): Unit = runBlocking {
+    fun `test nested sub dirs with content`(): Unit = runBlocking {
         val dir = "test_dir"
         createTestDir(dir)
 
@@ -90,5 +90,57 @@ class GlobTest : PakkuTest(teardown = true)
 
         expectThat(expandedGlob)
             .doesNotContain(Path(dir, subDir, excludedFileInSubDir).pathString)
+    }
+
+    @Test
+    fun `test simple sub dir negating`(): Unit = runBlocking {
+        val dir = "test_dir"
+        createTestDir(dir)
+
+        val subDir = "sub_dir"
+        createTestDir(dir, subDir)
+
+        val expandedGlob = listOf(
+            dir,
+            "!$dir/$subDir",
+        ).expandWithGlob(Path(workingPath))
+
+        expectThat(expandedGlob)
+            .contains(Path(dir).pathString)
+
+        expectThat(expandedGlob)
+            .doesNotContain(Path(dir, subDir).pathString)
+
+    }
+
+    @Test
+    fun `test sub dir negating with content`(): Unit = runBlocking {
+        val dir = "test_dir"
+        createTestDir(dir)
+
+        val subDir = "sub_dir"
+        createTestDir(dir, subDir)
+
+        val file = "test_file.txt"
+        createTestFile(dir, file)
+        createTestFile(dir, subDir, file)
+
+        val file2 = "test_file_2.txt"
+        createTestFile(dir, subDir, file2)
+
+        val expandedGlob = listOf(
+            dir,
+            "!$dir/$subDir/",
+            "$dir/$subDir/$file",
+        ).expandWithGlob(Path(workingPath))
+
+        expectThat(expandedGlob)
+            .contains(Path(dir).pathString)
+
+        expectThat(expandedGlob)
+            .contains(Path(dir, subDir, file).pathString)
+
+        expectThat(expandedGlob)
+            .doesNotContain(Path(dir, subDir, file2).pathString)
     }
 }

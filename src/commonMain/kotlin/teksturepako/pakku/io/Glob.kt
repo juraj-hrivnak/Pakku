@@ -21,7 +21,6 @@ suspend fun Path.walk(globPatterns: List<String>): Sequence<Pair<Path, Boolean>>
         val globPattern = "glob:${this@walk.invariantSeparatorsPathString}/$glob"
         runCatching { FileSystems.getDefault().getPathMatcher(globPattern) to negating }.get()
     }
-
     return@withContext this@walk.walk(PathWalkOption.INCLUDE_DIRECTORIES)
         .mapNotNull { path ->
             val lastMatcher = matchers.findLast { (matcher) -> matcher.matches(path) }
@@ -37,24 +36,37 @@ suspend fun Path.walk(globPatterns: List<String>): Sequence<Pair<Path, Boolean>>
 suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
 {
     val walk = inputPath.walk(this).toList().debug {
-        for ((path, negating) in it)
-        {
-            println("${if (negating) "!" else ""}$path")
-        }
+        for ((path, negating) in it) println("${if (negating) "!" else ""}$path")
     }
+
+    val excludedDirs = mutableSetOf<Path>()
 
     val paths = walk.fold(mutableSetOf<String>()) { acc, (path, negating) ->
-        if (negating)
-        {
-            acc -= path.toString()
-        }
-        else
-        {
-            acc += path.toString()
-        }
+        val pathString = path.toString()
 
+        when
+        {
+            negating ->
+            {
+                if (pathString.endsWith(File.separator))
+                {
+                    excludedDirs += path.toMutableSet()
+                    acc.removeIf { it.startsWith(pathString) }
+                }
+                else
+                {
+                    acc.remove(pathString)
+                }
+            }
+            else ->
+            {
+                if (!excludedDirs.any { path.startsWith(it) })
+                {
+                    acc += pathString
+                }
+            }
+        }
         acc
     }
-
     return paths.toList().debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }
 }
