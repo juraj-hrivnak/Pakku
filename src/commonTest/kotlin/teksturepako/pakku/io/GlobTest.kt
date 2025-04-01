@@ -3,6 +3,7 @@ package teksturepako.pakku.io
 import kotlinx.coroutines.runBlocking
 import strikt.api.expectThat
 import strikt.assertions.contains
+import strikt.assertions.containsExactly
 import strikt.assertions.doesNotContain
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.workingPath
@@ -142,5 +143,57 @@ class GlobTest : PakkuTest(teardown = true)
 
         expectThat(expandedGlob)
             .doesNotContain(Path(dir, subDir, file2).pathString)
+    }
+
+    @Test
+    fun `test triple subdirectories negating pattern`(): Unit = runBlocking {
+
+        // -- USING: '**' --
+
+        val firstDir = "dir_1"
+        createTestDir(firstDir)
+
+        val secondDir = "dir_2"
+        createTestDir(firstDir, secondDir)
+
+        val thirdDir = "dir_3"
+        createTestDir(firstDir, secondDir, thirdDir)
+
+        val file = "test_file.txt"
+        createTestFile(firstDir, secondDir, file)
+
+        val file2 = "test_file_2.txt"
+        createTestFile(firstDir, secondDir, thirdDir, file2)
+
+        val expandedGlob = listOf(
+            "$firstDir/**",
+            "!$firstDir/$secondDir/$file",
+        ).expandWithGlob(Path(workingPath))
+
+        expectThat(expandedGlob)
+            .contains(Path(firstDir, secondDir, thirdDir, file2).pathString)
+
+        expectThat(expandedGlob)
+            .doesNotContain(Path(firstDir, secondDir, file).pathString)
+
+        // -- USING: '*' --
+
+        val expandedGlobsSingleWildcard = listOf(
+            "$firstDir/*",
+            "!$firstDir/$secondDir/$file",
+        ).expandWithGlob(Path(workingPath))
+
+        expectThat(expandedGlobsSingleWildcard)
+            .containsExactly(Path(firstDir, secondDir).pathString)
+
+        // -- USING NO WILDCARDS --
+
+        val expandedGlobWithoutWildcards = listOf(
+            firstDir,
+            "!$firstDir/$secondDir/$file",
+        ).expandWithGlob(Path(workingPath))
+
+        expectThat(expandedGlobWithoutWildcards)
+            .containsExactly(Path(firstDir).pathString)
     }
 }

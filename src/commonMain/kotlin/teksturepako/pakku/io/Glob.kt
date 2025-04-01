@@ -1,72 +1,107 @@
 package teksturepako.pakku.io
 
-import com.github.michaelbull.result.get
-import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import teksturepako.pakku.debug
-import teksturepako.pakku.debugIf
-import java.io.File
+import teksturepako.pakku.debugIfNotEmpty
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import kotlin.io.path.*
 
-@OptIn(ExperimentalPathApi::class)
-suspend fun Path.walk(globPatterns: List<String>): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO)
+@JvmInline
+value class Glob private constructor(private val value: Pair<PathMatcher, Boolean>)
 {
-    val matchers: List<Pair<PathMatcher, Boolean>> = globPatterns.mapNotNull { input ->
-        val negating = input.startsWith("!")
-        val glob = (if (negating) input.removePrefix("!") else input).removePrefix("./")
-        val globPattern = "glob:${this@walk.invariantSeparatorsPathString}/$glob"
-        runCatching { FileSystems.getDefault().getPathMatcher(globPattern) to negating }.get()
+    val pathMatcher: PathMatcher get() = value.first
+    val isNegated: Boolean get() = value.second
+
+    constructor(pathMatcher: PathMatcher, isNegated: Boolean) : this(pathMatcher to isNegated)
+}
+
+@OptIn(ExperimentalPathApi::class)
+suspend fun Path.walk(
+    globPatterns: List<String>,
+): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO)
+{
+    val matchers = globPatterns.map { pattern ->
+        val isNegated = pattern.startsWith("!")
+        val cleanPattern = pattern.removePrefix("!").removePrefix("./")
+        val finalPattern = if (cleanPattern.endsWith("/")) cleanPattern.dropLast(1) else cleanPattern
+
+        val pathMatcher = FileSystems.getDefault().getPathMatcher("glob:$finalPattern")
+
+        Glob(pathMatcher, isNegated)
     }
-    return@withContext this@walk.walk(PathWalkOption.INCLUDE_DIRECTORIES)
+
+    val walk = walk(PathWalkOption.INCLUDE_DIRECTORIES)
+
+    walk
         .mapNotNull { path ->
-            val lastMatcher = matchers.findLast { (matcher) -> matcher.matches(path) }
-            if (lastMatcher == null) return@mapNotNull null
-            lastMatcher to path
+            val relativePath = path.relativeTo(this@walk)
+
+            matchers
+                .findLast { glob ->
+                    glob.pathMatcher.matches(relativePath)
+                }
+                ?.let { it to relativePath }
         }
-        .map { (matcher, path) ->
-            val resultPath = Path(path.absolutePathString().removePrefix(this@walk.absolutePathString()).removePrefix(File.separator))
-            resultPath to matcher.second // Negating
+        .flatMap { (glob, path) ->
+            if (path.isDirectory())
+            {
+                walk
+                    .filter { recursivePath ->
+                        val relativeRecursivePath = recursivePath.relativeTo(this@walk)
+                        val relativeDirPath = path.relativeTo(this@walk)
+
+                        relativeRecursivePath.startsWith(relativeDirPath)
+                                && relativeRecursivePath != relativeDirPath
+                                && relativeRecursivePath.isRegularFile()
+                    }
+                    .map { recursivePath ->
+                        recursivePath.relativeTo(this@walk) to glob.isNegated
+                    }
+            }
+            else
+            {
+                sequenceOf(path to glob.isNegated)
+            }
         }
 }
 
 suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
 {
-    val walk = inputPath.walk(this).toList().debug {
-        for ((path, negating) in it) println("${if (negating) "!" else ""}$path")
+    val walk = inputPath.walk(this).debug { paths ->
+        println("--- START GLOB MATCHES ---")
+        for ((path, isNegated) in paths)
+        {
+            println("${if (isNegated) "!" else ""}$path")
+        }
     }
 
-    val excludedDirs = mutableSetOf<Path>()
-
-    val paths = walk.fold(mutableSetOf<String>()) { acc, (path, negating) ->
-        val pathString = path.toString()
-
+    return walk.fold(mutableSetOf<String>()) { acc, (path, isNegated) ->
         when
         {
-            negating ->
+            isNegated ->
             {
-                if (pathString.endsWith(File.separator))
+                if (path.isDirectory())
                 {
-                    excludedDirs += path.toMutableSet()
-                    acc.removeIf { it.startsWith(pathString) }
+                    acc.removeAll { existingPath ->
+                        Path(existingPath).startsWith(path)
+                    }
                 }
                 else
                 {
-                    acc.remove(pathString)
+                    acc.remove(path.toString())
                 }
             }
             else ->
             {
-                if (!excludedDirs.any { path.startsWith(it) })
-                {
-                    acc += pathString
-                }
+                acc += path.toString()
             }
         }
         acc
     }
-    return paths.toList().debugIf({ it.isNotEmpty() }) { println("expandWithGlob = $it") }
+        .toList()
+        .debugIfNotEmpty { println("expandWithGlob = $it") }
+        .debug { println("--- END GLOB MATCHES ---") }
 }
