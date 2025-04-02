@@ -161,7 +161,7 @@ sealed class RuleContext(
             val message = "export $type '$inputPath' to '$outputPath'"
 
             return ruleResult(message, Packaging.FileAction {
-                outputPath to inputPath.copyRecursivelyTo(outputPath)
+                outputPath to inputPath.copyRecursivelyTo(outputPath, cleanUp = false)
             })
         }
     }

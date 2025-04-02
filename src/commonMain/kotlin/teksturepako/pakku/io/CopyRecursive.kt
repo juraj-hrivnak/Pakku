@@ -55,11 +55,12 @@ sealed class FileAction
  */
 suspend fun Path.copyRecursivelyTo(
     destination: Path,
-    onAction: suspend (FileAction) -> Unit = { }
+    onAction: suspend (FileAction) -> Unit = { },
+    cleanUp: Boolean = true,
 ): ActionError? = when
 {
     this.isRegularFile() -> this.copyFileTo(destination, onAction)
-    this.isDirectory()   -> this.copyDirectoryTo(destination, onAction)
+    this.isDirectory()   -> this.copyDirectoryTo(destination, onAction, cleanUp)
     else                 -> InvalidPathError(this)
 }
 
@@ -82,7 +83,8 @@ private suspend fun Path.copyFileTo(
 
 private suspend fun Path.copyDirectoryTo(
     destination: Path,
-    onAction: suspend (FileAction) -> Unit
+    onAction: suspend (FileAction) -> Unit,
+    cleanUp: Boolean,
 ): ActionError? = runCatching {
 
     val sourceFiles = this.collectFileInfo()
@@ -91,7 +93,7 @@ private suspend fun Path.copyDirectoryTo(
     processFilesByHash(sourceFiles, destinationFiles, this, destination, onAction)
         ?.onError { return@runCatching it }
 
-    cleanupByHash(destinationFiles, sourceFiles, destination, onAction)
+    if (cleanUp) cleanupByHash(destinationFiles, sourceFiles, destination, onAction)
 
     null
 }.getOrElse { CopyError(it.message ?: "Unknown error during directory copy") }
