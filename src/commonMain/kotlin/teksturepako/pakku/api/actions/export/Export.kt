@@ -3,7 +3,10 @@ package teksturepako.pakku.api.actions.export
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.runCatching
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.actions.export.Packaging.*
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
@@ -50,10 +53,12 @@ suspend fun export(
     configFile: ConfigFile,
     platforms: List<Platform>
 ): List<Job> = coroutineScope {
+    val dispatcher = Dispatchers.Default.limitedParallelism(1)
+
     val overrides = getOverridesAsync(configFile)
 
     profiles.map { profile ->
-        launch {
+        launch(dispatcher) {
             profile.build(exportingScope(lockFile, configFile)).export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
@@ -106,12 +111,10 @@ suspend fun ExportProfile.export(
             .runEffects { error ->
                 onError(this, error)
             }
-            .awaitAll()
             .filterNotNull() + results
                 .runEffectsOnFinished { error ->
                     onError(this, error)
                 }
-                .awaitAll()
                 .filterNotNull()
 
         cleanUpDirectory(
@@ -151,7 +154,7 @@ suspend fun ExportProfile.export(
 
 suspend fun List<RuleResult>.runEffects(
     onError: suspend (error: ActionError) -> Unit
-): List<Deferred<Path?>> = coroutineScope {
+): List<Path?> =
     this@runEffects.mapNotNull { ruleResult ->
         when (val packagingAction = ruleResult.packaging)
         {
@@ -162,7 +165,7 @@ suspend fun List<RuleResult>.runEffects(
                 if (packagingAction.error.severity == ErrorSeverity.FATAL)
                 {
                     debug { println("FATAL") }
-                    return@coroutineScope listOf()
+                    return listOf()
                 }
 
                 null
@@ -178,16 +181,12 @@ suspend fun List<RuleResult>.runEffects(
                 if (ruleResult.ruleContext !is Finished)
                 {
                     val action = measureTimedValue {
-                        async {
-                            packagingAction.action()?.let {
-                                onError(ExportingError(it))
-                            }
+                        packagingAction.action()?.let {
+                            onError(ExportingError(it))
                         }
                     }
 
-                    action.value.invokeOnCompletion {
-                        debug { println("$ruleResult in ${action.duration}") }
-                    }
+                    debug { println("$ruleResult in ${action.duration}") }
 
                     null
                 }
@@ -198,17 +197,13 @@ suspend fun List<RuleResult>.runEffects(
                 if (ruleResult.ruleContext !is Finished)
                 {
                     val action = measureTimedValue {
-                        async(Dispatchers.IO) {
-                            packagingAction.action().let { (file, error) ->
-                                if (error != null) onError(IOExportingError(error))
-                                file
-                            }
+                        packagingAction.action().let { (file, error) ->
+                            if (error != null) onError(IOExportingError(error))
+                            file
                         }
                     }
 
-                    action.value.invokeOnCompletion {
-                        debug { println("$ruleResult in ${action.duration}") }
-                    }
+                    debug { println("$ruleResult in ${action.duration}") }
 
                     action.value
                 }
@@ -216,51 +211,41 @@ suspend fun List<RuleResult>.runEffects(
             }
         }
     }
-}
 
 suspend fun List<RuleResult>.runEffectsOnFinished(
     onError: suspend (error: ActionError) -> Unit
-): List<Deferred<Path?>> = coroutineScope {
+): List<Path?> =
     this@runEffectsOnFinished.mapNotNull { ruleResult ->
         when
         {
             ruleResult.ruleContext is Finished && ruleResult.packaging is Action    ->
             {
                 val action = measureTimedValue {
-                    async {
-                        ruleResult.packaging.action()?.let {
-                            onError(ExportingError(it))
-                        }
+                    ruleResult.packaging.action()?.let {
+                        onError(ExportingError(it))
                     }
                 }
 
-                action.value.invokeOnCompletion {
-                    debug { println("$ruleResult in ${action.duration}") }
-                }
+                debug { println("$ruleResult in ${action.duration}") }
 
                 null
             }
             ruleResult.ruleContext is Finished && ruleResult.packaging is FileAction ->
             {
                 val action = measureTimedValue {
-                    async(Dispatchers.IO) {
-                        ruleResult.packaging.action().let { (file, error) ->
-                            if (error != null) onError(IOExportingError(error))
-                            file
-                        }
+                    ruleResult.packaging.action().let { (file, error) ->
+                        if (error != null) onError(IOExportingError(error))
+                        file
                     }
                 }
 
-                action.value.invokeOnCompletion {
-                    debug { println("$ruleResult in ${action.duration}") }
-                }
+                debug { println("$ruleResult in ${action.duration}") }
 
                 action.value
             }
             else -> null
         }
     }
-}
 
 /**
  * Runs through a list of [ExportRules][ExportRule],

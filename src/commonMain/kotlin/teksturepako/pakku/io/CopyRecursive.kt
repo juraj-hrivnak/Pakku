@@ -2,9 +2,7 @@ package teksturepako.pakku.io
 
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.runCatching
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.io.FileAction.*
 import java.nio.file.Path
@@ -20,48 +18,25 @@ private value class FileInfo private constructor(private val pathAndHash: Pair<P
     constructor(relativePath: Path, hash: String? = null) : this(relativePath to hash)
 }
 
-sealed class FileAction
-{
-    abstract val description: String
-
-    data class FileCopied(
-        val source: Path,
-        val destination: Path,
-        val hash: String?
-    ) : FileAction()
-    {
-        override val description = "copied file from $source to $destination (hash: ${hash?.take(8)})"
-    }
-
-    data class FileDeleted(
-        val path: Path,
-        val hash: String?
-    ) : FileAction()
-    {
-        override val description = "deleted file $path (hash mismatch: ${hash?.take(8)})"
-    }
-
-    data class DirectoryDeleted(
-        val path: Path
-    ) : FileAction()
-    {
-        override val description = "deleted empty directory $path"
-    }
-}
-
 /**
  * Recursively copies a file or directory optimized by hash comparison.
  * Files are only copied when their hashes differ.
  */
 suspend fun Path.copyRecursivelyTo(
     destination: Path,
-    onAction: suspend (FileAction) -> Unit = { },
     cleanUp: Boolean = true,
-): ActionError? = when
-{
-    this.isRegularFile() -> this.copyFileTo(destination, onAction)
-    this.isDirectory()   -> this.copyDirectoryTo(destination, onAction, cleanUp)
-    else                 -> InvalidPathError(this)
+    onAction: suspend (FileAction) -> Unit = { },
+): ActionError? = coroutineScope {
+    withContext(Dispatchers.IO) {
+        val path = this@copyRecursivelyTo
+
+        when
+        {
+            path.isRegularFile() -> path.copyFileTo(destination, onAction)
+            path.isDirectory()   -> path.copyDirectoryTo(destination, onAction, cleanUp)
+            else                 -> InvalidPathError(path)
+        }
+    }
 }
 
 private suspend fun Path.copyFileTo(

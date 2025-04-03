@@ -44,7 +44,7 @@ suspend fun syncRemoteDirectory(
             val inputPath = Path(Dirs.remoteDir.pathString, overridePath)
             val outputPath = Path(workingPath, overridePath)
 
-            inputPath.copyRecursivelyTo(outputPath, onSync)
+            inputPath.copyRecursivelyTo(outputPath) { onSync(it) }
         }
     }.awaitAll().toMultipleErrors()
 
