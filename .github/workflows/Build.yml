@@ -5,6 +5,9 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - main
+      - non-cuncurrent
     paths-ignore:
       - 'docs/**'
       - '*.md'
