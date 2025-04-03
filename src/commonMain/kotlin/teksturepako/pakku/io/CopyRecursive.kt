@@ -2,7 +2,9 @@ package teksturepako.pakku.io
 
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.runCatching
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.io.FileAction.*
 import java.nio.file.Path
@@ -74,20 +76,16 @@ private suspend fun Path.copyDirectoryTo(
 }.getOrElse { CopyError(it.message ?: "Unknown error during directory copy") }
 
 @OptIn(ExperimentalPathApi::class)
-private suspend fun Path.collectFileInfo(): List<FileInfo> = coroutineScope {
+private suspend fun Path.collectFileInfo(): List<FileInfo> =
     walk()
         .filter { it.isRegularFile() }
-        .map { path ->
-            async {
-                FileInfo(
-                    relativePath = this@collectFileInfo.relativize(path),
-                    hash = path.readAndCreateSha1FromBytes()
-                )
-            }
-        }
         .toList()
-        .awaitAll()
-}
+        .map { path ->
+            FileInfo(
+                relativePath = this@collectFileInfo.relativize(path),
+                hash = path.readAndCreateSha1FromBytes()
+            )
+        }
 
 private suspend fun processFilesByHash(
     sourceFiles: List<FileInfo>,
