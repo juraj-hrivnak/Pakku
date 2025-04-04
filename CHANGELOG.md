@@ -3,6 +3,12 @@
 
 ## Unreleased
 
+## v1.1.0
+
+- Fixed excluding files from subdirectories matched with glob pattern not working.
+- Added proper documentation for the glob pattern format.
+- Fixed broken debug prints when exporting with the `--debug` flag. 
+
 ## v1.0.0
 
 > [!IMPORTANT]  
