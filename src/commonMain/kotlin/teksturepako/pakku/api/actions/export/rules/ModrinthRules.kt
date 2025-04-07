@@ -97,6 +97,8 @@ suspend fun ProjectFile.toMrFile(lockFile: LockFile, configFile: ConfigFile): Mr
 
     val parentProject = this.getParentProject(lockFile) ?: return null
 
+    val url = this.url ?: return null
+
     val relativePathString = this.getRelativePathString(parentProject, configFile)
     val path = this.getPath(parentProject, configFile)
 
@@ -122,8 +124,7 @@ suspend fun ProjectFile.toMrFile(lockFile: LockFile, configFile: ConfigFile): Mr
             client = "required",
             server = serverSide,
         ),
-        // Replace ' ' in URL with '+'
-        downloads = setOf(this.url!!.replace(" ", "+")),
+        downloads = setOf(url),
         fileSize = this.size
     )
 }
