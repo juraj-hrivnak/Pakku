@@ -3,6 +3,8 @@
 
 ## Unreleased
 
+- Fixed encoding of spaces in URLs in the `modrinth.index.json` file when exporting.
+
 ## v1.1.0
 
 - Fixed excluding files from subdirectories matched with glob pattern not working.
