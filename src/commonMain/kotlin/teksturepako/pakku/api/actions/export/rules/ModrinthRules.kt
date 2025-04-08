@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.actions.export.rules
 
+import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.actions.export.ExportRule
 import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
@@ -97,7 +98,11 @@ suspend fun ProjectFile.toMrFile(lockFile: LockFile, configFile: ConfigFile): Mr
 
     val parentProject = this.getParentProject(lockFile) ?: return null
 
-    val url = this.url ?: return null
+    /**
+     * MUST NOT contain un-encoded spaces or any other illegal characters according to RFC 3986.
+     * [Source...](https://support.modrinth.com/en/articles/8802351-modrinth-modpack-format-mrpack#h_e2af55e39e)
+     */
+    val url = UrlEncoderUtil.encode(this.url ?: return null, allow = "/:")
 
     val relativePathString = this.getRelativePathString(parentProject, configFile)
     val path = this.getPath(parentProject, configFile)
