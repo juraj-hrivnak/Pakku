@@ -89,7 +89,7 @@ The `,` character is used to separate the subpatterns. Groups cannot be nested.
     </tr>
     <tr>
         <td><code>*.*</code></td>
-        <td>Matches file names containing a do.</td>
+        <td>Matches file names containing a dot.</td>
     </tr>
     <tr>
         <td><code>*.{json,conf}</code></td>
