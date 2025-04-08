@@ -3,6 +3,8 @@
 
 ## Unreleased
 
+## v1.1.1
+
 - Fixed encoding of spaces in URLs in the `modrinth.index.json` file when exporting.
 - Fixed typo in Pattern Format section in docs.
 
