@@ -14,9 +14,9 @@
 
         <primary>
             <title>Getting Started</title>
+            <a href="Installing-Pakku.md"/>
             <a href="About.md"/>
             <a href="Pakku-Terminology.md"/>
-            <a href="Installing-Pakku.md"/>
             <a href="Supporting-Pakku.md"/>
         </primary>
 
@@ -32,8 +32,10 @@
         <misc>
             <cards narrow="false">
                 <title>Configuring Pakku</title>
-                <a href="Config-File.md"/>
-                <a href="Pakku-Directory.md"/>
+                <a href="Adding-Overrides.md"/>
+                <a href="Changing-Project-s-Update-Strategy.md"/>
+                <a href="Overriding-Projects-Properties.md"/>
+                <a href="Adding-Manual-Overrides.md"/>
             </cards>
             <cards narrow="true">
                 <title>CLI Commands</title>
@@ -51,6 +53,8 @@
                 <a href="pakku-link.md"/>
                 <a href="pakku-export.md"/>
                 <a href="pakku-diff.md"/>
+                <a href="pakku-remote.md"/>
+                <a href="pakku-credentials.md"/>
             </cards>
         </misc>
     </section-starting-page>

@@ -21,7 +21,9 @@ import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.actions.sync.syncProjects
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
 import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.ui.*
 
@@ -40,7 +42,7 @@ class Sync : CliktCommand()
 
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            it.message?.let { message -> terminal.pDanger(message) }
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -56,7 +58,7 @@ class Sync : CliktCommand()
         else null
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            it.message?.let { message -> terminal.pDanger(message) }
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -90,6 +92,11 @@ class Sync : CliktCommand()
                 projectIn.createAdditionRequest(
                     onError = { error ->
                         terminal.pError(error)
+
+                        if (error is CurseForge.Unauthenticated)
+                        {
+                            terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
+                        }
                     },
                     onSuccess = { project, isRecommended, replacing, _ ->
                         val projMsg = project.getFullMsg()
@@ -166,6 +173,8 @@ class Sync : CliktCommand()
             if (removedProjects.isNotEmpty()) echo()
         }
 
+        // -- UPDATES -
+
         if (!flagsUsed || updatesFlag)
         {
             updatedProjects.takeIf { it.isNotEmpty() }?.run {
@@ -197,11 +206,11 @@ class Sync : CliktCommand()
             if (updatedProjects.isNotEmpty()) echo()
         }
 
-        lockFile.write()?.let { error ->
+        lockFile.write()?.onError { error ->
             terminal.pError(error)
             throw ProgramResult(1)
         }
-        configFile?.write()?.let { error ->
+        configFile?.write()?.onError { error ->
             terminal.pError(error)
             throw ProgramResult(1)
         }

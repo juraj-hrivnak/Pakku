@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.export
 
+import com.github.michaelbull.result.get
 import kotlinx.coroutines.runBlocking
 import strikt.api.expectThat
 import strikt.assertions.contains
@@ -23,8 +24,6 @@ import teksturepako.pakku.io.readPathTextOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class MrModpackModelTest : PakkuTest()
@@ -71,7 +70,7 @@ class MrModpackModelTest : PakkuTest()
         name = modpackName
     )
 
-    private val platforms = lockFile.getPlatforms().getOrNull()
+    private val platforms = lockFile.getPlatforms().get()
 
     override suspend fun `set-up`()
     {

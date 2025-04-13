@@ -31,13 +31,14 @@ To import an existing modpack, run the [`pakku import`](pakku-import.md) command
 <include from="pakku-import.md" element-id="snippet-cmd"></include>
 
 The `<path>` argument will only accept:
-- CurseForge's modpack with the `.zip` extension or the `manifest.json`.
-- Modrinth's modpack with the `.mrpack` extension or the `modrinth.index.json`.
+- CurseForge's modpack with the `.zip` extension or the CurseForge's `manifest.json` file.
+- Modrinth's modpack with the `.mrpack` extension or the Modrinth's `modrinth.index.json` file.
 
-Pakku automatically sets the targeted platform of your modpack based on the file you import,
-and imports [projects](Pakku-Terminology.md#project).
+Pakku automatically sets the targeted platform of your modpack based on the file you import.
 
-Pakku does not import [overrides](Pakku-Terminology.md#override).
+> Pakku imports projects only!
+> [Overrides](Pakku-Terminology.md#override) have to be copied over manually.
+{style="note"}
 
 ## Migrating Modpack's Platform or Importing as Multiplatform Modpack
 
@@ -88,10 +89,29 @@ Set the target to the `multiplatform` target.
 </step>
 </procedure>
 
+## Configuring CurseForge Access
+
+Pakku requires users to provide their own CurseForge API key when accessing CurseForge.
+
+According to [CurseForge for Studios REST API documentation](https://docs.curseforge.com/rest-api/#authentication), 
+the API key can be generated in the [CurseForge for Studios developer console](https://console.curseforge.com/).
+
+Follow these steps to configure the access:
+
+1. Login to the [developer console](https://console.curseforge.com/#/login).
+2. Go to the "API keys" tab: ![dev_console.png](dev_console.png)
+3. Copy your API key.
+4. Enter your API key to the prompt provided by Pakku,
+or use the [`pakku credentials set`](pakku-credentials-set.md) command:
+    
+    <var name="params">--cf-api-key *********************</var>
+    <include from="pakku-credentials-set.md" element-id="snippet-cmd"></include>
+
 <seealso style="cards">
    <category ref="related">
        <a href="Config-File.md"/>
        <a href="Lock-File.md"/>
+       <a href="Credentials-File.md"/>
    </category>
 </seealso>
 

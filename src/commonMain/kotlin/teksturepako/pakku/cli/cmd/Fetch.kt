@@ -5,17 +5,13 @@ import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.int
-import com.github.ajalt.colormath.Color
-import com.github.ajalt.colormath.model.RGB
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
-import com.github.ajalt.mordant.rendering.TextStyle
-import com.github.ajalt.mordant.terminal.danger
-import com.github.ajalt.mordant.widgets.Spinner
 import com.github.ajalt.mordant.widgets.progress.percentage
+import com.github.ajalt.mordant.widgets.progress.progressBar
 import com.github.ajalt.mordant.widgets.progress.progressBarContextLayout
-import com.github.ajalt.mordant.widgets.progress.spinner
 import com.github.ajalt.mordant.widgets.progress.text
 import com.github.michaelbull.result.getOrElse
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.errors.AlreadyExists
@@ -27,12 +23,13 @@ import teksturepako.pakku.api.actions.sync.sync
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs
 import teksturepako.pakku.api.data.LockFile
-import teksturepako.pakku.api.overrides.readProjectOverrides
+import teksturepako.pakku.api.overrides.readManualOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.cli.ui.*
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.seconds
 
 class Fetch : CliktCommand()
 {
@@ -50,7 +47,7 @@ class Fetch : CliktCommand()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -66,7 +63,7 @@ class Fetch : CliktCommand()
         else null
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            it.message?.let { message -> terminal.pDanger(message) }
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -78,15 +75,13 @@ class Fetch : CliktCommand()
             }
         }
 
-        fun fetchMsg(text: String, color: Color? = null) = TextStyle(color = color)(
-            prefixed(text, prefix = terminal.theme.string("pakku.prefix", ">>>"))
-        )
-
         val progressBar = progressBarContextLayout(spacing = 2) {
-            text { context }
-            spinner(Spinner.Dots())
+            text {
+                prefixed(context, prefix = terminal.theme.string("pakku.prefix", ">>>"))
+            }
             percentage()
-        }.animateInCoroutine(terminal, fetchMsg("Fetching"))
+            progressBar()
+        }.animateInCoroutine(terminal, "Fetching")
 
         launch { progressBar.execute() }
 
@@ -110,7 +105,7 @@ class Fetch : CliktCommand()
 
         // -- OVERRIDES --
 
-        val projectOverrides = readProjectOverrides(configFile)
+        val projectOverrides = readManualOverrides(configFile)
 
         val syncJob = launch {
             projectOverrides.sync(
@@ -121,17 +116,6 @@ class Fetch : CliktCommand()
                     terminal.pInfo("${projectOverride.fullOutputPath} synced")
                 }
             )
-        }
-
-        syncJob.invokeOnCompletion {
-            progressBar.update {
-                context = fetchMsg("Fetched", RGB("#98c379"))
-                paused = true
-            }
-
-            runBlocking {
-                progressBar.stop()
-            }
         }
 
         // -- OLD FILES --
@@ -157,6 +141,14 @@ class Fetch : CliktCommand()
         }
 
         fetchJob.join()
+
+        launch {
+            delay(3.seconds)
+            runBlocking {
+                progressBar.stop()
+            }
+        }
+
         syncJob.join()
         oldFilesJob.join()
 

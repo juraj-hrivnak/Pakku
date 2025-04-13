@@ -13,7 +13,7 @@ enum class OverrideType(val prettyName: String, val folderName: String)
 
     companion object
     {
-        fun fromProject(project: Project) = when (project.type)
+        fun fromProject(project: Project): OverrideType = when (project.type)
         {
             ProjectType.MOD ->
             {

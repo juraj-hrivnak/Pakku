@@ -39,9 +39,12 @@ Diff projects in modpack
 `-v`, `--verbose`
 : Gives detailed information on which mods were updated
 
+`-h`, `--header-size`
+: Specifies the base header size. Default = 2
+
 </snippet>
 
-`-h`, `--help`
+`--help`
 : Show the help message and exit
 
 </snippet>

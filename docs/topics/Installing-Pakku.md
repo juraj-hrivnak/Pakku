@@ -6,7 +6,7 @@ or [manually](#install-manually).
 
 Pakku also requires Java to be installed on your computer,
 so please, before installing, check whether you have Java installed on your computer.
-If not, install it from [here](https://www.java.com/en/download/).
+If not, you _can_ install it from [here](https://www.java.com/en/download/).
 
 <procedure title="Install Pakku using Scoop for Windows" id="install-scoop">
 
@@ -57,16 +57,5 @@ If not, install it from [here](https://www.java.com/en/download/).
    {style="note"}
 
 </procedure>
-
-<note>
-Currently, the only option to run Pakku is using Java.
-This requires Java Runtime to be installed on your computer.
-
-It is not possible to release Pakku as native executable
-because there is no library for compression for Kotlin Native.
-If this ever changes in the future, there might be release of Pakku
-as native executable.
-</note>
-
    
 [GitHub releases]: https://github.com/juraj-hrivnak/Pakku/releases/latest

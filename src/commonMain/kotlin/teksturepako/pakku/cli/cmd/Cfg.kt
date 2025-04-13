@@ -1,9 +1,6 @@
 package teksturepako.pakku.cli.cmd
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.Context
-import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.core.*
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
@@ -128,10 +125,9 @@ class Cfg : CliktCommand()
             echo()
         }
 
-        configFile.write()?.let {
-            terminal.pError(it)
-            echo()
-            return@runBlocking
+        configFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
         }
     }
 }

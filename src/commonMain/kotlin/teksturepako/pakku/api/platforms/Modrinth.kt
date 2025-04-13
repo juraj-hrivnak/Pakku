@@ -1,25 +1,20 @@
 package teksturepako.pakku.api.platforms
 
-import io.ktor.client.call.*
-import io.ktor.client.statement.*
+import com.github.michaelbull.result.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.datetime.Instant
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import net.thauvin.erik.urlencoder.UrlEncoderUtil.encode
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.models.mr.GetVersionsFromHashesRequest
 import teksturepako.pakku.api.models.mr.MrProjectModel
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debugIfEmpty
-import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.seconds
 
 object Modrinth : Platform(
     name = "Modrinth",
@@ -41,67 +36,22 @@ object Modrinth : Platform(
         ProjectType.SHADER          -> "${this.siteUrl}/shader"
     }
 
-    // -- API RATE LIMIT --
-
-    private var requestsRemaining = 0
-    private var waiting = false
-
-    override suspend fun HttpResponse.checkLimit(): HttpResponse
-    {
-        this.headers["x-ratelimit-remaining"]?.toInt()?.let { rateLimit ->
-            requestsRemaining = rateLimit
-            when
-            {
-                rateLimit == 0  ->
-                {
-                    print("Error: ")
-                    println(json.decodeFromString<JsonObject>(this.body())["description"])
-                    exitProcess(1)
-                }
-                rateLimit < 100 ->
-                {
-                    if (!waiting) println("Warning: Waiting 30 seconds, because of height Modrinth API usage")
-                    waiting = true
-                    delay(30.seconds)
-                }
-            }
-        }
-        return this
-    }
-
-    fun checkRateLimit()
-    {
-        if (requestsRemaining < 200 && requestsRemaining != 0)
-        {
-            println("Modrinth: Rate limit remaining: $requestsRemaining")
-        }
-    }
-
     // -- PROJECT --
 
-    override suspend fun requestProject(input: String, projectType: ProjectType?): Project?
+    override suspend fun requestProject(input: String, projectType: ProjectType?): Result<Project, ActionError>
     {
-        return when
-        {
-            input.matches("[0-9]{6}".toRegex())           -> null
-            input.matches("\b[0-9a-zA-Z]{8}\b".toRegex()) ->
-            {
-                json.decodeFromString<MrProjectModel>(
-                    this.requestProjectBody("project/$input") ?: return null
-                ).toProject()
-            }
-            else                                          ->
-            {
-                json.decodeFromString<MrProjectModel>(
-                    this.requestProjectBody("project/$input") ?: return null
-                ).toProject()
-            }
-        }.also { project -> projectType?.let { project?.type = it } }
+        val responseString = this.requestProjectBody("project/$input").getOrElse { return Err(it) }
+
+        val project = json.decodeFromString<MrProjectModel>(responseString).toProject()
+            .getOrElse { return Err(it) }
+            .apply { projectType?.let { type = it } }
+
+        return Ok(project)
     }
 
-    private fun MrProjectModel.toProject(): Project?
+    private fun MrProjectModel.toProject(): Result<Project, ActionError>
     {
-        return Project(
+        return Ok(Project(
             name = mutableMapOf(serialName to title),
             slug = mutableMapOf(serialName to slug),
             type = when (projectType)
@@ -111,7 +61,7 @@ object Modrinth : Platform(
                 "datapack"     -> ProjectType.DATA_PACK
                 "shader"       -> ProjectType.SHADER
 
-                else           -> return null.also { println("Project type $projectType not found!") }
+                else           -> return Err(ProjectTypeNotSupported(slug, projectType))
             },
             side = when
             {
@@ -123,16 +73,19 @@ object Modrinth : Platform(
             id = mutableMapOf(serialName to id),
             redistributable = license.id != "ARR",
             files = mutableSetOf(),
-        )
+        ))
     }
 
-    override suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
+    override suspend fun requestMultipleProjects(ids: List<String>): Result<MutableSet<Project>, ActionError>
     {
         val url = encode("projects?ids=${ids.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
-        return json.decodeFromString<List<MrProjectModel>>(
-            this.requestProjectBody(url) ?: return mutableSetOf()
-        ).mapNotNull { it.toProject() }.toMutableSet()
+        val responseString = this.requestProjectBody(url).getOrElse { return Err(it) }
+
+        val projects = json.decodeFromString<List<MrProjectModel>>(responseString)
+            .mapNotNull { it.toProject().get() }.toMutableSet()
+
+        return Ok(projects)
     }
 
     // -- FILES --
@@ -189,7 +142,7 @@ object Modrinth : Platform(
 
     override suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?, projectType: ProjectType?
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
     {
         val actualLoaders = when (projectType)
         {
@@ -197,12 +150,12 @@ object Modrinth : Platform(
             else                  -> loaders
         }
 
-        return if (fileId == null)
+        return if (fileId == null) // Multiple files
         {
-            // Multiple files
-            json.decodeFromString<List<MrVersionModel>>(
-                this.requestProjectBody("project/$projectId/version") ?: return mutableSetOf()
-            )
+            val responseString = this.requestProjectBody("project/$projectId/version")
+                .getOrElse { return Err(it) }
+
+            val files = json.decodeFromString<List<MrVersionModel>>(responseString)
                 .filterFileModels(mcVersions, actualLoaders)
                 .sortedWith(compareBy(compareByLoaders(actualLoaders)))
                 .flatMap { version -> version.toProjectFiles() }
@@ -210,34 +163,47 @@ object Modrinth : Platform(
                     println("${this::class.simpleName}#requestProjectFiles: file is null")
                 }
                 .toMutableSet()
+
+            Ok(files)
         }
-        else
+        else // One file
         {
-            // One file
-            json.decodeFromString<MrVersionModel>(
-                this.requestProjectBody("version/$fileId") ?: return mutableSetOf()
-            )
+            val responseString = this.requestProjectBody("version/$fileId")
+                .getOrElse { return Err(it) }
+
+            val files = json.decodeFromString<MrVersionModel>(responseString)
                 .toProjectFiles()
                 .toMutableSet()
+
+            Ok(files)
         }
     }
 
     override suspend fun requestMultipleProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
-    ): MutableSet<ProjectFile> = coroutineScope {
-        val loadersWithType =
-            (if (projectIdsToTypes.values.any { it == ProjectType.DATA_PACK }) listOf(DATAPACK_LOADER) else listOf()) + loaders
+    ): Result<MutableSet<ProjectFile>, ActionError> = coroutineScope {
+        val loadersWithType = when
+        {
+            projectIdsToTypes.values.any { it == ProjectType.DATA_PACK } -> listOf(DATAPACK_LOADER)
+            else                                                         -> listOf()
+        } + loaders
+
         // Chunk requests if there are too many ids; Also do this in parallel
-        return@coroutineScope ids.chunked(1_000).map { list ->
+        val files = ids.chunked(300).map { list ->
             async {
                 val url = encode("versions?ids=${list.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
-                json.decodeFromString<List<MrVersionModel>>(
-                    this@Modrinth.requestProjectBody(url) ?: return@async mutableSetOf()
-                )
+                val responseString = this@Modrinth.requestProjectBody(url).getOrElse { return@async Err(it) }
+
+                val files = json.decodeFromString<List<MrVersionModel>>(responseString)
+
+                Ok(files)
             }
         }
             .awaitAll()
+            .map { result ->
+                result.getOrElse { return@coroutineScope Err(it) }
+            }
             .flatten()
             .filterFileModels(mcVersions, loadersWithType)
             .sortedWith(
@@ -254,56 +220,62 @@ object Modrinth : Platform(
             )
             .flatMap { version -> version.toProjectFiles() }
             .toMutableSet()
+
+        return@coroutineScope Ok(files)
     }
 
     override suspend fun requestMultipleProjectsWithFiles(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, numberOfFiles: Int
-    ): MutableSet<Project>
+    ): Result<MutableSet<Project>, ActionError>
     {
         val url = encode("projects?ids=${projectIdsToTypes.keys.map { "\"$it\"" }}".filterNot { it.isWhitespace() }, allow = "?=")
 
-        val response = json.decodeFromString<List<MrProjectModel>>(
-            this.requestProjectBody(url) ?: return mutableSetOf()
-        )
+        val responseString = this.requestProjectBody(url).getOrElse { return Err(it) }
+
+        val response = json.decodeFromString<List<MrProjectModel>>(responseString)
 
         val fileIds = response.flatMap { it.versions }
+
         val projectFiles = requestMultipleProjectFiles(mcVersions, loaders, projectIdsToTypes, fileIds)
-        val projects = response.mapNotNull { it.toProject() }
+            .getOrElse { return Err(it) }
+
+        val projects = response.mapNotNull { it.toProject().get() }
 
         projects.assignFiles(projectFiles, this)
 
-        return projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet()
+        return Ok(projects.map { it.apply { files = files.take(numberOfFiles).toMutableSet() } }.toMutableSet())
     }
 
     suspend fun requestMultipleProjectsWithFilesFromHashes(
         hashes: List<String>, algorithm: String
-    ): MutableSet<Project>
+    ): Result<MutableSet<Project>, ActionError>
     {
-        val response = json.decodeFromString<Map<String, MrVersionModel>>(
-            this.requestProjectBody("version_files") {
-                Json.encodeToString(GetVersionsFromHashesRequest(hashes, algorithm))
-            } ?: return mutableSetOf()
-        ).values
+        val responseString = this.requestProjectBody("version_files") {
+            Json.encodeToString(GetVersionsFromHashesRequest(hashes, algorithm))
+        }.getOrElse { return Err(it) }
+
+        val response = json.decodeFromString<Map<String, MrVersionModel>>(responseString).values
 
         val projectFiles = response.flatMap { version -> version.toProjectFiles().take(1) }
         val projectIds = projectFiles.map { it.parentId }
         val projects = requestMultipleProjects(projectIds)
+            .getOrElse { return Err(it) }
 
         projects.assignFiles(projectFiles, this)
 
-        return projects
+        return Ok(projects)
     }
 
     suspend fun requestMultipleProjectFilesFromHashes(
         hashes: List<String>, algorithm: String
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
     {
-        return json.decodeFromString<Map<String, MrVersionModel>>(
-            this.requestProjectBody("version_files") {
-                Json.encodeToString(GetVersionsFromHashesRequest(hashes, algorithm))
-            } ?: return mutableSetOf()
-        ).values
+        val responseString = this.requestProjectBody("version_files") {
+            Json.encodeToString(GetVersionsFromHashesRequest(hashes, algorithm))
+        }.getOrElse { return Err(it) }
+
+        return Ok(json.decodeFromString<Map<String, MrVersionModel>>(responseString).values
             .flatMap { version -> version.toProjectFiles().take(1) }
-            .toMutableSet()
+            .toMutableSet())
     }
 }

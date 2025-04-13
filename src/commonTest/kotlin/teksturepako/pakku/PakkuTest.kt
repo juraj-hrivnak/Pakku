@@ -3,20 +3,19 @@ package teksturepako.pakku
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.generatePakkuId
 import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.api.pakku
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
-open class PakkuTest
+open class PakkuTest(protected open val teardown: Boolean = true)
 {
     private var testName: String = ""
 
     protected open suspend fun `set-up`()
     {
     }
-
-    protected open val teardown = true
 
     protected fun testFile(vararg path: String): Path
     {
@@ -40,6 +39,12 @@ open class PakkuTest
     @BeforeTest
     fun `set-up-test`()
     {
+        pakku {
+            developmentMode()
+        }
+        
+        debugMode = true
+
         testName = this::class.simpleName ?: generatePakkuId()
 
         println("Setting up test: $testName")

@@ -3,6 +3,115 @@
 
 ## Unreleased
 
+## v1.1.1
+
+- Fixed encoding of spaces in URLs in the `modrinth.index.json` file when exporting.
+- Fixed typo in Pattern Format section in docs.
+
+## v1.1.0
+
+- Fixed excluding files from subdirectories matched with glob pattern not working.
+- Added proper documentation for the glob pattern format.
+- Fixed broken debug prints when exporting with the `--debug` flag. 
+
+## v1.0.0
+
+> [!IMPORTANT]  
+> Pakku now requires users to provide their own CurseForge API key when accessing CurseForge.  
+> The embedded API key used in older versions of Pakku will be revoked in a month.
+> 
+> The transition is simple and can be done in two minutes. Please, [see the docs](https://juraj-hrivnak.github.io/Pakku/setting-up-a-modpack.html#configuring-curseforge-access) for more info.
+
+> [!WARNING]  
+> Deprecated argument and options from the `pakku set` command (namely: `[<projects>]...`, `-s`, `-u` and `-r`) have been removed.
+> Please, use the `pakku cfg prj` command as the alternative.
+### Highlights
+
+- Pakku now allows you to install Pakku modpacks from **secure remote Git repositories** using the `pakku remote` command.
+  - Example usage for *"autoupdating"* installation: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update`
+  - More information can be found below.
+- Implemented more robust error handling for HTTP requests.
+- Pakku now requires users to provide a CurseForge API key when accessing CurseForge.
+  - `pakku credentials` command has been added. Which can be used for your credentials' management.
+- On Windows, Pakku now tries to configure your console output to use the UTF-8 encoding (code page 65001). If this fails, Pakku will use the `ASCII` CLI theme.
+- Fixed Pakku incorrectly using backslash path separators in exported ZIP files when exporting on Windows.
+- Pakku now allows adding files directly to the `.pakku/overrides`, `.pakku/server-overrides` or `.pakku/client-overrides` directories. This can be used, for example, to bundle your server installer with the server pack.
+  - Due to this change, "Project Overrides" have been renamed to "Manual Overrides".
+- Added the `export` property for projects in the config file, which can be used to exclude projects from being exported.
+  - Example usage: 
+    ```json5
+    {
+        "projects": {
+            "spark": {
+                "export": false // If you don't want Spark to be in the exported modpack 😉
+            }
+        }
+    }
+    ```
+- Deprecated argument and options from the `pakku set` command (namely: `[<projects>]...`, `-s`, `-u` and `-r`) have been removed.
+- Fixed errors with various representations of hash algorithm names. For example, "SHA_1", "SHA-1" and "SHA1" will all be recognised as "SHA-1".
+- Improved docs and the readme. Mainly the "Configuring Pakku" chapter. Added a new "Server Management" chapter and a better explanation of types in the reference section.
+
+### `pakku remote` Explanation
+
+The `pakku remote` command can be used to install Pakku modpacks from secure remote Git repositories.
+
+It is based on Git, but using this command doesn't require Git to be installed on your computer. This is because Pakku uses the Java implementation of Git named [JGit](https://git-scm.com/book/en/v2/Appendix-B:-Embedding-Git-in-your-Applications-JGit).
+
+A remote modpack can only be installed in a directory with a non-initialized Pakku dev environment, meaning the directory must be empty or must contain empty directories only.
+
+To install a remote modpack, use the `pakku remote` command with the `<url>` argument provided.  
+Example usage: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git`
+
+`pakku remote` without any arguments will show you the status of the remote or show the help message when no remote is installed.  
+
+To update your modpack from the remote modpack repository, run the `pakku remote update` subcommand.  
+
+`pakku remote <url>` and the `update` subcommand can be used together for an autoupdating modpack installation.  
+Example usage: `pakku remote https://github.com/juraj-hrivnak/CaveGameUltimate.git update` - This will install or update the modpack as needed.
+
+Server installation can be achieved by using the `-S` or `--server-pack` flag when running the `pakku remote` command.
+
+### Other
+
+- The prefix "`!`" in glob pattern matching, which negates the pattern, will now exclude any matching file included by a **previous pattern**, and not a matching file included by any pattern, as it worked before.
+- Refactored the `LockFile` to use the `kotlin-result` monad.
+- Refactored action error messages to use the new `message()` function.
+- Modrinth `MultipleProjectFiles` requests are now chunked every 300 IDs instead of 1000.
+- Improved error handling for the export action.
+- Improved and unified error handling when writing the lock file and the config file to disk.
+- Implemented `OptionalExportRule`.
+- Fixed a rare crash when converting `ProjectFile` to `CfModData` on exporting.
+
+## v0.26.0
+
+### Highlights
+
+- Added mod loader and MC version changes to the diff, by @Wxrlds in [#48](https://github.com/juraj-hrivnak/Pakku/pull/48).
+  - Added sections `# Minecraft` and `# Loaders` to the diff output.
+  - Added `header-size` option to specify the size of the headers in the markdown.
+- Improved already added & replacing project messages.
+- Fixed support for CurseForge projects with 7-digit IDs; Fixes [#75](https://github.com/juraj-hrivnak/Pakku/issues/75).
+- Fixed the building of Export Profiles when exporting multiple times.
+- Created the [`CONTRIBUTING.md`](https://github.com/juraj-hrivnak/Pakku/blob/main/CONTRIBUTING.md).
+
+### API
+
+- Implemented `PakkuApi` entry point for initializing the Pakku API.
+  - Example usage:
+    ```kt
+    pakku {
+        curseForge(apiKey = "<your_custom_api_key>")
+        withUserAgent("<your_custom_user_agent>")
+    }
+    ```
+- Renamed `ExportingScope` to `ExportRuleScope` for better clarity.
+- Implemented the `getProjectConfig` function. (Get "projects" configuration from the config file.)
+
+### Tests
+
+- Migrated to Strikt assertion library for more readable tests.
+
 ## v0.25.0
 
 ### Highlights

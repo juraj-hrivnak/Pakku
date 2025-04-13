@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.export
 
+import com.github.michaelbull.result.get
 import kotlinx.coroutines.runBlocking
 import strikt.api.expectThat
 import strikt.assertions.contains
@@ -63,7 +64,7 @@ class CfModpackModelTest : PakkuTest()
             name = modpackName
         )
 
-        val platforms = lockFile.getPlatforms().getOrNull()
+        val platforms = lockFile.getPlatforms().get()
 
         assertNotNull(platforms)
 

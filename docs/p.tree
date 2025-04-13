@@ -8,9 +8,9 @@
 
     <toc-element topic="Home.topic" toc-title="Home"/>
     <toc-element toc-title="Getting Started">
+        <toc-element topic="Installing-Pakku.md"/>
         <toc-element topic="About.md"/>
         <toc-element topic="Pakku-Terminology.md"/>
-        <toc-element topic="Installing-Pakku.md"/>
         <toc-element topic="Supporting-Pakku.md"/>
     </toc-element>
     <toc-element toc-title="Pakku Basics">
@@ -21,10 +21,12 @@
         <toc-element topic="Exporting-a-Modpack.md"/>
     </toc-element>
     <toc-element toc-title="Configuring Pakku">
-        <toc-element topic="Config-File.md"/>
-        <toc-element topic="Pakku-Directory.md"/>
-        <toc-element topic="CLI-Config.md"/>
+        <toc-element topic="Adding-Overrides.md"/>
+        <toc-element topic="Changing-Project-s-Update-Strategy.md"/>
+        <toc-element topic="Overriding-Projects-Properties.md"/>
+        <toc-element topic="Adding-Manual-Overrides.md"/>
     </toc-element>
+    <toc-element toc-title="Sever Management"/>
     <toc-element toc-title="Reference">
         <toc-element toc-title="CLI Commands">
             <toc-element topic="pakku.md"/>
@@ -44,8 +46,16 @@
             <toc-element topic="pakku-link.md"/>
             <toc-element topic="pakku-export.md"/>
             <toc-element topic="pakku-diff.md"/>
+            <toc-element topic="pakku-remote.md"/>
+            <toc-element topic="pakku-remote-update.md"/>
+            <toc-element topic="pakku-credentials.md"/>
+            <toc-element topic="pakku-credentials-set.md"/>
         </toc-element>
+        <toc-element topic="Config-File.md"/>
         <toc-element topic="Lock-File.md"/>
+        <toc-element topic="Pakku-Directory.md"/>
+        <toc-element topic="CLI-Config.md"/>
+        <toc-element topic="Credentials-File.md"/>
         <toc-element toc-title="API Reference"
                      href="https://juraj-hrivnak.github.io/Pakku/api/"/>
     </toc-element>

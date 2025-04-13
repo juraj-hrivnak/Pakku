@@ -1,6 +1,8 @@
 package teksturepako.pakku.api.platforms
 
-import teksturepako.pakku.api.http.Http
+import com.github.michaelbull.result.*
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.http.requestBody
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectType
@@ -19,7 +21,7 @@ abstract class Platform(
     val apiUrl: String,
     val apiVersion: Int,
     override val siteUrl: String,
-) : Http(), Provider
+) : Provider
 {
     override fun toString(): String = this.name
 
@@ -30,13 +32,13 @@ abstract class Platform(
         apiVersion: Int = this.apiVersion
     ) = "$apiUrl/v$apiVersion"
 
-    suspend fun requestProjectBody(input: String): String? =
-        this.requestBody("${this.getCommonRequestUrl()}/$input")
+    open suspend fun requestProjectBody(input: String): Result<String, ActionError> =
+        requestBody("${this.getCommonRequestUrl()}/$input")
 
-    suspend fun requestProjectBody(input: String, bodyContent: () -> String): String? =
-        this.requestBody("${this.getCommonRequestUrl()}/$input", bodyContent)
+    open suspend fun requestProjectBody(input: String, bodyContent: () -> String): Result<String, ActionError> =
+        requestBody("${this.getCommonRequestUrl()}/$input", bodyContent)
 
-    abstract suspend fun requestMultipleProjects(ids: List<String>): MutableSet<Project>
+    abstract suspend fun requestMultipleProjects(ids: List<String>): Result<MutableSet<Project>, ActionError>
 
     // -- FILES --
 
@@ -50,12 +52,11 @@ abstract class Platform(
         projectId: String,
         fileId: String? = null,
         projectType: ProjectType? = null
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
 
     abstract suspend fun requestMultipleProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, ids: List<String>
-    ): MutableSet<ProjectFile>
-
+    ): Result<MutableSet<ProjectFile>, ActionError>
 
     /**
      * [Requests project files][requestProjectFiles] for provided [project][Project], with optional
@@ -68,11 +69,13 @@ abstract class Platform(
         fileId: String? = null,
         numberOfFiles: Int = 1,
         projectType: ProjectType? = null
-    ): MutableSet<ProjectFile>
+    ): Result<MutableSet<ProjectFile>, ActionError>
     {
-        return project.id[this.serialName]?.let { projectId ->
-            this.requestProjectFiles(mcVersions, loaders, projectId, fileId, projectType).take(numberOfFiles).toMutableSet()
-        } ?: mutableSetOf()
+        return Ok(project.id[this.serialName]?.let { projectId ->
+            this.requestProjectFiles(mcVersions, loaders, projectId, fileId, projectType)
+                .getOrElse { return Err(it) }
+                .take(numberOfFiles).toMutableSet()
+        } ?: mutableSetOf())
     }
 
     /**
@@ -86,16 +89,24 @@ abstract class Platform(
         fileId: String?,
         numberOfFiles: Int,
         projectType: ProjectType?
-    ): Project?
+    ): Result<Project, ActionError>
     {
-        return requestProject(input, projectType)?.apply {
-            files.addAll(requestFilesForProject(mcVersions, loaders, this, fileId, numberOfFiles, projectType))
-        }
+        return Ok(requestProject(input, projectType)
+            .getOrElse { return Err(it) }
+            .apply {
+                val files = requestFilesForProject(mcVersions, loaders, this, fileId, numberOfFiles, projectType).get()
+
+                if (files != null)
+                {
+                    this.files.addAll(files)
+                }
+            }
+        )
     }
 
     abstract suspend fun requestMultipleProjectsWithFiles(
         mcVersions: List<String>, loaders: List<String>, projectIdsToTypes: Map<String, ProjectType?>, numberOfFiles: Int
-    ): MutableSet<Project>
+    ): Result<MutableSet<Project>, ActionError>
 
     companion object
     {

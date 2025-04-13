@@ -2,9 +2,14 @@
 
 package teksturepako.pakku.api.data
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.onSuccess
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.platforms.*
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.containProject
@@ -12,8 +17,10 @@ import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.decodeOrNew
 import teksturepako.pakku.io.decodeToResult
-import teksturepako.pakku.io.readPathTextOrNull
 import teksturepako.pakku.io.writeToFile
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 /**
  * A lock file (`pakku-lock.json`) is an automatically generated file used by Pakku
@@ -81,23 +88,28 @@ data class LockFile(
         this.target = target
     }
 
-    fun getPlatforms(): Result<List<Platform>> = if (target != null) when (target!!.lowercase())
+    data class TargetNotFound(val target: String? = null) : ActionError()
     {
-        "curseforge" -> Result.success(listOf(CurseForge))
-        "modrinth" -> Result.success(listOf(Modrinth))
-        "multiplatform" -> Result.success(Multiplatform.platforms)
-        else -> Result.failure(PakkuException("Target '$target' not found"))
+        override val rawMessage = if (target != null) "Target '$target' not found" else "Target not found"
     }
-    else Result.failure(PakkuException("Target not found"))
 
-    fun getProjectProvider(): Result<Provider> = if (target != null) when (target!!.lowercase())
+    fun getPlatforms(): Result<List<Platform>, ActionError> = if (target != null) when (target!!.lowercase())
     {
-        "curseforge" -> Result.success(CurseForge)
-        "modrinth" -> Result.success(Modrinth)
-        "multiplatform" -> Result.success(Multiplatform)
-        else -> Result.failure(PakkuException("Target (project provider) '$target' not found"))
+        "curseforge" -> Ok(listOf(CurseForge))
+        "modrinth" -> Ok(listOf(Modrinth))
+        "multiplatform" -> Ok(Multiplatform.platforms)
+        else -> Err(TargetNotFound(target))
     }
-    else Result.failure(PakkuException("Target (project provider) not found"))
+    else Err(TargetNotFound())
+
+    fun getProjectProvider(): Result<Provider, ActionError> = if (target != null) when (target!!.lowercase())
+    {
+        "curseforge" -> Ok(CurseForge)
+        "modrinth" -> Ok(Modrinth)
+        "multiplatform" -> Ok(Multiplatform)
+        else -> Err(TargetNotFound(target))
+    }
+    else Err(TargetNotFound())
 
     // -- PROJECTS --
 
@@ -255,21 +267,22 @@ data class LockFile(
     {
         const val FILE_NAME = "pakku-lock.json"
 
-        fun exists(): Boolean = readPathTextOrNull("$workingPath/$FILE_NAME") != null
+        fun exists(): Boolean = Path(workingPath, FILE_NAME).exists()
+        fun existsAt(path: Path): Boolean = path.exists()
 
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
         fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
             .also { it.inheritConfig(ConfigFile.readOrNull()) }
 
-        /**
-         * Reads [LockFile] and parses it, or returns an exception.
-         * Use [Result.fold] to map it's [success][Result.success] or [failure][Result.failure] values.
-         */
-        fun readToResult(): Result<LockFile> = decodeToResult<LockFile>("$workingPath/$FILE_NAME")
-            .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
+        /** Reads [LockFile] and parses it to a [Result]. */
+        suspend fun readToResult(): Result<LockFile, ActionError> =
+            decodeToResult<LockFile>(Path("$workingPath/$FILE_NAME"))
+                .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
 
-        fun readToResultFrom(path: String): Result<LockFile> = decodeToResult<LockFile>(path)
-            .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
+        /** Reads [LockFile] from a specified [path] and parses it to a [Result]. */
+        suspend fun readToResultFrom(path: Path): Result<LockFile, ActionError> =
+            decodeToResult<LockFile>(path)
+                .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true)

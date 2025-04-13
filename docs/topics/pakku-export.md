@@ -16,6 +16,13 @@ Export modpack
 
 <snippet id="snippet-options-all">
 
+<snippet id="snippet-options">
+
+`--show-io-errors`
+: Show file IO error on exporting. (These can be ignored most of the time.)
+
+</snippet>
+
 `-h`, `--help`
 : Show the help message and exit
 

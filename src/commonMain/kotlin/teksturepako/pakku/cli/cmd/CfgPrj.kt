@@ -2,6 +2,7 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.help
@@ -10,13 +11,8 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.boolean
 import com.github.ajalt.clikt.parameters.types.enum
-import com.github.ajalt.mordant.terminal.danger
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.get
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
@@ -63,7 +59,7 @@ class CfgPrj : CliktCommand("prj")
 
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -115,10 +111,9 @@ class CfgPrj : CliktCommand("prj")
             }
         }
 
-        configFile.write()?.let {
-            terminal.pError(it)
-            echo()
-            return@runBlocking
+        configFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
         }
     }
 }

@@ -12,17 +12,18 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 
-data class ProjectOverride(
+data class ManualOverride(
     val type: OverrideType,
     val path: Path,
     val fullOutputPath: Path,
     val relativeOutputPath: Path,
-    val bytes: ByteArray
+    val bytes: ByteArray,
+    val isInPrimaryDirectory: Boolean
 )
 {
     companion object
     {
-        suspend fun fromPath(path: Path, configFile: ConfigFile?): ProjectOverride?
+        suspend fun fromPath(path: Path, configFile: ConfigFile?): ManualOverride?
         {
             val separator = File.separator
 
@@ -35,26 +36,51 @@ data class ProjectOverride(
             val projectType = ProjectType.entries.firstOrNull { projectType ->
                 "$separator${projectType.getPathString(configFile)}$separator" in path.absolutePathString()
                     .substringAfter(type.folderName)
-            } ?: return null
+            }
 
             val bytes = readPathBytesOrNull(path) ?: return null
 
-            val relativePath = path.absolutePathString().substringAfter(
-                "${Dirs.PAKKU_DIR}$separator${type.folderName}$separator${projectType.getPathString(configFile)}$separator",
-                ""
-            )
+            val relativePath = if (projectType != null)
+            {
+                path.absolutePathString().substringAfter(
+                    "${Dirs.PAKKU_DIR}$separator${type.folderName}$separator${projectType.getPathString(configFile)}$separator",
+                    ""
+                )
+            }
+            else
+            {
+                path.absolutePathString().substringAfter(
+                    "${Dirs.PAKKU_DIR}$separator${type.folderName}$separator",
+                    ""
+                )
+            }
 
             if (relativePath.isBlank()) return null
 
-            val prjTypePathString = projectType.getPathString(configFile)
+            val prjTypePathString = projectType?.getPathString(configFile)
 
-            return ProjectOverride(
-                type = type,
-                path = path,
-                fullOutputPath = Path(workingPath, prjTypePathString, relativePath),
-                relativeOutputPath = Path(prjTypePathString, relativePath),
-                bytes = bytes
-            )
+            return if (prjTypePathString != null)
+            {
+                ManualOverride(
+                    type = type,
+                    path = path,
+                    fullOutputPath = Path(workingPath, prjTypePathString, relativePath),
+                    relativeOutputPath = Path(prjTypePathString, relativePath),
+                    bytes = bytes,
+                    isInPrimaryDirectory = false
+                )
+            }
+            else
+            {
+                ManualOverride(
+                    type = type,
+                    path = path,
+                    fullOutputPath = Path(workingPath, relativePath),
+                    relativeOutputPath = Path(relativePath),
+                    bytes = bytes,
+                    isInPrimaryDirectory = true
+                )
+            }
         }
     }
 
@@ -63,7 +89,7 @@ data class ProjectOverride(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ProjectOverride
+        other as ManualOverride
 
         if (type != other.type) return false
         if (path != other.path) return false

@@ -25,7 +25,8 @@ import kotlin.system.exitProcess
 
 class Pakku : CliktCommand()
 {
-    init {
+    init
+    {
         installMordantMarkdown()
         versionOption(VERSION, help = "Get pakku version")
         completionOption(help = "Generate autocompletion scripts")

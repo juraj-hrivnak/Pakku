@@ -8,8 +8,8 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.table.grid
-import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.info
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
@@ -18,6 +18,7 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.cli.ui.getFlavoredName
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFlavoredUpdateMsg
+import teksturepako.pakku.cli.ui.pError
 
 class Ls : CliktCommand()
 {
@@ -31,7 +32,7 @@ class Ls : CliktCommand()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }

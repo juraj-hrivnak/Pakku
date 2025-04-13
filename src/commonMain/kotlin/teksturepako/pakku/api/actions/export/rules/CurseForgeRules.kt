@@ -3,7 +3,7 @@ package teksturepako.pakku.api.actions.export.rules
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.actions.export.ExportRule
-import teksturepako.pakku.api.actions.export.ExportingScope
+import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.actions.export.ruleResult
@@ -23,7 +23,7 @@ data object RequiresMcVersion : ActionError()
     override val severity = ErrorSeverity.FATAL
 }
 
-fun ExportingScope.cfModpackRule(): ExportRule
+fun ExportRuleScope.cfModpackRule(): ExportRule
 {
     val modpackModel = lockFile.getFirstMcVersion()?.let { mcVersion ->
         createCfModpackModel(mcVersion, lockFile, configFile)
@@ -37,11 +37,18 @@ fun ExportingScope.cfModpackRule(): ExportRule
                 val projectFile = it.project.getFilesForPlatform(CurseForge).firstOrNull()
                     ?: return@ExportRule it.setMissing()
 
-                it.addToCfModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
+                it.addToCfModpackModel(projectFile, modpackModel
+                    ?: return@ExportRule it.error(RequiresMcVersion))
             }
-            is ExportingOverride        -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
-            is ExportingProjectOverride -> it.export(overridesDir = OverrideType.OVERRIDE.folderName)
-            is Finished                 ->
+            is ExportingOverride       -> it.export(
+                overridesDir = OverrideType.OVERRIDE.folderName,
+                allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
+            )
+            is ExportingManualOverride -> it.export(
+                overridesDir = OverrideType.OVERRIDE.folderName,
+                allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
+            )
+            is Finished                ->
             {
                 it.createJsonFile(modpackModel, CfModpackModel.MANIFEST, format = jsonEncodeDefaults)
             }
@@ -108,7 +115,7 @@ fun ProjectFile.toCfModData(parentProject: Project): CfModData?
     if (this.type != CurseForge.serialName) return null
 
     return CfModData(
-        projectID = parentProject.id[CurseForge.serialName]!!.toInt(),
+        projectID = parentProject.id[CurseForge.serialName]?.toInt() ?: return null,
         fileID = this.id.toInt()
     )
 }

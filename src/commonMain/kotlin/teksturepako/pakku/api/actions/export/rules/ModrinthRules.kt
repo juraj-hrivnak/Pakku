@@ -1,7 +1,8 @@
 package teksturepako.pakku.api.actions.export.rules
 
+import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.actions.export.ExportRule
-import teksturepako.pakku.api.actions.export.ExportingScope
+import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
 import teksturepako.pakku.api.actions.export.ruleResult
@@ -17,7 +18,7 @@ import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.readPathBytesOrNull
 
-fun ExportingScope.mrModpackRule(): ExportRule
+fun ExportRuleScope.mrModpackRule(): ExportRule
 {
     val modpackModel = lockFile.getFirstMcVersion()?.run {
         createMrModpackModel(this, lockFile, configFile)
@@ -33,9 +34,9 @@ fun ExportingScope.mrModpackRule(): ExportRule
 
                 it.addToMrModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
             }
-            is ExportingOverride        -> it.export()
-            is ExportingProjectOverride -> it.export()
-            is Finished                 ->
+            is ExportingOverride       -> it.export()
+            is ExportingManualOverride -> it.export()
+            is Finished                ->
             {
                 it.createJsonFile(modpackModel, MrModpackModel.MANIFEST, format = jsonEncodeDefaults)
             }
@@ -97,6 +98,12 @@ suspend fun ProjectFile.toMrFile(lockFile: LockFile, configFile: ConfigFile): Mr
 
     val parentProject = this.getParentProject(lockFile) ?: return null
 
+    /**
+     * MUST NOT contain un-encoded spaces or any other illegal characters according to RFC 3986.
+     * [Source...](https://support.modrinth.com/en/articles/8802351-modrinth-modpack-format-mrpack#h_e2af55e39e)
+     */
+    val url = UrlEncoderUtil.encode(this.url ?: return null, allow = "/:")
+
     val relativePathString = this.getRelativePathString(parentProject, configFile)
     val path = this.getPath(parentProject, configFile)
 
@@ -122,8 +129,7 @@ suspend fun ProjectFile.toMrFile(lockFile: LockFile, configFile: ConfigFile): Mr
             client = "required",
             server = serverSide,
         ),
-        // Replace ' ' in URL with '+'
-        downloads = setOf(this.url!!.replace(" ", "+")),
+        downloads = setOf(url),
         fileSize = this.size
     )
 }

@@ -1,21 +1,18 @@
 package teksturepako.pakku.cli.cmd
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.Context
-import com.github.ajalt.clikt.core.requireObject
-import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.core.*
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
-import com.github.ajalt.mordant.terminal.danger
-import com.github.michaelbull.result.get
-import com.github.michaelbull.result.getOrElse
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.*
+import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.NotFoundOn
 import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.http.RequestError
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
@@ -26,10 +23,12 @@ import teksturepako.pakku.cli.arg.*
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
+import teksturepako.pakku.cli.ui.pErrorOrPrompt
 import teksturepako.pakku.cli.ui.pSuccess
 import kotlin.collections.fold
 import kotlin.system.exitProcess
 import com.github.michaelbull.result.fold as resultFold
+import com.github.michaelbull.result.fold as resultFold1
 
 class AddPrj : CliktCommand("prj")
 {
@@ -82,19 +81,19 @@ class AddPrj : CliktCommand("prj")
         val noDepsFlag = flags.getOrElse("noDepsFlag") { false }
 
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
 
         val projectProvider = lockFile.getProjectProvider().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -103,17 +102,15 @@ class AddPrj : CliktCommand("prj")
         {
             suspend fun handleMissingProject(error: NotFoundOn)
             {
-                val (promptedProject, promptedArg) = promptForProject(
-                    error.provider, terminal, lockFile, projectType = projectTypeOpt
+                val (promptedProject, _) = terminal.promptForProject(
+                    error.provider, lockFile, projectType = projectTypeOpt
                 ).onFailure {
                     if (it is EmptyArg) return add(projectIn, strict = false)
                 }.getOrElse {
-                    return terminal.pError(it)
+                    return terminal.pErrorOrPrompt(it)
                 }
 
-                if (promptedProject == null) return terminal.pError(ProjNotFound(promptedArg.rawArg))
-
-                (error.project + promptedProject).resultFold( // Combine projects
+                (error.project + promptedProject).resultFold1( // Combine projects
                     failure = { terminal.pError(it) },
                     success = { add(it) }
                 )
@@ -122,6 +119,11 @@ class AddPrj : CliktCommand("prj")
             projectIn.createAdditionRequest(
                 onError = { error ->
                     terminal.pError(error)
+
+                    if (error is CurseForge.Unauthenticated)
+                    {
+                        terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
+                    }
 
                     if (error is NotFoundOn && strict)
                     {
@@ -175,20 +177,40 @@ class AddPrj : CliktCommand("prj")
             )
         }
 
-        val projects: List<Project?> = listOf(cf, mr, gh)
+        val projects = listOf(cf, mr, gh)
 
-        val combinedProject: Project? = projects.fold(null as Project?) { acc, project ->
-            when
-            {
-                acc == null     -> project
-                project == null -> acc
-                else            -> (acc + project).get()
+        val combinedProject: Result<Project, ActionError> = projects.fold(
+            Err(ProjNotFound()) as Result<Project, ActionError>
+        ) { acc, currentProject ->
+            acc.onFailure { error ->
+                if (error !is ProjNotFound && !(error is RequestError && error.response.status == HttpStatusCode.NotFound))
+                {
+                    return@fold Err(error)
+                }
             }
+
+            currentProject?.flatMap { project ->
+                acc.map { accProject ->
+                    accProject + project
+                }.getOrElse {
+                    Ok(project)
+                }
+            } ?: acc
         }
 
-        add(combinedProject)
-        echo()
+        combinedProject.resultFold(
+            success = {
+                add(combinedProject.get())
+                echo()
+            },
+            failure = { error ->
+                terminal.pErrorOrPrompt(error)
+            }
+        )
 
-        lockFile.write()?.let { terminal.pError(it) }
+        lockFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
+        }
     }
 }

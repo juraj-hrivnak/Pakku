@@ -45,23 +45,35 @@
 
 With **Pakku**, you can create modpacks for **CurseForge**, **Modrinth** or **both simultaneously**.
 
-### Multiplatform :dna: 
+It's a package manager that significantly simplifies Minecraft modpack development, inspired by package managers like npm and Cargo.
+In addition to package management itself, it enables support for version control, simplifies collaboration options, and adds support for CI/CD.
 
-Modpack development with the split of mod hosting platforms has become significantly harder. Pakku addresses this problem and tries to be as helpful as possible when developing a multiplatform modpack.
+## Features
 
-When adding a mod, resource pack or shader (further referred to as "Project") to your modpack, Pakku has a robust way to find it across both platforms. And even If this fails, you can specify the project slug, ID, or version manually.
+**A comprehensive toolkit for modpack development:**
 
-### Optimized :abacus: 
+##### Project operations
+<pre>
+ <kbd>pakku add</kbd> &#9;» Add new projects with automatic dependency resolution
+ <kbd>pakku rm</kbd> &#9;» Remove projects safely with dependency checking
+ <kbd>pakku update</kbd> &#9;» Update projects individually or in bulk
+ <kbd>pakku ls</kbd> &#9;» List and inspect project details
+ <kbd>pakku diff</kbd> &#9;» Compare different versions of your modpack
+</pre>
 
-Pakku is multithreaded to ensure everything is done as quickly as possible.
+##### Development environment
+<pre>
+ <kbd>pakku init</kbd> &#9;» Create a new modpack
+ <kbd>pakku import</kbd> &#9;» Import existing modpacks
+ <kbd>pakku fetch</kbd> &#9;» Set up or update your development environment
+ <kbd>pakku sync</kbd> &#9;» Sync your local project files with your modpack
+</pre>
 
-Pakku is also efficient with its HTTP requests, reducing them to a minimum. This ensures that data is sent quicker back to you and that you do not get rate-limited by adding or updating too many projects at once.
-
-### Configurable :nut_and_bolt: 
-
-Pakku utilises a design used by many well-known package managers like npm or Cargo, which consists of two files, the config file and the lock file.
-
-This allows you to fine-tune your modpack, while still being up-to-date. If any data retrieved from the platforms does not suit your requirements, you can simply override it in the config file.
+##### Modpack distribution
+<pre>
+ <kbd>pakku export</kbd> &#9;» Create distribution-ready packages
+ <kbd>pakku remote</kbd> &#9;» Install a modpack from a Git URL (great for server owners)
+</pre>
 
 ## Documentation 📚
 
@@ -70,24 +82,24 @@ Visit the [**Documentation**](https://juraj-hrivnak.github.io/Pakku) for install
 ## Images
 
 <p align="center">
-  <a href="https://github.com/juraj-hrivnak/pakku">
-    <img
-      src="docs/images/screenshot_export.png"
-      alt="Exporting a Modpack"
-    />
-  </a>
-  <a href="https://github.com/juraj-hrivnak/pakku">
-    <img
-      src="docs/images/screenshot_ls.png"
-      alt="Listing Projects"
-      width="800"
-    />
-  </a>
+  <img
+    src="docs/images/screenshot_export.png"
+    alt="Exporting a Modpack"
+  />
+  <img
+    src="docs/images/screenshot_ls.png"
+    alt="Listing Projects"
+    width="800"
+  />
 </p>
 
 ## Development
 
-To build Pakku for the JVM, run the <code>gradlew jvmJar</code>. <br>
+For a development and setup guide, check out our [Contributing Guide](CONTRIBUTING.md).
+
+Contributions are very welcomed, from code to documentation improvements!
+
+Join our [Discord](https://discord.com/invite/dtAyqdzTMj) if you have any questions.
 
 ## License
 

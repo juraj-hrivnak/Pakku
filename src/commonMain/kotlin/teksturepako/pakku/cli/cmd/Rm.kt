@@ -2,12 +2,14 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.danger
+import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.actions.errors.ProjNotFound
@@ -29,7 +31,7 @@ class Rm : CliktCommand()
 
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
-            terminal.danger(it.message)
+            terminal.pError(it)
             echo()
             return@runBlocking
         }
@@ -97,6 +99,9 @@ class Rm : CliktCommand()
             echo()
         }
 
-        lockFile.write()?.let { terminal.pError(it) }
+        lockFile.write()?.onError { error ->
+            terminal.pError(error)
+            throw ProgramResult(1)
+        }
     }
 }

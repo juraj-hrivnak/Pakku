@@ -1,13 +1,10 @@
 package teksturepako.pakku.api.actions.export
 
-import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.*
-import teksturepako.pakku.api.actions.errors.ActionError
-import teksturepako.pakku.api.actions.errors.CouldNotSave
-import teksturepako.pakku.api.actions.errors.ErrorSeverity
+import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.actions.export.Packaging.*
 import teksturepako.pakku.api.actions.export.RuleContext.Finished
 import teksturepako.pakku.api.actions.export.profiles.defaultProfiles
@@ -15,18 +12,19 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs.cacheDir
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.overrides.OverrideType
-import teksturepako.pakku.api.overrides.readProjectOverrides
+import teksturepako.pakku.api.overrides.OverridesDeferred
+import teksturepako.pakku.api.overrides.getOverridesAsync
+import teksturepako.pakku.api.overrides.readManualOverrides
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
-import teksturepako.pakku.io.*
+import teksturepako.pakku.io.cleanUpDirectory
+import teksturepako.pakku.io.tryOrNull
+import teksturepako.pakku.io.tryToResult
+import teksturepako.pakku.io.zip
 import java.nio.file.Path
-import kotlin.collections.fold
-import kotlin.collections.map
 import kotlin.io.path.*
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
-import com.github.michaelbull.result.fold as resultFold
 
 suspend fun exportDefaultProfiles(
     onError: suspend (profile: ExportProfile, error: ActionError) -> Unit,
@@ -52,24 +50,14 @@ suspend fun export(
     configFile: ConfigFile,
     platforms: List<Platform>
 ): List<Job> = coroutineScope {
-    val overrides: Deferred<List<Result<String, ActionError>>> = async {
-        configFile.getAllOverrides()
-    }
-
-    val serverOverrides: Deferred<List<Result<String, ActionError>>> = async {
-        configFile.getAllServerOverrides()
-    }
-
-    val clientOverrides: Deferred<List<Result<String, ActionError>>> = async {
-        configFile.getAllClientOverrides()
-    }
+    val overrides = getOverridesAsync(configFile)
 
     profiles.map { profile ->
         launch {
             profile.build(exportingScope(lockFile, configFile)).export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
-                lockFile, configFile, platforms, overrides, serverOverrides, clientOverrides
+                lockFile, configFile, platforms, overrides
             )
         }
     }
@@ -81,9 +69,7 @@ suspend fun ExportProfile.export(
     lockFile: LockFile,
     configFile: ConfigFile,
     platforms: List<Platform>,
-    overrides: Deferred<List<Result<String, ActionError>>>,
-    serverOverrides: Deferred<List<Result<String, ActionError>>>,
-    clientOverrides: Deferred<List<Result<String, ActionError>>>,
+    overrides: OverridesDeferred
 )
 {
     if (this.requiresPlatform != null && this.requiresPlatform !in platforms) return
@@ -98,101 +84,75 @@ suspend fun ExportProfile.export(
         } + ".${this.fileExtension}"
 
         val outputZipFile = runCatching { Path(workingPath, "build", this.name, modpackFileName) }
-            .onFailure { onError(this, CouldNotSave(null, it.message)) }
-            .get() ?: return
+            .onFailure { e: Throwable ->
+                onError(this, CouldNotExport(this, modpackFileName, e.message))
+            }
+            .get()
+            ?: return@measureTimedValue null
 
         // Create parent directory
         cacheDir.tryOrNull {
-            it.createDirectory()
+            it.createDirectories()
             it.setAttribute("dos:hidden", true)
         }
 
         val inputDirectory = Path(cacheDir.pathString, this.name)
 
-        val results: List<RuleResult> = this.rules.filterNotNull().produceRuleResults(
-            onError = { error -> onError(this, error) },
-            lockFile, configFile, this.name, overrides, serverOverrides, clientOverrides
+        val results: List<RuleResult> = this.rules
+            .filterNotNull()
+            .produceRuleResults(lockFile, configFile, this.name, overrides)
+
+        val cachedPaths: List<Path> = results
+            .runEffects { error ->
+                onError(this, error)
+            }
+            .awaitAll()
+            .filterNotNull() + results
+                .runEffectsOnFinished { error ->
+                    onError(this, error)
+                }
+                .awaitAll()
+                .filterNotNull()
+
+        cleanUpDirectory(
+            inputDirectory, cachedPaths,
+            onError = { onError(this, IOExportingError(it)) },
+            onAction = { action -> debug { println("[${this.name}] CleanUp $action") } }
         )
 
-        // Run export rules
-        val cachedPaths: List<Path> = results.resolveResults { onError(this, it) }.awaitAll().filterNotNull() +
-                results.finishResults { onError(this, it) }.awaitAll().filterNotNull()
-
-        // -- FILE CACHE --
-
-        /** Map of _absolute paths_ to their _hashes_ for every path not in a directory */
-        val fileHashes: Map<Path, String> = cachedPaths.filterNot { it.isDirectory() }
-            .mapNotNull { file ->
-                file.tryToResult { it.readBytes() }
-                    .onFailure { onError(this, it) }
-                    .get()?.let { file to it }
-            }
-            .associate { it.first.absolute() to createHash("sha1", it.second) }
-
-        /** Map of _absolute paths_ to their _hashes_ for every path in a directory */
-        val dirContentHashes: Map<Path, String> = cachedPaths.filter { it.isDirectory() }
-            .mapNotNull { directory ->
-                directory.tryToResult { it.toFile().walkTopDown() }
-                    .onFailure { onError(this, it) }.get()
-            }
-            .flatMap {
-                it.mapNotNull { file -> file.toPath() }
-            }
-            .mapNotNull { path ->
-                path.readAndCreateSha1FromBytes()?.let {
-                    path.absolute() to it
+        outputZipFile
+            .tryToResult { it.createParentDirectories() }
+            .onFailure { error ->
+                if (error !is AlreadyExists)
+                {
+                    onError(this, CouldNotExport(this, modpackFileName, error.rawMessage))
+                    return@measureTimedValue null
                 }
             }
-            .toMap()
 
-        val fileTreeWalk = inputDirectory.tryToResult { it.toFile().walkBottomUp() }
-            .onFailure { onError(this, it) }.get()
-
-        if (fileTreeWalk != null)
+        try
         {
-            for (file in fileTreeWalk)
-            {
-                val path = file.toPath()
-                if (path == inputDirectory) continue
-
-                if (path.isDirectory())
-                {
-                    val currentDirFiles = path.tryToResult { it.toFile().listFiles() }
-                        .onFailure { onError(this, it) }.get()?.mapNotNull { it.toPath() } ?: continue
-
-                    if (currentDirFiles.isNotEmpty()) continue
-
-                    val deleted = path.deleteIfExists()
-                    if (deleted) debug { println("[${this.name}] CleanUp delete empty directory $path") }
-                }
-                else
-                {
-                    val hash = path.readAndCreateSha1FromBytes() ?: continue
-                    if ((path.absolute() in fileHashes.keys && hash in fileHashes.values) ||
-                        (path.absolute() in dirContentHashes.keys && hash in dirContentHashes.values)) continue
-
-                    val deleted = path.deleteIfExists()
-                    if (deleted) debug { println("[${this.name}] CleanUp delete file $path") }
-                }
-            }
+            zip(inputDirectory, outputZipFile)
         }
-
-        // -- ZIP CREATION --
-
-        outputZipFile.tryToResult { it.createParentDirectories() }.onFailure { onError(this, it) }
-
-        zip(inputDirectory, outputZipFile)
+        catch (e: Exception)
+        {
+            onError(this, CouldNotExport(this, modpackFileName, e.stackTraceToString()))
+            return@measureTimedValue null
+        }
 
         outputZipFile
     }
 
-    onSuccess(this, timedValue.value, timedValue.duration)
+    if (timedValue.value != null)
+    {
+        onSuccess(this, timedValue.value!!, timedValue.duration)
+    }
 }
 
-suspend fun List<RuleResult>.resolveResults(
+suspend fun List<RuleResult>.runEffects(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
-    this@resolveResults.mapNotNull { ruleResult ->
+    this@runEffects.mapNotNull { ruleResult ->
         when (val packagingAction = ruleResult.packaging)
         {
             is Error        ->
@@ -220,7 +180,7 @@ suspend fun List<RuleResult>.resolveResults(
                     val action = measureTimedValue {
                         async {
                             packagingAction.action()?.let {
-                                onError(it)
+                                onError(ExportingError(it))
                             }
                         }
                     }
@@ -240,7 +200,7 @@ suspend fun List<RuleResult>.resolveResults(
                     val action = measureTimedValue {
                         async(Dispatchers.IO) {
                             packagingAction.action().let { (file, error) ->
-                                if (error != null) onError(error)
+                                if (error != null) onError(IOExportingError(error))
                                 file
                             }
                         }
@@ -258,10 +218,10 @@ suspend fun List<RuleResult>.resolveResults(
     }
 }
 
-suspend fun List<RuleResult>.finishResults(
+suspend fun List<RuleResult>.runEffectsOnFinished(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
-    this@finishResults.mapNotNull { ruleResult ->
+    this@runEffectsOnFinished.mapNotNull { ruleResult ->
         when
         {
             ruleResult.ruleContext is Finished && ruleResult.packaging is Action    ->
@@ -269,7 +229,7 @@ suspend fun List<RuleResult>.finishResults(
                 val action = measureTimedValue {
                     async {
                         ruleResult.packaging.action()?.let {
-                            onError(it)
+                            onError(ExportingError(it))
                         }
                     }
                 }
@@ -285,7 +245,7 @@ suspend fun List<RuleResult>.finishResults(
                 val action = measureTimedValue {
                     async(Dispatchers.IO) {
                         ruleResult.packaging.action().let { (file, error) ->
-                            if (error != null) onError(error)
+                            if (error != null) onError(IOExportingError(error))
                             file
                         }
                     }
@@ -309,48 +269,20 @@ suspend fun List<RuleResult>.finishResults(
  * [RuleContext.MissingProject] and [RuleContext.Finished] are applied last.
  */
 suspend fun List<ExportRule>.produceRuleResults(
-    onError: suspend (error: ActionError) -> Unit,
-    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String,
-    overrides: Deferred<List<Result<String, ActionError>>>,
-    serverOverrides: Deferred<List<Result<String, ActionError>>>,
-    clientOverrides: Deferred<List<Result<String, ActionError>>>,
+    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String, overrides: OverridesDeferred
 ): List<RuleResult> = coroutineScope {
 
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
-        acc + lockFile.getAllProjects().map {
-            rule to RuleContext.ExportingProject(it, lockFile, configFile, workingSubDir)
-        } + overrides.await().mapNotNull { result ->
-            result.resultFold(
-                success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.OVERRIDE, lockFile, configFile, workingSubDir)
-                },
-                failure = {
-                    onError(it)
-                    null
-                }
-            )
-        } + serverOverrides.await().mapNotNull { result ->
-            result.resultFold(
-                success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.SERVER_OVERRIDE, lockFile, configFile, workingSubDir)
-                },
-                failure = {
-                    onError(it)
-                    null
-                }
-            )
-        } + clientOverrides.await().mapNotNull { result ->
-            result.resultFold(
-                success = {
-                    rule to RuleContext.ExportingOverride(it, OverrideType.CLIENT_OVERRIDE, lockFile, configFile, workingSubDir)
-                },
-                failure = {
-                    onError(it)
-                    null
-                }
-            )
-        } + readProjectOverrides(configFile).map {
-            rule to RuleContext.ExportingProjectOverride(it, lockFile, configFile, workingSubDir)
+        acc + lockFile.getAllProjects().mapNotNull { project ->
+            // Projects
+            if (project.export == false) return@mapNotNull null
+            rule to RuleContext.ExportingProject(project, lockFile, configFile, workingSubDir)
+        } + overrides.awaitAll().map { (overridePath, overrideType) ->
+            // Overrides
+            rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir)
+        } + readManualOverrides(configFile).map { projectOverride ->
+            // Manual overrides
+            rule to RuleContext.ExportingManualOverride(projectOverride, lockFile, configFile, workingSubDir)
         }
     }.map { (exportRule, ruleContext) ->
         exportRule.getResult(ruleContext)

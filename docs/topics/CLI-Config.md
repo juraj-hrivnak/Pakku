@@ -1,19 +1,54 @@
-# CLI Config
+# CLI Config File
 
-CLI Config (`cli-config.json`) is an optional file
-which can be used to modify the UI aspects of the Pakku CLI.
+The CLI config file (`cli-config.json`) can be used to modify the UI aspects of the Pakku CLI.
 
 The `cli-config.json` must be located in the [Pakku directory (`.pakku`)](Pakku-Directory.md).
-The relative path from the `.minecraft` directory should be: `.pakku/cli-config.json`.
+<br>The relative path from your modpack directory must be: `.pakku/cli-config.json`.
 
 ## Properties
 
-`theme`
-: Can be `default` or `ascii`. (Defaults to `default` 😜.)
-: - The `default` theme uses [UTF-8](https://en.wikipedia.org/wiki/UTF-8) symbols
-which may not be properly rendered in some terminals.
-: - The `ascii` theme limits the characters to [ASCII](https://en.wikipedia.org/wiki/ASCII) only.
-
-`ansi_level`
-: Can be `none`, `ansi16`, `ansi256` or `truecolor`.
-(By default it is automatically detected based on your terminal/CMD.)
+<deflist>
+    <def id="theme">
+        <title><code>theme</code></title>
+        <p>
+            (By default it is automatically detected based on your terminal/CMD.)
+        </p>
+        <table>
+            <tr>
+                <td>Possible value</td>
+                <td>Description</td>
+            </tr>
+            <tr>
+                <td><code>default</code></td>
+                <td>
+                    Uses <a href="https://en.wikipedia.org/wiki/UTF-8">UTF-8</a>
+                    characters for a better experience in the CLI. 
+                    <note>
+                        <a href="https://en.wikipedia.org/wiki/UTF-8">UTF-8</a>
+                        characters may not render properly in some terminals.
+                    </note>
+                </td>
+            </tr>
+            <tr>
+                <td><code>ascii</code></td>
+                <td>
+                    Limits characters to <a href="https://en.wikipedia.org/wiki/ASCII">ASCII</a> only.
+                </td>
+            </tr>
+        </table>
+    </def>
+    <def id="ansi_level">
+        <title><code>ansi_level</code></title>
+        <p>
+            (By default it is automatically detected based on your terminal/CMD.)
+        </p>
+        <table>
+            <tr>
+                <td>Possible values</td>
+            </tr>
+            <tr>
+                <td><code>none</code>, <code>ansi16</code>, <code>ansi256</code> or <code>truecolor</code></td>
+            </tr>
+        </table>
+    </def>
+</deflist>
