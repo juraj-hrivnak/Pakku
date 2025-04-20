@@ -21,10 +21,7 @@ import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
-import teksturepako.pakku.cli.ui.hint
-import teksturepako.pakku.cli.ui.pDanger
-import teksturepako.pakku.cli.ui.pError
-import teksturepako.pakku.cli.ui.pMsg
+import teksturepako.pakku.cli.ui.*
 
 class Init : CliktCommand()
 {
@@ -91,9 +88,8 @@ class Init : CliktCommand()
 
         // -- LOADERS --
 
-        loadersOpts?.let { loaders ->
-            lockFile.setLoaders(loaders)
-        } ?: run {
+        if (loadersOpts.isNullOrEmpty())
+        {
             with(terminal.prompt("? Loaders")?.split(" ") ?: return@runBlocking)
             {
                 this.forEach { lockFile.addLoader(it, "") }
@@ -107,6 +103,10 @@ class Init : CliktCommand()
                     terminal.success("    $loaderName version set to $this")
                 }
             }
+        }
+        else
+        {
+            lockFile.setLoaders(loadersOpts!!)
         }
 
         // -- TARGET --
@@ -157,7 +157,7 @@ class Init : CliktCommand()
             }
         }
 
-        terminal.success("Modpack successfully initialized")
+        terminal.pSuccess("Modpack successfully initialized")
         echo()
     }
 }
