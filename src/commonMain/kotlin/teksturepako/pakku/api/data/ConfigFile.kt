@@ -156,6 +156,12 @@ data class ConfigFile(
 
         projectConfig.builder(projectInput)
 
+        // Remove empty project config
+        if (this.projects[projectInput] == ProjectConfig())
+        {
+            this.projects.remove(projectInput)
+        }
+
         return null
     }
 
