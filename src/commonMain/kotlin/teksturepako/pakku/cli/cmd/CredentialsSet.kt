@@ -21,7 +21,13 @@ class CredentialsSet : CliktCommand("set")
 
     override fun run(): Unit = runBlocking {
         curseForgeApiKeyOpt?.let { curseForgeApiKey ->
-            CredentialsFile.update(curseForgeApiKey)?.onError { return@let terminal.pError(it) }
+            CredentialsFile.update(curseForgeApiKey)?.onError {
+                terminal.pError(it)
+                echo()
+
+                return@let
+            }
+
             terminal.pSuccess("CurseForge API key successfully configured.")
             echo()
         }

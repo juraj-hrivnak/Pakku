@@ -58,6 +58,15 @@ object CurseForge : Platform(
     override suspend fun requestProjectBody(input: String, bodyContent: () -> String): Result<String, ActionError> =
         requestBody("${this.getCommonRequestUrl()}/$input", bodyContent, apiKeyHeader)
 
+    suspend fun testApiKey(apiKey: String): ActionError?
+    {
+        // Test with JEI project ID
+        return requestBody("${this.getCommonRequestUrl()}/mods/238222", API_KEY_HEADER to apiKey).fold(
+            success = { null },
+            failure = { it }
+        )
+    }
+
     // -- PROJECT --
 
     override suspend fun requestProject(input: String, projectType: ProjectType?): Result<Project, ActionError> = when

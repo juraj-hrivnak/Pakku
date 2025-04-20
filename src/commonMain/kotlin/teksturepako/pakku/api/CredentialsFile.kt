@@ -7,6 +7,7 @@ import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.CouldNotRead
 import teksturepako.pakku.api.actions.errors.CouldNotSave
 import teksturepako.pakku.api.data.json
+import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.io.decodeToResult
 import teksturepako.pakku.io.tryOrNull
 import teksturepako.pakku.io.tryToResult
@@ -36,8 +37,12 @@ data class CredentialsFile(
         suspend fun update(curseForgeApiKey: String? = null): ActionError?
         {
             return readToResult().fold(
-                success = { config ->
-                    val updatedConfig = config.copy(curseForgeApiKey = curseForgeApiKey)
+                success = { credentialsFile ->
+                    val updatedConfig = credentialsFile.copy(curseForgeApiKey = curseForgeApiKey)
+
+                    updatedConfig.curseForgeApiKey?.let { apiKey ->
+                        CurseForge.testApiKey(apiKey)?.onError { return it }
+                    }
 
                     pakku { curseForge(apiKey = updatedConfig.curseForgeApiKey) }
                     updatedConfig.write()?.onError { return it }
@@ -61,10 +66,7 @@ data class CredentialsFile(
         val path = home?.let {
             val dir = Path(it, CONFIG_DIR)
 
-            dir.tryOrNull {
-                createDirectories()
-                setAttribute("dos:hidden", true)
-            }
+            dir.tryOrNull { createDirectories() }
 
             Path(it, CONFIG_DIR, FILE_NAME)
         } ?: return CouldNotSave(Path(CONFIG_DIR, FILE_NAME))
