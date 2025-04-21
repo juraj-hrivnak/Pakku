@@ -3,6 +3,14 @@
 
 ## Unreleased
 
+## v1.2.0
+
+- Implemented working path search up. You can now run Pakku anywhere in your modpack's subdirectories.
+- Fixed `pakku init` command not asking for loaders.
+- When configuring the CurseForge API key, Pakku will now test it to see if it works and return an error if it is not valid.
+- When using the `pakku cfg prj` command, pakku will now remove empty project entries. 
+For example, if this command: `pakku cfg prj -t mod example-mod` results in this JSON: `"example-mod": {}`, `"example-mod": {}` will be removed from `pakku.json`.
+
 ## v1.1.1
 
 - Fixed encoding of spaces in URLs in the `modrinth.index.json` file when exporting.
