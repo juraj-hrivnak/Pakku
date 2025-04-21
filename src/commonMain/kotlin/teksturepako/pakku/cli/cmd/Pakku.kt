@@ -13,6 +13,8 @@ import com.github.michaelbull.result.onSuccess
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.VERSION
 import teksturepako.pakku.api.data.Dirs.PAKKU_DIR
+import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.searchUpForWorkingPath
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.cli.arg.overrideYes
 import teksturepako.pakku.cli.ui.pInfo
@@ -50,7 +52,14 @@ class Pakku : CliktCommand()
     {
         overrideYes = yesFlag
         debugMode = debugFlag
-        workingPathOpt?.let { workingPath = it }
+
+        if (workingPathOpt != null)
+        {
+            workingPath = workingPathOpt as String
+        }
+        else if (!LockFile.exists()) runBlocking {
+            searchUpForWorkingPath()?.let { workingPath = it }
+        }
     }
 }
 
