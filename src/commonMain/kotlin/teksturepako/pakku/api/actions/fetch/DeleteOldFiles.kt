@@ -43,6 +43,8 @@ suspend fun deleteOldFiles(
     val allowedExtensions = listOf(".jar", ".zip", ".jar.meta")
 
     val detectedProjects = async {
+        if (!shelve) return@async mapOf()
+
         detectProjects(lockFile, configFile, platforms)
             .flatMap { project -> project.files }
             .map { projectFile ->
