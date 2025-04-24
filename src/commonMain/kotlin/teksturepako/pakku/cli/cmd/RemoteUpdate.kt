@@ -1,9 +1,6 @@
 package teksturepako.pakku.cli.cmd
 
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.Context
-import com.github.ajalt.clikt.core.requireObject
-import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.core.*
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.MultiProgressBarAnimation
 import com.github.ajalt.mordant.animation.progress.ProgressTask
@@ -113,7 +110,7 @@ suspend fun CliktCommand.remoteUpdateImpl(args: Remote.Args) = coroutineScope {
     remoteJob.await()?.onError {
         terminal.pError(it)
         echo()
-        return@coroutineScope
+        throw ProgramResult(1)
     }
 
     remoteJob.join()

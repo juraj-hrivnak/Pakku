@@ -90,7 +90,7 @@ private suspend fun modpackDirIsEmpty(): Boolean = Path(workingPath)
 
         // If no files found, directory is empty
         return@tryOrNull listDirectoryEntries()
-            .filterNot { it.name == "pakku.jar" }
+            .filterNot { it.name == "pakku.jar" || it.name == "icon.png" }
             .none { it.isRegularFile() || it.isDirectory() && it.listDirectoryEntries().isNotEmpty() }
     }
     ?: false
