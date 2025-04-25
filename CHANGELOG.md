@@ -3,6 +3,11 @@
 
 ## Unreleased
 
+## v1.2.1
+
+- Improved performance of the `pakku fetch` command.
+- `icon.png` is now allowed to be present in the modpack directory when installing a remote modpack.
+
 ## v1.2.0
 
 - Implemented working path search up. You can now run Pakku anywhere in your modpack's subdirectories.
