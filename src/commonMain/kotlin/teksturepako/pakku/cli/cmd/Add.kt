@@ -32,7 +32,7 @@ class Add : CliktCommand()
     override fun help(context: Context) = "Add projects"
 
     private val projectArgs: List<ProjectArg> by argument("projects", help = "Projects to add").multiple().transformAll {
-        it.mapNotNull x@ { input ->
+        it.mapNotNull { input ->
             mapProjectArg(input).getOrElse { err ->
                 terminal.pError(err)
                 null
