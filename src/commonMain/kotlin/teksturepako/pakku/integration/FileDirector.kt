@@ -36,10 +36,12 @@ data class FileDirectorModel(
 fun ExportRuleScope.fileDirectorRule(
     excludedProviders: Set<Provider> = setOf(),
     fileDirectorModel: FileDirectorModel = FileDirectorModel()
-) = OptionalExportRule(requiresProject = "filedirector") {
-    when (it)
-    {
-        is MissingProject ->
+): ExportRule?
+{
+    if (lockFile.getProject("filedirector") == null || lockFile.getProject("autopack-director") == null) return null
+
+    return ExportRule {
+        when (it)
         {
             it.addToFileDirector(fileDirectorModel, excludedProviders)
         }
