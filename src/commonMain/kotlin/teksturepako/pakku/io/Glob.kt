@@ -2,7 +2,6 @@ package teksturepako.pakku.io
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import teksturepako.pakku.debug
 import teksturepako.pakku.debugIfNotEmpty
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -70,38 +69,30 @@ suspend fun Path.walk(
 
 suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
 {
-    val walk = inputPath.walk(this).debug { paths ->
-        println("--- START GLOB MATCHES ---")
-        for ((path, isNegated) in paths)
-        {
-            println("${if (isNegated) "!" else ""}$path")
-        }
-    }
+    val walk = inputPath.walk(this)
 
-    return walk.fold(mutableSetOf<String>()) { acc, (path, isNegated) ->
+    return walk.fold(sequenceOf<String>()) { acc, (path, isNegated) ->
         when
         {
             isNegated ->
             {
                 if (path.isDirectory())
                 {
-                    acc.removeAll { existingPath ->
+                    acc.filterNot { existingPath ->
                         Path(existingPath).startsWith(path)
                     }
                 }
                 else
                 {
-                    acc.remove(path.toString())
+                    acc - path.toString()
                 }
             }
             else ->
             {
-                acc += path.toString()
+                acc + path.toString()
             }
         }
-        acc
     }
         .toList()
         .debugIfNotEmpty { println("expandWithGlob = $it") }
-        .debug { println("--- END GLOB MATCHES ---") }
 }

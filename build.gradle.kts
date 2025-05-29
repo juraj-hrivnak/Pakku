@@ -176,11 +176,6 @@ tasks.withType<Jar> {
                     .map { zipTree(it) }
             )
         }
-        else
-        {
-            // Don't bundle to sources jar
-            exclude("**/CurseForgeApiKey.kt")
-        }
     }
 }
 
@@ -221,52 +216,6 @@ fun generateVersion() {
     versionDestFile.printWriter().use { out ->
         inputStream.bufferedReader().forEachLine { inputLine ->
             val newLine = inputLine.replace("__VERSION", version.toString())
-            out.println(newLine)
-        }
-    }
-
-    inputStream.close()
-}
-
-// -- API KEY --
-
-private val apiKeySourceFile = File("$rootDir/resources/teksturepako/pakku/api/platforms/TemplateApiKey.kt")
-private val apiKeyDestFile = File("$rootDir/src/commonMain/kotlin/teksturepako/pakku/api/platforms/CurseForgeApiKey.kt")
-
-tasks.register("embedApiKey") {
-    group = "build"
-
-    inputs.file(apiKeySourceFile)
-    outputs.file(apiKeyDestFile)
-
-    doLast {
-        embedApiKey()
-    }
-}
-
-if (nativeEnabled)
-{
-    tasks.named("compileKotlinNative") {
-        dependsOn("embedApiKey")
-    }
-}
-
-tasks.named("compileKotlinJvm") {
-    dependsOn("embedApiKey")
-}
-
-tasks.named("jvmSourcesJar") {
-    dependsOn("embedApiKey")
-}
-
-fun embedApiKey() {
-    val apiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
-
-    val inputStream: InputStream = apiKeySourceFile.inputStream()
-
-    apiKeyDestFile.printWriter().use { out ->
-        inputStream.bufferedReader().forEachLine { inputLine ->
-            val newLine = inputLine.replace("__CURSEFORGE_API_KEY", apiKey.replace("$", "\\$"))
             out.println(newLine)
         }
     }
