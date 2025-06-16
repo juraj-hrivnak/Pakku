@@ -16,7 +16,8 @@ fun strong(string: String): String = TextStyle(bold = true, underline = true)(st
 fun strong(text: Any?): String = TextStyle(bold = true, underline = true)(text.toString())
 fun String.plusStrong(string: String): String = this + TextStyle(bold = true, underline = true)(string)
 
-fun String.createHyperlink(hyperlink: String): String = TextStyle(hyperlink = hyperlink)(this)
+fun String.createHyperlink(hyperlink: String?): String =
+    if (hyperlink == null) this else TextStyle(hyperlink = hyperlink)(this)
 
 fun <T : Any> Collection<T>.toMsg(): String
 {

@@ -84,6 +84,7 @@ class Status: CliktCommand()
         launch { progressBar.execute() }
 
         val currentProjects = lockFile.getAllProjects()
+
         val updatedProjects = updateMultipleProjectsWithFiles(
             lockFile.getMcVersions(),
             lockFile.getLoaders(),
@@ -99,10 +100,10 @@ class Status: CliktCommand()
             updatedProjects.isEmpty() && currentProjects.isNotEmpty() ->
             {
                 terminal.pSuccess("All projects are up to date.")
-
                 echo()
             }
-            updatedProjects.size == 1                                 ->
+
+            updatedProjects.size == 1 ->
             {
                 terminal.pInfo("Following project has a new version available:")
                 terminal.println(
@@ -111,8 +112,9 @@ class Status: CliktCommand()
                         " to update the project"
                     )
                 )
-                projects(currentProjects, updatedProjects)
+                projects(currentProjects, updatedProjects, lockFile)
             }
+
             updatedProjects.size > 1 ->
             {
                 terminal.pInfo("Following projects have a new version available:")
@@ -122,7 +124,7 @@ class Status: CliktCommand()
                         " or \"pakku update ${dim("-a")}\" to update all projects"
                     )
                 )
-                projects(currentProjects, updatedProjects)
+                projects(currentProjects, updatedProjects, lockFile)
             }
             else -> echo()
         }
@@ -131,48 +133,61 @@ class Status: CliktCommand()
 
 private fun CliktCommand.projects(
     currentProjects: List<Project>,
-    updatedProjects: MutableSet<Project>
-)
-{
-    terminal.println(
-        grid {
-            for (updatedProject in updatedProjects)
+    updatedProjects: MutableSet<Project>,
+    lockFile: LockFile
+) = terminal.println(
+    grid {
+        for (updatedProject in updatedProjects)
+        {
+            row {
+                cell(" ".repeat(3) + updatedProject.getFlavoredSlug())
+                cell(updatedProject.getFlavoredName(terminal.theme))
+                cell(updatedProject.type.name)
+                updatedProject.side?.let { cell(it.name) }
+            }
+
+            val currentProject = currentProjects.firstOrNull { it isAlmostTheSameAs updatedProject }
+
+            if (currentProject == null) continue
+
+            var filesUpdated = false
+
+            for (provider in updatedProject.getProviders())
             {
-                row {
-                    cell(" ".repeat(3) + updatedProject.getFlavoredSlug())
-                    cell(updatedProject.getFlavoredName(terminal.theme))
-                    cell(updatedProject.type.name)
-                    updatedProject.side?.let { cell(it.name) }
+                val currentFile = currentProject.getFilesForProvider(provider).firstOrNull()
+                val updatedFile = updatedProject.getFilesForProvider(provider).firstOrNull()
+
+                if (currentFile == null || updatedFile == null || currentFile == updatedFile)
+                {
+                    continue
+                }
+                else
+                {
+                    filesUpdated = true
                 }
 
-                val currentProject = currentProjects.firstOrNull { it isAlmostTheSameAs updatedProject }
-                if (currentProject == null) continue
+                val (currentFileNameDiff, updatedFileNameDiff) =
+                    coloredStringDiff(currentFile.fileName, updatedFile.fileName)
 
-                var filesUpdated = false
+                val providerName = dim("${provider.shortName}_file:")
 
-                for (provider in updatedProject.getProviders())
-                {
-                    val cFile = currentProject.getFilesForProvider(provider).firstOrNull()?.fileName
-                    val uFile = updatedProject.getFilesForProvider(provider).firstOrNull()?.fileName
-
-                    if (cFile == null || uFile == null || cFile == uFile) continue
-
-                    val (cDiffFile, uDiffFile) = coloredStringDiff(cFile, uFile)
-
-                    filesUpdated = true
-
-                    row {
-                        cell(" ".repeat(6) + dim("${provider.shortName}_file:")) {
-                            align = TextAlign.RIGHT
-                        }
-                        cell(cDiffFile) { align = TextAlign.CENTER }
-                        cell(dim("->")) { align = TextAlign.CENTER }
-                        cell(uDiffFile) { align = TextAlign.LEFT }
+                row {
+                    cell(" ".repeat(6) + providerName) {
+                        align = TextAlign.RIGHT
+                    }
+                    cell(currentFileNameDiff.createHyperlink(currentFile.getSiteUrl(lockFile))) {
+                        align = TextAlign.LEFT
+                    }
+                    cell(dim("->")) {
+                        align = TextAlign.CENTER
+                    }
+                    cell(updatedFileNameDiff.createHyperlink(updatedFile.getSiteUrl(lockFile))) {
+                        align = TextAlign.LEFT
                     }
                 }
-
-                if (filesUpdated) row()
             }
+
+            if (filesUpdated) row()
         }
-    )
-}
+    }
+)

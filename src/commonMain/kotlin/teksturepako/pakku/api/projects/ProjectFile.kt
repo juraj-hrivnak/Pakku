@@ -10,6 +10,7 @@ import teksturepako.pakku.api.actions.errors.NoHashes
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.api.platforms.*
 import teksturepako.pakku.io.createHash
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -67,5 +68,36 @@ data class ProjectFile(
         }
 
         return null
+    }
+
+    // -- URLS --
+
+    fun getSiteUrl(lockFile: LockFile): String?
+    {
+        val parentProject = getParentProject(lockFile) ?: return null
+        val provider = Provider.providers.firstOrNull { it.serialName == this.type } ?: return null
+
+        return when (provider)
+        {
+            is CurseForge -> buildString {
+                append(provider.getUrlForProjectType(parentProject.type))
+                append("/${parentProject.slug[provider.serialName]}")
+                append("/files")
+                append("/${this@ProjectFile.id}")
+            }
+            is Modrinth   -> buildString {
+                append(provider.getUrlForProjectType(parentProject.type))
+                append("/${parentProject.slug[provider.serialName]}")
+                append("/version")
+                append("/${this@ProjectFile.id}")
+            }
+            is GitHub    -> buildString {
+                append(provider.siteUrl)
+                append("/${parentProject.slug[provider.serialName]}")
+                append("/releases/tag")
+                append("/${this@ProjectFile.id}")
+            }
+            else -> null
+        }
     }
 }
