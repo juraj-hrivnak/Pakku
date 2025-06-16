@@ -16,8 +16,8 @@ import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.*
-import teksturepako.pakku.debug
 
 
 class Status: CliktCommand()
@@ -60,20 +60,22 @@ class Status: CliktCommand()
             terminal.println()
         }
 
-        terminal.println(buildString {
-            val mcVer = lockFile.getMcVersions()
-            val loaders = lockFile.getLoadersWithVersions().map { (loaderName, loaderVersion) ->
-                buildString {
-                    append(loaderName)
-                    if (loaderVersion.isNotBlank()) append("-$loaderVersion")
+        terminal.println(
+            buildString {
+                val mcVer = lockFile.getMcVersions()
+                val loaders = lockFile.getLoadersWithVersions().map { (loaderName, loaderVersion) ->
+                    buildString {
+                        append(loaderName)
+                        if (loaderVersion.isNotBlank()) append("-$loaderVersion")
+                    }
                 }
-            }
 
-            append("on Minecraft " + (if (mcVer.size > 1) "versions" else "version") + " ${mcVer.toMsg()}, ")
-            append((if (loaders.size > 1) "loaders" else "loader") + " ${loaders.toMsg()}, ")
-            append("targeting " + (if (platforms.size > 1) "platforms" else "platform") + " ${platforms.toMsg()}")
-            append(".")
-        })
+                append("on Minecraft " + (if (mcVer.size > 1) "versions" else "version") + " ${mcVer.toMsg()}, ")
+                append((if (loaders.size > 1) "loaders" else "loader") + " ${loaders.toMsg()}, ")
+                append("targeting " + (if (platforms.size > 1) "platforms" else "platform") + " ${platforms.toMsg()}")
+                append(".")
+            }
+        )
 
         val progressBar = progressBarLayout(spacing = 2) {
             spinner(Spinner.Dots())
@@ -92,56 +94,6 @@ class Status: CliktCommand()
 
         progressBar.clear()
 
-        fun projects()
-        {
-            terminal.println(grid {
-                for (updatedProject in updatedProjects)
-                {
-                    row {
-                        cell(" ".repeat(3) + updatedProject.getFlavoredSlug())
-                        cell(updatedProject.getFlavoredName(terminal.theme))
-                        cell(updatedProject.type.name)
-                        updatedProject.side?.let { cell(it.name) }
-                    }
-
-                    val currentProject = currentProjects.firstOrNull { it isAlmostTheSameAs updatedProject }
-                    if (currentProject == null) continue
-
-                    var filesUpdated = false
-
-                    for (provider in updatedProject.getProviders())
-                    {
-                        debug { println(provider.serialName) }
-
-                        val cFile = currentProject.getFilesForProvider(provider).firstOrNull()?.fileName
-                        val uFile = updatedProject.getFilesForProvider(provider).firstOrNull()?.fileName
-
-                        debug {
-                            println(cFile)
-                            println(updatedProject.files)
-                        }
-
-                        if (cFile == null || uFile == null || cFile == uFile) continue
-
-                        val (cDiffFile, uDiffFile) = coloredStringDiff(cFile, uFile)
-
-                        filesUpdated = true
-
-                        row {
-                            cell(" ".repeat(6) + dim("${provider.shortName}_file:")) {
-                                align = TextAlign.RIGHT
-                            }
-                            cell(cDiffFile) { align = TextAlign.CENTER }
-                            cell(dim("->")) { align = TextAlign.CENTER }
-                            cell(uDiffFile) { align = TextAlign.LEFT }
-                        }
-                    }
-
-                    if (filesUpdated) row()
-                }
-            })
-        }
-
         when
         {
             updatedProjects.isEmpty() && currentProjects.isNotEmpty() ->
@@ -159,7 +111,7 @@ class Status: CliktCommand()
                         " to update the project"
                     )
                 )
-                projects()
+                projects(currentProjects, updatedProjects)
             }
             updatedProjects.size > 1 ->
             {
@@ -170,9 +122,57 @@ class Status: CliktCommand()
                         " or \"pakku update ${dim("-a")}\" to update all projects"
                     )
                 )
-                projects()
+                projects(currentProjects, updatedProjects)
             }
             else -> echo()
         }
     }
+}
+
+private fun CliktCommand.projects(
+    currentProjects: List<Project>,
+    updatedProjects: MutableSet<Project>
+)
+{
+    terminal.println(
+        grid {
+            for (updatedProject in updatedProjects)
+            {
+                row {
+                    cell(" ".repeat(3) + updatedProject.getFlavoredSlug())
+                    cell(updatedProject.getFlavoredName(terminal.theme))
+                    cell(updatedProject.type.name)
+                    updatedProject.side?.let { cell(it.name) }
+                }
+
+                val currentProject = currentProjects.firstOrNull { it isAlmostTheSameAs updatedProject }
+                if (currentProject == null) continue
+
+                var filesUpdated = false
+
+                for (provider in updatedProject.getProviders())
+                {
+                    val cFile = currentProject.getFilesForProvider(provider).firstOrNull()?.fileName
+                    val uFile = updatedProject.getFilesForProvider(provider).firstOrNull()?.fileName
+
+                    if (cFile == null || uFile == null || cFile == uFile) continue
+
+                    val (cDiffFile, uDiffFile) = coloredStringDiff(cFile, uFile)
+
+                    filesUpdated = true
+
+                    row {
+                        cell(" ".repeat(6) + dim("${provider.shortName}_file:")) {
+                            align = TextAlign.RIGHT
+                        }
+                        cell(cDiffFile) { align = TextAlign.CENTER }
+                        cell(dim("->")) { align = TextAlign.CENTER }
+                        cell(uDiffFile) { align = TextAlign.LEFT }
+                    }
+                }
+
+                if (filesUpdated) row()
+            }
+        }
+    )
 }
