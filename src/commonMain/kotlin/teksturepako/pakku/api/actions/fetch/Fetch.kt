@@ -56,6 +56,12 @@ suspend fun List<ProjectFile>.fetch(
                         return@launch
                     }
 
+                    if (projectFile.url == null)
+                    {
+                        onError(NoUrl(projectFile))
+                        return@launch
+                    }
+
                     totalBytes += projectFile.size.toLong()
                     val prevBytes: AtomicLong = atomic(0L)
 

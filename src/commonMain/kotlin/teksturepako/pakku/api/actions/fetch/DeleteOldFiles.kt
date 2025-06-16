@@ -71,7 +71,6 @@ suspend fun deleteOldFiles(
                 val path = projectFile.getPath(parentProject, configFile)
 
                 readPathBytesToResult(path)
-                    .onFailure { onError(it) }
                     .get()?.let { path to it }
             }
         }

@@ -6,6 +6,7 @@ import teksturepako.pakku.api.actions.export.ExportProfile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.cli.ui.dim
 import teksturepako.pakku.cli.ui.getFlavoredSlug
 import teksturepako.pakku.cli.ui.getFullMsg
@@ -38,6 +39,11 @@ data class AlreadyExists(val file: String) : ActionError()
 }
 
 // -- PROJECT FILE --
+
+data class NoUrl(val projectFile: ProjectFile) : ActionError()
+{
+    override val rawMessage = "${projectFile.fileName} has no URL."
+}
 
 data class DownloadFailed(val path: Path?, val retryNumber: Int = 0) : ActionError()
 {
