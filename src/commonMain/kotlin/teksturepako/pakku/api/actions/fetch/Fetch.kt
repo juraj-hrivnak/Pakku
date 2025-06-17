@@ -9,11 +9,13 @@ import kotlinx.coroutines.channels.produce
 import teksturepako.pakku.api.actions.errors.*
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.http.requestByteArray
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.ProjectFile
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.writeBytes
@@ -35,7 +37,10 @@ suspend fun List<ProjectFile>.fetch(
     onError: suspend (error: ActionError) -> Unit,
     onProgress: suspend (completed: Long, total: Long) -> Unit,
     onSuccess: suspend (path: Path, projectFile: ProjectFile) -> Unit,
-    lockFile: LockFile, configFile: ConfigFile?, retry: Int? = null
+    lockFile: LockFile,
+    configFile: ConfigFile?,
+    retry: Int? = null,
+    outputDir: Path = Path(workingPath)
 ) = coroutineScope {
     tailrec suspend fun tryFetch(projectFiles: List<ProjectFile>, retryNumber: Int = 0)
     {
@@ -48,7 +53,7 @@ suspend fun List<ProjectFile>.fetch(
                 launch {
                     val parentProject = projectFile.getParentProject(lockFile) ?: return@launch
 
-                    val path = projectFile.getPath(parentProject, configFile)
+                    val path = projectFile.getPath(parentProject, configFile, outputDir)
 
                     if (path.exists())
                     {

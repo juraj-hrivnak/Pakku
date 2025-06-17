@@ -14,6 +14,7 @@ import teksturepako.pakku.api.platforms.*
 import teksturepako.pakku.io.createHash
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 @Serializable
 @SerialName("project_file")
@@ -38,10 +39,10 @@ data class ProjectFile(
 
     // -- FILE PATH --
 
-    fun getPath(parentProject: Project, configFile: ConfigFile?): Path
+    fun getPath(parentProject: Project, configFile: ConfigFile?, outputDir: Path = Path(workingPath)): Path
     {
         val parentPathString = parentProject.getPathStringWithSubpath(configFile)
-        return Path(workingPath, parentPathString, fileName)
+        return Path(outputDir.pathString, parentPathString, fileName)
     }
 
     fun getRelativePathString(parentProject: Project, configFile: ConfigFile?, separator: Char = '/'): String
