@@ -198,7 +198,7 @@ sealed class RuleContext(
                         if (error !is AlreadyExists) return@FileAction outputPath to error
                     }
 
-                outputPath to outputPath.tryToResult { writeBytes(manualOverride.bytes) }
+                outputPath to manualOverride.path.tryToResult { copyTo(outputPath, overwrite = true) }
                     .getError()
             })
         }
@@ -256,7 +256,11 @@ sealed class RuleContext(
 
             val result = onExport(
                 // Creates a callback to download the file lazily.
-                { projectFile.url?.let { url -> requestByteArray(url) } },
+                {
+                    projectFile.url?.let { url ->
+                        requestByteArray(url)
+                    }
+                },
                 projectFile.fileName,
                 OverrideType.fromProject(project).folderName
             )

@@ -17,13 +17,12 @@ data class ManualOverride(
     val path: Path,
     val fullOutputPath: Path,
     val relativeOutputPath: Path,
-    val bytes: ByteArray,
     val isInPrimaryDirectory: Boolean
 )
 {
     companion object
     {
-        suspend fun fromPath(path: Path, configFile: ConfigFile?): ManualOverride?
+        fun fromPath(path: Path, configFile: ConfigFile?): ManualOverride?
         {
             val separator = File.separator
 
@@ -38,8 +37,6 @@ data class ManualOverride(
                     .substringAfter(type.folderName)
             }
 
-            val bytes = readPathBytesOrNull(path) ?: return null
-
             val relativePath = if (projectType != null)
             {
                 path.absolutePathString().substringAfter(
@@ -50,8 +47,7 @@ data class ManualOverride(
             else
             {
                 path.absolutePathString().substringAfter(
-                    "${Dirs.PAKKU_DIR}$separator${type.folderName}$separator",
-                    ""
+                    "${Dirs.PAKKU_DIR}$separator${type.folderName}$separator", ""
                 )
             }
 
@@ -66,7 +62,6 @@ data class ManualOverride(
                     path = path,
                     fullOutputPath = Path(workingPath, prjTypePathString, relativePath),
                     relativeOutputPath = Path(prjTypePathString, relativePath),
-                    bytes = bytes,
                     isInPrimaryDirectory = false
                 )
             }
@@ -77,36 +72,9 @@ data class ManualOverride(
                     path = path,
                     fullOutputPath = Path(workingPath, relativePath),
                     relativeOutputPath = Path(relativePath),
-                    bytes = bytes,
                     isInPrimaryDirectory = true
                 )
             }
         }
-    }
-
-    override fun equals(other: Any?): Boolean
-    {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ManualOverride
-
-        if (type != other.type) return false
-        if (path != other.path) return false
-        if (fullOutputPath != other.fullOutputPath) return false
-        if (relativeOutputPath != other.relativeOutputPath) return false
-        if (!bytes.contentEquals(other.bytes)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int
-    {
-        var result = type.hashCode()
-        result = 31 * result + path.hashCode()
-        result = 31 * result + fullOutputPath.hashCode()
-        result = 31 * result + relativeOutputPath.hashCode()
-        result = 31 * result + bytes.contentHashCode()
-        return result
     }
 }

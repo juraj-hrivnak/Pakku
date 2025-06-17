@@ -81,7 +81,10 @@ suspend fun deleteOldFiles(
         }
         .plus(
             manualOverrides.associate { projectOverride ->
-                projectOverride.fullOutputPath.absolute() to createHash("sha1", projectOverride.bytes)
+                val projectOverrideHash = readPathBytesOrNull(projectOverride.path)
+                    ?.let { createHash("sha1", it) }
+
+                projectOverride.fullOutputPath.absolute() to projectOverrideHash
             }
         )
     }
