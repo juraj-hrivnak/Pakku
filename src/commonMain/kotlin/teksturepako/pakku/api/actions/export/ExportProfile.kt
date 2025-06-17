@@ -121,9 +121,7 @@ interface ExportRuleScope
     val configFile: ConfigFile
 }
 
-
-
-fun exportingScope(lockFile: LockFile, configFile: ConfigFile): ExportRuleScope = object : ExportRuleScope
+fun exportRuleScope(lockFile: LockFile, configFile: ConfigFile): ExportRuleScope = object : ExportRuleScope
 {
     override val lockFile: LockFile = lockFile
     override val configFile: ConfigFile = configFile

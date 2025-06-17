@@ -54,7 +54,7 @@ suspend fun export(
 
     profiles.map { profile ->
         launch {
-            profile.build(exportingScope(lockFile, configFile)).export(
+            profile.build(exportRuleScope(lockFile, configFile)).export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
                 lockFile, configFile, platforms, overrides
