@@ -89,14 +89,12 @@ fun createCfModpackModel(
     configFile: ConfigFile,
 ): CfModpackModel
 {
-    val cfLoaders: List<CfModLoaderData> = lockFile.getLoadersWithVersions().map { loader ->
-        val (loaderName, loaderVersion) = loader
-
-        CfModLoaderData(
+    val cfLoaders: List<CfModLoaderData> = lockFile.getLoadersWithVersions().firstOrNull()?.let { (loaderName, loaderVersion) ->
+        listOf(CfModLoaderData(
             id = "$loaderName-$loaderVersion",
-            primary = lockFile.getLoadersWithVersions().firstOrNull() == loader
-        )
-    }
+            primary = true
+        ))
+    } ?: listOf()
 
     return CfModpackModel(
         CfMinecraftData(

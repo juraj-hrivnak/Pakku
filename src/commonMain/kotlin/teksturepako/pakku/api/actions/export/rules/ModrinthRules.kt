@@ -79,10 +79,9 @@ fun createMrModpackModel(
     configFile: ConfigFile,
 ): MrModpackModel
 {
-    val mrDependencies = mapOf("minecraft" to mcVersion) + lockFile.getLoadersWithVersions()
-        .associate { (loaderName, loaderVersion) ->
-            getMrLoaderName(loaderName) to loaderVersion
-        }
+    val mrDependencies = mapOf("minecraft" to mcVersion) + (lockFile.getLoadersWithVersions().firstOrNull()
+        ?.let { (loaderName, loaderVersion) -> mapOf(getMrLoaderName(loaderName) to loaderVersion) }
+        ?: mapOf())
 
     return MrModpackModel(
         name = configFile.getName(),
