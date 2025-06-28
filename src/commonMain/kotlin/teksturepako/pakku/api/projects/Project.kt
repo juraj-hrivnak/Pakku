@@ -13,6 +13,7 @@ import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.io.filterPath
+import kotlin.reflect.KMutableProperty0
 
 /**
  * Represents a project. (E.g. a mod, resource pack, shader, etc.)
@@ -220,20 +221,30 @@ data class Project(
 
     fun inheritPropertiesFrom(configFile: ConfigFile?): Project
     {
-        configFile?.projects?.forEach { (input, config) ->
-            if (input in this || this.files.any { input in it.fileName })
-            {
-                config.type?.let { this.type = it }
-                config.side?.let { this.side = it }
-                config.updateStrategy?.let { this.updateStrategy = it }
-                config.redistributable?.let { this.redistributable = it }
-                config.subpath?.let { this.subpath = it }
-                config.aliases?.let { this.aliases = it }
-                config.export?.let { this.export = it }
-            }
+        configFile ?: return this
+
+        for ((input, config) in configFile.projects)
+        {
+            if (input !in this && !this.files.any { input in it.fileName }) continue
+
+            updateValue(::type, config.type)
+            updateValue(::side, config.side)
+            updateValue(::updateStrategy, config.updateStrategy)
+            updateValue(::redistributable, config.redistributable)
+            updateValue(::subpath, config.subpath)
+            updateValue(::aliases, config.aliases)
+            updateValue(::export, config.export)
         }
 
         return this
+    }
+
+    private fun <T> updateValue(currentValue: KMutableProperty0<T>, updatedValue: T?)
+    {
+        if (updatedValue == null) return
+
+        currentValue.set(updatedValue)
+        println("!>!>!>! ${this.slug} ${currentValue.name} = $updatedValue")
     }
 
     // -- SUBPATH --
