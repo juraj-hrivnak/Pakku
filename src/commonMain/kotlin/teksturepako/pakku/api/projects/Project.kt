@@ -12,6 +12,7 @@ import teksturepako.pakku.api.data.*
 import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
+import teksturepako.pakku.debug
 import teksturepako.pakku.io.filterPath
 import kotlin.reflect.KMutableProperty0
 
@@ -126,26 +127,6 @@ data class Project(
                 || input in this.id.values
                 || this.aliases?.contains(input) == true
     }
-
-//    /** Check if the current project has an alias of the specified project. */
-//    infix fun hasAliasOf(other: Project): Boolean
-//    {
-//        return this.aliases?.any { alias ->
-//            other.id.values.any { it.contentEquals(alias) }
-//                    || other.name.values.map { otherName -> otherName.filterName() }.any { it.contentEquals(alias) }
-//                    || other.slug.values.any { it.contentEquals(alias) }
-//        } ?: false
-//    }
-//
-//    /** Checks if the current project contains the specified string in its slugs, names, IDs or aliases. */
-//    operator fun contains(input: String): Boolean
-//    {
-//        return this.slug.values.any { it == input }
-//                || this.name.values.map { it.filterName() }.any { it == input }
-//                || this.id.values.any { it == input }
-//                || this.aliases?.any { it == input } == true
-//    }
-
 
     /** Checks if the project has any files. */
     fun hasFiles(): Boolean = this.files.allNotEmpty()
@@ -264,7 +245,7 @@ data class Project(
         if (updatedValue == null) return
 
         currentValue.set(updatedValue)
-        println("!>!>!>! ${this.slug} overridden by $input: ${currentValue.name} = $updatedValue")
+        debug { println("${this.slug} overridden by $input: ${currentValue.name} = $updatedValue") }
     }
 
     // -- SUBPATH --
