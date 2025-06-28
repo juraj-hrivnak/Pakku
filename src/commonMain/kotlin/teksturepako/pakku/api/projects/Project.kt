@@ -227,24 +227,24 @@ data class Project(
         {
             if (input !in this && !this.files.any { input in it.fileName }) continue
 
-            updateValue(::type, config.type)
-            updateValue(::side, config.side)
-            updateValue(::updateStrategy, config.updateStrategy)
-            updateValue(::redistributable, config.redistributable)
-            updateValue(::subpath, config.subpath)
-            updateValue(::aliases, config.aliases)
-            updateValue(::export, config.export)
+            updateValue(::type, config.type, input)
+            updateValue(::side, config.side, input)
+            updateValue(::updateStrategy, config.updateStrategy, input)
+            updateValue(::redistributable, config.redistributable, input)
+            updateValue(::subpath, config.subpath, input)
+            updateValue(::aliases, config.aliases, input)
+            updateValue(::export, config.export, input)
         }
 
         return this
     }
 
-    private fun <T> updateValue(currentValue: KMutableProperty0<T>, updatedValue: T?)
+    private fun <T> updateValue(currentValue: KMutableProperty0<T>, updatedValue: T?, input: String)
     {
         if (updatedValue == null) return
 
         currentValue.set(updatedValue)
-        println("!>!>!>! ${this.slug} ${currentValue.name} = $updatedValue")
+        println("!>!>!>! ${this.slug} overridden by $input: ${currentValue.name} = $updatedValue")
     }
 
     // -- SUBPATH --
