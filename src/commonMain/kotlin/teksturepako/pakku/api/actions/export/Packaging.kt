@@ -9,6 +9,6 @@ sealed class Packaging
     data class Error(val error: ActionError) : Packaging()
     data object Ignore : Packaging()
     data object EmptyAction : Packaging()
-    data class Action(var action: (suspend() -> ActionError?)?) : Packaging()
+    data class Action(val action: suspend () -> ActionError?) : Packaging()
     data class FileAction(val action: suspend () -> Pair<Path, ActionError?>) : Packaging()
 }
