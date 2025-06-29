@@ -179,14 +179,13 @@ suspend fun List<RuleResult>.runEffects(
                 {
                     val action = measureTimedValue {
                         async {
-                            packagingAction.action()?.let {
-                                onError(ExportingError(it))
-                            }
+                            packagingAction.action?.invoke()?.onError { onError(ExportingError(it)) }
                         }
                     }
 
                     action.value.invokeOnCompletion {
                         debug { println("$ruleResult in ${action.duration}") }
+                        packagingAction.action = null // Clean up the reference
                     }
 
                     null
@@ -228,14 +227,14 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
             {
                 val action = measureTimedValue {
                     async {
-                        ruleResult.packaging.action()?.let {
-                            onError(ExportingError(it))
-                        }
+                        ruleResult.packaging.action?.invoke()
+                            ?.onError { onError(ExportingError(it)) }
                     }
                 }
 
                 action.value.invokeOnCompletion {
                     debug { println("$ruleResult in ${action.duration}") }
+                    ruleResult.packaging.action = null // Clean up the reference
                 }
 
                 null
