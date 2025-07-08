@@ -2,10 +2,17 @@
 
 The basic operations to get info about your modpack include:
 
+- [Inspecting projects](#inspecting-projects)
 - [Checking the status](#checking-the-status) of your modpack
 (Which projects have a new version available)
 - [Listing projects](#listing-projects)
 - [Differentiating between versions](#differentiating-between-versions) of your modpack (Useful for changelogs)
+
+## Inspecting Projects
+
+To inspect a project or multiple projects, run the [`pakku insp`](pakku-insp.md) command:
+
+<include from="pakku-insp.md" element-id="snippet-cmd"/>
 
 ## Checking the Status
 

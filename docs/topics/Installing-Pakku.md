@@ -1,8 +1,9 @@
 # Installing Pakku
 
-You can install Pakku [using Scoop](#install-scoop) for Windows,
+You can install Pakku
+[using Scoop](#install-scoop) for Windows,
 [using Brew](#install-brew) for macOS (or Linux),
-[using nix](#install-nix) for Windows WSL, macOS, Linux
+[using Nix](#install-nix) for Linux, macOS, Windows WSL,
 or [manually](#install-manually).
 
 Pakku also requires Java to be installed on your computer,
@@ -47,7 +48,7 @@ If not, you _can_ install it from [here](https://www.java.com/en/download/).
 
 Pakku is available from [nixpkgs](https://github.com/NixOS/nixpkgs) as `pakku`.
 
-1. Check you have Nix installed on your computer. NixOS comes with it preinstalled.
+1. Check whether you have Nix installed on your computer. NixOS comes with it preinstalled.
    If not, check the installation instructions from [here](https://nixos.org/download/) for your OS.
 2. If using just the nix package manager you can install Pakku with these commands:
    ```nix
