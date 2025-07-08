@@ -6,10 +6,12 @@ import kotlinx.coroutines.coroutineScope
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.Dirs.PAKKU_DIR
 import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.debug
 import teksturepako.pakku.io.tryOrNull
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
 
 suspend fun readManualOverrides(
@@ -27,8 +29,12 @@ suspend fun readManualOverridesFrom(
     }
     .mapNotNull { dir ->
         dir.tryOrNull {
-            toFile().walkTopDown().map { file: File ->
-                file.toPath()
+            toFile().walkTopDown().mapNotNull { file: File ->
+                val path = file.toPath()
+
+                if (path.isDirectory()) return@mapNotNull null
+
+                path
             }
         }
     }
@@ -44,6 +50,7 @@ suspend fun readManualOverridesFrom(
     .awaitAll()
     .filterNotNull()
     .toSet()
+    .debug { println("readManualOverridesFrom($path) = $it") }
 
 @Suppress("unused")
 suspend fun copyManualOverrideDirectories(inputPath: Path, outputPath: Path) = OverrideType.entries
