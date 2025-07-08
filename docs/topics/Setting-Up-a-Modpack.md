@@ -103,9 +103,13 @@ Follow these steps to configure the access:
 3. Copy your API key.
 4. Enter your API key to the prompt provided by Pakku,
 or use the [`pakku credentials set`](pakku-credentials-set.md) command:
-    
-    <var name="params">--cf-api-key *********************</var>
-    <include from="pakku-credentials-set.md" element-id="snippet-cmd"></include>
+   
+   <var name="params">--cf-api-key *********************</var>
+   <include from="pakku-credentials-set.md" element-id="snippet-cmd"></include>
+
+   > The API keys contain the dollar symbol (`$`) which needs to be escaped in the Bash shell.
+   > You can also put the API key in double quotes.
+   {style="warning"}
 
 <seealso style="cards">
    <category ref="related">
