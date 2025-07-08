@@ -32,6 +32,8 @@ abstract class ActionError
         return text.split("\n").joinToString("\n") { offset(it, offset) }
     }
 
+    open fun shortMessage(arg: String = ""): String? = null
+
     protected fun optionalArg(arg: Any?): String = if (arg != null) " '$arg'" else ""
 
     inline fun <T> onError(action: (ActionError) -> T): T = action(this)

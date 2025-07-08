@@ -29,7 +29,7 @@ data class CliConfig(
 
             else      -> CliThemes.Ascii
         },
-        ansiLevel = this.ansiLevel?.let { AnsiLevel.valueOf(it.uppercase()) }
+        ansiLevel = this.ansiLevel?.let { AnsiLevel.valueOf(it.uppercase()) },
     )
 
     companion object

@@ -166,18 +166,18 @@ data class Project(
     /** Checks if the project has no files on the specified [provider]. */
     fun hasNoFilesOn(provider: Provider) = !hasFilesOn(provider)
 
-    /** Checks if file names match across specified [platforms][platforms]. */
-    fun fileNamesMatchAcrossPlatforms(platforms: List<Platform>): Boolean
+    /** Checks if versions match across specified [providers]. */
+    fun versionsMatchAcrossProviders(providers: List<Provider>): Boolean
     {
         return this.files.asSequence()
-            .map { it.fileName }
-            .chunked(platforms.size)
+            .mapNotNull { it.hashes?.get("sha1") }
+            .chunked(providers.size)
             .all { it.allEqual() }
     }
 
-    /** Checks if file names do not match across specified [platforms][platforms]. */
-    fun fileNamesDoNotMatchAcrossPlatforms(platforms: List<Platform>): Boolean =
-        !fileNamesMatchAcrossPlatforms(platforms)
+    /** Checks if versions do not match across specified [providers]. */
+    fun versionsDoNotMatchAcrossProviders(providers: List<Provider>): Boolean =
+        !versionsMatchAcrossProviders(providers)
 
     /** Retrieves a list of [project files][ProjectFile] associated with the specified [platform][Platform]. */
     fun getFilesForPlatform(platform: Platform): List<ProjectFile>
@@ -228,19 +228,19 @@ data class Project(
         {
             if (input !in this) continue
 
-            updateValue(::type, config.type, input)
-            updateValue(::side, config.side, input)
-            updateValue(::updateStrategy, config.updateStrategy, input)
-            updateValue(::redistributable, config.redistributable, input)
-            updateValue(::subpath, config.subpath, input)
-            updateValue(::aliases, config.aliases, input)
-            updateValue(::export, config.export, input)
+            updateProperty(::type, config.type, input)
+            updateProperty(::side, config.side, input)
+            updateProperty(::updateStrategy, config.updateStrategy, input)
+            updateProperty(::redistributable, config.redistributable, input)
+            updateProperty(::subpath, config.subpath, input)
+            updateProperty(::aliases, config.aliases, input)
+            updateProperty(::export, config.export, input)
         }
 
         return this
     }
 
-    private fun <T> updateValue(currentValue: KMutableProperty0<T>, updatedValue: T?, input: String)
+    private fun <T> updateProperty(currentValue: KMutableProperty0<T>, updatedValue: T?, input: String)
     {
         if (updatedValue == null) return
 

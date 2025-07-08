@@ -6,12 +6,16 @@ import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
 
-fun Terminal.processErrorMsg(error: ActionError, arg: String = "", prepend: String? = null, offset: Int = 0): String
+fun Terminal.processErrorMsg(
+    msg: String,
+    severity: ErrorSeverity = ErrorSeverity.ERROR,
+    prepend: String? = null,
+    offset: Int = 0
+): String
 {
-    val msg = error.message(arg)
     val prep = if (prepend == null) "" else "$prepend "
 
-    return when (error.severity)
+    return when (severity)
     {
         ErrorSeverity.FATAL ->
         {
@@ -30,6 +34,20 @@ fun Terminal.processErrorMsg(error: ActionError, arg: String = "", prepend: Stri
             prefixed("$prep$msg", this.theme.string("pakku.prefix", ">>>"), offset)
         }
     }
+}
+
+fun Terminal.processErrorMsg(error: ActionError, arg: String = "", prepend: String? = null, offset: Int = 0): String
+{
+    val msg = error.message(arg)
+
+    return processErrorMsg(msg, error.severity, prepend, offset)
+}
+
+fun Terminal.processShortErrorMsg(error: ActionError, arg: String = "", prepend: String? = null, offset: Int = 0): String
+{
+    val msg = error.shortMessage(arg) ?: return ""
+
+    return processErrorMsg(msg, error.severity, prepend, offset)
 }
 
 suspend fun Terminal.pErrorOrPrompt(error: ActionError)

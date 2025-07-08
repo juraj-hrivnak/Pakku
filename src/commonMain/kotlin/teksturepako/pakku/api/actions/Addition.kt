@@ -65,9 +65,9 @@ suspend fun Project?.createAdditionRequest(
     }
 
     // Check if project files match across platforms
-    if (this.fileNamesDoNotMatchAcrossPlatforms(platforms))
+    if (this.versionsDoNotMatchAcrossProviders(platforms))
     {
-        onError(FileNamesDoNotMatch(this))
+        onError(VersionsDoNotMatch(this))
         isRecommended = false
     }
 

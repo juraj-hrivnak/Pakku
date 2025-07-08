@@ -216,7 +216,7 @@ data class NoFiles(val project: Project, val lockFile: LockFile) : ActionError()
     )
 }
 
-data class FileNamesDoNotMatch(val project: Project) : ActionError()
+data class VersionsDoNotMatch(val project: Project) : ActionError()
 {
     override val rawMessage = message(
         project.type, project.slug, "versions do not match across platforms.",
@@ -229,6 +229,10 @@ data class FileNamesDoNotMatch(val project: Project) : ActionError()
         project.files.map { "${it.type}: ${it.fileName}" }.toString(),
         newlines = true
     )
+
+    override fun shortMessage(arg: String) = "Versions do not match across platforms."
+
+    override val severity = ErrorSeverity.WARNING
 }
 
 // -- REMOVAL --
