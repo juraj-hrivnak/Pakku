@@ -24,7 +24,7 @@ data class CredentialsFile(
     {
         private const val FILE_NAME = "credentials"
         private const val CONFIG_DIR = ".pakku"
-        private val home = System.getenv("HOME") ?: System.getProperty("user.home") ?: null
+        private val home = System.getenv("HOME") ?: System.getProperty("user.home")
 
         suspend fun readToResult(): Result<CredentialsFile, ActionError>
         {
@@ -34,18 +34,28 @@ data class CredentialsFile(
             return decodeToResult<CredentialsFile>(path).onFailure { return Ok(CredentialsFile()) }
         }
 
-        suspend fun update(curseForgeApiKey: String? = null): ActionError?
+        suspend fun update(
+            updatedCurseForgeApiKey: String? = null,
+            updatedGitHubAccessToken: String? = null,
+        ): ActionError?
         {
             return readToResult().fold(
                 success = { credentialsFile ->
-                    val updatedConfig = credentialsFile.copy(curseForgeApiKey = curseForgeApiKey)
+                    val updatedCredentialsFile = credentialsFile.copy(
+                        curseForgeApiKey = updatedCurseForgeApiKey ?: credentialsFile.curseForgeApiKey,
+                        gitHubAccessToken = updatedGitHubAccessToken ?: credentialsFile.gitHubAccessToken,
+                    )
 
-                    updatedConfig.curseForgeApiKey?.let { apiKey ->
+                    updatedCredentialsFile.curseForgeApiKey?.let { apiKey ->
                         CurseForge.testApiKey(apiKey)?.onError { return it }
                     }
 
-                    pakku { curseForge(apiKey = updatedConfig.curseForgeApiKey) }
-                    updatedConfig.write()?.onError { return it }
+                    pakku {
+                        curseForge(apiKey = updatedCredentialsFile.curseForgeApiKey)
+                        gitHub(accessToken = updatedCredentialsFile.gitHubAccessToken)
+                    }
+
+                    updatedCredentialsFile.write()?.onError { return it }
 
                     null
                 },

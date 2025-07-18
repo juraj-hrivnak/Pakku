@@ -28,6 +28,7 @@ fun main(args: Array<String>)
 
     pakku {
         curseForge(apiKey = System.getenv("CURSEFORGE_API_KEY") ?: credentials?.curseForgeApiKey)
+        gitHub(accessToken = System.getenv("GITHUB_ACCESS_TOKEN") ?: credentials?.gitHubAccessToken)
         withUserAgent("Pakku/$VERSION (github.com/juraj-hrivnak/Pakku)")
     }
 

@@ -67,7 +67,7 @@ suspend fun Terminal.promptForCurseForgeApiKey(): ActionError?
 
     if (prompt.isNullOrBlank()) return EmptyArg("CurseForge API key")
 
-    CredentialsFile.update(curseForgeApiKey = prompt)?.onError { return it }
+    CredentialsFile.update(updatedCurseForgeApiKey = prompt)?.onError { return it }
 
     this.pSuccess("CurseForge API key successfully configured.")
 

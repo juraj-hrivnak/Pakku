@@ -17,11 +17,14 @@ class CredentialsSet : CliktCommand("set")
     private val curseForgeApiKeyOpt: String? by option("--cf-api-key", "--curseforge-api-key")
         .help("the CurseForge API key credential")
 
+    private val gitHubAccessTokenOpt: String? by option("--gh-access-token", "--github-access-token")
+        .help("the GitHub API access token credential")
+
     override val printHelpOnEmptyArgs = true
 
     override fun run(): Unit = runBlocking {
         curseForgeApiKeyOpt?.let { curseForgeApiKey ->
-            CredentialsFile.update(curseForgeApiKey)?.onError {
+            CredentialsFile.update(updatedCurseForgeApiKey = curseForgeApiKey)?.onError {
                 terminal.pError(it)
                 echo()
 
@@ -29,6 +32,18 @@ class CredentialsSet : CliktCommand("set")
             }
 
             terminal.pSuccess("CurseForge API key successfully configured.")
+            echo()
+        }
+
+        gitHubAccessTokenOpt?.let { gitHubAccessToken ->
+            CredentialsFile.update(updatedGitHubAccessToken = gitHubAccessToken)?.onError {
+                terminal.pError(it)
+                echo()
+
+                return@let
+            }
+
+            terminal.pSuccess("GitHub API access token successfully configured.")
             echo()
         }
     }

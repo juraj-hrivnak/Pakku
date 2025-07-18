@@ -6,6 +6,7 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrElse
 import kotlinx.datetime.Instant
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
+import teksturepako.pakku.api.PakkuApi
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.http.requestBody
@@ -23,6 +24,14 @@ object GitHub : Provider
     override val shortName = "gh"
     override val siteUrl = "https://github.com"
 
+    // -- ACCESS TOKEN --
+
+    private val accessTokenHeader = PakkuApi.gitHubAccessToken
+        ?.takeIf { it.isNotBlank() }
+        ?.let { "Authorization" to "token $it" }
+
+    // -- PROJECT --
+
     private fun GhRepoModel.toProject(): Project
     {
         return Project(
@@ -36,7 +45,8 @@ object GitHub : Provider
     }
 
     override suspend fun requestProject(input: String, projectType: ProjectType?): Result<Project, ActionError> = tryRequest {
-        val responseString = requestBody("https://api.github.com/repos/$input").getOrElse { return Err(it) }
+        val responseString = requestBody("https://api.github.com/repos/$input", accessTokenHeader)
+            .getOrElse { return Err(it) }
 
         val project = json.decodeFromString<GhRepoModel>(responseString)
             .toProject()
@@ -44,6 +54,8 @@ object GitHub : Provider
 
         return Ok(project)
     }
+
+    // -- PROJECT FILES --
 
     private fun GhReleaseModel.toProjectFiles(parentId: String): List<ProjectFile>
     {
@@ -62,7 +74,12 @@ object GitHub : Provider
                 url = UrlEncoderUtil.decode(asset.browserDownloadUrl), // Decode URL
                 id = asset.id.toString(),
                 parentId = parentId,
-                hashes = null,
+                hashes = asset.digest?.split(":")?.let { digest ->
+                    val algo = digest.getOrNull(0) ?: return@let null
+                    val hash = digest.getOrNull(1) ?: return@let null
+
+                    mutableMapOf(algo to hash)
+                },
                 requiredDependencies = null,
                 size = asset.size,
                 datePublished = Instant.parse(publishedAt ?: createdAt)
@@ -82,7 +99,7 @@ object GitHub : Provider
 
         val projectFiles = if (fileId == null) // Multiple files
         {
-            val responseString = requestBody("https://api.github.com/repos/$input/releases")
+            val responseString = requestBody("https://api.github.com/repos/$input/releases", accessTokenHeader)
                 .getOrElse { return Err(it) }
 
             json.decodeFromString<List<GhReleaseModel>>(responseString)
@@ -91,7 +108,7 @@ object GitHub : Provider
         }
         else // One file
         {
-            val responseString = requestBody("https://api.github.com/repos/$input/releases/tags/$fileId")
+            val responseString = requestBody("https://api.github.com/repos/$input/releases/tags/$fileId", accessTokenHeader)
                 .getOrElse { return Err(it) }
 
             json.decodeFromString<GhReleaseModel>(responseString)

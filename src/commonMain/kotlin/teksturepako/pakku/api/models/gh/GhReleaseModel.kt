@@ -38,6 +38,7 @@ data class GhReleaseModel(
         val state: String,
         @SerialName("content_type") val contentType: String,
         val size: Int,
+        val digest: String? = null,
         @SerialName("download_count") val downloadCount: Int,
         @SerialName("created_at") val createdAt: String,
         @SerialName("updated_at") val updatedAt: String,

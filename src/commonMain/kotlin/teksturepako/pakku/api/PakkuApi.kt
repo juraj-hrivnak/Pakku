@@ -8,6 +8,7 @@ object PakkuApi
     data class Configuration(
         internal var developmentMode: Boolean = false,
         internal var curseForgeApiKey: String? = null,
+        internal var gitHubAccessToken: String? = null,
         internal var userAgent: String? = null,
         internal var timeout: Duration = 3.minutes,
     )
@@ -22,6 +23,12 @@ object PakkuApi
         fun curseForge(apiKey: String?)
         {
             this.curseForgeApiKey = apiKey
+        }
+
+        /** Sets the GitHub Access Token for authentication. */
+        fun gitHub(accessToken: String?)
+        {
+            this.gitHubAccessToken = accessToken
         }
 
         /** Sets the user agent for HTTP requests. */
@@ -66,11 +73,13 @@ object PakkuApi
         }
     }
 
-
-
     /** The CurseForge API key used for authentication. */
     internal val curseForgeApiKey: String?
         get() = configuration?.curseForgeApiKey
+
+    /** The GitHub Access Token used for authentication. */
+    internal val gitHubAccessToken: String?
+        get() = configuration?.gitHubAccessToken
 
     /** The user agent used for HTTP requests. */
     internal val userAgent: String?
