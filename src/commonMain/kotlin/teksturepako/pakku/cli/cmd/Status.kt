@@ -86,6 +86,9 @@ class Status: CliktCommand()
         val currentProjects = lockFile.getAllProjects()
 
         val updatedProjects = updateMultipleProjectsWithFiles(
+            onError = {
+                terminal.pError(it)
+            },
             lockFile.getMcVersions(),
             lockFile.getLoaders(),
             currentProjects.toMutableSet(),

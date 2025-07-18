@@ -47,7 +47,14 @@ class Update : CliktCommand()
         }
 
         val updatedProjects = updateMultipleProjectsWithFiles(
-            lockFile.getMcVersions(), lockFile.getLoaders(), currentProjects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
+            onError = {
+                terminal.pError(it)
+            },
+            lockFile.getMcVersions(),
+            lockFile.getLoaders(),
+            currentProjects.toMutableSet(),
+            ConfigFile.readOrNull(),
+            numberOfFiles = 1
         )
 
         for (updatedProject in updatedProjects)

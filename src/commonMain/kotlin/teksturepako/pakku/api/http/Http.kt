@@ -13,8 +13,9 @@ import io.ktor.http.*
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.debug
+import teksturepako.pakku.toPrettyString
 
-class RequestError(val response: HttpResponse) : ActionError()
+class RequestError(val response: HttpResponse, val body: String? = null) : ActionError()
 {
     override val rawMessage = message(
         "Error: (${response.call.request.url.host}) HTTP request ",
@@ -39,7 +40,7 @@ suspend inline fun <reified T> tryRequest(block: () -> HttpResponse): Result<T, 
         {
             HttpStatusCode.OK       -> Ok(response.body<T>())
             HttpStatusCode.NotFound -> Err(ProjNotFound())
-            else                    -> Err(RequestError(response))
+            else                    -> Err(RequestError(response, response.bodyAsText().toPrettyString()))
         }
     }
     catch (e: Exception)
@@ -68,7 +69,9 @@ suspend inline fun requestBody(
     url: String,
     vararg headers: Pair<String, String>?
 ): Result<String, ActionError> = tryRequest {
-    pakkuClient.get(url) { headers.filterNotNull().forEach { this.headers.append(it.first, it.second) } }
+    pakkuClient.get(url) {
+        headers.filterNotNull().forEach { this.headers.append(it.first, it.second) }
+    }
 }
 
 /**

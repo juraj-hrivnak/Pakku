@@ -1,9 +1,12 @@
 package teksturepako.pakku.api.actions.update
 
 import com.github.michaelbull.result.get
+import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Instant
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Multiplatform.platforms
@@ -17,22 +20,28 @@ import teksturepako.pakku.api.projects.inheritPropertiesFrom
  * Projects are also filtered using their [update strategy][UpdateStrategy].
  */
 suspend fun updateMultipleProjectsWithFiles(
+    onError: suspend (error: ActionError) -> Unit,
     mcVersions: List<String>,
     loaders: List<String>,
     projects: MutableSet<Project>,
     configFile: ConfigFile?,
-    numberOfFiles: Int
+    numberOfFiles: Int,
 ): MutableSet<Project> = coroutineScope {
     val ghProjectsDeferred = async {
         projects
             .filter { GitHub.serialName in it.slug.keys }
             .map { oldProject ->
-                val ghSlug = oldProject.slug[GitHub.serialName] ?: return@map oldProject
-                GitHub.requestProjectWithFiles(emptyList(), emptyList(), ghSlug, projectType = oldProject.type).get()
-                    ?.inheritPropertiesFrom(configFile)
-                    ?.takeIf { it.hasFiles() }
-                    ?: oldProject
+                async {
+                    val ghSlug = oldProject.slug[GitHub.serialName] ?: return@async oldProject
+                    GitHub.requestProjectWithFiles(emptyList(), emptyList(), ghSlug, projectType = oldProject.type)
+                        .onFailure { onError(it) }
+                        .get()
+                        ?.inheritPropertiesFrom(configFile)
+                        ?.takeIf { it.hasFiles() }
+                        ?: oldProject
+                }
             }
+            .awaitAll()
     }
 
     val updatedProjects = platforms.fold(projects) { accProjects, platform ->
@@ -41,7 +50,7 @@ suspend fun updateMultipleProjectsWithFiles(
             loaders,
             accProjects.mapNotNull { project -> project.id[platform.serialName]?.let { it to project.type } }.toMap(),
             Int.MAX_VALUE
-        ).get()?.inheritPropertiesFrom(configFile)
+        ).onFailure { onError(it) }.get()?.inheritPropertiesFrom(configFile)
 
         accProjects.map { accProject ->
             platformProjects?.find { it.slug[platform.serialName] == accProject.slug[platform.serialName] }

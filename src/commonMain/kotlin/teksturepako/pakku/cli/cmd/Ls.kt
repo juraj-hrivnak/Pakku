@@ -41,6 +41,9 @@ class Ls : CliktCommand()
 
         val newProjects = if (checkUpdatesFlag) async {
             updateMultipleProjectsWithFiles(
+                onError = {
+                    terminal.pError(it)
+                },
                 lockFile.getMcVersions(),
                 lockFile.getLoaders(),
                 projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
