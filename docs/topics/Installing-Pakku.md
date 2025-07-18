@@ -1,10 +1,14 @@
 # Installing Pakku
 
-You can install Pakku
-[using Scoop](#install-scoop) for Windows,
-[using Brew](#install-brew) for macOS (or Linux),
-[using Nix](#install-nix) for Linux, macOS, Windows WSL,
-or [manually](#install-manually).
+You can install Pakku using:
+
+- [**Scoop** for Windows](#install-scoop)
+- [**Brew** for macOS (or Linux)](#install-brew)
+- [**Nix** for Linux, macOS or Windows WSL](#install-nix)
+
+or [**manually**](#install-manually).
+
+
 
 Pakku also requires Java to be installed on your computer,
 so please, before installing, check whether you have Java installed on your computer.
@@ -45,6 +49,10 @@ If not, you _can_ install it from [here](https://www.java.com/en/download/).
 </procedure>
 
 <procedure title="Install Pakku using Nix" id="install-nix">
+
+<a href="https://repology.org/project/pakku-minecraft/versions">
+    <img src="https://repology.org/badge/vertical-allrepos/pakku-minecraft.svg" alt="Packaging status" align="right"/>
+</a>
 
 Pakku is available from [nixpkgs](https://github.com/NixOS/nixpkgs) as `pakku`.
 
