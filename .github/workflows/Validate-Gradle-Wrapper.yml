@@ -1,6 +1,9 @@
 name: "Validate Gradle Wrapper"
 run-name: "Validate Gradle Wrapper #${{ github.run_number }}"
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:
