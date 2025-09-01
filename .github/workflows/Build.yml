@@ -1,6 +1,9 @@
 name: Build
 run-name: "Build #${{ github.run_number }}"
 
+permissions:
+  contents: read
+
 on:
   push:
     tags:
