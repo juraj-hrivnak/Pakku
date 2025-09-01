@@ -1,6 +1,9 @@
 name: Update Tap
 run-name: "Update Tap #${{ github.run_number }}"
 
+permissions:
+  contents: read
+
 on:
   workflow_run:
     workflows: [Build documentation]
