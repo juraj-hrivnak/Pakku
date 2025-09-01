@@ -1,6 +1,9 @@
 name: Test
 run-name: "Test #${{ github.run_number }}"
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths-ignore:
