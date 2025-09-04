@@ -2,8 +2,6 @@ package teksturepako.pakku.io
 
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.runCatching
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.io.FileAction.*
@@ -102,16 +100,13 @@ private suspend fun Path.copyDirectoryTo(
 private suspend fun Path.collectFileInfo(): List<FileInfo> = coroutineScope {
     walk()
         .filter { it.isRegularFile() }
-        .map { path ->
-            async {
-                FileInfo(
-                    relativePath = this@collectFileInfo.relativize(path),
-                    hash = path.readAndCreateSha1FromBytes()
-                )
-            }
-        }
         .toList()
-        .awaitAll()
+        .mapAsync { path ->
+            FileInfo(
+                relativePath = this@collectFileInfo.relativize(path),
+                hash = path.readAndCreateSha1FromBytes()
+            )
+        }
 }
 
 private suspend fun processFilesByHash(

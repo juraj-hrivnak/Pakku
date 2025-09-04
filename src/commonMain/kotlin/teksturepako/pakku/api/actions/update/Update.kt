@@ -3,7 +3,6 @@ package teksturepako.pakku.api.actions.update
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.Instant
 import teksturepako.pakku.api.actions.errors.ActionError
@@ -13,6 +12,7 @@ import teksturepako.pakku.api.platforms.Multiplatform.platforms
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
+import teksturepako.pakku.io.mapAsync
 
 /**
  * Requests new data for provided [projects] from all platforms and updates them based on platform-specific slugs,
@@ -30,18 +30,15 @@ suspend fun updateMultipleProjectsWithFiles(
     val ghProjectsDeferred = async {
         projects
             .filter { GitHub.serialName in it.slug.keys }
-            .map { oldProject ->
-                async {
-                    val ghSlug = oldProject.slug[GitHub.serialName] ?: return@async oldProject
-                    GitHub.requestProjectWithFiles(emptyList(), emptyList(), ghSlug, projectType = oldProject.type)
-                        .onFailure { onError(it) }
-                        .get()
-                        ?.inheritPropertiesFrom(configFile)
-                        ?.takeIf { it.hasFiles() }
-                        ?: oldProject
-                }
+            .mapAsync { oldProject ->
+                val ghSlug = oldProject.slug[GitHub.serialName] ?: return@mapAsync oldProject
+                GitHub.requestProjectWithFiles(emptyList(), emptyList(), ghSlug, projectType = oldProject.type)
+                    .onFailure { onError(it) }
+                    .get()
+                    ?.inheritPropertiesFrom(configFile)
+                    ?.takeIf { it.hasFiles() }
+                    ?: oldProject
             }
-            .awaitAll()
     }
 
     val updatedProjects = platforms.fold(projects) { accProjects, platform ->

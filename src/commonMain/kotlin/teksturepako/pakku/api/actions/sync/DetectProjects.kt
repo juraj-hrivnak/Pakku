@@ -2,7 +2,6 @@ package teksturepako.pakku.api.actions.sync
 
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import teksturepako.pakku.api.actions.update.combineProjects
 import teksturepako.pakku.api.data.ConfigFile
@@ -16,6 +15,7 @@ import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.debugIfNotEmpty
 import teksturepako.pakku.io.createHash
+import teksturepako.pakku.io.mapAsyncNotNull
 import teksturepako.pakku.io.readPathBytesOrNull
 import teksturepako.pakku.io.tryOrNull
 import teksturepako.pakku.toPrettyString
@@ -51,18 +51,14 @@ suspend fun detectProjects(
             }
         }
         .flatMap { pathSequence ->
-            pathSequence.toSet().map { path ->
-                async {
-                    if (path.isDirectory() || allowedExtensions.none { path.pathString.endsWith(it) }) return@async null
+            pathSequence.toSet().mapAsyncNotNull x@{ path ->
+                if (path.isDirectory() || allowedExtensions.none { path.pathString.endsWith(it) }) return@x null
 
-                    val bytes = readPathBytesOrNull(path) ?: return@async null
+                val bytes = readPathBytesOrNull(path) ?: return@x null
 
-                    Triple(path, bytes, createHash("sha1", bytes))
-                }
+                Triple(path, bytes, createHash("sha1", bytes))
             }
         }
-        .awaitAll()
-        .filterNotNull()
         .debugIfNotEmpty {
             println(it.map { (path, _) -> path.pathString }.toPrettyString())
         }
