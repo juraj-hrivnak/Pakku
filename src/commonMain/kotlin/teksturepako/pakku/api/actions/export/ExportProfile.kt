@@ -5,6 +5,9 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
 
+@DslMarker
+annotation class ExportSystemDsl
+
 /**
  * An export profile is used to contain a list of [export rules][ExportRule].
  *
@@ -38,6 +41,7 @@ open class ExportProfile(
  * @param requiresPlatform Optional platform constraint for the export profile.
  * @param builder A lambda function to add export rules.
  */
+@ExportSystemDsl
 fun exportProfile(
     name: String,
     fileExtension: String = "zip",
@@ -73,6 +77,7 @@ class ExportProfileBuilder(
     // -- AFTER BUILD --
 
     /** Adds an export rule to the profile. */
+    @ExportSystemDsl
     fun rule(exportRule: (ExportRuleScope) -> ExportRule): ExportRule
     {
         val rule = exportRule(this)
@@ -82,6 +87,7 @@ class ExportProfileBuilder(
     }
 
     /** Adds an optional export rule to the profile. */
+    @ExportSystemDsl
     fun optionalRule(exportRule: (ExportRuleScope) -> ExportRule?): ExportRule?
     {
         val rule = exportRule(this)
@@ -95,6 +101,7 @@ class ExportProfileBuilder(
     }
 
     /** Provides a fallback mechanism when an optional rule is null. */
+    @ExportSystemDsl
     infix fun ExportRule?.orElse(exportRule: (ExportRuleScope) -> ExportRule?): ExportRule?
     {
         if (this == null)
