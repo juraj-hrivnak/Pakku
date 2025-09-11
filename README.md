@@ -45,8 +45,9 @@
 
 With **Pakku**, you can create modpacks for **CurseForge**, **Modrinth** or **both simultaneously**.
 
-It's a package manager that significantly simplifies Minecraft modpack development, inspired by package managers like npm and Cargo.
-In addition to package management itself, it enables support for version control, simplifies collaboration options, and adds support for CI/CD.
+
+It is a package manager that greatly simplifies Minecraft modpack development, inspired by package managers like npm and Cargo.
+In addition to management itself, it enables support for version control, simplifies collaboration options, and adds support for CI/CD.
 
 ## Features
 
