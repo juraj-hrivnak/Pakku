@@ -39,6 +39,8 @@ Example output:
 
 <img src="screenshot_export.png" alt="export image"/>
 
+## How It Works?
+
 Pakku uses an export profile system under the hood.
 Currently, it is only possible to export the default profiles (`curseforge`, `modrinth` and `serverpack`).
 However, exposing this functionality to users using scripting is planned for the v2.0.
@@ -48,6 +50,8 @@ Benefits from export profile system:
 - Export profiles consist of number of export rule which control what happens on exporting.
 - Export rules are purely functional.
 - Each profile is independent and results in one exported file.
+
+### Multiplatform Modpacks
 
 Handling of projects in a multiplatform modpack:
 

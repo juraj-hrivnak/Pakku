@@ -19,7 +19,7 @@ This will ask you to enter:
 3. The mod loaders and their versions supported by the modpack.
 4. The targeted platform of the modpack.
 
-I will also set the version of the modpack to `0.0.1` and add `config` folder to the overrides.
+It will also set the version of the modpack to `0.0.1` and add `config` folder to the overrides.
 
 If you made a mistake, you can change the properties of the modpack
 using the [`pakku set`](pakku-set.md) command.
@@ -108,14 +108,14 @@ or use the [`pakku credentials set`](pakku-credentials-set.md) command:
    <include from="pakku-credentials-set.md" element-id="snippet-cmd"></include>
 
    > The API keys contain the dollar symbol (`$`) which needs to be escaped in the Bash shell.
-   > You can also put the API key in double quotes.
+   > You can also put the API key in quotes.
    {style="warning"}
 
 <seealso style="cards">
    <category ref="related">
-       <a href="Config-File.md"/>
-       <a href="Lock-File.md"/>
-       <a href="Credentials-File.md"/>
+       <a href="Config-File.md"></a>
+       <a href="Lock-File.md"></a>
+       <a href="Credentials-File.md"></a>
    </category>
 </seealso>
 

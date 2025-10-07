@@ -1,5 +1,8 @@
 package teksturepako.pakku.io
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.coroutineScope
@@ -66,6 +69,14 @@ private suspend fun Path.copyFileTo(
     destination: Path,
     onAction: suspend (FileAction) -> Unit
 ): ActionError? = runCatching {
+    if (this.hasUnsafePathComponents()) {
+        return@runCatching IllegalPath(this.toString())
+    }
+
+    if (destination.hasUnsafePathComponents()) {
+        return@runCatching IllegalPath(destination.toString())
+    }
+
     val sourceHash = this.readAndCreateSha1FromBytes()
     val destHash = if (!destination.exists()) null else destination.readAndCreateSha1FromBytes()
 
@@ -84,29 +95,48 @@ private suspend fun Path.copyDirectoryTo(
     onAction: suspend (FileAction) -> Unit,
     cleanUp: Boolean,
 ): ActionError? = runCatching {
+    val normalizedSource = this.normalize().toAbsolutePath()
+    val normalizedDestination = destination.normalize().toAbsolutePath()
 
-    val sourceFiles = this.collectFileInfo()
-    val destinationFiles = destination.collectFileInfo()
+    val sourceFiles = this.collectFileInfo(normalizedSource)
+        .getOrElse { return@runCatching it }
 
-    processFilesByHash(sourceFiles, destinationFiles, this, destination, onAction)
+    val destinationFiles = destination.collectFileInfo(normalizedDestination)
+        .getOrElse { return@runCatching it }
+
+    processFilesByHash(sourceFiles, destinationFiles, normalizedSource, normalizedDestination, onAction)
         ?.onError { return@runCatching it }
 
-    if (cleanUp) cleanupByHash(destinationFiles, sourceFiles, destination, onAction)
+    if (cleanUp) cleanupByHash(destinationFiles, sourceFiles, normalizedDestination, onAction)
 
     null
 }.getOrElse { CopyError(it.message ?: "Unknown error during directory copy") }
 
 @OptIn(ExperimentalPathApi::class)
-private suspend fun Path.collectFileInfo(): List<FileInfo> = coroutineScope {
-    walk()
-        .filter { it.isRegularFile() }
-        .toList()
-        .mapAsync { path ->
-            FileInfo(
-                relativePath = this@collectFileInfo.relativize(path),
-                hash = path.readAndCreateSha1FromBytes()
-            )
-        }
+private suspend fun Path.collectFileInfo(baseDir: Path): Result<List<FileInfo>, ActionError> = coroutineScope {
+    return@coroutineScope try {
+        val files = walk()
+            .filter { it.isRegularFile() }
+            .toList()
+            .mapAsync { path ->
+                val relativePath = this@collectFileInfo.relativize(path)
+
+                if (relativePath.hasUnsafePathComponents()) throw SecurityException(relativePath.toString())
+
+                val resolvedPath = baseDir.resolve(relativePath).normalize().toAbsolutePath()
+                if (!resolvedPath.startsWith(baseDir)) throw SecurityException(resolvedPath.toString())
+
+                FileInfo(
+                    relativePath = relativePath, hash = path.readAndCreateSha1FromBytes()
+                )
+            }
+
+        Ok(files)
+    } catch (e: SecurityException) {
+        Err(IllegalPath(e.message ?: "UNKNOWN PATH"))
+    } catch (e: Exception) {
+        Err(CopyError("Error collecting file info: ${e.message}"))
+    }
 }
 
 private suspend fun processFilesByHash(
@@ -119,13 +149,31 @@ private suspend fun processFilesByHash(
     val destFileMap = destinationFiles.associateBy { it.relativePath }
 
     sourceFiles.forEach { sourceFile ->
+        if (sourceFile.relativePath.hasUnsafePathComponents()) {
+            return@runCatching IllegalPath(sourceFile.relativePath.toString())
+        }
+
         val destFile = destFileMap[sourceFile.relativePath]
 
         if (destFile?.hash == null || destFile.hash != sourceFile.hash)
         {
             val destPath = destination.resolve(sourceFile.relativePath)
+
+            if (!destPath.isWithinBounds(destination))
+            {
+                return@runCatching IllegalPath(destPath.toString())
+            }
+
             destPath.parent?.createDirectories()
-            source.resolve(sourceFile.relativePath).copyTo(destPath, overwrite = true)
+
+            val sourcePath = source.resolve(sourceFile.relativePath)
+
+            if (!sourcePath.isWithinBounds(source))
+            {
+                return@runCatching IllegalPath(sourcePath.toString())
+            }
+
+            sourcePath.copyTo(destPath, overwrite = true)
 
             val action = FileCopied(source = sourceFile.relativePath, destination = destPath, hash = sourceFile.hash)
 
@@ -151,24 +199,28 @@ private suspend fun cleanupByHash(
             sourceFileMap[destFile.relativePath]?.hash == destFile.hash
         }
         .forEach { fileInfo ->
-            val fileToDelete = destination.resolve(fileInfo.relativePath)
-            fileToDelete.deleteIfExists()
+            if (!fileInfo.relativePath.hasUnsafePathComponents()) {
+                val fileToDelete = destination.resolve(fileInfo.relativePath)
 
-            val action = FileDeleted(path = fileInfo.relativePath, hash = fileInfo.hash)
-
-            onAction(action)
+                if (fileToDelete.isWithinBounds(destination)) {
+                    fileToDelete.deleteIfExists()
+                    val action = FileDeleted(path = fileInfo.relativePath, hash = fileInfo.hash)
+                    onAction(action)
+                }
+            }
         }
 
-    // Clean up empty directories bottom-up
     destination.walk(PathWalkOption.BREADTH_FIRST, PathWalkOption.INCLUDE_DIRECTORIES)
         .filter { it.isDirectory() && it != destination }
         .forEach { dir ->
-            if (dir.listDirectoryEntries().isEmpty()) {
+            if (dir.isWithinBounds(destination) && dir.listDirectoryEntries().isEmpty()) {
                 dir.deleteIfExists()
                 onAction(DirectoryDeleted(dir))
             }
         }
 }
+
+// -- ERROR CLASSES --
 
 data class InvalidPathError(val path: Path) : ActionError()
 {
