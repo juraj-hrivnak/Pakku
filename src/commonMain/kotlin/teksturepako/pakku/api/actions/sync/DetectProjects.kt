@@ -3,6 +3,7 @@ package teksturepako.pakku.api.actions.sync
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.actions.update.combineProjects
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
@@ -27,6 +28,7 @@ import kotlin.io.path.pathString
 import com.github.michaelbull.result.fold as resultFold
 
 suspend fun detectProjects(
+    onError: suspend (error: ActionError) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile?,
     platforms: List<Platform>,
@@ -64,22 +66,32 @@ suspend fun detectProjects(
         }
 
     val cfProjectsDeferred: Deferred<Set<Project>> = async {
-        if (CurseForge in platforms)
+        val fileBytes = files.map { it.second }
+
+        if (CurseForge in platforms && fileBytes.isNotEmpty())
         {
-            CurseForge.requestMultipleProjectsWithFilesFromBytes(lockFile.getMcVersions(), files.map { it.second }).resultFold(
+            CurseForge.requestMultipleProjectsWithFilesFromBytes(lockFile.getMcVersions(), fileBytes).resultFold(
                 success = { it.inheritPropertiesFrom(configFile).toSet() },
-                failure = { mutableSetOf() }
+                failure = {
+                    onError(it)
+                    mutableSetOf()
+                }
             )
         }
         else mutableSetOf()
     }
 
     val mrProjectsDeferred: Deferred<Set<Project>> = async {
-        if (Modrinth in platforms)
+        val fileHashes = files.map { it.third }
+
+        if (Modrinth in platforms && fileHashes.isNotEmpty())
         {
-            Modrinth.requestMultipleProjectsWithFilesFromHashes(files.map { it.third }, "sha1").resultFold(
+            Modrinth.requestMultipleProjectsWithFilesFromHashes(fileHashes, "sha1").resultFold(
                 success = { it.inheritPropertiesFrom(configFile).toSet() },
-                failure = { mutableSetOf() }
+                failure = {
+                    onError(it)
+                    mutableSetOf()
+                }
             )
         }
         else mutableSetOf()

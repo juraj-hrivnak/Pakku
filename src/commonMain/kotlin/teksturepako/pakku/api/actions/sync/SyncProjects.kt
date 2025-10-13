@@ -1,11 +1,10 @@
 package teksturepako.pakku.api.actions.sync
 
 import kotlinx.coroutines.coroutineScope
-import teksturepako.pakku.api.actions.update.combineProjects
+import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.GitHub
-import teksturepako.pakku.api.platforms.Multiplatform
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.containNotProject
@@ -17,16 +16,17 @@ data class SyncResult(
 )
 
 suspend fun syncProjects(
+    onError: suspend (error: ActionError) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile?,
     platforms: List<Platform>,
 ): SyncResult = coroutineScope {
 
-    val detectedProjects = detectProjects(lockFile, configFile, platforms)
+    val detectedProjects = detectProjects(onError, lockFile, configFile, platforms)
 
     val currentProjects = lockFile.getAllProjects().filterNot {
         it.slug.keys.firstOrNull() == GitHub.serialName && it.slug.keys.size == 1
-    }
+    }.toSet()
 
     val addedProjects = detectedProjects
         .filter { detectedProject -> currentProjects containNotProject detectedProject }
@@ -36,15 +36,18 @@ suspend fun syncProjects(
         .filter { currentProject -> detectedProjects containNotProject currentProject }
         .toSet()
 
-    val updatedProjects = Multiplatform.platforms.fold(currentProjects) { accProjects, platform ->
-        accProjects.map { accProject ->
-            detectedProjects.find { it.slug[platform.serialName] == accProject.slug[platform.serialName] }
-                ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, 1) }
-                ?: accProject
-        }
-    }
+    val updatedProjects = (detectedProjects - addedProjects - removedProjects)
         .distinctBy { it.files }
-        .filter { project -> project !in currentProjects }
+        .filter { detectedProject ->
+            currentProjects
+                .find { currentProject ->
+                    currentProject.slug.any { (platform, slug) -> detectedProject.slug[platform] == slug }
+                }?.let { currentProject ->
+                    // Only consider updated if files are different
+                    currentProject.files != detectedProject.files
+                }
+                ?: false // Fallback to false if not project is found
+        }
         .toSet()
 
     return@coroutineScope SyncResult(addedProjects, removedProjects, updatedProjects)

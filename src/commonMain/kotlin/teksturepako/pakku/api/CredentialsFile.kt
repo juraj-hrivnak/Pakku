@@ -12,7 +12,10 @@ import teksturepako.pakku.io.decodeToResult
 import teksturepako.pakku.io.tryOrNull
 import teksturepako.pakku.io.tryToResult
 import teksturepako.pakku.io.writeToFile
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.pathString
 
 @Serializable
 data class CredentialsFile(

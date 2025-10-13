@@ -42,10 +42,10 @@ suspend fun deleteOldFiles(
     val defaultIgnoredPaths = listOf("saves", "screenshots")
     val allowedExtensions = listOf(".jar", ".zip", ".jar.meta")
 
-    val detectedProjects = async {
+    val detectedProjectsDeferred = async {
         if (!shelve) return@async mapOf()
 
-        detectProjects(lockFile, configFile, platforms)
+        detectProjects(onError, lockFile, configFile, platforms)
             .flatMap { project -> project.files }
             .map { projectFile ->
                 async x@ {
@@ -127,8 +127,8 @@ suspend fun deleteOldFiles(
 
             if (shelve)
             {
-                if (path.absolute() in detectedProjects.await().keys
-                    || hash in detectedProjects.await().values
+                if (path.absolute() in detectedProjectsDeferred.await().keys
+                    || hash in detectedProjectsDeferred.await().values
                     || path.isDirectory()) return@launch
 
                 path.tryToResult {

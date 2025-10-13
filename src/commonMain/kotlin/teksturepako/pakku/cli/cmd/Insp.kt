@@ -6,7 +6,10 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.mordant.rendering.*
-import com.github.ajalt.mordant.table.*
+import com.github.ajalt.mordant.table.ColumnWidth
+import com.github.ajalt.mordant.table.grid
+import com.github.ajalt.mordant.table.horizontalLayout
+import com.github.ajalt.mordant.table.verticalLayout
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.widgets.Panel
 import com.github.ajalt.mordant.widgets.Text
@@ -16,8 +19,8 @@ import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents.Formats.RFC_1123
-import teksturepako.pakku.api.actions.errors.VersionsDoNotMatch
 import teksturepako.pakku.api.actions.errors.ProjNotFound
+import teksturepako.pakku.api.actions.errors.VersionsDoNotMatch
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Provider

@@ -10,7 +10,10 @@ import teksturepako.pakku.api.actions.errors.NoHashes
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
-import teksturepako.pakku.api.platforms.*
+import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.api.platforms.GitHub
+import teksturepako.pakku.api.platforms.Modrinth
+import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.io.createHash
 import java.nio.file.Path
 import kotlin.io.path.Path

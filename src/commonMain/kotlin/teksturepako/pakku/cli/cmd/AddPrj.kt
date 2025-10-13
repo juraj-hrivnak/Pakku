@@ -25,7 +25,6 @@ import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pErrorOrPrompt
 import teksturepako.pakku.cli.ui.pSuccess
-import kotlin.collections.fold
 import kotlin.system.exitProcess
 import com.github.michaelbull.result.fold as resultFold
 import com.github.michaelbull.result.fold as resultFold1

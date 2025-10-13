@@ -71,7 +71,10 @@ class Sync : CliktCommand()
 
         launch { progressBar.execute() }
 
-        val (addedProjects, removedProjects, updatedProjects) = syncProjects(lockFile, configFile, platforms)
+        val (addedProjects, removedProjects, updatedProjects) = syncProjects(
+            onError = { terminal.pError(it ) },
+            lockFile, configFile, platforms
+        )
 
         progressBar.clear()
 

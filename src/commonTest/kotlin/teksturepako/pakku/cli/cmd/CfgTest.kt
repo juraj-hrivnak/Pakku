@@ -1,12 +1,9 @@
 package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.testing.test
-import com.github.michaelbull.result.runCatching
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.projects.ProjectType
-import kotlin.io.path.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
