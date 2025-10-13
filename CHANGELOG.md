@@ -3,6 +3,16 @@
 
 ## Unreleased
 
+## v1.3.0
+
+### Highlights
+
+- Added support for exporting Sinytra Connector modpacks.
+  - Only the first loader is exported.
+- You can now inspect project details using the `pakku insp` command.
+- Added support for specifying the GitHub Access Token (to enable better limits).
+  - Use `pakku credentials set --gh-access-token <token>` or the `GITHUB_ACCESS_TOKEN` environment variable configure the access token.
+
 ## v1.2.1
 
 - Improved performance of the `pakku fetch` command.
