@@ -57,6 +57,10 @@ class CfgPrj : CliktCommand("prj")
     private val aliasOpt: String? by option("-a", "--alias", metavar = "alias")
         .help("Add alias to the project")
 
+    private val exportOpt: Boolean? by option("-e", "--export")
+        .help("Change whether the project can be exported")
+        .boolean()
+
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.pError(it)
@@ -102,6 +106,12 @@ class CfgPrj : CliktCommand("prj")
                     if (aliases == null) aliases = mutableSetOf()
                     aliases!!.add(opt)
                     terminal.pSuccess("'projects.$projectArg.aliases' add '$opt'")
+                    echo()
+                }
+
+                exportOpt?.let { opt ->
+                    export = opt
+                    terminal.pSuccess("'projects.$projectArg.export' set to '$opt'")
                     echo()
                 }
             }

@@ -27,6 +27,7 @@
 - Resolving manual overrides is now faster.
 - Added support for the new GitHub repository asset digests.
 - Pakku now integrates with autopack-director, similarly to how it integrates with file-director.
+- Added `--export` option to the `pakku cfg prj` command.
 - Added proper checking when projects have no URL during download.
 - Added IntelliJ project icon.
 - Updated GitHub Actions workflows with proper permissions.
