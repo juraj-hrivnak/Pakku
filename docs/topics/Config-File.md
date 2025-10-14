@@ -2,6 +2,8 @@
 
 A config file (`pakku.json`) is a file dedicated for the user.
 
+It should be located in your modpack directory (`.minecraft`).
+
 It must be present when exporting the modpack 
 or when you need to use some of Pakku's more advanced functionalities.
 

@@ -3,7 +3,7 @@
 Pakku directory (`.pakku`) can be used to define [manual overrides](Pakku-Terminology.md#override)
 and is also used for other Pakku functionality.
 
-Pakku directory must be located in your modpack directory and must be named: `.pakku`.
+Pakku directory must be located in your modpack directory (`.minecraft`) and must be named: `.pakku`.
 
 ## Subdirectories
 

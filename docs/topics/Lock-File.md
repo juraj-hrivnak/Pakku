@@ -3,6 +3,8 @@
 A lock file (`pakku-lock.json`) is an automatically generated file
 used by Pakku to define all [properties](#properties) of a modpack needed for its development.
 
+It should be located in your modpack directory (`.minecraft`).
+
 This file is not intended to be modified manually.
 
 ## Properties
