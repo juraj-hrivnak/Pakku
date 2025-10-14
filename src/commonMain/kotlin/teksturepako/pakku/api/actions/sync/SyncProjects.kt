@@ -42,11 +42,12 @@ suspend fun syncProjects(
             currentProjects
                 .find { currentProject ->
                     currentProject.slug.any { (platform, slug) -> detectedProject.slug[platform] == slug }
-                }?.let { currentProject ->
+                }
+                ?.let { currentProject ->
                     // Only consider updated if files are different
                     currentProject.files != detectedProject.files
                 }
-                ?: false // Fallback to false if not project is found
+                ?: false // Fallback to false if no project is found
         }
         .toSet()
 
