@@ -21,6 +21,9 @@ Set a credential
 `--cf-api-key`, `--curseforge-api-key`
 : the CurseForge API key credential
 
+`--gh-access-token`, `--github-access-token`
+: the GitHub API access token credential
+
 </snippet>
 
 `-h`, `--help`

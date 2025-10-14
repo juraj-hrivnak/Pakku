@@ -45,6 +45,9 @@ Configure projects
 `-a`, `--alias`
 : Add alias to the project
 
+`-e`, `--export`
+: Change whether the project can be exported
+
 </snippet>
 
 `-h`, `--help`
