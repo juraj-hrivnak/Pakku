@@ -4,8 +4,8 @@ You can install Pakku using:
 
 - [**Scoop** for Windows](#install-scoop)
 - [**Brew** for macOS (or Linux)](#install-brew)
-- [**Nix** for Linux, macOS or Windows WSL](#install-nix): [![latest packaged version(s)](https://repology.org/badge/latest-versions/pakku-minecraft.svg)](https://repology.org/project/pakku-minecraft/versions)
-- **Yay** for Arch Linux: [![latest packaged version(s)](https://repology.org/badge/latest-versions/pakku-mc.svg)](https://repology.org/project/pakku-mc/versions)
+- [**Nix** for Linux, macOS or Windows WSL](#install-nix)
+- **Yay** for Arch Linux: [![AUR package](https://repology.org/badge/version-for-repo/aur/pakku-mc.svg)](https://repology.org/project/pakku-mc/packages)
 
 or [**manually**](#install-manually).
 
