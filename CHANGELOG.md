@@ -7,11 +7,42 @@
 
 ### Highlights
 
-- Added support for exporting Sinytra Connector modpacks.
-  - Only the first loader is exported.
-- You can now inspect project details using the `pakku insp` command.
-- Added support for specifying the GitHub Access Token (to enable better limits).
-  - Use `pakku credentials set --gh-access-token <token>` or the `GITHUB_ACCESS_TOKEN` environment variable configure the access token.
+- **New** [**installation options**](https://juraj-hrivnak.github.io/Pakku/installing-pakku.html) **have been added**.
+  - You can now install Pakku using **Nix**, thanks to @Redlonghead!
+  - And Pakku is now also available from [**AUR**](https://repology.org/project/pakku-mc/packages), thanks to SelfRef!
+- Improved support for **multi-loader** modpacks. Pakku now exports only the primary loader, making Pakku fully compatible with the Sinytra Connector!
+- Pakku now allows configuring the GitHub access token. Doing so will extend your GitHub API rate limit from 60 to 5,000 requests per hour. Configure it easily with:
+  - `pakku credentials set --gh-access-token <token>`, or set the `GITHUB_ACCESS_TOKEN` environment variable.
+- Added the `pakku insp` command for inspecting projects in detail.
+- Added better error handling to the `update` and `sync` commands.
+- The `status` command will now display hyperlinks to project files.
+- Improved the `ls` command:
+  - Listing projects will now better adapt to your terminal size.
+  - Short warnings will appear below project names if there are version mismatches.
+- Fixed project updates detection when running the `pakku sync` command.
+- Fixed project configuration in the config file (`pakku.json`) affecting more projects than intended in some cases.
+
+### Other
+
+- Resolving manual overrides is now faster.
+- Added support for the new GitHub repository asset digests.
+- Pakku now integrates with autopack-director, similarly to how it integrates with file-director.
+- Added proper checking when projects have no URL during download.
+- Added IntelliJ project icon.
+- Updated GitHub Actions workflows with proper permissions.
+
+### Docs 
+
+- Added better explanations of the export process.
+- Added warnings about escaping CurseForge API key symbols in bash.
+- Updated documentation with Nix installation instructions (thanks to @Redlonghead!)
+- Improved formatting of installation instructions.
+- Updated Writerside documentation tooling.
+
+### API
+
+– Added `outputDir` option for fetch API actions.
+- Added `ExportSystemDsl` annotations to Pakku's DSL functions.
 
 ## v1.2.1
 
