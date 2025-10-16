@@ -3,6 +3,10 @@
 
 ## Unreleased
 
+## v1.3.1
+
+- Fixed [#100](https://github.com/juraj-hrivnak/Pakku/issues/100).
+
 ## v1.3.0
 
 ### Highlights
