@@ -48,13 +48,12 @@ fun exportProfile(
     requiresPlatform: Platform? = null,
     builder: ExportProfileBuilder.() -> Unit
 ): ExportProfileBuilder = ExportProfileBuilder(name, fileExtension, requiresPlatform, builder)
-
 class ExportProfileBuilder(
     private val name: String,
     private val fileExtension: String = "zip",
     private val requiresPlatform: Platform? = null,
     private val builder: (ExportProfileBuilder.() -> Unit),
-    private var rules: Sequence<ExportRule> = sequenceOf(),
+    private val rules: MutableList<ExportRule> = mutableListOf(),
 ) : ExportRuleScope
 {
     override lateinit var lockFile: LockFile
@@ -65,11 +64,11 @@ class ExportProfileBuilder(
         this.lockFile = exportingScope.lockFile
         this.configFile = exportingScope.configFile
 
-        this.rules = emptySequence()
+        this.rules.clear()
         this.apply(builder)
 
         debug { println("Building [${this.name} profile]") }
-        debug { println("[${this.name} profile] has ${this.rules.toList().size} rule(s)") }
+        debug { println("[${this.name} profile] has ${this.rules.size} rule(s)") }
 
         return ExportProfile(this.name, this.fileExtension, this.rules.toList(), this.requiresPlatform)
     }
@@ -82,7 +81,7 @@ class ExportProfileBuilder(
     {
         val rule = exportRule(this)
 
-        rules += rule
+        rules.add(rule)
         return rule
     }
 
@@ -94,7 +93,7 @@ class ExportProfileBuilder(
 
         if (rule != null)
         {
-            rules += rule
+            rules.add(rule)
             return rule
         }
         else return null
@@ -110,7 +109,7 @@ class ExportProfileBuilder(
 
             if (rule != null)
             {
-                rules += rule
+                rules.add(rule)
                 return rule
             }
             else return null

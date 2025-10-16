@@ -71,27 +71,28 @@ suspend fun List<String>.expandWithGlob(inputPath: Path): List<String>
 {
     val walk = inputPath.walk(this)
 
-    return walk.fold(sequenceOf<String>()) { acc, (path, isNegated) ->
+    return walk.fold(mutableSetOf<String>()) { acc, (path, isNegated) ->
         when
         {
             isNegated ->
             {
                 if (path.isDirectory())
                 {
-                    acc.filterNot { existingPath ->
+                    acc.removeAll { existingPath ->
                         Path(existingPath).startsWith(path)
                     }
                 }
                 else
                 {
-                    acc - path.toString()
+                    acc -= (path.toString())
                 }
             }
             else ->
             {
-                acc + path.toString()
+                acc += path.toString()
             }
         }
+        acc
     }
         .toList()
         .debugIfNotEmpty { println("expandWithGlob = $it") }
