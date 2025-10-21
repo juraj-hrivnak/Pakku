@@ -3,6 +3,12 @@
 
 ## Unreleased
 
+## v1.3.2
+
+- Fixed a bug in the improved recursive copy mechanism introduced in _v1.3.0_.
+  - This is a hotfix for both _v1.3.0_ and _v1.3.1_.
+  - Fixed [#101](https://github.com/juraj-hrivnak/Pakku/issues/101).
+
 ## v1.3.1
 
 - Fixed [#100](https://github.com/juraj-hrivnak/Pakku/issues/100).
