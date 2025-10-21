@@ -4,9 +4,11 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.errors.ActionError
+import java.io.File
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+import kotlin.io.path.pathString
 
 @OptIn(ExperimentalStdlibApi::class)
 fun createHash(type: String, input: ByteArray): String
@@ -28,7 +30,6 @@ fun createHash(type: String, input: ByteArray): String
         .toHexString()
 }
 
-
 class IllegalPath(path: String) : ActionError()
 {
     override val rawMessage = "Illegal path: '$path'."
@@ -36,14 +37,22 @@ class IllegalPath(path: String) : ActionError()
 
 fun filterPath(path: String): Result<String, ActionError>
 {
-    if (path.contains("..")
-        || path.contains(Regex("[A-Z]:/"))
-        || path.contains(Regex("[A-Z]:\\\\"))
-        || path.startsWith("/")
-        || path.startsWith("\\")
-    ) return Err(IllegalPath(path))
+    return if (path.hasUnsafePathComponents()) Err(IllegalPath(path)) else Ok(path)
+}
 
-    return Ok(path)
+fun Path.hasUnsafePathComponents(): Boolean =
+    this.pathString.hasUnsafePathComponents()
+
+private fun String.hasUnsafePathComponents(): Boolean
+{
+    return this.contains("..")
+        || this.contains(Regex("[A-Z]:/"))
+        || this.contains(Regex("[A-Z]:\\\\"))
+        || this.startsWith("/")
+        || this.startsWith("\\")
+        || this.split(File.separator).any { // windows devices
+            it.uppercase().matches(Regex("^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|$)"))
+        }
 }
 
 fun Path.isWithinBounds(baseDir: Path): Boolean
@@ -58,24 +67,5 @@ fun Path.isWithinBounds(baseDir: Path): Boolean
     catch (_: Exception)
     {
         false
-    }
-}
-
-fun Path.hasUnsafePathComponents(): Boolean
-{
-    val pathString = this.toString()
-
-    if (pathString.contains("..")) return true
-
-    if (this.isAbsolute) return true
-
-    return this.any { component ->
-        val name = component.toString()
-        // Reject components that are exactly ".." or "."
-        name == ".." || name == "." ||
-        // Reject null bytes (can cause issues in some systems)
-        name.contains('\u0000') ||
-        // Reject Windows device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9)
-        name.uppercase().matches(Regex("^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\\.|$)"))
     }
 }

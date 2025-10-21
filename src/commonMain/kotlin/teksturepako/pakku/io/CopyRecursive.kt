@@ -65,15 +65,17 @@ suspend fun Path.copyRecursivelyTo(
     else                 -> InvalidPathError(this)
 }
 
-private suspend fun Path.copyFileTo(
+suspend fun Path.copyFileTo(
     destination: Path,
     onAction: suspend (FileAction) -> Unit
 ): ActionError? = runCatching {
-    if (this.hasUnsafePathComponents()) {
+    if (this.hasUnsafePathComponents())
+    {
         return@runCatching IllegalPath(this.toString())
     }
 
-    if (destination.hasUnsafePathComponents()) {
+    if (destination.hasUnsafePathComponents())
+    {
         return@runCatching IllegalPath(destination.toString())
     }
 
@@ -149,7 +151,8 @@ private suspend fun processFilesByHash(
     val destFileMap = destinationFiles.associateBy { it.relativePath }
 
     sourceFiles.forEach { sourceFile ->
-        if (sourceFile.relativePath.hasUnsafePathComponents()) {
+        if (sourceFile.relativePath.hasUnsafePathComponents())
+        {
             return@runCatching IllegalPath(sourceFile.relativePath.toString())
         }
 
@@ -199,10 +202,12 @@ private suspend fun cleanupByHash(
             sourceFileMap[destFile.relativePath]?.hash == destFile.hash
         }
         .forEach { fileInfo ->
-            if (!fileInfo.relativePath.hasUnsafePathComponents()) {
+            if (!fileInfo.relativePath.hasUnsafePathComponents())
+            {
                 val fileToDelete = destination.resolve(fileInfo.relativePath)
 
-                if (fileToDelete.isWithinBounds(destination)) {
+                if (fileToDelete.isWithinBounds(destination))
+                {
                     fileToDelete.deleteIfExists()
                     val action = FileDeleted(path = fileInfo.relativePath, hash = fileInfo.hash)
                     onAction(action)
@@ -213,7 +218,8 @@ private suspend fun cleanupByHash(
     destination.walk(PathWalkOption.BREADTH_FIRST, PathWalkOption.INCLUDE_DIRECTORIES)
         .filter { it.isDirectory() && it != destination }
         .forEach { dir ->
-            if (dir.isWithinBounds(destination) && dir.listDirectoryEntries().isEmpty()) {
+            if (dir.isWithinBounds(destination) && dir.listDirectoryEntries().isEmpty())
+            {
                 dir.deleteIfExists()
                 onAction(DirectoryDeleted(dir))
             }

@@ -17,6 +17,7 @@ import teksturepako.pakku.api.overrides.ManualOverride
 import teksturepako.pakku.api.overrides.OverrideType
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.io.copyFileTo
 import teksturepako.pakku.io.copyRecursivelyTo
 import teksturepako.pakku.io.tryToResult
 import kotlin.io.path.*
@@ -188,18 +189,12 @@ sealed class RuleContext(
             val message = "export ${manualOverride.type} '${manualOverride.path}' to '$outputPath'"
 
             return ruleResult(message, Packaging.FileAction {
-                if (outputPath.exists())
-                {
-                    return@FileAction outputPath to AlreadyExists(outputPath.toString())
-                }
-
                 outputPath.tryToResult { createParentDirectories() }
                     .onFailure { error ->
                         if (error !is AlreadyExists) return@FileAction outputPath to error
                     }
 
-                outputPath to manualOverride.path.tryToResult { copyTo(outputPath, overwrite = true) }
-                    .getError()
+                outputPath to manualOverride.path.copyFileTo(outputPath) { }
             })
         }
     }
