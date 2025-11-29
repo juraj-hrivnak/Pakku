@@ -17,19 +17,19 @@ open class PakkuTest(protected open val teardown: Boolean = true)
     {
     }
 
-    protected fun testFile(vararg path: String): Path
+    fun testPath(vararg path: String): Path
     {
         return Path(workingPath, *path)
     }
 
-    protected fun createTestFile(vararg path: String)
+    fun createTestFile(vararg path: String)
     {
         val file = Path(workingPath, *path)
         runCatching { file.createParentDirectories() }
         runCatching { file.createFile() }
     }
 
-    protected fun createTestDir(vararg path: String)
+    fun createTestDir(vararg path: String)
     {
         val dir = Path(workingPath, *path)
         runCatching { dir.createParentDirectories() }

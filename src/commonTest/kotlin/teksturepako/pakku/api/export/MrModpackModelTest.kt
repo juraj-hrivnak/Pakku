@@ -103,7 +103,7 @@ class MrModpackModelTest : PakkuTest()
     @Test
     fun `test mr modpack model in zip`()
     {
-        val zipPath = testFile("build", Modrinth.serialName, "$modpackName.${MrModpackModel.EXTENSION}")
+        val zipPath = testPath("build", Modrinth.serialName, "$modpackName.${MrModpackModel.EXTENSION}")
 
         val modpackModel = runBlocking {
             readPathTextFromZip(zipPath, MrModpackModel.MANIFEST).toMrModpackModel()

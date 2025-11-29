@@ -1,314 +1,325 @@
 package teksturepako.pakku.io
 
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 import strikt.api.expectThat
-import strikt.assertions.*
+import strikt.assertions.contains
+import strikt.assertions.isA
+import strikt.assertions.isEqualTo
+import strikt.assertions.isNotNull
 import teksturepako.pakku.PakkuTest
+import teksturepako.pakku.expectStructure
+import teksturepako.pakku.testStructure
 import teksturepako.pakku.toPrettyString
-import kotlin.io.path.*
+import kotlin.io.path.writeText
+import kotlin.test.Test
 import kotlin.test.fail
 
 class CopyRecursiveTest : PakkuTest()
 {
-    private val sourceDir = "source"
-    private val destDir = "destination"
-    private val testFileName = "test_file.txt"
     private val testFileContent = "Hello, Pakku!"
 
     // -- SINGLE FILE COPY TESTS --
 
-    @Test fun `file to other file`(): Unit = runBlocking {
-        createTestFile(testFileName)
-        testFile(testFileName).writeText(testFileContent)
+    @Test
+    fun `copy single file`(): Unit = runBlocking {
+        val struct = testStructure {
+            file("source.txt", testFileContent)
+        }
 
-        val source = testFile(testFileName)
-        val destination = testFile("copied_$testFileName")
+        with(struct) {
+            file("source.txt").copyRecursivelyTo(testPath("dest.txt"))
+                ?.onError { fail() }
+        }
 
-        val error = source.copyRecursivelyTo(destination, onAction = { println(it.toPrettyString()) })
-
-        expectThat(error).isNull()
-        expectThat(destination).get { exists() }.isTrue()
-        expectThat(destination.readText()).isEqualTo(testFileContent)
-    }
-
-    @Test fun `file with the same hash`(): Unit = runBlocking {
-        createTestFile(testFileName)
-        testFile(testFileName).writeText(testFileContent)
-
-        val source = testFile(testFileName)
-        val destination = testFile("copied_$testFileName")
-
-        // First copy
-        source.copyRecursivelyTo(destination, onAction = { println(it.toPrettyString()) })
-
-        // Second copy - should skip because hash matches
-        val error = source.copyRecursivelyTo(destination, onAction = { println(it.toPrettyString()); fail() })
-
-        expectThat(error).isNull()
-        expectThat(destination).get { exists() }.isTrue()
-        expectThat(destination.readText()).isEqualTo(testFileContent)
+        expectStructure {
+            file("source.txt", testFileContent)
+            file("dest.txt", testFileContent)
+        }
     }
 
     @Test
-    fun `test copy single file with different hash should overwrite`(): Unit = runBlocking {
-        createTestFile(testFileName)
-        testFile(testFileName).writeText(testFileContent)
+    fun `file with the same hash`(): Unit = runBlocking {
+        val struct = testStructure {
+            file("test_file.txt", testFileContent)
+        }
 
-        val source = testFile(testFileName)
-        val destination = testFile("copied_$testFileName")
+        with(struct) {
+            // First copy
+            file("test_file.txt").copyRecursivelyTo(testPath("copied_test_file.txt"))?.onError { fail() }
 
-        // Create destination with different content
-        createTestFile("copied_$testFileName")
-        destination.writeText("Different content")
+            // Second copy - should skip because hash matches
+            file("test_file.txt").copyRecursivelyTo(
+            testPath("copied_test_file.txt"), onAction = {
+                println(it.toPrettyString())
+                fail("Should not copy file with same hash")
+            })?.onError { fail() }
+        }
 
-        val error = source.copyRecursivelyTo(destination)
+        expectStructure {
+            file("copied_test_file.txt", testFileContent)
+        }
+    }
 
-        expectThat(error).isNull()
-        expectThat(destination.readText()).isEqualTo(testFileContent)
+    @Test
+    fun `copy single file with different hash should overwrite`(): Unit = runBlocking {
+        val struct = testStructure {
+            file("source.txt", testFileContent)
+            file("dest.txt", "Different content")
+        }
+
+        with(struct) {
+            file("source.txt").copyRecursivelyTo(file("dest.txt"))?.onError { fail() }
+        }
+
+        expectStructure {
+            file("dest.txt", testFileContent)
+        }
     }
 
     // -- DIRECTORY COPY TESTS --
 
     @Test
-    fun `test copy empty directory`(): Unit = runBlocking {
-        val sourceDir = "source_empty"
-        val destDir = "dest_empty"
+    fun `copy empty directory`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source_empty")
+        }
 
-        createTestDir(sourceDir)
+        with(struct) {
+            dir("source_empty").copyRecursivelyTo(testPath("dest_empty"))?.onError { fail() }
+        }
 
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
-
-        val error = source.copyRecursivelyTo(destination)
-
-        expectThat(error).isNull()
-        expectThat(destination). get { exists() }.isFalse()
+        expectStructure {
+            doesNotExist("dest_empty")
+        }
     }
 
     @Test
-    fun `test copy directory with single file`(): Unit = runBlocking {
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, testFileName)
-        testFile(sourceDir, testFileName).writeText(testFileContent)
+    fun `copy directory with single file`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("test_file.txt", testFileContent)
+            }
+        }
 
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
+        with(struct) {
+            dir("source").copyRecursivelyTo(testPath("destination"))?.onError { fail() }
+        }
 
-        val error = source.copyRecursivelyTo(destination)
-
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, testFileName)).get { exists() }.isTrue()
-        expectThat(testFile(destDir, testFileName).readText()).isEqualTo(testFileContent)
+        expectStructure {
+            dir("destination") {
+                file("test_file.txt", testFileContent)
+            }
+        }
     }
 
     @Test
-    fun `test copy directory with multiple files`(): Unit = runBlocking {
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, "file1.txt")
-        createTestFile(sourceDir, "file2.txt")
-        createTestFile(sourceDir, "file3.txt")
+    fun `copy directory with multiple files`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("file1.txt", "Content 1")
+                file("file2.txt", "Content 2")
+                file("file3.txt", "Content 3")
+            }
+        }
 
-        testFile(sourceDir, "file1.txt").writeText("Content 1")
-        testFile(sourceDir, "file2.txt").writeText("Content 2")
-        testFile(sourceDir, "file3.txt").writeText("Content 3")
+        with(struct) {
+            dir("source").copyRecursivelyTo(testPath("destination"))?.onError { fail() }
+        }
 
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
-
-        val error = source.copyRecursivelyTo(destination)
-
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, "file1.txt")).get { exists() }.isTrue()
-        expectThat(testFile(destDir, "file2.txt")).get { exists() }.isTrue()
-        expectThat(testFile(destDir, "file3.txt")).get { exists() }.isTrue()
-        expectThat(testFile(destDir, "file1.txt").readText()).isEqualTo("Content 1")
-        expectThat(testFile(destDir, "file2.txt").readText()).isEqualTo("Content 2")
-        expectThat(testFile(destDir, "file3.txt").readText()).isEqualTo("Content 3")
+        expectStructure {
+            dir("destination") {
+                file("file1.txt", "Content 1")
+                file("file2.txt", "Content 2")
+                file("file3.txt", "Content 3")
+            }
+        }
     }
 
     @Test
-    fun `test copy directory with nested subdirectories`(): Unit = runBlocking {
-        createTestDir(sourceDir)
-        createTestDir(sourceDir, "subdir1")
-        createTestDir(sourceDir, "subdir1", "subdir2")
+    fun `copy directory with nested subdirectories`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("root_file.txt", "Root")
+                dir("subdir1") {
+                    file("nested_file.txt", "Nested")
+                    dir("subdir2") {
+                        file("deeply_nested_file.txt", "Deeply nested")
+                    }
+                }
+            }
+        }
 
-        createTestFile(sourceDir, "root_file.txt")
-        createTestFile(sourceDir, "subdir1", "nested_file.txt")
-        createTestFile(sourceDir, "subdir1", "subdir2", "deeply_nested_file.txt")
+        with(struct) {
+            dir("source").copyRecursivelyTo(testPath("destination"))?.onError { fail() }
+        }
 
-        testFile(sourceDir, "root_file.txt").writeText("Root")
-        testFile(sourceDir, "subdir1", "nested_file.txt").writeText("Nested")
-        testFile(sourceDir, "subdir1", "subdir2", "deeply_nested_file.txt").writeText("Deeply nested")
-
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
-
-        val error = source.copyRecursivelyTo(destination)
-
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, "root_file.txt")).get { exists() }.isTrue()
-        expectThat(testFile(destDir, "subdir1", "nested_file.txt")).get { exists() }.isTrue()
-        expectThat(testFile(destDir, "subdir1", "subdir2", "deeply_nested_file.txt")).get { exists() }.isTrue()
-        expectThat(
-            testFile(
-                destDir,
-                "subdir1",
-                "subdir2",
-                "deeply_nested_file.txt"
-            ).readText()
-        ).isEqualTo("Deeply nested")
+        expectStructure {
+            dir("destination") {
+                file("root_file.txt", "Root")
+                dir("subdir1") {
+                    file("nested_file.txt", "Nested")
+                    dir("subdir2") {
+                        file("deeply_nested_file.txt", "Deeply nested")
+                    }
+                }
+            }
+        }
     }
 
     // -- CLEANUP TESTS --
 
     @Test
-    fun `test cleanup removes files not in source`(): Unit = runBlocking {
-        val sourceDir = "source_cleanup"
-        val destDir = "dest_cleanup"
+    fun `cleanup removes files not in source`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("keep_file.txt", "Keep this")
+            }
+            dir("dest") {
+                file("keep_file.txt", "Keep this")
+                file("remove_file.txt", "Remove this")
+            }
+        }
 
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, "keep_file.txt")
-        testFile(sourceDir, "keep_file.txt").writeText("Keep this")
+        with(struct) {
+            dir("source").copyRecursivelyTo(dir("dest"), cleanUp = true)?.onError { fail() }
+        }
 
-        createTestDir(destDir)
-        createTestFile(destDir, "keep_file.txt")
-        createTestFile(destDir, "remove_file.txt")
-        testFile(destDir, "keep_file.txt").writeText("Keep this")  // Same content = same hash
-        testFile(destDir, "remove_file.txt").writeText("Remove this")
-
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
-
-        val error = source.copyRecursivelyTo(destination, cleanUp = true)
-
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, "keep_file.txt")). get { exists() }.isTrue()
-        expectThat(testFile(destDir, "remove_file.txt")).get { exists() }. isFalse()
+        expectStructure {
+            dir("dest") {
+                file("keep_file.txt", "Keep this")
+                doesNotExist("remove_file.txt")
+            }
+        }
     }
 
     @Test
-    fun `test cleanup disabled preserves extra files`(): Unit = runBlocking {
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, "source_file.txt")
-        testFile(sourceDir, "source_file.txt").writeText("Source")
+    fun `cleanup disabled preserves extra files`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("source_file.txt", "Source")
+            }
+            dir("dest") {
+                file("extra_file.txt", "Extra")
+            }
+        }
 
-        createTestDir(destDir)
-        createTestFile(destDir, "extra_file.txt")
-        testFile(destDir, "extra_file.txt").writeText("Extra")
+        with(struct) {
+            dir("source").copyRecursivelyTo(dir("dest"), cleanUp = false)?.onError { fail() }
+        }
 
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
-
-        val error = source.copyRecursivelyTo(destination, cleanUp = false)
-
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, "source_file.txt")).get { exists() }.isTrue()
-        expectThat(testFile(destDir, "extra_file.txt")).get { exists() }.isTrue()
+        expectStructure {
+            dir("dest") {
+                file("source_file.txt", "Source")
+                file("extra_file.txt", "Extra")
+            }
+        }
     }
+
     @Test
-    fun `test cleanup removes empty directories`(): Unit = runBlocking {
-        val sourceDir = "source_cleanup_dirs"
-        val destDir = "dest_cleanup_dirs"
+    fun `cleanup removes empty directories`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("file.txt", "Content")
+            }
+            dir("dest") {
+                file("file.txt", "Content")
+                dir("empty_dir") {
+                    file("to_remove.txt", "This will be removed")
+                }
+            }
+        }
 
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, "file. txt")
-        testFile(sourceDir, "file.txt"). writeText("Content")
+        with(struct) {
+            dir("source").copyRecursivelyTo(dir("dest"), cleanUp = true)?.onError { fail() }
+        }
 
-        createTestDir(destDir)
-        createTestDir(destDir, "empty_dir")
-        createTestFile(destDir, "empty_dir", "to_remove. txt")
-        testFile(destDir, "empty_dir", "to_remove.txt").writeText("This will be removed")
-        createTestFile(destDir, "file.txt")
-        testFile(destDir, "file. txt").writeText("Content")
-
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
-
-        val error = source.copyRecursivelyTo(destination, cleanUp = true)
-
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, "empty_dir")). get { exists() }. isFalse()
+        expectStructure {
+            dir("dest") {
+                file("file.txt", "Content")
+                doesNotExist("empty_dir")
+            }
+        }
     }
 
     // -- HASH OPTIMIZATION TESTS --
 
     @Test
-    fun `test identical files are not recopied`(): Unit = runBlocking {
-        val sourceDir = "source_hash_opt"
-        val destDir = "dest_hash_opt"
+    fun `identical files are not recopied`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("file1.txt", "Same content")
+                file("file2.txt", "Different content")
+            }
+        }
 
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, "file1. txt")
-        createTestFile(sourceDir, "file2.txt")
-        testFile(sourceDir, "file1.txt"). writeText("Same content")
-        testFile(sourceDir, "file2.txt"). writeText("Different content")
+        with(struct) {
+            // First copy
+            dir("source").copyRecursivelyTo(testPath("dest"), cleanUp = false)?.onError { fail() }
 
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
+            // Modify only one file
+            file("source", "file2.txt").writeText("Updated content")
 
-        // First copy
-        source.copyRecursivelyTo(destination, cleanUp = false)
+            // Second copy - should only copy file2
+            dir("source").copyRecursivelyTo(testPath("dest"), cleanUp = false)?.onError { fail() }
+        }
 
-        // Modify only one file
-        testFile(sourceDir, "file2.txt").writeText("Updated content")
-
-        // Second copy - should only copy file2
-        val error = source.copyRecursivelyTo(destination, cleanUp = false)
-
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, "file1.txt").readText()).isEqualTo("Same content")
-        expectThat(testFile(destDir, "file2.txt").readText()). isEqualTo("Updated content")
+        expectStructure {
+            dir("dest") {
+                file("file1.txt", "Same content")
+                file("file2.txt", "Updated content")
+            }
+        }
     }
 
     // -- ERROR HANDLING TESTS --
 
     @Test
-    fun `test copy invalid path returns error`(): Unit = runBlocking {
-        val invalidPath = testFile("non_existent_file.txt")
-        val destination = testFile("destination.txt")
-
-        val error = invalidPath.copyRecursivelyTo(destination)
-
+    fun `copy invalid path returns error`(): Unit = runBlocking {
+        val error = testPath("non_existent_file.txt").copyRecursivelyTo(testPath("destination.txt"))
         expectThat(error).isNotNull().isA<InvalidPathError>()
     }
 
     // -- FILE ACTION TESTS --
 
     @Test
-    fun `test FileCopied action contains correct information`(): Unit = runBlocking {
-        createTestFile(testFileName)
-        testFile(testFileName).writeText(testFileContent)
-
-        val source = testFile(testFileName)
-        val destination = testFile("copied_$testFileName")
+    fun `FileCopied action contains correct information`(): Unit = runBlocking {
+        val struct = testStructure {
+            file("test_file.txt", testFileContent)
+        }
 
         var capturedAction: FileAction? = null
-        source.copyRecursivelyTo(destination, onAction = { capturedAction = it })
+
+        with(struct) {
+            file("test_file.txt").copyRecursivelyTo(
+                testPath("copied_test_file.txt"), onAction = { capturedAction = it })?.onError { fail() }
+        }
 
         expectThat(capturedAction).isNotNull().isA<FileAction.FileCopied>().and {
-            get { this.source }.isEqualTo(source)
-            get { this.destination }.isEqualTo(destination)
+            get { this.source }.isEqualTo(struct.file("test_file.txt"))
+            get { this.destination }.isEqualTo(testPath("copied_test_file.txt"))
             get { this.hash }.isNotNull()
             get { this.description }.contains("copied file")
         }
     }
 
     @Test
-    fun `test FileDeleted action during cleanup`(): Unit = runBlocking {
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, "keep. txt")
-        testFile(sourceDir, "keep.txt").writeText("Keep")
-
-        createTestDir(destDir)
-        createTestFile(destDir, "delete.txt")
-        testFile(destDir, "delete.txt").writeText("Delete")
-
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
+    fun `FileDeleted action during cleanup`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source") {
+                file("keep. txt", "Keep")
+            }
+            dir("dest") {
+                file("delete.txt", "Delete")
+            }
+        }
 
         val actions = mutableListOf<FileAction>()
-        source.copyRecursivelyTo(destination, onAction = { actions.add(it) }, cleanUp = true)
+
+        with(struct) {
+            dir("source").copyRecursivelyTo(
+                dir("dest"), onAction = { actions.add(it) }, cleanUp = true
+            )?.onError { fail() }
+        }
 
         val deletedAction = actions.filterIsInstance<FileAction.FileDeleted>().firstOrNull()
 
@@ -319,17 +330,21 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `test DirectoryDeleted action during cleanup`(): Unit = runBlocking {
-        createTestDir(sourceDir)
-
-        createTestDir(destDir)
-        createTestDir(destDir, "empty_subdir")
-
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
+    fun `DirectoryDeleted action during cleanup`(): Unit = runBlocking {
+        val struct = testStructure {
+            dir("source")
+            dir("dest") {
+                dir("empty_subdir")
+            }
+        }
 
         val actions = mutableListOf<FileAction>()
-        source.copyRecursivelyTo(destination, onAction = { actions.add(it) }, cleanUp = true)
+
+        with(struct) {
+            dir("source").copyRecursivelyTo(
+                dir("dest"), onAction = { actions.add(it) }, cleanUp = true
+            )?.onError { fail() }
+        }
 
         val dirDeletedAction = actions.filterIsInstance<FileAction.DirectoryDeleted>().firstOrNull()
 
@@ -341,34 +356,41 @@ class CopyRecursiveTest : PakkuTest()
     // -- EDGE CASES --
 
     @Test
-    fun `test copy with special characters in filename`(): Unit = runBlocking {
+    fun `copy with special characters in filename`(): Unit = runBlocking {
         val specialFileName = "test file with spaces & special-chars_123.txt"
-        createTestDir(sourceDir)
-        createTestFile(sourceDir, specialFileName)
-        testFile(sourceDir, specialFileName).writeText("Special content")
 
-        val source = testFile(sourceDir)
-        val destination = testFile(destDir)
+        val struct = testStructure {
+            dir("source") {
+                file(specialFileName, "Special content")
+            }
+        }
 
-        val error = source.copyRecursivelyTo(destination)
+        with(struct) {
+            dir("source").copyRecursivelyTo(testPath("destination"))?.onError { fail() }
+        }
 
-        expectThat(error).isNull()
-        expectThat(testFile(destDir, specialFileName)).get { exists() }.isTrue()
-        expectThat(testFile(destDir, specialFileName).readText()).isEqualTo("Special content")
+        expectStructure {
+            dir("destination") {
+                file(specialFileName, "Special content")
+            }
+        }
     }
 
     @Test
-    fun `test copy preserves file content exactly`(): Unit = runBlocking {
-        createTestFile(testFileName)
+    fun `copy preserves file content exactly`(): Unit = runBlocking {
         val binaryContent = ByteArray(256) { it.toByte() }
-        testFile(testFileName).writeBytes(binaryContent)
 
-        val source = testFile(testFileName)
-        val destination = testFile("copied_$testFileName")
+        val struct = testStructure {
+            file("binary_file.bin", binaryContent)
+        }
 
-        val error = source.copyRecursivelyTo(destination)
+        with(struct) {
+            file("binary_file.bin").copyRecursivelyTo(testPath("copied_binary_file.bin"))
+                ?.onError { fail() }
+        }
 
-        expectThat(error).isNull()
-        expectThat(destination.readBytes()).contentEquals(binaryContent)
+        expectStructure {
+            file("copied_binary_file.bin", binaryContent)
+        }
     }
 }

@@ -95,7 +95,7 @@ class CfModpackModelTest : PakkuTest()
     @Test
     fun `test cf modpack model in zip`()
     {
-        val zipPath = testFile("build", CurseForge.serialName, "$modpackName.${CfModpackModel.EXTENSION}")
+        val zipPath = testPath("build", CurseForge.serialName, "$modpackName.${CfModpackModel.EXTENSION}")
 
         val modpackModel = runBlocking {
             readPathTextFromZip(zipPath, CfModpackModel.MANIFEST).toCfModpackModel()
