@@ -38,6 +38,21 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
+    fun `invalid file`(): Unit = runBlocking {
+        val struct = testStructure {
+            file("../source.txt", testFileContent)
+        }
+
+        with(struct) {
+            file("../source.txt").copyRecursivelyTo(testPath("dest.txt"))
+        }
+
+        expectStructure {
+            doesNotExist("dest.txt")
+        }
+    }
+
+    @Test
     fun `file with the same hash`(): Unit = runBlocking {
         val struct = testStructure {
             file("test_file.txt", testFileContent)
