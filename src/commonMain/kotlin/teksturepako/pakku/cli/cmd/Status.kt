@@ -58,6 +58,30 @@ class Status: CliktCommand()
             }
 
             terminal.println()
+
+            // Show fork information if parent is configured
+            if (configFile.hasParent())
+            {
+                val parent = configFile.getParent()!!
+                terminal.println()
+                terminal.pInfo("Fork of ${parent.id} (${parent.type})")
+                
+                if (parent.version != null)
+                {
+                    terminal.println("  Tracking: pinned to version ${parent.version}")
+                }
+                else
+                {
+                    terminal.println("  Tracking: latest version")
+                }
+
+                val upstreamCount = lockFile.getUpstreamProjectCount()
+                val localCount = lockFile.getLocalProjectCount()
+                val totalCount = lockFile.getAllProjects().size
+
+                terminal.println("  Projects: $upstreamCount upstream + $localCount local = $totalCount total")
+                terminal.println()
+            }
         }
 
         terminal.println(
