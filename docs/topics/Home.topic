@@ -24,6 +24,7 @@
             <title>Pakku Basics</title>
             <a href="Setting-Up-a-Modpack.md"/>
             <a href="Managing-Projects.md"/>
+            <a href="Managing-Forks.md"/>
             <a href="Getting-Info-About-Your-Modpack.md"/>
             <a href="Developing-a-Modpack.md"/>
             <a href="Exporting-a-Modpack.md"/>
@@ -51,6 +52,7 @@
                 <a href="pakku-ls.md"/>
                 <a href="pakku-fetch.md"/>
                 <a href="pakku-sync.md"/>
+                <a href="pakku-parent.md"/>
                 <a href="pakku-link.md"/>
                 <a href="pakku-export.md"/>
                 <a href="pakku-diff.md"/>
