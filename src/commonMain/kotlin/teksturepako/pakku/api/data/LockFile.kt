@@ -10,6 +10,7 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.CouldNotRead
 import teksturepako.pakku.api.platforms.*
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.containProject
@@ -21,6 +22,25 @@ import teksturepako.pakku.io.writeToFile
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+
+/**
+ * Represents the origin of a project in a divergent modpack.
+ */
+@Serializable
+enum class ProjectOrigin
+{
+    /** Project comes from the parent modpack. */
+    @SerialName("upstream")
+    UPSTREAM,
+
+    /** Project is a local addition not in parent. */
+    @SerialName("local")
+    LOCAL,
+
+    /** Project was added after unlinking from parent. */
+    @SerialName("external")
+    EXTERNAL
+}
 
 /**
  * A lock file (`pakku-lock.json`) is an automatically generated file used by Pakku
@@ -225,6 +245,38 @@ data class LockFile(
 
     fun getProjectByPakkuId(pakkuId: String): Project? = this.projects.find { pakkuId == it.pakkuId }
 
+    // -- PROJECT ORIGINS --
+
+    /**
+     * Sets the origin for a project.
+     */
+    fun setProjectOrigin(pakkuId: String, origin: ProjectOrigin)
+    {
+        this.projects.find { it.pakkuId == pakkuId }?.origin = origin
+    }
+
+    /**
+     * Gets all projects with the specified origin.
+     */
+    fun getProjectsByOrigin(origin: ProjectOrigin): List<Project> =
+        this.projects.filter { it.origin == origin }
+
+    /**
+     * Checks if a project is a local addition (not in parent).
+     */
+    fun isLocalAddition(pakkuId: String): Boolean =
+        this.projects.find { it.pakkuId == pakkuId }?.origin == ProjectOrigin.LOCAL
+
+    /**
+     * Gets the count of upstream projects.
+     */
+    fun getUpstreamProjectCount(): Int = this.projects.count { it.origin == ProjectOrigin.UPSTREAM }
+
+    /**
+     * Gets the count of local addition projects.
+     */
+    fun getLocalProjectCount(): Int = this.projects.count { it.origin == ProjectOrigin.LOCAL }
+
     // -- DEPENDENCIES --
 
     fun addPakkuLink(pakkuId: String, project: Project) =
@@ -283,6 +335,48 @@ data class LockFile(
         suspend fun readToResultFrom(path: Path): Result<LockFile, ActionError> =
             decodeToResult<LockFile>(path)
                 .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
+
+        /**
+         * Reads [LockFile] from a parent modpack specified by [parentConfig].
+         * Supports CurseForge, Modrinth, and local path sources.
+         */
+        suspend fun readFromParent(parentConfig: ParentConfig): Result<LockFile, ActionError>
+        {
+            return when (parentConfig.type.lowercase())
+            {
+                "curseforge" -> readFromCurseForge(parentConfig.id, parentConfig.version)
+                "modrinth" -> readFromModrinth(parentConfig.id, parentConfig.version)
+                "local" -> readFromLocalPath(parentConfig.id)
+                else -> Err(CouldNotRead("parent", "Unknown parent type: ${parentConfig.type}"))
+            }
+        }
+
+        private suspend fun readFromCurseForge(projectId: String, version: String?): Result<LockFile, ActionError>
+        {
+            // Import and use CurseForge API to fetch modpack
+            // This is a simplified placeholder - actual implementation would
+            // download the modpack zip and extract the lockfile
+            return Err(CouldNotRead("parent", "CurseForge parent sync not yet implemented"))
+        }
+
+        private suspend fun readFromModrinth(projectId: String, version: String?): Result<LockFile, ActionError>
+        {
+            // Import and use Modrinth API to fetch modpack
+            // This is a simplified placeholder - actual implementation would
+            // download the mrpack and extract the lockfile
+            return Err(CouldNotRead("modrinth", "Modrinth parent sync not yet implemented"))
+        }
+
+        private suspend fun readFromLocalPath(path: String): Result<LockFile, ActionError>
+        {
+            val parentPath = Path(path)
+            val lockFilePath = parentPath.resolve(FILE_NAME)
+            if (!lockFilePath.exists())
+            {
+            return Err(CouldNotRead("parent", "Modrinth parent sync not yet implemented"))
+            }
+            return decodeToResult<LockFile>(lockFilePath)
+        }
     }
 
     suspend fun write() = writeToFile(this, "$workingPath/$FILE_NAME", overrideText = true)

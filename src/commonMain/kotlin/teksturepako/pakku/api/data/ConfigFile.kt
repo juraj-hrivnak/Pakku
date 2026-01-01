@@ -35,6 +35,12 @@ data class ConfigFile(
     /** The author of the modpack. */
     private var author: String = "",
 
+    /** Parent modpack configuration for divergent modpacks. */
+    @SerialName("parent") var parentConfig: ParentConfig? = null,
+
+    /** List of project slugs that are local-only additions (not in parent). */
+    @SerialName("local_only") private var localOnly: MutableList<String> = mutableListOf(),
+
     /** A mutable list of overrides packed up with the modpack. */
     private val overrides: MutableList<String> = mutableListOf(),
 
@@ -77,6 +83,20 @@ data class ConfigFile(
     fun getVersion() = this.version
     fun getDescription() = this.description
     fun getAuthor() = this.author
+
+    // -- PARENT CONFIG --
+
+    fun setParent(parent: ParentConfig?) = run { this.parentConfig = parent }
+    fun hasParent() = this.parentConfig != null
+    fun getParent() = this.parentConfig
+
+    // -- LOCAL ONLY --
+
+    fun addLocalOnly(slug: String) = this.localOnly.add(slug)
+    fun removeLocalOnly(slug: String) = this.localOnly.remove(slug)
+    fun clearLocalOnly() = this.localOnly.clear()
+    fun isLocalOnly(slug: String) = slug in this.localOnly
+    fun getLocalOnly() = this.localOnly.toList()
 
     // -- OVERRIDES --
 

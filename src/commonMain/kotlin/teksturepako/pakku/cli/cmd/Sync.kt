@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
+import com.github.ajalt.mordant.terminal.prompt
 import com.github.ajalt.mordant.widgets.Spinner
 import com.github.ajalt.mordant.widgets.progress.progressBarLayout
 import com.github.ajalt.mordant.widgets.progress.spinner
@@ -21,8 +22,10 @@ import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.actions.sync.syncProjects
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.ProjectOrigin
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
 import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.ui.*
@@ -39,6 +42,15 @@ class Sync : CliktCommand()
 
     private val updatesFlag by option("-U", "--updates").flag()
         .help("Sync updates only")
+
+    private val fromParentFlag by option("--from-parent").flag()
+        .help("Sync changes from parent modpack")
+
+    private val preferUpstreamOpt by option("--prefer-upstream").flag()
+        .help("On conflict, prefer upstream version over local-only")
+
+    private val preferLocalOpt by option("--prefer-local").flag()
+        .help("On conflict, prefer local-only version over upstream")
 
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
@@ -64,6 +76,231 @@ class Sync : CliktCommand()
         }
 
         val flagsUsed = additionsFlag || removalsFlag || updatesFlag
+
+        // -- FROM PARENT SYNC --
+        if (fromParentFlag)
+        {
+            val config = configFile ?: run {
+                echo("No pakku.json found. Run 'pakku parent set' first.")
+                throw ProgramResult(1)
+            }
+
+            val parentConfig = config.getParent() ?: run {
+                echo("No parent modpack configured. Run 'pakku parent set' first.")
+                throw ProgramResult(1)
+            }
+
+            echo("Fetching parent modpack...")
+            val parentLockFile = LockFile.readFromParent(parentConfig).getOrElse { error ->
+                terminal.pError(error)
+                throw ProgramResult(1)
+            }
+
+            val localProjects = lockFile.getAllProjects()
+            val parentProjects = parentLockFile.getAllProjects()
+
+            val localSlugs = localProjects.map { it.pakkuId!! }.toSet()
+            val parentSlugs = parentProjects.map { it.pakkuId!! }.toSet()
+
+            val upstreamMods = localProjects.filter { it.pakkuId in parentSlugs }
+            val localOnly = localProjects.filter { it.pakkuId !in parentSlugs }
+
+            echo()
+            echo("Divergence Report:")
+            echo("  Upstream mods: ${upstreamMods.size}")
+            echo("  Local additions: ${localOnly.size}")
+            echo()
+
+            val parentSlugsOnly = parentSlugs - localSlugs
+            val removedFromUpstream = lockFile.getProjectsByOrigin(ProjectOrigin.UPSTREAM).filter { it.pakkuId !in parentSlugs }
+
+            var changed = false
+
+            // Detect conflicts: parent adds project that exists as local-only
+            val conflicts = parentSlugsOnly.mapNotNull { slug ->
+                val parentProject = parentProjects.find { it.pakkuId == slug }!!
+                val existingLocal = localOnly.find { it.pakkuId == slug }
+                if (existingLocal != null && existingLocal.slug.values.any { configFile.isLocalOnly(it) })
+                {
+                    parentProject to existingLocal
+                } else null
+            }
+
+            // Handle conflicts
+            if (conflicts.isNotEmpty())
+            {
+                echo("⚠️  Conflicts detected (${conflicts.size}):")
+                echo("Parent has added projects that already exist as local-only in your modpack.")
+                echo()
+
+                val resolvedConflicts = mutableSetOf<String>()
+
+                for ((parentProject, localProject) in conflicts)
+                {
+                    echo("Conflict: ${parentProject.getFullMsg()}")
+                    echo("  Upstream: ${parentProject.files.firstOrNull()?.fileName}")
+                    echo("  Local:    ${localProject.files.firstOrNull()?.fileName}")
+                    echo()
+
+                    val choice = when
+                    {
+                        preferUpstreamOpt -> 2
+                        preferLocalOpt -> 1
+                        else ->
+                        {
+                            echo("Choose action:")
+                            echo("  [1] Keep as local-only (ignore upstream version)")
+                            echo("  [2] Switch to upstream version (remove from local-only)")
+                            echo("  [3] Skip (decide later)")
+                            terminal.prompt("Enter choice (1-3)")?.toIntOrNull() ?: 3
+                        }
+                    }
+
+                    when (choice)
+                    {
+                        1 ->
+                        {
+                            terminal.pInfo("Keeping ${localProject.getFullMsg()} as local-only")
+                            resolvedConflicts.add(localProject.pakkuId!!)
+                        }
+                        2 ->
+                        {
+                            lockFile.update(parentProject)
+                            lockFile.setProjectOrigin(parentProject.pakkuId!!, ProjectOrigin.UPSTREAM)
+                            localProject.slug.values.forEach { configFile.removeLocalOnly(it) }
+                            terminal.pSuccess("Switched ${parentProject.getFullMsg()} to upstream version")
+                            resolvedConflicts.add(parentProject.pakkuId!!)
+                            changed = true
+                        }
+                        else ->
+                        {
+                            terminal.pInfo("Skipped ${localProject.getFullMsg()}")
+                            resolvedConflicts.add(localProject.pakkuId!!)
+                        }
+                    }
+                    echo()
+                }
+
+                // Filter out conflicts from parentSlugsOnly
+                val parentSlugsOnlyFiltered = parentSlugsOnly.filter { it !in resolvedConflicts }
+
+                // Add new mods from parent (non-conflicting)
+                if (parentSlugsOnlyFiltered.isNotEmpty())
+                {
+                    echo("New mods in parent (${parentSlugsOnlyFiltered.size}):")
+                    for (slug in parentSlugsOnlyFiltered)
+                    {
+                        val parentProject = parentProjects.find { it.pakkuId == slug }!!
+                        echo("  + ${parentProject.getFullMsg()}")
+                    }
+                    echo()
+
+                    if (terminal.ynPrompt("Add these ${parentSlugsOnlyFiltered.size} mods to your modpack?", false))
+                    {
+                        for (slug in parentSlugsOnlyFiltered)
+                        {
+                            val parentProject = parentProjects.find { it.pakkuId == slug }!!
+                            lockFile.add(parentProject)
+                            lockFile.setProjectOrigin(parentProject.pakkuId!!, ProjectOrigin.UPSTREAM)
+                            changed = true
+                        }
+                        terminal.pSuccess("Added ${parentSlugsOnlyFiltered.size} mods from parent")
+                    }
+                }
+            }
+            else
+            {
+                // No conflicts, add new mods from parent
+                if (parentSlugsOnly.isNotEmpty())
+                {
+                    echo("New mods in parent (${parentSlugsOnly.size}):")
+                    for (slug in parentSlugsOnly)
+                    {
+                        val parentProject = parentProjects.find { it.pakkuId == slug }!!
+                        echo("  + ${parentProject.getFullMsg()}")
+                    }
+                    echo()
+
+                if (terminal.ynPrompt("Add these ${parentSlugsOnly.size} mods to your modpack?", false))
+                {
+                    for (slug in parentSlugsOnly)
+                    {
+                        val parentProject = parentProjects.find { it.pakkuId == slug }!!
+                        lockFile.add(parentProject)
+                        lockFile.setProjectOrigin(parentProject.pakkuId!!, ProjectOrigin.UPSTREAM)
+                        changed = true
+                    }
+                    terminal.pSuccess("Added ${parentSlugsOnly.size} mods from parent")
+                }
+                }
+            }
+
+            // Update upstream mods
+            val upstreamToUpdate = mutableListOf<Pair<Project, Project>>()
+            for (local in upstreamMods)
+            {
+                val parent = parentProjects.find { it.pakkuId == local.pakkuId }!!
+                if (local.files.firstOrNull()?.id != parent.files.firstOrNull()?.id)
+                {
+                    upstreamToUpdate.add(local to parent)
+                }
+            }
+
+            if (upstreamToUpdate.isNotEmpty())
+            {
+                echo("Updates in parent (${upstreamToUpdate.size}):")
+                for ((local, parent) in upstreamToUpdate)
+                {
+                    echo("  ~ ${local.getFullMsg()}")
+                    echo("    ${local.files.firstOrNull()?.fileName} -> ${parent.files.firstOrNull()?.fileName}")
+                }
+                echo()
+
+                if (terminal.ynPrompt("Update ${upstreamToUpdate.size} mods from parent?", false))
+                {
+                    for ((_, parent) in upstreamToUpdate)
+                    {
+                        lockFile.update(parent)
+                        lockFile.setProjectOrigin(parent.pakkuId!!, ProjectOrigin.UPSTREAM)
+                        changed = true
+                    }
+                    terminal.pSuccess("Updated ${upstreamToUpdate.size} mods from parent")
+                }
+            }
+
+            // Handle removed from upstream
+            if (removedFromUpstream.isNotEmpty())
+            {
+                echo("Mods removed from parent (${removedFromUpstream.size}):")
+                for (project in removedFromUpstream)
+                {
+                    echo("  - ${project.getFullMsg()}")
+                }
+                echo()
+
+                if (terminal.ynPrompt("Remove ${removedFromUpstream.size} mods from your modpack?", false))
+                {
+                    for (project in removedFromUpstream)
+                    {
+                        lockFile.remove(project)
+                        lockFile.removePakkuLinkFromAllProjects(project.pakkuId!!)
+                        changed = true
+                    }
+                    terminal.pSuccess("Removed ${removedFromUpstream.size} mods")
+                }
+            }
+
+            if (!changed)
+            {
+                echo("No changes needed from parent.")
+            }
+
+            lockFile.write()?.onError { error ->
+                terminal.pError(error)
+                throw ProgramResult(1)
+            }
+            return@runBlocking
+        }
 
         val progressBar = progressBarLayout(spacing = 2) {
             spinner(Spinner.Dots())

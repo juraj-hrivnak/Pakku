@@ -14,7 +14,9 @@ import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.errors.NotFoundOn
+import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.ProjectOrigin
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
@@ -41,6 +43,8 @@ class Add : CliktCommand()
     }
 
     private val noDepsFlag: Boolean by option("-D", "--no-deps", help = "Ignore resolving dependencies").flag()
+
+    private val localOnlyFlag: Boolean by option("-l", "--local-only", help = "Mark project as local-only (won't sync from parent)").flag()
 
     private val projectTypeOpt: ProjectType? by option(
         "-t",
@@ -130,6 +134,16 @@ class Add : CliktCommand()
                     {
                         if (replacing == null) lockFile.add(project) else lockFile.update(project)
                         lockFile.linkProjectToDependents(project)
+
+                        if (localOnlyFlag)
+                        {
+                            lockFile.setProjectOrigin(project.pakkuId!!, ProjectOrigin.LOCAL)
+                            val config = ConfigFile.readOrNull()
+                            project.slug.values.forEach { slug ->
+                                config?.addLocalOnly(slug)
+                            }
+                            config?.write()
+                        }
 
                         if (!noDepsFlag)
                         {

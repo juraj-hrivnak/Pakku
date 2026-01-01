@@ -27,6 +27,15 @@ Sync your modpack with local project files
 `-U`, `--updates`
 : Sync updates only
 
+`-f`, `--from-parent`
+: Sync from parent modpack instead of local files
+
+`--prefer-upstream`
+: Automatically prefer upstream version in conflicts (use with `--from-parent`)
+
+`--prefer-local`
+: Automatically prefer local version in conflicts (use with `--from-parent`)
+
 </snippet>
 
 `-h`, `--help`
