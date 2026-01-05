@@ -3,6 +3,33 @@
 
 ## Unreleased
 
+### Added
+
+- Added `export_server_side_projects_to_client` configuration option to control how server-side mods are handled in client modpack exports
+    - **CurseForge behavior:**
+        - When `false`: Server-side mods are excluded from manifest.json (CurseForge doesn't support env fields)
+        - When `true` (default): Server-side mods are included in manifest.json
+    - **Modrinth behavior (leverages native env field support):**
+        - Always includes all mods, uses env fields to express environment constraints
+        - When `false`: Server-side mods set `env.client="unsupported", env.server="required"` (correctly follows side constraints)
+        - When `true` (default): Server-side mods set `env.client="required", env.server="required"` (backward compatible, treated as BOTH-side)
+    - Existing projects automatically migrated to `true` to maintain backward compatibility
+    - New projects (`pakku init`) default to `false` for correct filtering behavior
+- Added `--client-only` flag to `pakku export` command for pure client-only modpack exports
+    - CurseForge: No effect (uses standard export behavior)
+    - Modrinth: Excludes server-side mods (server-overrides) and `server-overrides/` directory
+    - ServerPack: Skips export entirely when this flag is enabled
+- Modrinth exports now correctly set `env.client` and `env.server` fields for all mod types:
+    - CLIENT mods: `env.client = "required"`, `env.server = "unsupported"`
+    - SERVER mods: Respects `export_server_side_projects_to_client` configuration
+    - BOTH/untagged mods: `env.client = "required"`, `env.server = "required"`
+
+### Tests
+
+- Added comprehensive tests for export rules (`ExportRulesTest.kt`)
+- Added tests for configuration file parsing and migration (`ConfigFileTest.kt`)
+
+
 ## v1.3.3
 
 - Fixed exporting Modrinth project files to Modrinth manifest with different project ids than the actual project id.

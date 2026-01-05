@@ -31,14 +31,15 @@ suspend fun exportDefaultProfiles(
     onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile,
-    platforms: List<Platform>
+    platforms: List<Platform>,
+    clientOnly: Boolean = false
 ): List<Job>
 {
     return export(
         profiles = defaultProfiles,
         onError = { profile, error -> onError(profile, error) },
         onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
-        lockFile, configFile, platforms
+        lockFile, configFile, platforms, clientOnly
     )
 }
 
@@ -48,7 +49,8 @@ suspend fun export(
     onSuccess: suspend (profile: ExportProfile, path: Path, duration: Duration) -> Unit,
     lockFile: LockFile,
     configFile: ConfigFile,
-    platforms: List<Platform>
+    platforms: List<Platform>,
+    clientOnly: Boolean = false
 ): List<Job> = coroutineScope {
     val overrides = getOverridesAsync(configFile)
 
@@ -57,7 +59,7 @@ suspend fun export(
             profile.build(exportRuleScope(lockFile, configFile)).export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
-                lockFile, configFile, platforms, overrides
+                lockFile, configFile, platforms, overrides, clientOnly
             )
         }
     }
@@ -69,10 +71,14 @@ suspend fun ExportProfile.export(
     lockFile: LockFile,
     configFile: ConfigFile,
     platforms: List<Platform>,
-    overrides: OverridesDeferred
+    overrides: OverridesDeferred,
+    clientOnly: Boolean = false
 )
 {
     if (this.requiresPlatform != null && this.requiresPlatform !in platforms) return
+
+    // Skip serverpack export when clientOnly is enabled
+    if (clientOnly && this.name == "serverpack") return
 
     val timedValue = measureTimedValue {
 
@@ -100,7 +106,7 @@ suspend fun ExportProfile.export(
 
         val results: List<RuleResult> = this.rules
             .filterNotNull()
-            .produceRuleResults(lockFile, configFile, this.name, overrides)
+            .produceRuleResults(lockFile, configFile, this.name, overrides, clientOnly)
 
         val cachedPaths: List<Path> = results
             .runEffects { error ->
@@ -269,20 +275,20 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
  * [RuleContext.MissingProject] and [RuleContext.Finished] are applied last.
  */
 suspend fun List<ExportRule>.produceRuleResults(
-    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String, overrides: OverridesDeferred
+    lockFile: LockFile, configFile: ConfigFile, workingSubDir: String, overrides: OverridesDeferred, clientOnly: Boolean = false
 ): List<RuleResult> = coroutineScope {
 
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
         acc + lockFile.getAllProjects().mapNotNull { project ->
             // Projects
             if (project.export == false) return@mapNotNull null
-            rule to RuleContext.ExportingProject(project, lockFile, configFile, workingSubDir)
+            rule to RuleContext.ExportingProject(project, lockFile, configFile, workingSubDir, clientOnly)
         } + overrides.awaitAll().map { (overridePath, overrideType) ->
             // Overrides
-            rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir)
+            rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir, clientOnly)
         } + readManualOverrides(configFile).map { projectOverride ->
             // Manual overrides
-            rule to RuleContext.ExportingManualOverride(projectOverride, lockFile, configFile, workingSubDir)
+            rule to RuleContext.ExportingManualOverride(projectOverride, lockFile, configFile, workingSubDir, clientOnly)
         }
     }.map { (exportRule, ruleContext) ->
         exportRule.getResult(ruleContext)
@@ -293,12 +299,12 @@ suspend fun List<ExportRule>.produceRuleResults(
     }.flatMap { ruleResult ->
         this@produceRuleResults.map { rule ->
             val project = (ruleResult.ruleContext as RuleContext.MissingProject).project
-            rule.getResult(RuleContext.MissingProject(project, lockFile, configFile, workingSubDir))
+            rule.getResult(RuleContext.MissingProject(project, lockFile, configFile, workingSubDir, clientOnly))
         }
     }
 
     val finished = this@produceRuleResults.map { rule ->
-        rule.getResult(Finished(lockFile, configFile, workingSubDir))
+        rule.getResult(Finished(lockFile, configFile, workingSubDir, clientOnly))
     }
 
     return@coroutineScope results + missing + finished

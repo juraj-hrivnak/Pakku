@@ -48,7 +48,16 @@ data class ConfigFile(
     val paths: MutableMap<String, String> = mutableMapOf(),
 
     /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
-    val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
+    val projects: MutableMap<String, ProjectConfig> = mutableMapOf(),
+
+    /**
+     * Controls whether server-side projects (mods with side: SERVER) should be exported to client modpacks.
+     * - `true`: Server-side projects are included in client exports (backward compatible behavior)
+     * - `false`: Server-side projects are excluded from client exports (correct filtering)
+     * - `null`: Field not set, triggers automatic migration to `true` for existing projects
+     */
+    @SerialName("export_server_side_projects_to_client")
+    private var exportServerSideProjectsToClient: Boolean? = null
 )
 {
     // -- PACK --
@@ -77,6 +86,15 @@ data class ConfigFile(
     fun getVersion() = this.version
     fun getDescription() = this.description
     fun getAuthor() = this.author
+
+    // -- EXPORT CONFIGURATION --
+
+    fun setExportServerSideProjectsToClient(value: Boolean)
+    {
+        this.exportServerSideProjectsToClient = value
+    }
+
+    fun getExportServerSideProjectsToClient() = this.exportServerSideProjectsToClient
 
     // -- OVERRIDES --
 
@@ -178,6 +196,31 @@ data class ConfigFile(
         val projectConfig = this.projects[projectOutput] ?: return Err(ProjNotFound(project = projectIn))
 
         return Ok(builder(projectConfig))
+    }
+
+    // -- MIGRATION --
+
+    /**
+     * Migrates configuration file to include the `export_server_side_projects_to_client` field if missing.
+     * Sets the field to `true` for existing projects to maintain backward compatibility.
+     * This function is idempotent - calling it multiple times has no additional effect.
+     *
+     * @return Pair of (ConfigFile, wasMigrated: Boolean)
+     */
+    suspend fun migrateIfNeeded(): Pair<ConfigFile, Boolean>
+    {
+        return if (this.exportServerSideProjectsToClient == null)
+        {
+            // Set to true for backward compatibility with existing projects
+            this.exportServerSideProjectsToClient = true
+            this.write()
+            Pair(this, true) // Migration occurred
+        }
+        else
+        {
+            // Field already exists, no migration needed
+            Pair(this, false) // No migration needed
+        }
     }
 
     // -- FILE I/O --

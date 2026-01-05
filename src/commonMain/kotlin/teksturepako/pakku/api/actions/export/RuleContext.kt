@@ -28,7 +28,8 @@ import kotlin.io.path.*
 sealed class RuleContext(
     open val workingSubDir: String,
     open val lockFile: LockFile,
-    open val configFile: ConfigFile
+    open val configFile: ConfigFile,
+    open val clientOnly: Boolean = false
 )
 {
     fun getPath(path: String, vararg subpath: String) =
@@ -109,11 +110,12 @@ sealed class RuleContext(
         val project: Project,
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
-        override val workingSubDir: String
-    ) : RuleContext(workingSubDir, lockFile, configFile)
+        override val workingSubDir: String,
+        override val clientOnly: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
     {
         /** Sets the [project entry][RuleContext.ExportingProject] missing. */
-        fun setMissing(): RuleResult = MissingProject(project, lockFile, configFile, workingSubDir)
+        fun setMissing(): RuleResult = MissingProject(project, lockFile, configFile, workingSubDir, clientOnly)
             .ruleResult("missing ${project.slug}", Packaging.EmptyAction)
         
         suspend fun exportAsOverride(
@@ -146,8 +148,9 @@ sealed class RuleContext(
         val type: OverrideType,
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
-        override val workingSubDir: String
-    ) : RuleContext(workingSubDir, lockFile, configFile)
+        override val workingSubDir: String,
+        override val clientOnly: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
     {
         fun export(
             overridesDir: String? = type.folderName,
@@ -172,8 +175,9 @@ sealed class RuleContext(
         val manualOverride: ManualOverride,
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
-        override val workingSubDir: String
-    ) : RuleContext(workingSubDir, lockFile, configFile)
+        override val workingSubDir: String,
+        override val clientOnly: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
     {
         fun export(
             overridesDir: String? = manualOverride.type.folderName,
@@ -204,8 +208,9 @@ sealed class RuleContext(
         val project: Project,
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
-        override val workingSubDir: String
-    ) : RuleContext(workingSubDir, lockFile, configFile)
+        override val workingSubDir: String,
+        override val clientOnly: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
     {
         suspend fun exportAsOverrideFrom(
             provider: Provider,
@@ -268,8 +273,9 @@ sealed class RuleContext(
     data class Finished(
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
-        override val workingSubDir: String
-    ) : RuleContext(workingSubDir, lockFile, configFile)
+        override val workingSubDir: String,
+        override val clientOnly: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
     {
         fun replaceText(vararg pairs: Pair<String, String>): RuleResult
         {

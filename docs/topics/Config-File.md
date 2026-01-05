@@ -65,6 +65,41 @@ or when you need to use some of Pakku's more advanced functionalities.
             Type: <code>List&lt;String&gt;</code> (glob)
         </p>
     </def>
+    <def id="export_server_side_projects_to_client">
+        <title><code>export_server_side_projects_to_client</code></title>
+        <note>
+            <p>Added in version <b>1.3.3</b></p>
+        </note>
+        <p>
+            Controls how server-side mods (mods with <code>side: SERVER</code>) are handled when exporting client modpacks.
+        </p>
+        <p>
+            <b>When <code>false</code> (recommended for new projects):</b>
+        </p>
+        <list>
+            <li><b>CurseForge:</b> Server-side mods are excluded from the manifest (CurseForge doesn't support environment fields)</li>
+            <li><b>Modrinth:</b> Server-side mods are included with <code>env.client = "unsupported"</code> (correctly follows side constraints using Modrinth's native env field support)</li>
+        </list>
+        <p>
+            <b>When <code>true</code> (default for backward compatibility):</b>
+        </p>
+        <list>
+            <li><b>CurseForge:</b> Server-side mods are included in the manifest</li>
+            <li><b>Modrinth:</b> Server-side mods are included with <code>env.client = "required"</code> (treated as BOTH-side for compatibility)</li>
+        </list>
+        <note>
+            <p>
+                Existing modpacks are automatically migrated to <code>true</code> to maintain backward compatibility.
+                New modpacks created with <code>pakku init</code> default to <code>false</code> for correct filtering behavior.
+            </p>
+        </note>
+        <p>
+            Type: <code>Boolean</code>
+        </p>
+        <p>
+            Default: <code>true</code> (after migration), <code>false</code> (new projects)
+        </p>
+    </def>
     <def id="paths">
         <title><code>paths</code></title>
         <p>A map of project types to their respective paths.</p>
