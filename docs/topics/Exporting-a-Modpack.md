@@ -93,6 +93,8 @@ The `--client-only` mode is useful when:
 
 Pakku provides fine-grained control over how server-side mods are handled in client modpack exports through the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration option.
 
+> **Important:** This configuration only affects **mod projects** in the manifest file. Override files (such as the `server-overrides/` directory) are always exported unless the `--client-only` flag is used.
+
 ### Behavior by Platform
 
 <table>
@@ -110,6 +112,9 @@ Pakku provides fine-grained control over how server-side mods are handled in cli
 <td><b>Modrinth</b></td>
 <td>Server-side mods are <b>included</b> with <code>env.client = "unsupported"</code> (leverages Modrinth's native env field support)</td>
 <td>Server-side mods are <b>included</b> with <code>env.client = "required"</code> (treated as BOTH-side for backward compatibility)</td>
+</tr>
+<tr>
+<td colspan="3"><i>Note: In both cases, <code>server-overrides/</code> directory is exported</i></td>
 </tr>
 </table>
 

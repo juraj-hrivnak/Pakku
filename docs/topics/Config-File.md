@@ -73,12 +73,19 @@ or when you need to use some of Pakku's more advanced functionalities.
         <p>
             Controls how server-side mods (mods with <code>side: SERVER</code>) are handled when exporting client modpacks.
         </p>
+        <warning>
+            <p>
+                This option only affects <b>mod projects</b> in the manifest file, not override files.
+                The <code>server-overrides/</code> directory is always exported unless the <code>--client-only</code> flag is used.
+            </p>
+        </warning>
         <p>
             <b>When <code>false</code> (recommended for new projects):</b>
         </p>
         <list>
             <li><b>CurseForge:</b> Server-side mods are excluded from the manifest (CurseForge doesn't support environment fields)</li>
             <li><b>Modrinth:</b> Server-side mods are included with <code>env.client = "unsupported"</code> (correctly follows side constraints using Modrinth's native env field support)</li>
+            <li><b>Override files:</b> <code>server-overrides/</code> directory is still exported</li>
         </list>
         <p>
             <b>When <code>true</code> (default for backward compatibility):</b>
@@ -86,6 +93,7 @@ or when you need to use some of Pakku's more advanced functionalities.
         <list>
             <li><b>CurseForge:</b> Server-side mods are included in the manifest</li>
             <li><b>Modrinth:</b> Server-side mods are included with <code>env.client = "required"</code> (treated as BOTH-side for compatibility)</li>
+            <li><b>Override files:</b> <code>server-overrides/</code> directory is still exported</li>
         </list>
         <note>
             <p>

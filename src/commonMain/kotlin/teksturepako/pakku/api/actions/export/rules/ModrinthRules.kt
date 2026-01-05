@@ -57,30 +57,22 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
             is ExportingOverride       ->
             {
                 // When clientOnly is enabled, exclude server-overrides
+                // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
                 val allowedTypes = if (it.clientOnly) {
                     setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
                 } else {
-                    // Use configured behavior for override files when not in clientOnly mode
-                    if (!exportServerSide) {
-                        setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
-                    } else {
-                        null // null means all types are allowed
-                    }
+                    null // null means all types are allowed
                 }
                 it.export(allowedTypes = allowedTypes)
             }
             is ExportingManualOverride ->
             {
                 // When clientOnly is enabled, exclude server-overrides
+                // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
                 val allowedTypes = if (it.clientOnly) {
                     setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
                 } else {
-                    // Use configured behavior for override files when not in clientOnly mode
-                    if (!exportServerSide) {
-                        setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
-                    } else {
-                        null // null means all types are allowed
-                    }
+                    null // null means all types are allowed
                 }
                 it.export(allowedTypes = allowedTypes)
             }
