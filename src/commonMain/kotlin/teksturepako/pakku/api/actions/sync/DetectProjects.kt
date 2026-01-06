@@ -101,11 +101,13 @@ suspend fun detectProjects(
         listOf(CurseForge to cfProjectsDeferred.await(), Modrinth to mrProjectsDeferred.await())
     }.await()
 
+    val mcVersions = lockFile.getMcVersions()
+
     val detectedProjects = platformsToProjects
         .fold(platformsToProjects.flatMap { it.second }) { accProjects, (platform, platformProjects) ->
             accProjects.map { accProject ->
                 platformProjects.find { it isAlmostTheSameAs accProject }
-                    ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, 1) }
+                    ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, 1, mcVersions) }
                     ?: accProject
             }
         }
