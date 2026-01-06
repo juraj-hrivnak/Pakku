@@ -117,7 +117,7 @@ class MrModpackModelTest : PakkuTest()
     private fun testModpackModel(modpackModel: MrModpackModel)
     {
         val greeneryMrFile = runBlocking {
-            greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(lockFile, configFile)
+            greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(configFile, greeneryProject)
         }
 
         assertNotNull(greeneryMrFile)
