@@ -72,24 +72,26 @@ fun combineProjects(
     accProject: Project, newProject: Project, platformName: String, numberOfFiles: Int, mcVersions: List<String> = listOf(),
 ): Project
 {
-    val accLoaders = accProject.files
-        .filter { it.type == platformName }
-        .maxByOrNull { it.datePublished }
-        ?.loaders
-        ?: listOf()
+    fun List<ProjectFile>.filterByAccLoaders(accProject: Project, platformName: String): List<ProjectFile>
+    {
+        val accLoaders = accProject.files
+            .filter { it.type == platformName }
+            .maxByOrNull { it.datePublished }
+            ?.loaders
+            ?: listOf()
+        
+        return if (accLoaders.isEmpty()) this else this.filter { file -> accLoaders.any { it in file.loaders } }
+    }
 
     val newFiles = newProject.files
         .filter { it.type == platformName }
+        .filterByAccLoaders(accProject, platformName) // keep the current loader
         .sortedWith(
-            compareBy<ProjectFile> { file ->
+            comparator = compareBy<ProjectFile> { file ->
                 // prefer mc version higher in the lock file
-                mcVersions.indexOfFirst { it in file.mcVersions }
-                    .let { if (it == -1) mcVersions.size else it }
-            }.thenBy { file ->
-                // prefer the current loader
-                accLoaders.indexOfFirst { it in file.loaders }
-                    .let { if (it == -1) accLoaders.size else it }
-            }.thenByDescending {
+                mcVersions.indexOfFirst { it in file.mcVersions }.let { if (it == -1) mcVersions.size else it }
+            }
+            .thenByDescending {
                 // prefer newer file
                 it.datePublished
             }

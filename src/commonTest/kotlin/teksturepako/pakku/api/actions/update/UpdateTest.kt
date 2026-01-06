@@ -20,7 +20,7 @@ import kotlin.test.fail
 class UpdateTest : PakkuTest(debug = false)
 {
     @Test
-    fun `prefer higher mc version`() = runTest {
+    fun `prefer mc version higher in lock file`() = runTest {
         LockFile(
             target = Modrinth.serialName,
             mcVersions = mutableListOf("1.21.1"),
