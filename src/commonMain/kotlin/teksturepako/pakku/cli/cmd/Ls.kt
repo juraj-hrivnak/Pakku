@@ -37,6 +37,12 @@ class Ls : CliktCommand()
             return@runBlocking
         }
 
+        val platforms = lockFile.getPlatforms().getOrElse {
+            terminal.pError(it)
+            echo()
+            return@runBlocking
+        }
+
         val projects = lockFile.getAllProjects()
 
         val newProjects = if (checkUpdatesFlag) async {
@@ -46,7 +52,10 @@ class Ls : CliktCommand()
                 },
                 lockFile.getMcVersions(),
                 lockFile.getLoaders(),
-                projects.toMutableSet(), ConfigFile.readOrNull(), numberOfFiles = 1
+                projects.toMutableSet(),
+                ConfigFile.readOrNull(),
+                platforms,
+                numberOfFiles = 1
             )
         } else null
 

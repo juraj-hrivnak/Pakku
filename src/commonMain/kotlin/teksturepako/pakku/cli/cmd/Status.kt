@@ -93,6 +93,7 @@ class Status: CliktCommand()
             lockFile.getLoaders(),
             currentProjects.toMutableSet(),
             ConfigFile.readOrNull(),
+            platforms,
             numberOfFiles = 1
         )
 
