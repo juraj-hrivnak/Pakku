@@ -111,6 +111,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
                 implementation("io.mockk:mockk:1.13.12")
                 implementation("io.strikt:strikt-core:0.34.0")
             }
