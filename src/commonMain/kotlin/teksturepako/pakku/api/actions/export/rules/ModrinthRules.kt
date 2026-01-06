@@ -13,6 +13,7 @@ import teksturepako.pakku.api.models.mr.MrModpackModel
 import teksturepako.pakku.api.models.mr.MrModpackModel.MrFile
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
+import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.io.createHash
@@ -60,7 +61,7 @@ fun mrMissingProjectsRule() = ExportRule {
 
 fun ExportingProject.addToMrModpackModel(projectFile: ProjectFile, modpackModel: MrModpackModel) =
     ruleResult("addToMrModpackModel ${project.type} ${project.slug}", Packaging.Action {
-        projectFile.toMrFile(lockFile, configFile)?.let { mrFile ->
+        projectFile.toMrFile(configFile, this.project)?.let { mrFile ->
             modpackModel.files.add(mrFile)
         }
         null // Return no error
@@ -91,11 +92,9 @@ fun createMrModpackModel(
     )
 }
 
-suspend fun ProjectFile.toMrFile(lockFile: LockFile, configFile: ConfigFile): MrFile?
+suspend fun ProjectFile.toMrFile(configFile: ConfigFile, parentProject: Project): MrFile?
 {
     if (this.type !in listOf(Modrinth.serialName, GitHub.serialName)) return null
-
-    val parentProject = this.getParentProject(lockFile) ?: return null
 
     /**
      * MUST NOT contain un-encoded spaces or any other illegal characters according to RFC 3986.
