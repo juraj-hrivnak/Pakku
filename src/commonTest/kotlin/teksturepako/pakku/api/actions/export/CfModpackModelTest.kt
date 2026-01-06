@@ -1,4 +1,4 @@
-package teksturepako.pakku.api.export
+package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.get
 import kotlinx.coroutines.runBlocking
@@ -68,14 +68,12 @@ class CfModpackModelTest : PakkuTest()
 
         assertNotNull(platforms)
 
-        runBlocking {
-            export(
-                profiles = listOf(curseForgeProfile()),
-                onError = { _, _ -> },
-                onSuccess = { _, _, _ -> },
-                lockFile, configFile, platforms
-            )
-        }
+        export(
+            profiles = listOf(curseForgeProfile()),
+            onError = { _, _ -> },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms
+        )
     }
 
     @Test
