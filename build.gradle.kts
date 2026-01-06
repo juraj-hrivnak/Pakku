@@ -28,7 +28,6 @@ repositories {
 }
 
 private val ktorVersion: String = libs.versions.ktor.get()
-private val kotestVersion: String = libs.versions.kotest.get()
 
 kotlin {
     withSourcesJar(publish = false)

@@ -6,7 +6,6 @@ import strikt.api.expectThat
 import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import teksturepako.pakku.PakkuTest
-import teksturepako.pakku.api.actions.export.export
 import teksturepako.pakku.api.actions.export.profiles.curseForgeProfile
 import teksturepako.pakku.api.actions.import.toCfModpackModel
 import teksturepako.pakku.api.data.ConfigFile

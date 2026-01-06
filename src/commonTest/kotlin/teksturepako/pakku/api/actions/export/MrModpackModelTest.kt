@@ -7,7 +7,6 @@ import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import teksturepako.pakku.PakkuTest
-import teksturepako.pakku.api.actions.export.export
 import teksturepako.pakku.api.actions.export.profiles.modrinthProfile
 import teksturepako.pakku.api.actions.export.rules.toMrFile
 import teksturepako.pakku.api.actions.import.toMrModpackModel
@@ -76,14 +75,12 @@ class MrModpackModelTest : PakkuTest()
     {
         assertNotNull(platforms)
 
-        runBlocking {
-            export(
-                profiles = listOf(modrinthProfile()),
-                onError = { _, _ -> },
-                onSuccess = { _, _, _ -> },
-                lockFile, configFile, platforms
-            )
-        }
+        export(
+            profiles = listOf(modrinthProfile()),
+            onError = { _, _ -> },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms
+        )
     }
 
     @Test
