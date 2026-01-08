@@ -39,6 +39,9 @@ Add projects
 `-t`, `--type`
 : Project type of projects to add
 
+`-l`, `--local-only`
+: Mark added projects as local-only (not from parent modpack)
+
 </snippet>
 
 `-h`, `--help`

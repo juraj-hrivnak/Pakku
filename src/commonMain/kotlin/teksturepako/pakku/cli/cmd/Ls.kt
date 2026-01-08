@@ -6,6 +6,7 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.table.ColumnWidth
 import com.github.ajalt.mordant.table.grid
@@ -17,7 +18,8 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.errors.VersionsDoNotMatch
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
-import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.*
+import teksturepako.pakku.api.data.ProjectOrigin
 import teksturepako.pakku.cli.ui.*
 
 class Ls : CliktCommand()
@@ -29,6 +31,9 @@ class Ls : CliktCommand()
         "--name-max-length",
         help = "Set max length for project names"
     ).int().default(20)
+    private val originFilterOpt by option("--origin", help = "Filter projects by origin")
+        .choice("local", "upstream", "external")
+    private val localOnlyFlag by option("--local-only", help = "Show only local-only projects").flag()
 
     override fun run() = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
@@ -37,7 +42,23 @@ class Ls : CliktCommand()
             return@runBlocking
         }
 
-        val projects = lockFile.getAllProjects()
+        val allProjects = lockFile.getAllProjects()
+
+        val projects = when
+        {
+            localOnlyFlag -> allProjects.filter { it.origin == ProjectOrigin.LOCAL }
+            originFilterOpt != null -> {
+                val targetOrigin = when (originFilterOpt)
+                {
+                    "local" -> ProjectOrigin.LOCAL
+                    "upstream" -> ProjectOrigin.UPSTREAM
+                    "external" -> ProjectOrigin.EXTERNAL
+                    else -> null
+                }
+                allProjects.filter { it.origin == targetOrigin }
+            }
+            else -> allProjects
+        }
 
         val newProjects = if (checkUpdatesFlag) async {
             updateMultipleProjectsWithFiles(

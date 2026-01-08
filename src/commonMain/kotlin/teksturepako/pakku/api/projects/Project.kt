@@ -45,6 +45,8 @@ data class Project(
     var aliases: MutableSet<String>? = null,
     var export: Boolean? = null,
 
+    @SerialName("origin") var origin: ProjectOrigin? = null,
+
     var files: MutableSet<ProjectFile>,
 )
 {
@@ -220,7 +222,18 @@ data class Project(
 
     // -- CONFIG INHERITANCE --
 
-    fun inheritPropertiesFrom(configFile: ConfigFile?): Project
+    fun inheritPropertiesFrom(configFile: ConfigFile?, localConfig: LocalConfig? = null): Project
+    {
+        // First inherit from base config
+        inheritPropertiesFromBase(configFile)
+
+        // Then inherit from local config (local wins on conflicts)
+        inheritPropertiesFromLocal(localConfig)
+
+        return this
+    }
+
+    private fun inheritPropertiesFromBase(configFile: ConfigFile?): Project
     {
         configFile ?: return this
 
@@ -228,13 +241,34 @@ data class Project(
         {
             if (input !in this) continue
 
-            updateProperty(::type, config.type, input)
-            updateProperty(::side, config.side, input)
+            updateProperty(::type, config.type?.let { ProjectType.valueOf(it.name) }, input)
+            updateProperty(::side, config.side?.let { ProjectSide.valueOf(it.name) }, input)
             updateProperty(::updateStrategy, config.updateStrategy, input)
             updateProperty(::redistributable, config.redistributable, input)
             updateProperty(::subpath, config.subpath, input)
             updateProperty(::aliases, config.aliases, input)
             updateProperty(::export, config.export, input)
+        }
+
+        return this
+    }
+
+    private fun inheritPropertiesFromLocal(localConfig: LocalConfig?): Project
+    {
+        localConfig ?: return this
+
+        for ((input, config) in localConfig.projects)
+        {
+            if (input !in this) continue
+
+            // Local config values override base config
+            config.type?.let { updateProperty(::type, ProjectType.valueOf(it), input) }
+            config.side?.let { updateProperty(::side, ProjectSide.valueOf(it), input) }
+            config.updateStrategy?.let { updateProperty(::updateStrategy, UpdateStrategy.valueOf(it), input) }
+            config.redistributable?.let { updateProperty(::redistributable, it, input) }
+            config.subpath?.let { updateProperty(::subpath, it, input) }
+            config.aliases?.let { updateProperty(::aliases, it, input) }
+            config.export?.let { updateProperty(::export, it, input) }
         }
 
         return this

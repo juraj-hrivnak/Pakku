@@ -43,7 +43,7 @@ fun main(args: Array<String>)
         terminal = cliConfig?.toTerminal()
             ?: Terminal(theme = if (utf8Supported) CliThemes.Default else CliThemes.Ascii)
     }.subcommands(
-        Init(), Import(), Add(), Rm(), Insp(), Cfg(), Set(), Status(), Update(), Ls(), Fetch(), Sync(), Link(),
+        Init(), Import(), Add(), Rm(), Insp(), Cfg(), Set(), Parent(), Status(), Update(), Ls(), Fetch(), Sync(), Link(),
         Export(), Diff(), Remote(), Credentials()
     ).main(args)
 

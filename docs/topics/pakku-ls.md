@@ -21,8 +21,17 @@ List projects
 `-c`, `--check-updates`
 : Add update info for projects
 
+`-v`, `--verbose`
+: Displays more verbose information per project
+
 `--name-max-length`
 : Set max length for project names
+
+`-o`, `--origin`
+: Filter projects by origin (upstream, local, external)
+
+`-l`, `--local-only`
+: Show only local-only projects
 
 </snippet>
 
