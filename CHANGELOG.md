@@ -3,6 +3,10 @@
 
 ## Unreleased
 
+## v1.3.3
+
+- Fixed exporting Modrinth project files to Modrinth manifest with different project ids than the actual project id.
+
 ## v1.3.2
 
 - Fixed a bug in the improved recursive copy mechanism introduced in _v1.3.0_.
