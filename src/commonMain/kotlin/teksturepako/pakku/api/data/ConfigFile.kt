@@ -53,11 +53,10 @@ data class ConfigFile(
     /**
      * Controls whether server-side projects (mods with side: SERVER) should be exported to client modpacks.
      * - `true`: Server-side projects are included in client exports (backward compatible behavior)
-     * - `false`: Server-side projects are excluded from client exports (correct filtering)
-     * - `null`: Field not set, triggers automatic migration to `true` for existing projects
+     * - `false` (default): Server-side projects are excluded from client exports (correct filtering)
      */
     @SerialName("export_server_side_projects_to_client")
-    private var exportServerSideProjectsToClient: Boolean? = null
+    private var exportServerSideProjectsToClient: Boolean = false
 )
 {
     // -- PACK --
@@ -201,25 +200,32 @@ data class ConfigFile(
     // -- MIGRATION --
 
     /**
-     * Migrates configuration file to include the `export_server_side_projects_to_client` field if missing.
-     * Sets the field to `true` for existing projects to maintain backward compatibility.
-     * This function is idempotent - calling it multiple times has no additional effect.
+     * Migrates configuration file based on lockfile version.
+     * - If lockfile version is 1 and `export_server_side_projects_to_client` is missing,
+     *   sets it to `true` for backward compatibility and bumps lockfile to version 2.
+     * - If lockfile version is 2 or higher, no migration is needed; default is `false`.
      *
-     * @return Pair of (ConfigFile, wasMigrated: Boolean)
+     * @param lockFile The lock file to check version and bump if needed
+     * @return Triple of (ConfigFile, LockFile, wasMigrated: Boolean)
      */
-    suspend fun migrateIfNeeded(): Pair<ConfigFile, Boolean>
+    suspend fun migrateIfNeeded(lockFile: LockFile): Triple<ConfigFile, LockFile, Boolean>
     {
-        return if (this.exportServerSideProjectsToClient == null)
+        return when (lockFile.getLockFileVersion())
         {
-            // Set to true for backward compatibility with existing projects
-            this.exportServerSideProjectsToClient = true
-            this.write()
-            Pair(this, true) // Migration occurred
-        }
-        else
-        {
-            // Field already exists, no migration needed
-            Pair(this, false) // No migration needed
+            1 ->
+            {
+                // Old project: set to true for backward compatibility
+                this.exportServerSideProjectsToClient = true
+                this.write()
+                val bumpedLockFile = lockFile.bumped()
+                bumpedLockFile.write()
+                Triple(this, bumpedLockFile, true)
+            }
+            else ->
+            {
+                // New project or already migrated: default false, no migration needed
+                Triple(this, lockFile, false)
+            }
         }
     }
 

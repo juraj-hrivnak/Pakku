@@ -143,7 +143,9 @@ class Init : CliktCommand()
 
         echo()
 
-        lockFile.write()?.onError { error ->
+        // Bump lockfile version to latest for new projects to avoid triggering migration
+        val bumpedLockFile = lockFile.bumped()
+        bumpedLockFile.write()?.onError { error ->
             terminal.pError(error)
             throw ProgramResult(1)
         }
@@ -153,7 +155,7 @@ class Init : CliktCommand()
 
         // -- API KEY --
 
-        if (lockFile.getPlatforms().get()?.contains(CurseForge) == true
+        if (bumpedLockFile.getPlatforms().get()?.contains(CurseForge) == true
             && CredentialsFile.readToResult().get()?.curseForgeApiKey == null)
         {
             terminal.println("? CurseForge API key")

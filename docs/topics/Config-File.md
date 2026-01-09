@@ -80,7 +80,7 @@ or when you need to use some of Pakku's more advanced functionalities.
             </p>
         </warning>
         <p>
-            <b>When <code>false</code> (recommended for new projects):</b>
+            <b>When <code>false</code> (default):</b>
         </p>
         <list>
             <li><b>CurseForge:</b> Server-side mods are excluded from the manifest (CurseForge doesn't support environment fields)</li>
@@ -88,7 +88,7 @@ or when you need to use some of Pakku's more advanced functionalities.
             <li><b>Override files:</b> <code>server-overrides/</code> directory is still exported</li>
         </list>
         <p>
-            <b>When <code>true</code> (default for backward compatibility):</b>
+            <b>When <code>true</code> (for backward compatibility with existing projects):</b>
         </p>
         <list>
             <li><b>CurseForge:</b> Server-side mods are included in the manifest</li>
@@ -97,15 +97,15 @@ or when you need to use some of Pakku's more advanced functionalities.
         </list>
         <note>
             <p>
-                Existing modpacks are automatically migrated to <code>true</code> to maintain backward compatibility.
-                New modpacks created with <code>pakku init</code> default to <code>false</code> for correct filtering behavior.
+                Existing modpacks (with <code>lockfile_version: 1</code>) are automatically migrated to <code>true</code> to maintain backward compatibility.
+                The lockfile version is then upgraded to <code>2</code>.
             </p>
         </note>
         <p>
             Type: <code>Boolean</code>
         </p>
         <p>
-            Default: <code>true</code> (after migration), <code>false</code> (new projects)
+            Default: <code>false</code>
         </p>
     </def>
     <def id="paths">

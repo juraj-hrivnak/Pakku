@@ -134,10 +134,10 @@ Set this in your [`pakku.json`](Config-File.md):
 }
 ```
 
-- **`false`** (recommended): Correctly handles server-side mods according to each platform's capabilities
-- **`true`** (default): Maintains backward compatibility by including all mods
+- **`false`** (default): Correctly handles server-side mods according to each platform's capabilities
+- **`true`**: Maintains backward compatibility by including all mods
 
-> Existing modpacks are automatically migrated to `true` when you first run Pakku after upgrading. New modpacks created with `pakku init` default to `false`.
+> Existing modpacks (with `lockfile_version: 1`) are automatically migrated to `true` when you first run `pakku export` after upgrading. The lockfile version is then upgraded to `2`.
 
 ### Example: Environment Fields in Modrinth
 

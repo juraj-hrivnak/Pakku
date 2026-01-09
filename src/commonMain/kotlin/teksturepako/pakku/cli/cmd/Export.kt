@@ -46,19 +46,21 @@ class Export : CliktCommand()
             return@runBlocking
         }
 
-        val (configFile, wasMigrated) = ConfigFile.readToResult().getOrElse {
+        val configFile = ConfigFile.readToResult().getOrElse {
             terminal.pError(it)
             echo()
             return@runBlocking
-        }.migrateIfNeeded()
+        }
+
+        val (migratedConfig, migratedLockFile, wasMigrated) = configFile.migrateIfNeeded(lockFile)
 
         // Show migration message if config was migrated
         if (wasMigrated)
         {
-            terminal.pSuccess("[Migration] Added config option 'export_server_side_projects_to_client=true' to maintain backward compatibility")
+            terminal.pSuccess("[Migration] Upgraded lockfile to version 2. Added 'export_server_side_projects_to_client=true' for backward compatibility.")
         }
 
-        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
+        val platforms: List<Platform> = migratedLockFile.getPlatforms().getOrElse {
             terminal.pError(it)
             echo()
             return@runBlocking
@@ -87,7 +89,7 @@ class Export : CliktCommand()
 
                 terminal.pSuccess("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
             },
-            lockFile, configFile, platforms, noServer
+            migratedLockFile, migratedConfig, platforms, noServer
         ).joinAll()
 
         progressBar.clear()

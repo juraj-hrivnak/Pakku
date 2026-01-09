@@ -7,16 +7,15 @@
 
 - Added `export_server_side_projects_to_client` configuration option to control how server-side mods are handled in client modpack exports
     - **CurseForge behavior:**
-        - When `false`: Server-side mods are excluded from manifest.json (CurseForge doesn't support env fields)
-        - When `true` (default): Server-side mods are included in manifest.json
+        - When `false` (default): Server-side mods are excluded from manifest.json (CurseForge doesn't support env fields)
+        - When `true`: Server-side mods are included in manifest.json
     - **Modrinth behavior (leverages native env field support):**
         - Always includes all mods, uses env fields to express environment constraints
-        - When `false`: Server-side mods set `env.client="unsupported", env.server="required"` (correctly follows side constraints)
-        - When `true` (default): Server-side mods set `env.client="required", env.server="required"` (backward compatible, treated as BOTH-side)
+        - When `false` (default): Server-side mods set `env.client="unsupported", env.server="required"` (correctly follows side constraints)
+        - When `true`: Server-side mods set `env.client="required", env.server="required"` (backward compatible, treated as BOTH-side)
     - **Important:** This option only affects **projects** in the manifest, not override files
       - `server-overrides/` directory is always exported (unless `--no-server` flag is used)
-    - Existing projects automatically migrated to `true` to maintain backward compatibility
-    - New projects (`pakku init`) default to `false` for correct filtering behavior
+    - **Migration:** Existing projects (with `lockfile_version: 1`) are automatically migrated to `true` for backward compatibility, and lockfile version is upgraded to `2`
 - Added `--no-server` flag to `pakku export` command for exporting modpacks without server content
     - CurseForge: No effect (uses standard export behavior)
     - Modrinth: Excludes server-side mods (server-overrides) and `server-overrides/` directory
