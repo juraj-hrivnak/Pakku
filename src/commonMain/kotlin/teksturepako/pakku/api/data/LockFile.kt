@@ -49,6 +49,16 @@ data class LockFile(
     @SerialName("lockfile_version") @Required private val lockFileVersion: Int = 1,
 )
 {
+    // -- LOCKFILE VERSION --
+
+    fun getLockFileVersion(): Int = this.lockFileVersion
+
+    /**
+     * Returns a new LockFile with the version bumped to the latest version.
+     * This is used during migration to mark that the lockfile has been upgraded.
+     */
+    fun bumped(): LockFile = this.copy(lockFileVersion = VERSIONS.last())
+
     // -- MC VERSIONS --
 
     fun setMcVersions(mcVersions: Collection<String>)
@@ -266,6 +276,7 @@ data class LockFile(
     companion object
     {
         const val FILE_NAME = "pakku-lock.json"
+        val VERSIONS = listOf(1, 2)
 
         fun exists(): Boolean = Path(workingPath, FILE_NAME).exists()
         fun existsAt(path: Path): Boolean = path.exists()

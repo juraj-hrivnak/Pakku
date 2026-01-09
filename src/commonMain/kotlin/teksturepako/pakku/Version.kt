@@ -2,4 +2,4 @@
 
 package teksturepako.pakku
 
-const val VERSION = "1.3.1"
+const val VERSION = "1.3.4"

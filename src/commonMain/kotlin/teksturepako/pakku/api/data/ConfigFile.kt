@@ -48,7 +48,15 @@ data class ConfigFile(
     val paths: MutableMap<String, String> = mutableMapOf(),
 
     /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
-    val projects: MutableMap<String, ProjectConfig> = mutableMapOf()
+    val projects: MutableMap<String, ProjectConfig> = mutableMapOf(),
+
+    /**
+     * Controls whether server-side projects (mods with side: SERVER) should be exported to client modpacks.
+     * - `true`: Server-side projects are included in client exports (backward compatible behavior)
+     * - `false` (default): Server-side projects are excluded from client exports (correct filtering)
+     */
+    @SerialName("export_server_side_projects_to_client")
+    private var exportServerSideProjectsToClient: Boolean = false
 )
 {
     // -- PACK --
@@ -77,6 +85,15 @@ data class ConfigFile(
     fun getVersion() = this.version
     fun getDescription() = this.description
     fun getAuthor() = this.author
+
+    // -- EXPORT CONFIGURATION --
+
+    fun setExportServerSideProjectsToClient(value: Boolean)
+    {
+        this.exportServerSideProjectsToClient = value
+    }
+
+    fun getExportServerSideProjectsToClient() = this.exportServerSideProjectsToClient
 
     // -- OVERRIDES --
 
@@ -178,6 +195,38 @@ data class ConfigFile(
         val projectConfig = this.projects[projectOutput] ?: return Err(ProjNotFound(project = projectIn))
 
         return Ok(builder(projectConfig))
+    }
+
+    // -- MIGRATION --
+
+    /**
+     * Migrates configuration file based on lockfile version.
+     * - If lockfile version is 1 and `export_server_side_projects_to_client` is missing,
+     *   sets it to `true` for backward compatibility and bumps lockfile to version 2.
+     * - If lockfile version is 2 or higher, no migration is needed; default is `false`.
+     *
+     * @param lockFile The lock file to check version and bump if needed
+     * @return Triple of (ConfigFile, LockFile, wasMigrated: Boolean)
+     */
+    suspend fun migrateIfNeeded(lockFile: LockFile): Triple<ConfigFile, LockFile, Boolean>
+    {
+        return when (lockFile.getLockFileVersion())
+        {
+            1 ->
+            {
+                // Old project: set to true for backward compatibility
+                this.exportServerSideProjectsToClient = true
+                this.write()
+                val bumpedLockFile = lockFile.bumped()
+                bumpedLockFile.write()
+                Triple(this, bumpedLockFile, true)
+            }
+            else ->
+            {
+                // New project or already migrated: default false, no migration needed
+                Triple(this, lockFile, false)
+            }
+        }
     }
 
     // -- FILE I/O --

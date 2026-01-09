@@ -73,9 +73,26 @@ This file is not intended to be modified manually.
     </def>
     <def id="lockfile_version">
         <title><code>lockfile_version</code></title>
-        <p>The version of the lock file.</p>
+        <p>The version of the lock file format. Used for migration purposes.</p>
+        <table>
+            <tr>
+                <td>Version</td>
+                <td>Description</td>
+            </tr>
+            <tr>
+                <td><code>1</code></td>
+                <td>Initial version. Projects created before version 1.3.4.</td>
+            </tr>
+            <tr>
+                <td><code>2</code></td>
+                <td>Added in version 1.3.4. Indicates that <code>export_server_side_projects_to_client</code> migration has been applied.</td>
+            </tr>
+        </table>
         <p>
             Type: <code>Int</code>
+        </p>
+        <p>
+            Default: <code>1</code>
         </p>
     </def>
 </deflist>
