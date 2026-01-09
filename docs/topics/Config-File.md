@@ -68,7 +68,7 @@ or when you need to use some of Pakku's more advanced functionalities.
     <def id="export_server_side_projects_to_client">
         <title><code>export_server_side_projects_to_client</code></title>
         <note>
-            <p>Added in version <b>1.3.3</b></p>
+            <p>Added in version <b>1.3.4</b></p>
         </note>
         <p>
             Controls how server-side mods (mods with <code>side: SERVER</code>) are handled when exporting client modpacks.

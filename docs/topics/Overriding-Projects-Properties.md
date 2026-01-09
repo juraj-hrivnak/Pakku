@@ -55,7 +55,7 @@ The `side` property determines where a project (mod, resource pack, etc.) can ru
 
 ### Impact on Exporting
 
-> Added in version **1.3.3**
+> Added in version **1.3.4**
 
 The `side` property, combined with the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration, controls how projects are exported:
 

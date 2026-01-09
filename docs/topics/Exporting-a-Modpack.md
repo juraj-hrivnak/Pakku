@@ -41,7 +41,7 @@ Example output:
 
 ## Export Without Server Content
 
-> Added in version **1.3.3**
+> Added in version **1.3.4**
 
 Use the `--no-server` option to export a modpack without server-side content:
 
@@ -89,7 +89,7 @@ The `--no-server` mode is useful when:
 ## Server-Side Mod Handling
 {id="server-side-mod-handling"}
 
-> Added in version **1.3.3**
+> Added in version **1.3.4**
 
 Pakku provides fine-grained control over how server-side mods are handled in client modpack exports through the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration option.
 
