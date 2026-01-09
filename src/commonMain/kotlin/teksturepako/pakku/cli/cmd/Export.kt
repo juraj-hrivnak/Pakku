@@ -35,8 +35,8 @@ class Export : CliktCommand()
         .help("Show file IO error on exporting. (These can be ignored most of the time.)")
         .flag()
 
-    private val clientOnly: Boolean by option("--client-only")
-        .help("Export client-only modpack. Modrinth: exclude server-overrides and SERVER mods; ServerPack: skip export.")
+    private val noServer: Boolean by option("--no-server")
+        .help("Export modpack without server content. Modrinth: exclude server-overrides and SERVER mods; ServerPack: skip export.")
         .flag()
 
     override fun run(): Unit = runBlocking {
@@ -87,7 +87,7 @@ class Export : CliktCommand()
 
                 terminal.pSuccess("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
             },
-            lockFile, configFile, platforms, clientOnly
+            lockFile, configFile, platforms, noServer
         ).joinAll()
 
         progressBar.clear()

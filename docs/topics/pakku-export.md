@@ -21,8 +21,8 @@ Export modpack
 `--show-io-errors`
 : Show file IO error on exporting. (These can be ignored most of the time.)
 
-`--client-only`
-: Export client-only modpack. Modrinth: exclude server-overrides and SERVER mods; ServerPack: skip export.
+`--no-server`
+: Export modpack without server content. Modrinth: exclude server-overrides and SERVER mods; ServerPack: skip export.
 
 </snippet>
 

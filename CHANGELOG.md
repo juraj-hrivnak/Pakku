@@ -13,11 +13,11 @@
         - Always includes all mods, uses env fields to express environment constraints
         - When `false`: Server-side mods set `env.client="unsupported", env.server="required"` (correctly follows side constraints)
         - When `true` (default): Server-side mods set `env.client="required", env.server="required"` (backward compatible, treated as BOTH-side)
-    - **Important:** This option only affects **mod projects** in the manifest, not override files
-      - `server-overrides/` directory is always exported (unless `--client-only` flag is used)
+    - **Important:** This option only affects **projects** in the manifest, not override files
+      - `server-overrides/` directory is always exported (unless `--no-server` flag is used)
     - Existing projects automatically migrated to `true` to maintain backward compatibility
     - New projects (`pakku init`) default to `false` for correct filtering behavior
-- Added `--client-only` flag to `pakku export` command for pure client-only modpack exports
+- Added `--no-server` flag to `pakku export` command for exporting modpacks without server content
     - CurseForge: No effect (uses standard export behavior)
     - Modrinth: Excludes server-side mods (server-overrides) and `server-overrides/` directory
     - ServerPack: Skips export entirely when this flag is enabled

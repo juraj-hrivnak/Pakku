@@ -29,7 +29,7 @@ sealed class RuleContext(
     open val workingSubDir: String,
     open val lockFile: LockFile,
     open val configFile: ConfigFile,
-    open val clientOnly: Boolean = false
+    open val noServer: Boolean = false
 )
 {
     fun getPath(path: String, vararg subpath: String) =
@@ -111,11 +111,11 @@ sealed class RuleContext(
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
         override val workingSubDir: String,
-        override val clientOnly: Boolean = false
-    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
+        override val noServer: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, noServer)
     {
         /** Sets the [project entry][RuleContext.ExportingProject] missing. */
-        fun setMissing(): RuleResult = MissingProject(project, lockFile, configFile, workingSubDir, clientOnly)
+        fun setMissing(): RuleResult = MissingProject(project, lockFile, configFile, workingSubDir, noServer)
             .ruleResult("missing ${project.slug}", Packaging.EmptyAction)
         
         suspend fun exportAsOverride(
@@ -149,8 +149,8 @@ sealed class RuleContext(
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
         override val workingSubDir: String,
-        override val clientOnly: Boolean = false
-    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
+        override val noServer: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, noServer)
     {
         fun export(
             overridesDir: String? = type.folderName,
@@ -176,8 +176,8 @@ sealed class RuleContext(
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
         override val workingSubDir: String,
-        override val clientOnly: Boolean = false
-    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
+        override val noServer: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, noServer)
     {
         fun export(
             overridesDir: String? = manualOverride.type.folderName,
@@ -209,8 +209,8 @@ sealed class RuleContext(
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
         override val workingSubDir: String,
-        override val clientOnly: Boolean = false
-    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
+        override val noServer: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, noServer)
     {
         suspend fun exportAsOverrideFrom(
             provider: Provider,
@@ -274,8 +274,8 @@ sealed class RuleContext(
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
         override val workingSubDir: String,
-        override val clientOnly: Boolean = false
-    ) : RuleContext(workingSubDir, lockFile, configFile, clientOnly)
+        override val noServer: Boolean = false
+    ) : RuleContext(workingSubDir, lockFile, configFile, noServer)
     {
         fun replaceText(vararg pairs: Pair<String, String>): RuleResult
         {

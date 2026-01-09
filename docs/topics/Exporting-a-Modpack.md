@@ -39,14 +39,14 @@ Example output:
 
 <img src="screenshot_export.png" alt="export image"/>
 
-## Client-Only Export Mode
+## Export Without Server Content
 
 > Added in version **1.3.3**
 
-Use the `--client-only` option to export a pure client-only modpack that excludes all server-side content:
+Use the `--no-server` option to export a modpack without server-side content:
 
 ```bash
-pakku export --client-only
+pakku export --no-server
 ```
 
 ### Behavior by Platform
@@ -54,7 +54,7 @@ pakku export --client-only
 <table>
 <tr>
 <th>Platform</th>
-<th>Client-Only Export Behavior</th>
+<th>No Server Export Behavior</th>
 </tr>
 <tr>
 <td><b>CurseForge</b></td>
@@ -78,13 +78,13 @@ pakku export --client-only
 
 ### Use Cases
 
-The `--client-only` mode is useful when:
+The `--no-server` mode is useful when:
 
-- You want to distribute a client-only version of your modpack
+- You want to distribute a version of your modpack without server content
 - You need to ensure no server-side content is accidentally included
 - You're creating a specialized client build without server components
 
-> **Note:** The `--client-only` option works independently from the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration. When `--client-only` is used, it overrides the configuration setting for that export operation.
+> **Note:** The `--no-server` option works independently from the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration. When `--no-server` is used, it overrides the configuration setting for that export operation.
 
 ## Server-Side Mod Handling
 {id="server-side-mod-handling"}
@@ -93,7 +93,7 @@ The `--client-only` mode is useful when:
 
 Pakku provides fine-grained control over how server-side mods are handled in client modpack exports through the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration option.
 
-> **Important:** This configuration only affects **mod projects** in the manifest file. Override files (such as the `server-overrides/` directory) are always exported unless the `--client-only` flag is used.
+> **Important:** This configuration only affects **projects** in the manifest file. Override files (such as the `server-overrides/` directory) are always exported unless the `--no-server` flag is used.
 
 ### Behavior by Platform
 

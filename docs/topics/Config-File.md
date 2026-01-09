@@ -75,8 +75,8 @@ or when you need to use some of Pakku's more advanced functionalities.
         </p>
         <warning>
             <p>
-                This option only affects <b>mod projects</b> in the manifest file, not override files.
-                The <code>server-overrides/</code> directory is always exported unless the <code>--client-only</code> flag is used.
+                This option only affects <b>projects</b> in the manifest file, not override files.
+                The <code>server-overrides/</code> directory is always exported unless the <code>--no-server</code> flag is used.
             </p>
         </warning>
         <p>

@@ -38,8 +38,8 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
         {
             is ExportingProject         ->
             {
-                // When clientOnly is enabled, skip SERVER-only projects (server-overrides)
-                if (it.clientOnly)
+                // When noServer is enabled, skip SERVER-only projects (server-overrides)
+                if (it.noServer)
                 {
                     val overrideType = OverrideType.fromProject(it.project)
                     if (overrideType == OverrideType.SERVER_OVERRIDE)
@@ -56,9 +56,9 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
             }
             is ExportingOverride       ->
             {
-                // When clientOnly is enabled, exclude server-overrides
+                // When noServer is enabled, exclude server-overrides
                 // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
-                val allowedTypes = if (it.clientOnly) {
+                val allowedTypes = if (it.noServer) {
                     setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
                 } else {
                     null // null means all types are allowed
@@ -67,9 +67,9 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
             }
             is ExportingManualOverride ->
             {
-                // When clientOnly is enabled, exclude server-overrides
+                // When noServer is enabled, exclude server-overrides
                 // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
-                val allowedTypes = if (it.clientOnly) {
+                val allowedTypes = if (it.noServer) {
                     setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
                 } else {
                     null // null means all types are allowed
