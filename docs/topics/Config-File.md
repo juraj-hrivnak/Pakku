@@ -65,6 +65,49 @@ or when you need to use some of Pakku's more advanced functionalities.
             Type: <code>List&lt;String&gt;</code> (glob)
         </p>
     </def>
+    <def id="export_server_side_projects_to_client">
+        <title><code>export_server_side_projects_to_client</code></title>
+        <note>
+            <p>Added in version <b>1.3.4</b></p>
+        </note>
+        <p>
+            Controls how server-side mods (mods with <code>side: SERVER</code>) are handled when exporting client modpacks.
+        </p>
+        <warning>
+            <p>
+                This option only affects <b>projects</b> in the manifest file, not override files.
+                The <code>server-overrides/</code> directory is always exported unless the <code>--no-server</code> flag is used.
+            </p>
+        </warning>
+        <p>
+            <b>When <code>false</code> (default):</b>
+        </p>
+        <list>
+            <li><b>CurseForge:</b> Server-side mods are excluded from the manifest (CurseForge doesn't support environment fields)</li>
+            <li><b>Modrinth:</b> Server-side mods are included with <code>env.client = "unsupported"</code> (correctly follows side constraints using Modrinth's native env field support)</li>
+            <li><b>Override files:</b> <code>server-overrides/</code> directory is still exported</li>
+        </list>
+        <p>
+            <b>When <code>true</code> (for backward compatibility with existing projects):</b>
+        </p>
+        <list>
+            <li><b>CurseForge:</b> Server-side mods are included in the manifest</li>
+            <li><b>Modrinth:</b> Server-side mods are included with <code>env.client = "required"</code> (treated as BOTH-side for compatibility)</li>
+            <li><b>Override files:</b> <code>server-overrides/</code> directory is still exported</li>
+        </list>
+        <note>
+            <p>
+                Existing modpacks (with <code>lockfile_version: 1</code>) are automatically migrated to <code>true</code> to maintain backward compatibility.
+                The lockfile version is then upgraded to <code>2</code>.
+            </p>
+        </note>
+        <p>
+            Type: <code>Boolean</code>
+        </p>
+        <p>
+            Default: <code>false</code>
+        </p>
+    </def>
     <def id="paths">
         <title><code>paths</code></title>
         <p>A map of project types to their respective paths.</p>

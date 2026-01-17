@@ -35,6 +35,10 @@ class Export : CliktCommand()
         .help("Show file IO error on exporting. (These can be ignored most of the time.)")
         .flag()
 
+    private val noServer: Boolean by option("--no-server")
+        .help("Export modpack without server content. Modrinth: exclude server-overrides and SERVER mods; ServerPack: skip export.")
+        .flag()
+
     override fun run(): Unit = runBlocking {
         val lockFile = LockFile.readToResult().getOrElse {
             terminal.pError(it)
@@ -48,7 +52,15 @@ class Export : CliktCommand()
             return@runBlocking
         }
 
-        val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
+        val (migratedConfig, migratedLockFile, wasMigrated) = configFile.migrateIfNeeded(lockFile)
+
+        // Show migration message if config was migrated
+        if (wasMigrated)
+        {
+            terminal.pSuccess("[Migration] Upgraded lockfile to version 2. Added 'export_server_side_projects_to_client=true' for backward compatibility.")
+        }
+
+        val platforms: List<Platform> = migratedLockFile.getPlatforms().getOrElse {
             terminal.pError(it)
             echo()
             return@runBlocking
@@ -77,7 +89,7 @@ class Export : CliktCommand()
 
                 terminal.pSuccess("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
             },
-            lockFile, configFile, platforms
+            migratedLockFile, migratedConfig, platforms, noServer
         ).joinAll()
 
         progressBar.clear()

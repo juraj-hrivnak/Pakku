@@ -65,7 +65,6 @@ class Init : CliktCommand()
 
         val configFile = ConfigFile.readOrNew()
         val lockFile = LockFile.readOrNew()
-
         // -- NAME --
 
         with(nameOpt ?: terminal.prompt("? Modpack name") ?: "")
