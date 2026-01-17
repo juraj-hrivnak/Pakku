@@ -46,6 +46,12 @@ class Update : CliktCommand()
             }
         }
 
+        val platforms = lockFile.getPlatforms().getOrElse {
+            terminal.pError(it)
+            echo()
+            return@runBlocking
+        }
+
         val updatedProjects = updateMultipleProjectsWithFiles(
             onError = {
                 terminal.pError(it)
@@ -54,6 +60,7 @@ class Update : CliktCommand()
             lockFile.getLoaders(),
             currentProjects.toMutableSet(),
             ConfigFile.readOrNull(),
+            platforms,
             numberOfFiles = 1
         )
 

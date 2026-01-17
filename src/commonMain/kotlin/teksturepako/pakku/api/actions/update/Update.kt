@@ -4,12 +4,12 @@ import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.datetime.Instant
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.platforms.GitHub
-import teksturepako.pakku.api.platforms.Multiplatform.platforms
+import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
+import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.UpdateStrategy
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.io.mapAsync
@@ -25,6 +25,7 @@ suspend fun updateMultipleProjectsWithFiles(
     loaders: List<String>,
     projects: MutableSet<Project>,
     configFile: ConfigFile?,
+    platforms: List<Platform>,
     numberOfFiles: Int,
 ): MutableSet<Project> = coroutineScope {
     val ghProjectsDeferred = async {
@@ -51,7 +52,7 @@ suspend fun updateMultipleProjectsWithFiles(
 
         accProjects.map { accProject ->
             platformProjects?.find { it.slug[platform.serialName] == accProject.slug[platform.serialName] }
-                ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, numberOfFiles) }
+                ?.let { newProject -> combineProjects(accProject, newProject, platform.serialName, numberOfFiles, mcVersions) }
                 ?: accProject
         }.toMutableSet()
     }
@@ -67,24 +68,36 @@ suspend fun updateMultipleProjectsWithFiles(
         .toMutableSet()
 }
 
-fun combineProjects(accProject: Project, newProject: Project, platformName: String, numberOfFiles: Int): Project
+fun combineProjects(
+    accProject: Project, newProject: Project, platformName: String, numberOfFiles: Int, mcVersions: List<String> = listOf(),
+): Project
 {
-    val accFile = accProject.files.filter { projectFile ->
-        projectFile.type == platformName
-    }.maxByOrNull { it.datePublished }
+    fun List<ProjectFile>.filterByAccLoaders(accProject: Project, platformName: String): List<ProjectFile>
+    {
+        val accLoaders = accProject.files
+            .filter { it.type == platformName }
+            .maxByOrNull { it.datePublished }
+            ?.loaders
+            ?: listOf()
+        
+        return if (accLoaders.isEmpty()) this else this.filter { file -> accLoaders.any { it in file.loaders } }
+    }
 
-    val accPublished = accFile?.datePublished ?: Instant.DISTANT_PAST
+    val newFiles = newProject.files
+        .filter { it.type == platformName }
+        .filterByAccLoaders(accProject, platformName) // keep the current loader
+        .sortedWith(
+            comparator = compareBy<ProjectFile> { file ->
+                // prefer mc version higher in the lock file
+                mcVersions.indexOfFirst { it in file.mcVersions }.let { if (it == -1) mcVersions.size else it }
+            }
+            .thenByDescending {
+                // prefer newer file
+                it.datePublished
+            }
+        )
 
-    val newFiles = if (accFile == null) newProject.files else newProject.files.sortedWith(
-        compareBy { file ->
-            accFile.loaders.indexOfFirst { it in file.loaders }.let { if (it == -1) accFile.loaders.size else it }
-        }
-    )
-
-    val updatedFiles = (newFiles.take(numberOfFiles) + accProject.files)
-        .filterNot { projectFile ->
-            projectFile.type == platformName && projectFile.datePublished < accPublished
-        }
+    val updatedFiles = (newFiles.take(numberOfFiles) + accProject.files.filter { it.type != platformName })
         .distinctBy { it.type }
         .toMutableSet()
 

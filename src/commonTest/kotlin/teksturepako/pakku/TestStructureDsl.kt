@@ -92,7 +92,6 @@ class StructureExpectation(
 )
 {
     private fun resolvePath(vararg parts: String): Array<String> = basePath + parts
-
     private fun resolveFilePath(name: String): Path = test.testPath(*resolvePath(name))
 
     private fun verifyPath(name: String, block: (Path) -> Unit)

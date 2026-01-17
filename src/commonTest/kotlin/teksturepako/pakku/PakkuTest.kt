@@ -9,7 +9,10 @@ import kotlin.io.path.*
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
-open class PakkuTest(protected open val teardown: Boolean = true)
+open class PakkuTest(
+    protected open val teardown: Boolean = true,
+    protected open val debug: Boolean = true
+)
 {
     private var testName: String = ""
 
@@ -43,7 +46,7 @@ open class PakkuTest(protected open val teardown: Boolean = true)
             developmentMode()
         }
         
-        debugMode = true
+        debugMode = this.debug
 
         testName = this::class.simpleName ?: generatePakkuId()
 
