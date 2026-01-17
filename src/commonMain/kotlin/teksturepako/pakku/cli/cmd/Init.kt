@@ -65,14 +65,6 @@ class Init : CliktCommand()
 
         val configFile = ConfigFile.readOrNew()
         val lockFile = LockFile.readOrNew()
-
-        /**
-         * Set default export configuration for new projects.
-         * New projects default to excluding server-side mods from client exports (correct behavior).
-         * Existing projects maintain backward compatibility through the migration system.
-         */
-        configFile.setExportServerSideProjectsToClient(false)
-
         // -- NAME --
 
         with(nameOpt ?: terminal.prompt("? Modpack name") ?: "")
