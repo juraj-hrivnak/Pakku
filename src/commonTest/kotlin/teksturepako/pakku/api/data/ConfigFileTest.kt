@@ -6,6 +6,8 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isFalse
 import strikt.assertions.isTrue
 import teksturepako.pakku.PakkuTest
+import kotlin.io.path.Path
+import kotlin.io.path.writeText
 import kotlin.test.Test
 
 /**
@@ -26,10 +28,11 @@ class ConfigFileTest : PakkuTest()
             )
             configFile.write()
             
-            // Create a lockfile with version 1 (old project)
-            val lockFile = LockFile()
+            // Create a lockfile with version 1 (simulating old project from JSON)
+            // Note: Default is now v2, so we write v1 to JSON directly to simulate old project
+            Path("$workingPath/${LockFile.FILE_NAME}").writeText("""{"lockfile_version":1}""")
+            val lockFile = LockFile.readOrNew()
             expectThat(lockFile.getLockFileVersion()).isEqualTo(1)
-            lockFile.write()
             
             // Trigger migration
             val (migratedConfig, migratedLockFile, wasMigrated) = 
@@ -58,7 +61,8 @@ class ConfigFileTest : PakkuTest()
             configFile.write()
             
             // Create a lockfile with version 2 (new or already migrated project)
-            val lockFile = LockFile().bumped() // Bump to version 2
+            // Note: Default is now v2, so just use LockFile()
+            val lockFile = LockFile()
             expectThat(lockFile.getLockFileVersion()).isEqualTo(2)
             lockFile.write()
             
@@ -81,15 +85,16 @@ class ConfigFileTest : PakkuTest()
     fun `test migration is idempotent with lockfile version`()
     {
         runBlocking {
-            // Create config and lockfile v1
+            // Create config and write it
             val configFile = ConfigFile(
                 name = "Test Modpack",
                 version = "1.0.0"
             )
             configFile.write()
             
-            val lockFile = LockFile()
-            lockFile.write()
+            // Create a lockfile v1 (simulating old project from JSON)
+            Path("$workingPath/${LockFile.FILE_NAME}").writeText("""{"lockfile_version":1}""")
+            val lockFile = LockFile.readOrNew()
             
             // First migration
             val (firstConfig, firstLockFile, firstMigrated) = 
@@ -118,8 +123,9 @@ class ConfigFileTest : PakkuTest()
             configFile.setVersion("0.0.1")
             configFile.write()
             
-            // New project should have lockfile v2
-            val lockFile = LockFile().bumped()
+            // New project should have lockfile v2 (default)
+            val lockFile = LockFile()
+            expectThat(lockFile.getLockFileVersion()).isEqualTo(2)
             lockFile.write()
             
             // Read back and verify default is false
@@ -165,7 +171,7 @@ class ConfigFileTest : PakkuTest()
     }
 
     @Test
-    fun `test new project init with bumped lockfile does not trigger migration`()
+    fun `test new project init with default lockfile v2 does not trigger migration`()
     {
         runBlocking {
             // Simulate Init command behavior:
@@ -176,15 +182,14 @@ class ConfigFileTest : PakkuTest()
             configFile.setExportServerSideProjectsToClient(false)
             configFile.write()
 
-            // 2. Create lockfile and bump version (as Init now does)
+            // 2. Create lockfile (default is now v2, no need to bump)
             val lockFile = LockFile()
-            val bumpedLockFile = lockFile.bumped()
-            expectThat(bumpedLockFile.getLockFileVersion()).isEqualTo(2)
-            bumpedLockFile.write()
+            expectThat(lockFile.getLockFileVersion()).isEqualTo(2)
+            lockFile.write()
 
             // 3. Simulate first export - should NOT trigger migration
             val (migratedConfig, migratedLockFile, wasMigrated) =
-                ConfigFile.readOrNull()!!.migrateIfNeeded(bumpedLockFile)
+                ConfigFile.readOrNull()!!.migrateIfNeeded(lockFile)
 
             // Verify no migration occurred
             expectThat(wasMigrated).isFalse()

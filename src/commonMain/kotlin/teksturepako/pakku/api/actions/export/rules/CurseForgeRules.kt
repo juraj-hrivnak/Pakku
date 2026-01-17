@@ -41,7 +41,7 @@ fun ExportRuleScope.cfModpackRule(): ExportRule
      * When `exportServerSideProjectsToClient` is false, only OVERRIDE and CLIENT_OVERRIDE are allowed.
      * This filters out SERVER_OVERRIDE projects from client modpack exports.
      */
-    val allowedTypes = if (!exportServerSide) {
+    val allowedOverrideTypes = if (!exportServerSide) {
         setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
     } else {
         null // null means all types are allowed (backward compatibility)
@@ -57,7 +57,7 @@ fun ExportRuleScope.cfModpackRule(): ExportRule
 
                 // Check if project's override type is allowed
                 val overrideType = OverrideType.fromProject(it.project)
-                if (allowedTypes != null && overrideType !in allowedTypes)
+                if (allowedOverrideTypes != null && overrideType !in allowedOverrideTypes)
                 {
                     // Skip this project (server-side mod in client export)
                     return@ExportRule it.ignore()
@@ -68,11 +68,11 @@ fun ExportRuleScope.cfModpackRule(): ExportRule
             }
             is ExportingOverride       -> it.export(
                 overridesDir = OverrideType.OVERRIDE.folderName,
-                allowedTypes = allowedTypes
+                allowedTypes = allowedOverrideTypes
             )
             is ExportingManualOverride -> it.export(
                 overridesDir = OverrideType.OVERRIDE.folderName,
-                allowedTypes = allowedTypes
+                allowedTypes = allowedOverrideTypes
             )
             is Finished                ->
             {

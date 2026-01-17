@@ -38,7 +38,7 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
         {
             is ExportingProject         ->
             {
-                // When noServer is enabled, skip SERVER-only projects (server-overrides)
+                // When noServer is enabled, skip SERVER-only projects
                 if (it.noServer)
                 {
                     val overrideType = OverrideType.fromProject(it.project)
@@ -51,30 +51,29 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
                 val projectFile = it.project.getFilesForProviders(Modrinth, GitHub).firstOrNull()
                     ?: return@ExportRule it.setMissing()
 
-                // Modrinth: Include all projects, env fields will handle environment constraints
                 it.addToMrModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
             }
             is ExportingOverride       ->
             {
                 // When noServer is enabled, exclude server-overrides
                 // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
-                val allowedTypes = if (it.noServer) {
+                val allowedOverrideTypes = if (it.noServer) {
                     setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
                 } else {
                     null // null means all types are allowed
                 }
-                it.export(allowedTypes = allowedTypes)
+                it.export(allowedTypes = allowedOverrideTypes)
             }
             is ExportingManualOverride ->
             {
                 // When noServer is enabled, exclude server-overrides
                 // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
-                val allowedTypes = if (it.noServer) {
+                val allowedOverrideTypes = if (it.noServer) {
                     setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
                 } else {
                     null // null means all types are allowed
                 }
-                it.export(allowedTypes = allowedTypes)
+                it.export(allowedTypes = allowedOverrideTypes)
             }
             is Finished                ->
             {
