@@ -2,6 +2,7 @@ package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.get
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import strikt.api.expectThat
 import strikt.assertions.*
 import teksturepako.pakku.PakkuTest
@@ -179,10 +180,8 @@ class ExportRulesTest : PakkuTest()
 
     // -- USER STORY 1: CurseForge Export Tests --
 
-    @Test
-    fun `test CurseForge export excludes SERVER mods when config is false`()
-    {
-        runBlocking {
+    @Test fun `CurseForge export excludes SERVER mods when config is false`() = runTest {
+
         val lockFile = LockFile(
             target = CurseForge.serialName,
             mcVersions = mutableListOf(mcVersion),
@@ -193,6 +192,7 @@ class ExportRulesTest : PakkuTest()
         val configFile = ConfigFile(
             name = modpackName
         )
+
         configFile.setExportServerSideProjectsToClient(false)
         configFile.write()
 
@@ -222,12 +222,9 @@ class ExportRulesTest : PakkuTest()
         // BOTH mod should be in files
         expectThat(modpackModel.files)
             .any { get { projectID }.isEqualTo(bothModCfId) }
-        }
     }
 
-    @Test
-    fun `test CurseForge export includes SERVER mods when config is true`()
-    {
+    @Test fun `CurseForge export includes SERVER mods when config is true`() = runTest {
         runBlocking {
         val lockFile = LockFile(
             target = CurseForge.serialName,
@@ -267,10 +264,8 @@ class ExportRulesTest : PakkuTest()
         }
     }
 
-    @Test
-    fun `test CurseForge export includes CLIENT mods regardless of config`()
-    {
-        runBlocking {
+    @Test fun `CurseForge export includes CLIENT mods regardless of config`() = runTest {
+
         val lockFile = LockFile(
             target = CurseForge.serialName,
             mcVersions = mutableListOf(mcVersion),
@@ -302,15 +297,12 @@ class ExportRulesTest : PakkuTest()
         // CLIENT mod should always be in files
         expectThat(modpackModel.files)
             .any { get { projectID }.isEqualTo(clientModCfId) }
-        }
     }
 
     // -- USER STORY 2: Modrinth Export Tests --
 
-    @Test
-    fun `test Modrinth export sets env fields correctly for SERVER mod`()
-    {
-        runBlocking {
+    @Test fun `Modrinth export sets env fields correctly for SERVER mod`() = runTest {
+
         val lockFile = LockFile(
             target = Modrinth.serialName,
             mcVersions = mutableListOf(mcVersion),
@@ -347,13 +339,10 @@ class ExportRulesTest : PakkuTest()
         // When export_server_side_projects_to_client=true, SERVER mods are treated as BOTH for compatibility
         expectThat(serverFile.env?.client).isEqualTo("required")
         expectThat(serverFile.env?.server).isEqualTo("required")
-        }
     }
 
-    @Test
-    fun `test Modrinth export sets env fields correctly for CLIENT mod`()
-    {
-        runBlocking {
+    @Test fun `Modrinth export sets env fields correctly for CLIENT mod`() = runTest {
+
         val lockFile = LockFile(
             target = Modrinth.serialName,
             mcVersions = mutableListOf(mcVersion),
@@ -388,13 +377,11 @@ class ExportRulesTest : PakkuTest()
         // Verify env fields for CLIENT mod
         expectThat(clientFile.env?.client).isEqualTo("required")
         expectThat(clientFile.env?.server).isEqualTo("unsupported")
-        }
     }
 
     @Test
-    fun `test Modrinth export sets env fields correctly for BOTH mod`()
-    {
-        runBlocking {
+    fun `test Modrinth export sets env fields correctly for BOTH mod`() = runTest {
+
         val lockFile = LockFile(
             target = Modrinth.serialName,
             mcVersions = mutableListOf(mcVersion),
@@ -405,6 +392,7 @@ class ExportRulesTest : PakkuTest()
         val configFile = ConfigFile(
             name = modpackName
         )
+
         configFile.write()
 
         val platforms = lockFile.getPlatforms().get()
@@ -429,13 +417,10 @@ class ExportRulesTest : PakkuTest()
         // Verify env fields for BOTH mod
         expectThat(bothFile.env?.client).isEqualTo("required")
         expectThat(bothFile.env?.server).isEqualTo("required")
-        }
     }
 
-    @Test
-    fun `test Modrinth export includes SERVER mods with correct env when config is false`()
-    {
-        runBlocking {
+    @Test fun `Modrinth export includes SERVER mods with correct env when config is false`() = runTest {
+
         val lockFile = LockFile(
             target = Modrinth.serialName,
             mcVersions = mutableListOf(mcVersion),
@@ -475,15 +460,12 @@ class ExportRulesTest : PakkuTest()
         // CLIENT mod should be in files
         expectThat(modpackModel.files)
             .any { get { path }.contains("jei") }
-        }
     }
 
     // -- USER STORY 3: Backward Compatibility Tests --
 
-    @Test
-    fun `test CurseForge export includes untagged mods normally`()
-    {
-        runBlocking {
+    @Test fun `CurseForge export includes untagged mods normally`() = runTest {
+
         val untaggedMod = Project(
             type = ProjectType.MOD,
             side = null, // No side specified
@@ -533,13 +515,10 @@ class ExportRulesTest : PakkuTest()
         // Untagged mod should be included (treated as OVERRIDE)
         expectThat(modpackModel.files)
             .any { get { projectID }.isEqualTo(999999) }
-        }
     }
 
-    @Test
-    fun `test Modrinth export sets BOTH env for untagged mods`()
-    {
-        runBlocking {
+    @Test fun `Modrinth export sets BOTH env for untagged mods`() = runTest {
+
         val untaggedMod = Project(
             type = ProjectType.MOD,
             side = null, // No side specified
@@ -595,6 +574,5 @@ class ExportRulesTest : PakkuTest()
         // Verify env fields for untagged mod (should be BOTH)
         expectThat(untaggedFile.env?.client).isEqualTo("required")
         expectThat(untaggedFile.env?.server).isEqualTo("required")
-        }
     }
 }
