@@ -48,29 +48,32 @@ fun exportProfile(
     requiresPlatform: Platform? = null,
     builder: ExportProfileBuilder.() -> Unit
 ): ExportProfileBuilder = ExportProfileBuilder(name, fileExtension, requiresPlatform, builder)
+
 class ExportProfileBuilder(
-    private val name: String,
-    private val fileExtension: String = "zip",
-    private val requiresPlatform: Platform? = null,
-    private val builder: (ExportProfileBuilder.() -> Unit),
-    private val rules: MutableList<ExportRule> = mutableListOf(),
+    val name: String,
+    val fileExtension: String = "zip",
+    val requiresPlatform: Platform? = null,
+    val builder: (ExportProfileBuilder.() -> Unit),
 ) : ExportRuleScope
 {
+    private val _rules: MutableList<ExportRule> = mutableListOf()
+    val rules = _rules.toList()
+
     override lateinit var lockFile: LockFile
     override lateinit var configFile: ConfigFile
 
-    fun build(exportingScope: ExportRuleScope): ExportProfile
+    fun build(exportRuleScope: ExportRuleScope): ExportProfile
     {
-        this.lockFile = exportingScope.lockFile
-        this.configFile = exportingScope.configFile
+        this.lockFile = exportRuleScope.lockFile
+        this.configFile = exportRuleScope.configFile
 
-        this.rules.clear()
+        this._rules.clear()
         this.apply(builder)
 
         debug { println("Building [${this.name} profile]") }
-        debug { println("[${this.name} profile] has ${this.rules.size} rule(s)") }
+        debug { println("[${this.name} profile] has ${this._rules.size} rule(s)") }
 
-        return ExportProfile(this.name, this.fileExtension, this.rules.toList(), this.requiresPlatform)
+        return ExportProfile(this.name, this.fileExtension, this._rules.toList(), this.requiresPlatform)
     }
 
     // -- AFTER BUILD --
@@ -81,7 +84,7 @@ class ExportProfileBuilder(
     {
         val rule = exportRule(this)
 
-        rules.add(rule)
+        _rules.add(rule)
         return rule
     }
 
@@ -93,7 +96,7 @@ class ExportProfileBuilder(
 
         if (rule != null)
         {
-            rules.add(rule)
+            _rules.add(rule)
             return rule
         }
         else return null
@@ -109,12 +112,12 @@ class ExportProfileBuilder(
 
             if (rule != null)
             {
-                rules.add(rule)
+                _rules.add(rule)
                 return rule
             }
             else return null
         }
-        else return null
+        else return this
     }
 }
 

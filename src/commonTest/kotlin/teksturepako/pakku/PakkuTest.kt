@@ -1,5 +1,6 @@
 package teksturepako.pakku
 
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.data.generatePakkuId
 import teksturepako.pakku.api.data.workingPath
@@ -70,5 +71,14 @@ open class PakkuTest(
         println("Tearing down test: $testName")
 
         runCatching { Path("./build/test/$testName").deleteRecursively() }
+    }
+
+    val scope = atomic(0)
+
+    fun scenario(name: String?  = null, test: () -> Unit) {
+        scope += 1
+        name?.let { println("scenario[$name]") } ?: println("scenario[${scope.value}]")
+        test()
+        name?.let { println("end scenario[$name]") } ?: println("end scenario[${scope.value}]")
     }
 }
