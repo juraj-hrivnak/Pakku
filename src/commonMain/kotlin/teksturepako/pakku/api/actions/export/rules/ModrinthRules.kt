@@ -16,7 +16,6 @@ import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
-import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.readPathBytesOrNull
 
@@ -26,54 +25,39 @@ fun ExportRuleScope.mrModpackRule(): ExportRule
         createMrModpackModel(this, lockFile, configFile)
     }
 
-    /**
-     * Read configuration option for server-side project export.
-     * Unlike CurseForge, Modrinth supports env fields, so we include all projects
-     * and use env fields to express environment constraints.
-     */
-    val exportServerSide = configFile.getExportServerSideProjectsToClient() ?: true
-
     return ExportRule {
         when (it)
         {
             is ExportingProject         ->
             {
-                // When noServer is enabled, skip SERVER-only projects
-                if (it.noServer)
+                if (it.noServer && OverrideType.fromProject(it.project) == OverrideType.SERVER_OVERRIDE)
                 {
-                    val overrideType = OverrideType.fromProject(it.project)
-                    if (overrideType == OverrideType.SERVER_OVERRIDE)
-                    {
-                        return@ExportRule it.ignore()
-                    }
+                    return@ExportRule it.ignore()
                 }
 
                 val projectFile = it.project.getFilesForProviders(Modrinth, GitHub).firstOrNull()
                     ?: return@ExportRule it.setMissing()
 
-                it.addToMrModpackModel(projectFile, modpackModel ?: return@ExportRule it.error(RequiresMcVersion))
+                it.addToMrModpackModel(projectFile, modpackModel
+                    ?: return@ExportRule it.error(RequiresMcVersion))
             }
             is ExportingOverride       ->
             {
-                // When noServer is enabled, exclude server-overrides
-                // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
-                val allowedOverrideTypes = if (it.noServer) {
-                    setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
-                } else {
-                    null // null means all types are allowed
+                if (it.noServer)
+                {
+                    return@ExportRule it.export(allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE))
                 }
-                it.export(allowedTypes = allowedOverrideTypes)
+
+                it.export()
             }
             is ExportingManualOverride ->
             {
-                // When noServer is enabled, exclude server-overrides
-                // Otherwise, export all override types (export_server_side_projects_to_client only affects projects, not overrides)
-                val allowedOverrideTypes = if (it.noServer) {
-                    setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE)
-                } else {
-                    null // null means all types are allowed
+                if (it.noServer)
+                {
+                    return@ExportRule it.export(allowedTypes = setOf(OverrideType.OVERRIDE, OverrideType.CLIENT_OVERRIDE))
                 }
-                it.export(allowedTypes = allowedOverrideTypes)
+
+                it.export()
             }
             is Finished                ->
             {
@@ -143,29 +127,10 @@ suspend fun ProjectFile.toMrFile(configFile: ConfigFile, parentProject: Project)
     val relativePathString = this.getRelativePathString(parentProject, configFile)
     val path = this.getPath(parentProject, configFile)
 
-    /**
-     * Map project side to Modrinth env fields based on OverrideType and configuration.
-     * 
-     * Modrinth supports native environment fields, allowing precise control over mod loading.
-     * 
-     * When `export_server_side_projects_to_client = false` (correct behavior):
-     * - SERVER_OVERRIDE: client="unsupported", server="required" (follows official side constraints)
-     * - CLIENT_OVERRIDE: client="required", server="unsupported"
-     * - OVERRIDE (BOTH/null): client="required", server="required"
-     * 
-     * When `export_server_side_projects_to_client = true` (backward compatibility):
-     * - SERVER_OVERRIDE: client="required", server="required" (treated as BOTH for compatibility)
-     * - CLIENT_OVERRIDE: client="required", server="unsupported"
-     * - OVERRIDE (BOTH/null): client="required", server="required"
-     */
-    val exportServerSide = configFile.getExportServerSideProjectsToClient() ?: true
-    val overrideType = OverrideType.fromProject(parentProject)
-    val env = when (overrideType)
+    val env = when (OverrideType.fromProject(parentProject))
     {
         OverrideType.SERVER_OVERRIDE -> MrFile.Env(
-            // When exportServerSide=false, properly set client="unsupported" to follow side constraints
-            // When exportServerSide=true, set client="required" for backward compatibility (treat as BOTH)
-            client = if (exportServerSide) "required" else "unsupported",
+            client = if (configFile.getExportServerSideProjectsToClient()) "required" else "unsupported",
             server = "required"
         )
         OverrideType.CLIENT_OVERRIDE -> MrFile.Env(
