@@ -16,8 +16,10 @@ annotation class ExportSystemDsl
  *
  * An export profile can be exported using the
  * [ExportProfile.export()][ExportProfile.export] extension function.
- * Multiple export profiles can be exported
- * asynchronously when used as a parameter in the [export()][export] function.
+ * Multiple export profiles can be exported in parallel
+ * when used as a parameter in the [export()][export] function.
+ *
+ * For the more idiomatic way of creating export profile see [exportProfile].
  */
 open class ExportProfile(
     val name: String,
@@ -27,7 +29,7 @@ open class ExportProfile(
 )
 
 /**
- * Creates an export profile with customized settings and export rules.
+ * Creates an [export profile][ExportProfile] with customized settings and export rules.
  *
  * ```
  * val profile = exportProfile(name = "MyProfile") {
