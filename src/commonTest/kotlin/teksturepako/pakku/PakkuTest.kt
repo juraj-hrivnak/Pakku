@@ -49,7 +49,7 @@ open class PakkuTest(
         
         debugMode = this.debug
 
-        testName = this::class.simpleName ?: generatePakkuId()
+        testName = this::class.simpleName ?: generatePakkuId(mutableMapOf("provider" to "slug"))
 
         println("Setting up test: $testName")
 
