@@ -275,6 +275,6 @@ data class Project(
     init
     {
         // Init Pakku ID
-        if (pakkuId == null) pakkuId = generatePakkuId()
+        if (pakkuId == null) pakkuId = generatePakkuId(slug)
     }
 }
