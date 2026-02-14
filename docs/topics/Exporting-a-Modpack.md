@@ -171,7 +171,6 @@ When exporting to Modrinth with `export_server_side_projects_to_client = false`,
 }
 ```
 
-
 ## How It Works?
 
 Pakku uses an export profile system under the hood.
@@ -201,58 +200,5 @@ graph LR
 
 If your modpack contains [File Director](https://github.com/TerraFirmaCraft-The-Final-Frontier/FileDirector), Pakku will automatically add missing projects to its config,
 instead of packing them as [overrides](Pakku-Terminology.md#override).
-
-[//]: # (## Technical Implementation Details)
-
-[//]: # ()
-[//]: # (### Exporting Flow)
-
-[//]: # ()
-[//]: # (```mermaid)
-
-[//]: # (sequenceDiagram)
-
-[//]: # (    participant CMD as Export Function)
-
-[//]: # (    participant PRF as Export Profiles)
-
-[//]: # (    participant RUL as Export Rules)
-
-[//]: # (    participant PKG as Packaging Actions)
-
-[//]: # (    participant OUT as Output)
-
-[//]: # ()
-[//]: # (    CMD->>PRF: Builds)
-
-[//]: # (    activate PRF)
-
-[//]: # (    PRF->>RUL: Produces)
-
-[//]: # (    activate RUL)
-
-[//]: # (    RUL-->>PRF: Rule Results)
-
-[//]: # (    deactivate RUL)
-
-[//]: # (    PRF->>PKG: Runs)
-
-[//]: # (    activate PKG)
-
-[//]: # (    PKG-->>PRF: Package Data)
-
-[//]: # (    deactivate PKG)
-
-[//]: # (    PRF->>OUT: Generate Output)
-
-[//]: # (    activate OUT)
-
-[//]: # (    OUT-->>CMD: Export Complete)
-
-[//]: # (    deactivate OUT)
-
-[//]: # (    deactivate PRF)
-
-[//]: # (```)
 
 [`pakku export`]: pakku-export.md
