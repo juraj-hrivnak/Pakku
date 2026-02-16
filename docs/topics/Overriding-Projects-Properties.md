@@ -55,18 +55,15 @@ The `side` property determines where a project (mod, resource pack, etc.) can ru
 
 ### Impact on Exporting
 
-> Added in version **1.3.4**
+> Added in version **1.4.0**
 
-The `side` property, combined with the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration, controls how projects are exported:
+The `side` property affects how projects are exported to client modpacks, controlled by the [`export_server_side_projects_to_client`](Config-File.md#export_server_side_projects_to_client) configuration:
 
-**For CurseForge exports:**
-- When `export_server_side_projects_to_client = false`: `SERVER`-side projects are excluded from the manifest
-- When `export_server_side_projects_to_client = true`: All projects are included
+**When `export_server_side_projects_to_client = false` (default):**
+- **CurseForge**: `SERVER`-side projects are excluded from the manifest
+- **Modrinth**: `SERVER`-side projects are included with `env.client = "unsupported"`
 
-**For Modrinth exports:**
-- All projects are always included
-- `SERVER`-side projects: Set `env.client = "unsupported"` when `export_server_side_projects_to_client = false`, or `env.client = "required"` when `true`
-- `CLIENT`-side projects: Always set `env.client = "required", env.server = "unsupported"`
-- `BOTH`/unspecified projects: Always set `env.client = "required", env.server = "required"`
+**When `export_server_side_projects_to_client = true`:**
+- All projects are included regardless of side (backward compatible behavior)
 
-> See [Exporting a Modpack](Exporting-a-Modpack.md#server-side-mod-handling) for more details on export behavior.
+> **Note:** CurseForge lacks environment field support, so server-side mods must be excluded entirely. Modrinth can include them with proper `env` fields to prevent client loading.
