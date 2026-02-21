@@ -55,19 +55,20 @@ In addition to management itself, it enables support for version control, simpli
 
 ##### Project operations
 <pre>
- <kbd>pakku add</kbd> &#9;» Add new projects with automatic dependency resolution
- <kbd>pakku rm</kbd> &#9;» Remove projects safely with dependency checking
+ <kbd>pakku add</kbd> &#9;&#9;» Add new projects with automatic dependency resolution
+ <kbd>pakku rm</kbd> &#9;&#9;» Remove projects safely with dependency checking
  <kbd>pakku update</kbd> &#9;» Update projects individually or in bulk
- <kbd>pakku ls</kbd> &#9;» List and inspect project details
- <kbd>pakku diff</kbd> &#9;» Compare different versions of your modpack
+ <kbd>pakku ls</kbd> &#9;&#9;» List project
+ <kbd>pakku insp</kbd> &#9;&#9;» Inspect project details
+ <kbd>pakku diff</kbd> &#9;&#9;» Compare different versions of your modpack
 </pre>
 
 ##### Development environment
 <pre>
- <kbd>pakku init</kbd> &#9;» Create a new modpack
+ <kbd>pakku init</kbd> &#9;&#9;» Create a new modpack
  <kbd>pakku import</kbd> &#9;» Import existing modpacks
  <kbd>pakku fetch</kbd> &#9;» Set up or update your development environment
- <kbd>pakku sync</kbd> &#9;» Sync your local project files with your modpack
+ <kbd>pakku sync</kbd> &#9;&#9;» Sync your local project files with your modpack
 </pre>
 
 ##### Modpack distribution
