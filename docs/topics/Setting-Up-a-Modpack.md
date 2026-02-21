@@ -17,12 +17,19 @@ This will ask you to enter:
 1. The name of the modpack.
 2. The Minecraft versions supported by the modpack.
 3. The mod loaders and their versions supported by the modpack.
-4. The targeted platform of the modpack.
+4. The modpack's target. (One of `curseforge`, `modrinth` or `multiplatform`.)
 
-It will also set the version of the modpack to `0.0.1` and add `config` folder to the overrides.
+- If your target is `curseforge` or `multiplatform`, you will also need to set up your CurseForge API key. See [](#configuring-curseforge-access) for more details on this.
 
-If you made a mistake, you can change the properties of the modpack
-using the [`pakku set`](pakku-set.md) command.
+It will also set the version of the modpack to `0.0.1` and add the `config` directory to your [overrides](Pakku-Terminology.md#override).
+
+If you are in a non-interactive environment, consider using the command's options:
+
+<include from="pakku-init.md" element-id="snippet-options"></include>
+
+If you made a mistake during this process, you have these options:
+1. to change the Minecraft version, mod loaders, or target, use the [`pakku set`](pakku-set.md) command,
+2. to change the modpack name, author, description, modpack version and other properties modify the [config file (`pakku.json`)](Config-File.md) or use the [`pakku cfg`](pakku-cfg.md) command.
 
 ## Importing an Existing Modpack
 
@@ -41,7 +48,6 @@ Pakku automatically sets the targeted platform of your modpack based on the file
 {style="note"}
 
 ## Migrating Modpack's Platform or Importing as Multiplatform Modpack
-
 
 You can import a CurseForge modpack as a Modrinth modpack or vice versa by doing the following:
 
@@ -109,12 +115,3 @@ or use the [`pakku credentials set`](pakku-credentials-set.md) command:
 
    > In the Bash shell, make sure to escape the dollar symbols (`$`) or put the API key in single quotes: `'<key>'`.
    {style="warning"}
-
-<seealso style="cards">
-   <category ref="related">
-       <a href="Config-File.md"></a>
-       <a href="Lock-File.md"></a>
-       <a href="Credentials-File.md"></a>
-   </category>
-</seealso>
-
