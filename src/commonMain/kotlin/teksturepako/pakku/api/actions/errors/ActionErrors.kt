@@ -214,6 +214,8 @@ data class NoFiles(val project: Project, val lockFile: LockFile) : ActionError()
         "Make sure the project complies these requirements.",
         newlines = true
     )
+
+    override fun shortMessage(arg: String) = "No files attached."
 }
 
 data class VersionsDoNotMatch(val project: Project) : ActionError()
