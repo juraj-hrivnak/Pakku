@@ -19,6 +19,7 @@ import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents.Formats.RFC_1123
+import teksturepako.pakku.api.actions.errors.NoFiles
 import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.actions.errors.VersionsDoNotMatch
 import teksturepako.pakku.api.data.ConfigFile
@@ -213,10 +214,15 @@ private tailrec fun Terminal.insp(project: Project?, arg: String, lockFile: Lock
             cell(Text("Project Files", overflowWrap = OverflowWrap.BREAK_WORD, whitespace = Whitespace.NORMAL))
             cell(verticalLayout {
                 projectFiles?.asIterable()?.let { cellsFrom(it) }
-                if (project.versionsDoNotMatchAcrossProviders(project.getProviders()))
+                if (!project.hasNoFiles() && project.versionsDoNotMatchAcrossProviders(project.getProviders()))
                 {
                     cell("")
                     cell(this@insp.processShortErrorMsg(VersionsDoNotMatch(project)))
+                }
+                else if (project.hasNoFiles())
+                {
+                    cell("")
+                    cell(this@insp.processShortErrorMsg(NoFiles(project, lockFile)))
                 }
             })
         }
