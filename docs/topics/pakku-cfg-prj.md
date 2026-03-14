@@ -36,6 +36,9 @@ Configure projects
 `-u`, `--update-strategy`
 : Change the update strategy of a project
 
+`-vr`, `--version-resolution`
+: Change the version resolution strategy of a project
+
 `-r`, `--redistributable`
 : Change whether the project can be redistributed
 
