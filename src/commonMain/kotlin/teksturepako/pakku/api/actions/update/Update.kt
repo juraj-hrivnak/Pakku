@@ -2,6 +2,7 @@ package teksturepako.pakku.api.actions.update
 
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.onFailure
+import com.unascribed.flexver.FlexVerComparator
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import teksturepako.pakku.api.actions.errors.ActionError
@@ -11,6 +12,7 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.UpdateStrategy
+import teksturepako.pakku.api.projects.VersionResolutionStrategy
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.io.mapAsync
 
@@ -91,9 +93,17 @@ fun combineProjects(
                 // prefer mc version higher in the lock file
                 mcVersions.indexOfFirst { it in file.mcVersions }.let { if (it == -1) mcVersions.size else it }
             }
-            .thenByDescending {
-                // prefer newer file
-                it.datePublished
+            .thenComparator { a, b ->
+                // Choose sorting method based on versionResolutionStrategy
+                when (accProject.versionResolutionStrategy) {
+                    VersionResolutionStrategy.FLEXVER ->
+                        // FlexVerComparator.compare returns negative if a < b, positive if a > b
+                        // We need descending order (newest first), so negate the result
+                        -FlexVerComparator.compare(a.fileName, b.fileName)
+                    VersionResolutionStrategy.DATE ->
+                        // Sort by date published in descending order (newest first)
+                        b.datePublished.compareTo(a.datePublished)
+                }
             }
         )
 

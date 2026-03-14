@@ -13,6 +13,7 @@ import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
+import teksturepako.pakku.api.projects.VersionResolutionStrategy
 import teksturepako.pakku.io.*
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -147,6 +148,7 @@ data class ConfigFile(
         var type: ProjectType? = null,
         var side: ProjectSide? = null,
         @SerialName("update_strategy") var updateStrategy: UpdateStrategy? = null,
+        @SerialName("version_resolution_strategy") var versionResolutionStrategy: VersionResolutionStrategy? = null,
         @SerialName("redistributable") var redistributable: Boolean? = null,
         var subpath: String? = null,
         var aliases: MutableSet<String>? = null,
