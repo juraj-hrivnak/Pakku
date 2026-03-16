@@ -39,7 +39,6 @@ data class Project(
     val id: MutableMap<String, String>,
 
     @SerialName("update_strategy") var updateStrategy: UpdateStrategy = UpdateStrategy.LATEST,
-    @SerialName("version_resolution_strategy") var versionResolutionStrategy: VersionResolutionStrategy = VersionResolutionStrategy.DATE,
     @SerialName("redistributable") var redistributable: Boolean = true,
 
     private var subpath: String? = null,
@@ -80,7 +79,6 @@ data class Project(
                 id = (this.id + other.id).toMutableMap(),
 
                 updateStrategy = this.updateStrategy,
-                versionResolutionStrategy = this.versionResolutionStrategy,
                 redistributable = this.redistributable && other.redistributable,
 
                 subpath = this.subpath ?: other.subpath,
@@ -233,7 +231,6 @@ data class Project(
             updateProperty(::type, config.type, input)
             updateProperty(::side, config.side, input)
             updateProperty(::updateStrategy, config.updateStrategy, input)
-            updateProperty(::versionResolutionStrategy, config.versionResolutionStrategy, input)
             updateProperty(::redistributable, config.redistributable, input)
             updateProperty(::subpath, config.subpath, input)
             updateProperty(::aliases, config.aliases, input)

@@ -12,7 +12,6 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.api.projects.VersionResolutionStrategy
 import teksturepako.pakku.api.projects.inheritPropertiesFrom
 import teksturepako.pakku.io.mapAsync
 
@@ -66,7 +65,7 @@ suspend fun updateMultipleProjectsWithFiles(
             ?.let { newProject -> combineProjects(accProject, newProject, GitHub.serialName, numberOfFiles) }
             ?: accProject
     }
-        .filter { it.updateStrategy == UpdateStrategy.LATEST && it !in projects }
+        .filter { (it.updateStrategy == UpdateStrategy.LATEST || it.updateStrategy == UpdateStrategy.FLEXVER) && it !in projects }
         .toMutableSet()
 }
 
@@ -94,13 +93,12 @@ fun combineProjects(
                 mcVersions.indexOfFirst { it in file.mcVersions }.let { if (it == -1) mcVersions.size else it }
             }
             .thenComparator { a, b ->
-                // Choose sorting method based on versionResolutionStrategy
-                when (accProject.versionResolutionStrategy) {
-                    VersionResolutionStrategy.FLEXVER ->
+                when (accProject.updateStrategy) {
+                    UpdateStrategy.FLEXVER ->
                         // FlexVerComparator.compare returns negative if a < b, positive if a > b
                         // We need descending order (newest first), so negate the result
                         -FlexVerComparator.compare(a.fileName, b.fileName)
-                    VersionResolutionStrategy.DATE ->
+                    else ->
                         // Sort by date published in descending order (newest first)
                         b.datePublished.compareTo(a.datePublished)
                 }

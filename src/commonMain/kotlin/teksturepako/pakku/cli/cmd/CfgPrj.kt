@@ -18,7 +18,6 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.api.projects.UpdateStrategy
-import teksturepako.pakku.api.projects.VersionResolutionStrategy
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 
@@ -47,10 +46,6 @@ class CfgPrj : CliktCommand("prj")
     private val updateStrategyOpt: UpdateStrategy? by option("-u", "--update-strategy")
         .help("Change the update strategy of a project")
         .enum<UpdateStrategy>()
-
-    private val versionResolutionOpt: VersionResolutionStrategy? by option("-vr", "--version-resolution")
-        .help("Change the version resolution strategy of a project")
-        .enum<VersionResolutionStrategy>()
 
     private val redistributableOpt: Boolean? by option("-r", "--redistributable")
         .help("Change whether the project can be redistributed")
@@ -92,12 +87,6 @@ class CfgPrj : CliktCommand("prj")
                 updateStrategyOpt?.let {
                     updateStrategy = it
                     terminal.pSuccess("'projects.$projectArg.update_strategy' set to '$it'")
-                    echo()
-                }
-
-                versionResolutionOpt?.let {
-                    versionResolutionStrategy = it
-                    terminal.pSuccess("'projects.$projectArg.version_resolution_strategy' set to '$it'")
                     echo()
                 }
 
