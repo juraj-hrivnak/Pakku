@@ -5,6 +5,11 @@
 
 ### Added
 
+- Added `FLEXVER` update strategy to determine the latest version using FlexVer parsing of file names
+    - `LATEST` (default): Uses the file's publication date to determine the latest version
+    - `FLEXVER`: Uses FlexVer parsing of file names to determine the latest version
+    - This is useful when files are published with delays, making the publication date unreliable
+    - Can be set per-project using `pakku cfg prj <project> -u flexver`
 - Added `export_server_side_projects_to_client` configuration option to control how server-side mods are handled in client modpack exports
     - **CurseForge behavior:**
         - When `false` (default): Server-side mods are excluded from manifest.json (CurseForge doesn't support env fields)

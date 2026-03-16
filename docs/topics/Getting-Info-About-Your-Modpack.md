@@ -66,7 +66,11 @@ The output contains the following info:
     indicates that a new version of the project is available.
     <format color="LightGreen">Green colored ^</format> 
     indicates that the project is up-to-date.
-    <format color="Red">Red colored ✖^</format>
+    <format color="Blue">Blue colored ~</format>
+    indicates that a new version (using FlexVer) of the project is available.
+    <format color="LightGreen">Green colored ~</format>
+    indicates that the project (using FlexVer) is up-to-date.
+    <format color="Red">Red colored ^✖</format>
     indicates that the project will not be updated.
     </td>
 </tr>

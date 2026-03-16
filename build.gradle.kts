@@ -104,6 +104,9 @@ kotlin {
                 // JNA Dependencies | Apache-2.0 OR LGPL-2.1+
                 implementation("net.java.dev.jna:jna:5.13.0")
                 implementation("net.java.dev.jna:jna-platform:5.13.0")
+
+                // FlexVer | CC0-1.0
+                implementation("com.unascribed:flexver-java:1.1.1")
             }
         }
 
