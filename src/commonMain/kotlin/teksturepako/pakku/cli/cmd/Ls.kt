@@ -14,6 +14,7 @@ import com.github.ajalt.mordant.terminal.info
 import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import teksturepako.pakku.api.actions.errors.NoFiles
 import teksturepako.pakku.api.actions.errors.VersionsDoNotMatch
 import teksturepako.pakku.api.actions.update.updateMultipleProjectsWithFiles
 import teksturepako.pakku.api.data.ConfigFile
@@ -101,11 +102,17 @@ class Ls : CliktCommand()
                     cell(project.type.name)
                     project.side?.let { cell(it.name) }
                 }
-                if (project.versionsDoNotMatchAcrossProviders(project.getProviders()))
+                if (!project.hasNoFiles() && project.versionsDoNotMatchAcrossProviders(project.getProviders()))
                 {
                     row {
                         cell("")
                         cell(terminal.processShortErrorMsg(VersionsDoNotMatch(project)))
+                    }
+                    row()
+                } else if (project.hasNoFiles()) {
+                    row {
+                        cell("")
+                        cell(terminal.processShortErrorMsg(NoFiles(project, lockFile)))
                     }
                     row()
                 }

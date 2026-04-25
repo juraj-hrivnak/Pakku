@@ -38,6 +38,11 @@ fun Project.getFlavoredUpdateMsg(theme: Theme, updatedProjects: MutableSet<Proje
         val symbol = theme.string("pakku.update_strategy.latest", "^")
         if (updatedProjects containProject this) blue(symbol) else brightGreen(symbol)
     }
+    UpdateStrategy.FLEXVER     ->
+    {
+        val symbol = theme.string("pakku.update_strategy.flexver", "~")
+        if (updatedProjects containProject this) blue(symbol) else brightGreen(symbol)
+    }
 //    UpdateStrategy.SAME_LATEST -> cyan(theme.string("pakku.update_strategy.same_latest", "*^"))
     UpdateStrategy.NONE        -> red(theme.string("pakku.update_strategy.none", "x^"))
 }

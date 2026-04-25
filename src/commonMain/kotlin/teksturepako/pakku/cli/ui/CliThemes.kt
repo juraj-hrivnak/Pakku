@@ -10,6 +10,7 @@ object CliThemes
         strings["pakku.warning_sign"] = "⚠"
 
         strings["pakku.update_strategy.latest"] = "^"
+        strings["pakku.update_strategy.flexver"] = "~"
         strings["pakku.update_strategy.same_latest"] = "★"
         strings["pakku.update_strategy.none"] = "x"
     }
@@ -23,6 +24,7 @@ object CliThemes
         strings["pakku.warning_sign"] = "!"
 
         strings["pakku.update_strategy.same_latest"] = "*"
+        strings["pakku.update_strategy.flexver"] = "~"
         strings["pakku.update_strategy.none"] = "x"
 
         strings["list.number.separator"] = "."
