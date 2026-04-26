@@ -3,38 +3,22 @@
 
 ## Unreleased
 
-### Added
+## v1.4.0
 
-- Added `FLEXVER` update strategy to determine the latest version using FlexVer parsing of file names
-    - `LATEST` (default): Uses the file's publication date to determine the latest version
-    - `FLEXVER`: Uses FlexVer parsing of file names to determine the latest version
-    - This is useful when files are published with delays, making the publication date unreliable
-    - Can be set per-project using `pakku cfg prj <project> -u flexver`
-- Added `export_server_side_projects_to_client` configuration option to control how server-side mods are handled in client modpack exports
-    - **CurseForge behavior:**
-        - When `false` (default): Server-side mods are excluded from manifest.json (CurseForge doesn't support env fields)
-        - When `true`: Server-side mods are included in manifest.json
-    - **Modrinth behavior (leverages native env field support):**
-        - Always includes all mods, uses env fields to express environment constraints
-        - When `false` (default): Server-side mods set `env.client="unsupported", env.server="required"` (correctly follows side constraints)
-        - When `true`: Server-side mods set `env.client="required", env.server="required"` (backward compatible, treated as BOTH-side)
-    - **Important:** This option only affects **projects** in the manifest, not override files
-      - `server-overrides/` directory is always exported (unless `--no-server` flag is used)
-    - **Migration:** Existing projects (with `lockfile_version: 1`) are automatically migrated to `true` for backward compatibility, and lockfile version is upgraded to `2`
-- Added `--no-server` flag to `pakku export` command for exporting modpacks without server content
-    - CurseForge: No effect (uses standard export behavior)
-    - Modrinth: Excludes server-side mods (server-overrides) and `server-overrides/` directory
-    - ServerPack: Skips export entirely when this flag is enabled
-- Modrinth exports now correctly set `env.client` and `env.server` fields for all mod types:
-    - CLIENT mods: `env.client = "required"`, `env.server = "unsupported"`
-    - SERVER mods: Respects `export_server_side_projects_to_client` configuration
-    - BOTH/untagged mods: `env.client = "required"`, `env.server = "required"`
-
-### Tests
-
-- Added comprehensive tests for export rules (`ExportRulesTest.kt`)
-- Added tests for configuration file parsing and migration (`ConfigFileTest.kt`)
-
+- Fixed bug which caused hash mismatches in `serverpack` exports of multiplatform modpacks.
+- Fixed support for `SERVER` side (only) projects, by @Gardelll in [#113](https://github.com/juraj-hrivnak/Pakku/pull/113)
+    - `export_server_side_projects_to_client` config option has been added. Defaults to `false` for new modpacks. For existing it's `true`, for backwards compatibility.
+- Implemented higher MC version preference in the update algorithm.
+  - Update selection now prefers files matching the Minecraft version listed higher in the lock file `mc_versions` list. See [#114](https://github.com/juraj-hrivnak/Pakku/pull/114).
+- Added `FLEXVER` update strategy, by @SettingDust in [#124](https://github.com/juraj-hrivnak/Pakku/pull/124)
+    - `LATEST` (default): Uses the file's publication date to determine the latest version,
+    - `FLEXVER`: Uses FlexVer parsing of file names to determine the latest version.
+    - This is useful when files are published with delays, making the publication date unreliable.
+    - Can be set per-project using `pakku cfg prj -u flexver <projects...>`
+- Added `--no-server` flag to `pakku export` command for pure client-only modpack exports, by @Gardelll.
+- Fixed Crash on `pakku ls` and `pakku insp`, when project has no file associated, by @RealMuffinTime in [#123](https://github.com/juraj-hrivnak/Pakku/pull/123)
+- Fixed issue with optional export rule chaining. (File Director support was not working because of this.)
+- Added bunch of tests.
 
 ## v1.3.3
 
