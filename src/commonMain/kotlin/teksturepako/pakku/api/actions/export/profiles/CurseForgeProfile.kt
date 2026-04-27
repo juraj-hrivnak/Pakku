@@ -6,7 +6,7 @@ import teksturepako.pakku.api.actions.export.rules.cfModpackRule
 import teksturepako.pakku.api.actions.export.rules.replacementRule
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.integration.autopackdirector.autoPackDirectorRule
-import teksturepako.pakku.integration.filedierector.fileDirectorRule
+import teksturepako.pakku.integration.filedirector.fileDirectorRule
 
 fun curseForgeProfile() = exportProfile(name = CurseForge.serialName, requiresPlatform = CurseForge) {
     rule { cfModpackRule() }

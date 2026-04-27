@@ -12,8 +12,8 @@ import teksturepako.pakku.api.actions.export.ruleResult
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
-import teksturepako.pakku.integration.filedierector.models.FileDirectorModel
-import teksturepako.pakku.integration.filedierector.models.FileDirectorModel.UrlEntry
+import teksturepako.pakku.integration.filedirector.models.FileDirectorModel
+import teksturepako.pakku.integration.filedirector.models.FileDirectorModel.UrlEntry
 
 fun ExportRuleScope.autoPackDirectorRule(
     excludedProviders: Set<Provider> = setOf(),

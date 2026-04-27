@@ -1,4 +1,4 @@
-package teksturepako.pakku.integration.filedierector.models
+package teksturepako.pakku.integration.filedirector.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
