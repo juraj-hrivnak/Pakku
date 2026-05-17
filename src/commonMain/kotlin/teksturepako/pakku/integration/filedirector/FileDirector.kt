@@ -1,4 +1,4 @@
-package teksturepako.pakku.integration.filedierector
+package teksturepako.pakku.integration.filedirector
 
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
 import teksturepako.pakku.api.actions.errors.ActionError
@@ -12,8 +12,8 @@ import teksturepako.pakku.api.actions.export.ruleResult
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
-import teksturepako.pakku.integration.filedierector.models.FileDirectorModel
-import teksturepako.pakku.integration.filedierector.models.FileDirectorModel.UrlEntry
+import teksturepako.pakku.integration.filedirector.models.FileDirectorModel
+import teksturepako.pakku.integration.filedirector.models.FileDirectorModel.UrlEntry
 
 fun ExportRuleScope.fileDirectorRule(
     excludedProviders: Set<Provider> = setOf(),
