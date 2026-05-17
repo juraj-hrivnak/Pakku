@@ -99,7 +99,7 @@ kotlin {
 
                 // JGit | BSD 3-clause OR EDL 1.0
                 // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-                implementation("org.eclipse.jgit:org.eclipse.jgit:5.13.3.202401111512-r")
+                implementation("org.eclipse.jgit:org.eclipse.jgit:5.13.4.202507202350-r")
 
                 // JNA Dependencies | Apache-2.0 OR LGPL-2.1+
                 implementation("net.java.dev.jna:jna:5.13.0")
