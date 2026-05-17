@@ -6,7 +6,7 @@ import teksturepako.pakku.api.actions.export.rules.mrModpackRule
 import teksturepako.pakku.api.actions.export.rules.replacementRule
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.integration.autopackdirector.autoPackDirectorRule
-import teksturepako.pakku.integration.filedierector.fileDirectorRule
+import teksturepako.pakku.integration.filedirector.fileDirectorRule
 
 fun modrinthProfile() = exportProfile(
     name = Modrinth.serialName, fileExtension = "mrpack", requiresPlatform = Modrinth
