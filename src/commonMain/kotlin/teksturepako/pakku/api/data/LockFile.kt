@@ -271,6 +271,31 @@ data class LockFile(
         this.projects = this.projects.inheritPropertiesFrom(configFile)
     }
 
+    /**
+     * Merges this parent [LockFile] with a local fork layer.
+     *
+     * Parent projects are kept unless they overlap with a local project slug or are excluded by slug, name, or non-null Pakku ID.
+     * Local projects are appended after parent projects, and the result is sorted alphabetically by project name.
+     */
+    fun mergedWithLocal(localLockFile: LockFile, localConfigFile: ConfigFile): LockFile
+    {
+        val localSlugs = localLockFile.projects.flatMap { it.slug.values }.toSet()
+        val keptParentProjects = this.projects
+            .filterNot { parentProject -> parentProject.slug.values.any { it in localSlugs } }
+            .filterNot { parentProject ->
+                parentProject.slug.values.any { it in localConfigFile.excludes }
+                        || parentProject.name.values.any { it in localConfigFile.excludes }
+                        || parentProject.pakkuId?.let { it in localConfigFile.excludes } == true
+            }
+            .map { it.inheritPropertiesFrom(localConfigFile) }
+
+        val projects = (keptParentProjects + localLockFile.projects)
+            .sortedBy { it.name.values.firstOrNull() }
+            .toMutableList()
+
+        return this.copy(projects = projects)
+    }
+
     // -- FILE I/O --
 
     companion object
@@ -284,6 +309,13 @@ data class LockFile(
         /** Reads [LockFile] and parses it, or returns a new [LockFile]. */
         fun readOrNew(): LockFile = decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
             .also { it.inheritConfig(ConfigFile.readOrNull()) }
+
+        /**
+         * Reads [LockFile] from the specified [path], or returns a new [LockFile].
+         *
+         * Unlike [readOrNew], this does not apply config inheritance. Fork parent lock files must remain unmodified by local config until merge time.
+         */
+        fun readOrNewFrom(path: Path): LockFile = decodeOrNew<LockFile>(LockFile(), path.toString())
 
         /** Reads [LockFile] and parses it to a [Result]. */
         suspend fun readToResult(): Result<LockFile, ActionError> =
