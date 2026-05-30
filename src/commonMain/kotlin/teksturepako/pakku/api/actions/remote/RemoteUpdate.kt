@@ -14,6 +14,7 @@ suspend fun remoteUpdate(
     onSync: suspend (FileAction) -> Unit,
     branch: String? = null,
     allowedTypes: Set<OverrideType>?,
+    forceCleanUp: Boolean = false,
 ): ActionError?
 {
     if (LockFile.exists()) return CouldNotInstallRemote()
@@ -27,7 +28,7 @@ suspend fun remoteUpdate(
 
     debug { println("syncing overrides") }
 
-    syncRemoteDirectory(onSync, allowedTypes)
+    syncRemoteDirectory(onSync, allowedTypes, forceCleanUp)
         ?.onError { return it }
 
     return null
