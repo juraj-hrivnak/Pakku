@@ -122,8 +122,14 @@ suspend fun ExportProfile.export(
 
         cleanUpDirectory(
             inputDirectory, cachedPaths,
-            onError = { onError(this, IOExportingError(it)) },
-            onAction = { action -> debug { println("[${this.name}] CleanUp $action") } }
+            onError = { error ->
+                if (error !is FileNotFound) {
+                    onError(this, error)
+                }
+            },
+            onAction = { action ->
+                debug { println("[${this.name}] CleanUp $action") }
+            }
         )
 
         outputZipFile
@@ -186,7 +192,7 @@ suspend fun List<RuleResult>.runEffects(
                     val action = measureTimedValue {
                         async {
                             packagingAction.action()?.let {
-                                onError(ExportingError(it))
+                                onError(it)
                             }
                         }
                     }
@@ -206,7 +212,7 @@ suspend fun List<RuleResult>.runEffects(
                     val action = measureTimedValue {
                         async(Dispatchers.IO) {
                             packagingAction.action().let { (file, error) ->
-                                if (error != null) onError(IOExportingError(error))
+                                if (error != null) onError(error)
                                 file
                             }
                         }
@@ -235,7 +241,7 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
                 val action = measureTimedValue {
                     async {
                         ruleResult.packaging.action()?.let {
-                            onError(ExportingError(it))
+                            onError(it)
                         }
                     }
                 }
@@ -251,7 +257,7 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
                 val action = measureTimedValue {
                     async(Dispatchers.IO) {
                         ruleResult.packaging.action().let { (file, error) ->
-                            if (error != null) onError(IOExportingError(error))
+                            if (error != null) onError(error)
                             file
                         }
                     }

@@ -67,7 +67,7 @@ suspend fun Path.copyRecursivelyTo(
 
 suspend fun Path.copyFileTo(
     destination: Path,
-    onAction: suspend (FileAction) -> Unit
+    onAction: suspend (FileAction) -> Unit = { }
 ): ActionError? = runCatching {
     if (this.hasUnsafePathComponents())
     {

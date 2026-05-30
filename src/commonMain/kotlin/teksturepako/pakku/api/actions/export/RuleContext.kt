@@ -3,6 +3,7 @@ package teksturepako.pakku.api.actions.export
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getError
+import com.github.michaelbull.result.mapError
 import com.github.michaelbull.result.onFailure
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
@@ -74,7 +75,11 @@ sealed class RuleContext(
                 }
 
             outputPath to outputPath.tryToResult { writeBytes(bytes) }
+                .mapError { error ->
+                    if (error !is AlreadyExists) error else null
+                }
                 .getError()
+
         })
     }
 
@@ -101,6 +106,9 @@ sealed class RuleContext(
                 }
 
             outputPath to outputPath.tryToResult { writeBytes(bytes) }
+                .mapError { error ->
+                    if (error !is AlreadyExists) error else null
+                }
                 .getError()
         })
     }
@@ -166,6 +174,9 @@ sealed class RuleContext(
 
             return ruleResult(message, Packaging.FileAction {
                 outputPath to inputPath.copyRecursivelyTo(outputPath, cleanUp = false)
+                    .let { error ->
+                        if (error !is AlreadyExists) error else null
+                    }
             })
         }
     }
@@ -198,7 +209,10 @@ sealed class RuleContext(
                         if (error !is AlreadyExists) return@FileAction outputPath to error
                     }
 
-                outputPath to manualOverride.path.copyFileTo(outputPath) { }
+                outputPath to manualOverride.path.copyFileTo(outputPath)
+                    ?.let { error ->
+                        if (error !is AlreadyExists) error else null
+                    }
             })
         }
     }

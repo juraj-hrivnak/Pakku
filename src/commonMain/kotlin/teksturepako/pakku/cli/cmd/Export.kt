@@ -2,7 +2,9 @@ package teksturepako.pakku.cli.cmd
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.deprecated
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
@@ -14,7 +16,7 @@ import com.github.michaelbull.result.getOrElse
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import teksturepako.pakku.api.actions.errors.IOExportingError
+import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.actions.export.exportDefaultProfiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
@@ -31,9 +33,11 @@ class Export : CliktCommand()
 {
     override fun help(context: Context) = "Export modpack"
 
-    private val showIOErrors: Boolean by option("--show-io-errors")
+    @Suppress("unused")
+    private val showIOErrors: Boolean by option("--show-io-errors", hidden = true)
         .help("Show file IO error on exporting. (These can be ignored most of the time.)")
         .flag()
+        .deprecated("Deprecated. Kept for backwards compatibility, but does nothing.")
 
     private val noServer: Boolean by option("--no-server")
         .help("Export modpack without server content. Modrinth: exclude server-overrides and SERVER mods; ServerPack: skip export.")
@@ -72,6 +76,8 @@ class Export : CliktCommand()
 
         launch { progressBar.execute() }
 
+        var fatal = false
+
         exportDefaultProfiles(
             onError = { profile, error ->
                 if (error is CurseForge.Unauthenticated)
@@ -79,10 +85,12 @@ class Export : CliktCommand()
                     terminal.promptForCurseForgeApiKey()?.onError { terminal.pError(it) }
                 }
 
-                if (showIOErrors || error !is IOExportingError)
-                {
-                    terminal.pError(error, prepend = "[${profile.name} profile]")
+                if (error.severity == ErrorSeverity.FATAL) {
+                    terminal.pError(error, prepend = "FATAL [${profile.name} profile]")
+                    fatal = true
                 }
+
+                terminal.pError(error, prepend = "[${profile.name} profile]")
             },
             onSuccess = { profile, file, duration ->
                 val fileSize = file.fileSize().toHumanReadableSize()
@@ -95,5 +103,7 @@ class Export : CliktCommand()
         progressBar.clear()
 
         echo()
+
+        if (fatal) throw ProgramResult(1)
     }
 }

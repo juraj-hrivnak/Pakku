@@ -48,6 +48,7 @@ data class NoUrl(val projectFile: ProjectFile) : ActionError()
 data class DownloadFailed(val path: Path?, val retryNumber: Int = 0) : ActionError()
 {
     override val rawMessage = "Failed to download '$path'. ${if (retryNumber > 0) "Retry number $retryNumber." else ""}"
+    override val severity = ErrorSeverity.FATAL
 }
 
 data class NoHashes(val path: Path?) : ActionError()
@@ -64,6 +65,7 @@ data class HashMismatch(val path: Path?, val originalHash: String, val newHash: 
         "New hash: $newHash",
         newlines = true,
     )
+    override val severity = ErrorSeverity.FATAL
 }
 
 data class CouldNotSave(val path: Path?, val reason: String? = "") : ActionError()
@@ -140,36 +142,6 @@ data class CouldNotExport(val profile: ExportProfile, val modpackFileName: Strin
     override val rawMessage = "Profile ${profile.name} ('$modpackFileName') could not be exported. $reason"
     override fun message(arg: String): String = "(${dim(modpackFileName)}) could not be exported. $reason"
     override val severity = ErrorSeverity.FATAL
-}
-
-data class IOExportingError(val underlyingError: ActionError) : ActionError()
-{
-    override val rawMessage = message(
-        "There was an file IO error while exporting. ",
-        underlyingError.rawMessage
-    )
-
-    override fun message(arg: String): String = message(
-        "There was an file IO error while exporting. ",
-        underlyingError.message()
-    )
-
-    override val severity = underlyingError.severity
-}
-
-data class ExportingError(val underlyingError: ActionError) : ActionError()
-{
-    override val rawMessage = message(
-        "There was an error while exporting. ",
-        underlyingError.rawMessage
-    )
-
-    override fun message(arg: String): String = message(
-        "There was an error while exporting. ",
-        underlyingError.message()
-    )
-
-    override val severity = underlyingError.severity
 }
 
 // -- ADDITION --
