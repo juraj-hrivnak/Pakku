@@ -45,7 +45,8 @@ suspend fun deleteOldFiles(
     val detectedProjectsDeferred = async {
         if (!shelve) return@async mapOf()
 
-        detectProjects(onError, lockFile, configFile, platforms)
+        //TODO: refactor, just ignores manual overrides for now, and resyncs them
+        detectProjects(onError, lockFile, configFile, platforms, setOf())
             .flatMap { project -> project.files }
             .map { projectFile ->
                 async x@ {

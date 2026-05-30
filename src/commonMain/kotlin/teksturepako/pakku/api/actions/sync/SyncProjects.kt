@@ -4,6 +4,7 @@ import kotlinx.coroutines.coroutineScope
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.overrides.ManualOverride
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.projects.Project
@@ -20,9 +21,10 @@ suspend fun syncProjects(
     lockFile: LockFile,
     configFile: ConfigFile?,
     platforms: List<Platform>,
+    manualOverrides: Set<ManualOverride>,
 ): SyncResult = coroutineScope {
 
-    val detectedProjects = detectProjects(onError, lockFile, configFile, platforms)
+    val detectedProjects = detectProjects(onError, lockFile, configFile, platforms, manualOverrides)
 
     val currentProjects = lockFile.getAllProjects().filterNot {
         it.slug.keys.firstOrNull() == GitHub.serialName && it.slug.keys.size == 1

@@ -21,6 +21,7 @@ import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.actions.sync.syncProjects
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.overrides.readManualOverrides
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
@@ -63,6 +64,8 @@ class Sync : CliktCommand()
             return@runBlocking
         }
 
+        val manualOverrides = readManualOverrides(configFile)
+
         val flagsUsed = additionsFlag || removalsFlag || updatesFlag
 
         val progressBar = progressBarLayout(spacing = 2) {
@@ -73,7 +76,7 @@ class Sync : CliktCommand()
 
         val (addedProjects, removedProjects, updatedProjects) = syncProjects(
             onError = { terminal.pError(it ) },
-            lockFile, configFile, platforms
+            lockFile, configFile, platforms, manualOverrides
         )
 
         progressBar.clear()

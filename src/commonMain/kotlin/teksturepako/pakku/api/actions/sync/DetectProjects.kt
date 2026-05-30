@@ -8,6 +8,7 @@ import teksturepako.pakku.api.actions.update.combineProjects
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.workingPath
+import teksturepako.pakku.api.overrides.ManualOverride
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.platforms.Platform
@@ -22,6 +23,7 @@ import teksturepako.pakku.io.tryOrNull
 import teksturepako.pakku.toPrettyString
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
@@ -32,7 +34,10 @@ suspend fun detectProjects(
     lockFile: LockFile,
     configFile: ConfigFile?,
     platforms: List<Platform>,
+    manualOverrides: Set<ManualOverride>
 ): Set<Project> = coroutineScope {
+
+    val manualOverridesPaths = manualOverrides.map { it.fullOutputPath.absolutePathString() }
 
     val defaultIgnoredPaths = listOf("saves", "screenshots")
     val allowedExtensions = listOf(".jar", ".zip")
@@ -41,14 +46,28 @@ suspend fun detectProjects(
         .filterNot { it == ProjectType.WORLD }
         .mapNotNull { projectType ->
             val prjTypeDir = Path(workingPath, projectType.getPathString(configFile))
-            if (prjTypeDir.notExists() || defaultIgnoredPaths.any { it in prjTypeDir.pathString }) return@mapNotNull null
+
+            if (
+                prjTypeDir.notExists() ||
+                defaultIgnoredPaths.any { it in prjTypeDir.pathString }
+            )
+            {
+                return@mapNotNull null
+            }
 
             prjTypeDir
         }
         .mapNotNull { dir ->
             dir.tryOrNull { path ->
                 path.toFile().walkTopDown().mapNotNull { file: File ->
-                    file.toPath().takeIf { it != dir }
+                    val resultFile = file.toPath().takeIf { it != dir } ?: return@mapNotNull null
+
+                    if (resultFile.absolutePathString() in manualOverridesPaths)
+                    {
+                        return@mapNotNull null
+                    }
+
+                    resultFile
                 }
             }
         }
