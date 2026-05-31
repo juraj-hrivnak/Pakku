@@ -21,6 +21,7 @@ import kotlin.io.path.pathString
 suspend fun syncRemoteDirectory(
     onSync: suspend (FileAction) -> Unit,
     allowedTypes: Set<OverrideType>?,
+    forceCleanUp: Boolean = false,
 ): ActionError? = coroutineScope {
 
     debug { println("reading config file") }
@@ -44,7 +45,7 @@ suspend fun syncRemoteDirectory(
             val inputPath = Path(Dirs.remoteDir.pathString, overridePath)
             val outputPath = Path(workingPath, overridePath)
 
-            inputPath.copyRecursivelyTo(outputPath, onSync)
+            inputPath.copyRecursivelyTo(outputPath, onSync, cleanUp = forceCleanUp)
         }
     }.awaitAll().toMultipleErrors()
 
