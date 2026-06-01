@@ -50,6 +50,18 @@ data class ConfigFile(
     /** A mutable map of _project slugs, names, IDs or filenames_ to _project configs_. */
     val projects: MutableMap<String, ProjectConfig> = mutableMapOf(),
 
+    /** Parent modpack metadata for forked packs. */
+    var parent: ParentConfig? = null,
+
+    /** SHA-256 hash of the parent lock file at the last successful sync. */
+    @SerialName("parent_lock_hash") var parentLockHash: String? = null,
+
+    /** SHA-256 hash of the parent config file at the last successful sync. */
+    @SerialName("parent_config_hash") var parentConfigHash: String? = null,
+
+    /** Parent project slugs or names excluded from exports. */
+    val excludes: MutableSet<String> = mutableSetOf(),
+
     /**
      * Controls whether server-side projects (mods with side: SERVER) should be exported to client modpacks.
      * - `true`: Server-side projects are included in client exports (backward compatible behavior)
@@ -59,6 +71,24 @@ data class ConfigFile(
     private var exportServerSideProjectsToClient: Boolean = false
 )
 {
+    @Serializable
+    data class ParentConfig(
+        val type: String = "git",
+        val id: String,
+        var version: String? = null,
+        val ref: String = "main",
+        @SerialName("ref_type") val refType: RefType = RefType.BRANCH,
+        @SerialName("remote_name") val remoteName: String = "origin"
+    )
+
+    @Serializable
+    enum class RefType
+    {
+        BRANCH,
+        TAG,
+        COMMIT
+    }
+
     // -- PACK --
 
     fun setName(name: String)
@@ -239,6 +269,8 @@ data class ConfigFile(
         fun existsAt(path: Path): Boolean = path.exists()
 
         fun readOrNew(): ConfigFile = decodeOrNew(ConfigFile(), "$workingPath/$FILE_NAME")
+
+        fun readOrNewFrom(path: Path): ConfigFile = decodeOrNew(ConfigFile(), path.toString())
 
         fun readOrNull() = decodeToResult<ConfigFile>("$workingPath/$FILE_NAME").getOrNull()
 
