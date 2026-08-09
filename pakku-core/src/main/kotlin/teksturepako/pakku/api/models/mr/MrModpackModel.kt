@@ -1,15 +1,15 @@
 package teksturepako.pakku.api.models.mr
 
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.*
+import io.ktor.http.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.ProjNotFound
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.http.RequestError
 import teksturepako.pakku.api.models.ModpackModel
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Modrinth
@@ -49,40 +49,70 @@ data class MrModpackModel(
         lockFile: LockFile, platforms: List<Platform>
     ): Result<Set<Project>, ActionError>
     {
+
         val projects = Modrinth.requestMultipleProjectsWithFilesFromHashes(
             this.files.map { it.hashes.sha1 }, "sha1"
         ).getOrElse { return Err(it) }
 
-        // CurseForge
-        return if (CurseForge in platforms)
+        if (CurseForge !in platforms)
         {
-            runBlocking {
-                debug { println("CurseForge sub-import") }
-
-                val projectToSlugs = projects.mapNotNull { project ->
-                    project.slug[Modrinth.serialName]?.let { project to it }
-                }
-
-                val cfProjects = projectToSlugs.map { (project, slug) ->
-                    async {
-                        Ok(CurseForge.requestProjectFromSlug(slug)
-                            .getOrElse { return@async Err(it) }
-                            .apply {
-                                files += CurseForge.requestFilesForProject(
-                                    lockFile.getMcVersions(), lockFile.getLoaders(), this, projectType = project.type
-                                ).getOrElse { return@async Err(it) }
-                            }
-                        )
-                    }
-                }.awaitAll().map { result ->
-                    result.getOrElse { return@runBlocking Err(it) }
-                }
-
-                Ok(projects.combineWith(cfProjects))
-            }
+            return Ok(projects)
         }
-        else Ok(projects)
+
+        debug { println("CurseForge sub-import") }
+
+        val projectToSlugs = projects.mapNotNull { project ->
+            project.slug[Modrinth.serialName]?.let { project to it }
+        }
+
+        val cfProjects = coroutineScope {
+            projectToSlugs.map { (project, slug) ->
+                async {
+                    CurseForge.requestProjectFromSlug(slug).fold(
+                        success = { cfProject ->
+                            CurseForge.requestFilesForProject(
+                                lockFile.getMcVersions(), lockFile.getLoaders(), cfProject, projectType = project.type
+                            ).fold(
+                                success = { files ->
+                                    cfProject.apply {
+                                        this.files += files
+                                    }
+
+                                    Ok(cfProject)
+                                },
+
+                                failure = { error ->
+                                    Err(error)
+                                })
+                        },
+
+                        failure = { error ->
+                            if (error.isNotFound())
+                            {
+                                println(
+                                    "No ${project.type} {mr=**$slug**} found on CurseForge."
+                                )
+
+                                Ok(null)
+                            }
+                            else
+                            {
+                                Err(error)
+                            }
+                        })
+                }
+            }.awaitAll()
+        }
+
+        val foundCfProjects = cfProjects.mapNotNull { result ->
+            result.getOrElse { return Err(it) }
+        }
+
+        return Ok(projects.combineWith(foundCfProjects))
     }
+
+    private fun ActionError.isNotFound(): Boolean =
+        this is ProjNotFound || (this is RequestError && response.status == HttpStatusCode.NotFound)
 
     override suspend fun toLockFile() = LockFile(
         target = Modrinth.serialName,
