@@ -7,23 +7,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import teksturepako.pakku.api.actions.errors.ActionError
 import teksturepako.pakku.api.data.ConfigFile
+import teksturepako.pakku.api.data.workingPath
 import java.nio.file.Path
 
-suspend fun getOverridesAsync(configFile: ConfigFile): OverridesDeferred = coroutineScope {
-    val overrides: Deferred<List<Result<String, ActionError>>> = async {
-        configFile.getAllOverrides()
-    }
-
-    val serverOverrides: Deferred<List<Result<String, ActionError>>> = async {
-        configFile.getAllServerOverrides()
-    }
-
-    val clientOverrides: Deferred<List<Result<String, ActionError>>> = async {
-        configFile.getAllClientOverrides()
-    }
-
-    return@coroutineScope OverridesDeferred(overrides, serverOverrides, clientOverrides)
-}
+suspend fun getOverridesAsync(configFile: ConfigFile): OverridesDeferred =
+    getOverridesAsyncFrom(Path.of(workingPath), configFile)
 
 suspend fun getOverridesAsyncFrom(path: Path, configFile: ConfigFile): OverridesDeferred = coroutineScope {
     val overrides: Deferred<List<Result<String, ActionError>>> = async {
@@ -38,16 +26,17 @@ suspend fun getOverridesAsyncFrom(path: Path, configFile: ConfigFile): Overrides
         configFile.getAllClientOverridesFrom(path)
     }
 
-    return@coroutineScope OverridesDeferred(overrides, serverOverrides, clientOverrides)
+    return@coroutineScope OverridesDeferred(path, overrides, serverOverrides, clientOverrides)
 }
 
 data class OverridesDeferred(
+    val root: Path,
     val overrides: Deferred<List<Result<String, ActionError>>>,
     val serverOverrides: Deferred<List<Result<String, ActionError>>>,
     val clientOverrides: Deferred<List<Result<String, ActionError>>>,
 )
 {
-    suspend fun awaitAll(): List<Pair<String, OverrideType>>
+    suspend fun awaitAll(): List<OverrideSource>
     {
         val results = listOf(
             overrides.await() to OverrideType.OVERRIDE,
@@ -58,8 +47,10 @@ data class OverridesDeferred(
         return results.flatMap {
             it.first.mapNotNull { result ->
                 val pathString = result.get() ?: return@mapNotNull null
-                pathString to it.second
+                OverrideSource(root, pathString, it.second)
             }
         }
     }
 }
+
+data class OverrideSource(val root: Path, val path: String, val type: OverrideType)

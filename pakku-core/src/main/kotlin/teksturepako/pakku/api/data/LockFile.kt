@@ -275,9 +275,8 @@ data class LockFile(
     /** Merge a parent lock file with the local fork layer. */
     fun mergedWithLocal(localLockFile: LockFile, localConfigFile: ConfigFile): LockFile
     {
-        val localSlugs = localLockFile.projects.flatMap { it.slug.values }.toSet()
         val keptParentProjects = this.projects
-            .filterNot { parentProject -> parentProject.slug.values.any { it in localSlugs } }
+            .filterNot { parentProject -> localLockFile.projects.any { parentProject isAlmostTheSameAs it } }
             .filterNot { parentProject ->
                 parentProject.slug.values.any { it in localConfigFile.excludes }
                         || parentProject.name.values.any { it in localConfigFile.excludes }

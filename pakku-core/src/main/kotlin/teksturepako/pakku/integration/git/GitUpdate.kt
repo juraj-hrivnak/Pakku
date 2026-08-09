@@ -152,3 +152,58 @@ fun gitRefType(dir: Path, ref: String): ConfigFile.RefType =
             else -> ConfigFile.RefType.BRANCH
         }
     }
+
+suspend fun gitSyncRef(
+    dir: Path,
+    remoteName: String,
+    ref: String,
+    refType: ConfigFile.RefType,
+    onProgress: (taskName: String?, percentDone: Int) -> Unit,
+): ActionError? = coroutineScope {
+    val (progressMonitor, outputStream, writer) = pakkuGitProgressMonitor(onProgress)
+    try
+    {
+        Git.open(dir.toFile()).use { git ->
+            git.clean().setForce(true).setCleanDirectories(true).call()
+            val configuredRemote = git.repository.config.getString("remote", remoteName, "url")
+                ?.let { remoteName } ?: Constants.DEFAULT_REMOTE_NAME
+            git.fetch().setRemote(configuredRemote).setProgressMonitorIfPossible(progressMonitor).call()
+
+            val target = when (refType)
+            {
+                ConfigFile.RefType.BRANCH -> "refs/remotes/$configuredRemote/$ref"
+                ConfigFile.RefType.TAG -> "refs/tags/$ref"
+                ConfigFile.RefType.COMMIT -> ref
+            }
+            val objectId = git.repository.resolve(target)
+                ?: return@coroutineScope GitUpdateError(dir, "Ref '$ref' was not fetched")
+
+            git.checkout().setForced(true).setName(objectId.name).call()
+        }
+    }
+    catch (e: Exception)
+    {
+        debug { e.printStackTrace() }
+        return@coroutineScope GitUpdateError(dir, e.message)
+    }
+    finally
+    {
+        withContext(Dispatchers.IO) {
+            writer.close()
+            outputStream.close()
+        }
+    }
+    null
+}
+
+fun gitHeadTags(dir: Path): List<String> = Git.open(dir.toFile()).use { git ->
+    val repository = git.repository
+    val head = repository.resolve(Constants.HEAD) ?: return@use emptyList()
+    repository.refDatabase.getRefsByPrefix(Constants.R_TAGS)
+        .filter { ref ->
+            val peeled = repository.refDatabase.peel(ref)
+            (peeled.peeledObjectId ?: peeled.objectId) == head
+        }
+        .map { it.name.removePrefix(Constants.R_TAGS) }
+        .sorted()
+}

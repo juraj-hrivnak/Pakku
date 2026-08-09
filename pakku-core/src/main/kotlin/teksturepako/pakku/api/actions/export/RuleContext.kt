@@ -15,6 +15,7 @@ import teksturepako.pakku.api.data.json
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.ManualOverride
 import teksturepako.pakku.api.overrides.OverrideType
+import teksturepako.pakku.api.overrides.OverrideSource
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.io.copyFileTo
@@ -170,8 +171,7 @@ sealed class RuleContext(
 
     /** Rule context representing an 'override'. */
     data class ExportingOverride(
-        val path: String,
-        val type: OverrideType,
+        val source: OverrideSource,
         override val lockFile: LockFile,
         override val configFile: ConfigFile,
         override val workingSubDir: String,
@@ -179,6 +179,8 @@ sealed class RuleContext(
         override val deps: ExportDeps = defaultExportDeps(),
     ) : RuleContext(workingSubDir, lockFile, configFile, noServer, deps)
     {
+        val path get() = source.path
+        val type get() = source.type
         fun export(
             overridesDir: String? = type.folderName,
             allowedTypes: Set<OverrideType>? = null
@@ -186,7 +188,7 @@ sealed class RuleContext(
         {
             if (allowedTypes != null && type !in allowedTypes) return ignore()
 
-            val inputPath = Path(workingPath, path)
+            val inputPath = source.root.resolve(path)
             val outputPath = overridesDir?.let { getPath(it, path) } ?: getPath(path)
 
             val message = "export $type '$inputPath' to '$outputPath'"

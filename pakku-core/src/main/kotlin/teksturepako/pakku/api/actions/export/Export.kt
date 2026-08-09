@@ -15,6 +15,7 @@ import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.overrides.OverridesDeferred
 import teksturepako.pakku.api.overrides.getOverridesAsync
 import teksturepako.pakku.api.overrides.readManualOverrides
+import teksturepako.pakku.api.overrides.ManualOverride
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.debug
 import teksturepako.pakku.io.cleanUpDirectory
@@ -34,13 +35,15 @@ suspend fun exportDefaultProfiles(
     platforms: List<Platform>,
     noServer: Boolean = false,
     deps: ExportDeps = defaultExportDeps(),
+    parentOverrides: OverridesDeferred? = null,
+    manualOverrides: Collection<ManualOverride>? = null,
 ): List<Job>
 {
     return export(
         profiles = defaultProfiles,
         onError = { profile, error -> onError(profile, error) },
         onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
-        lockFile, configFile, platforms, noServer, deps
+        lockFile, configFile, platforms, noServer, deps, parentOverrides, manualOverrides
     )
 }
 
@@ -53,6 +56,8 @@ suspend fun export(
     platforms: List<Platform>,
     noServer: Boolean = false,
     deps: ExportDeps = defaultExportDeps(),
+    parentOverrides: OverridesDeferred? = null,
+    manualOverrides: Collection<ManualOverride>? = null,
 ): List<Job> = coroutineScope {
     val overrides = getOverridesAsync(configFile)
 
@@ -61,7 +66,7 @@ suspend fun export(
             profile.build(exportRuleScope(lockFile, configFile)).export(
                 onError = { profile, error -> onError(profile, error) },
                 onSuccess = { profile, path, duration -> onSuccess(profile, path, duration) },
-                lockFile, configFile, platforms, overrides, noServer, deps
+                lockFile, configFile, platforms, overrides, noServer, deps, parentOverrides, manualOverrides
             )
         }
     }
@@ -76,6 +81,8 @@ suspend fun ExportProfile.export(
     overrides: OverridesDeferred,
     noServer: Boolean = false,
     deps: ExportDeps = defaultExportDeps(),
+    parentOverrides: OverridesDeferred? = null,
+    manualOverrides: Collection<ManualOverride>? = null,
 )
 {
     if (this.requiresPlatform != null && this.requiresPlatform !in platforms) return
@@ -109,7 +116,7 @@ suspend fun ExportProfile.export(
 
         val results: List<RuleResult> = this.rules
             .filterNotNull()
-            .produceRuleResults(lockFile, configFile, this.name, overrides, noServer, deps)
+            .produceRuleResults(lockFile, configFile, this.name, overrides, noServer, deps, parentOverrides, manualOverrides)
 
         val cachedPaths: List<Path> = results
             .runEffects { error ->
@@ -167,6 +174,7 @@ suspend fun ExportProfile.export(
 suspend fun List<RuleResult>.runEffects(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
+    var previousFileAction: Deferred<Path?>? = null
     this@runEffects.mapNotNull { ruleResult ->
         when (val packagingAction = ruleResult.packaging)
         {
@@ -214,8 +222,10 @@ suspend fun List<RuleResult>.runEffects(
             {
                 if (ruleResult.ruleContext !is Finished)
                 {
+                    val predecessor = previousFileAction
                     val action = measureTimedValue {
                         async(Dispatchers.IO) {
+                            predecessor?.await()
                             packagingAction.action().let { (file, error) ->
                                 if (error != null) onError(error)
                                 file
@@ -227,6 +237,7 @@ suspend fun List<RuleResult>.runEffects(
                         debug { println("$ruleResult in ${action.duration}") }
                     }
 
+                    previousFileAction = action.value
                     action.value
                 }
                 else null
@@ -287,7 +298,8 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
  */
 suspend fun List<ExportRule>.produceRuleResults(
     lockFile: LockFile, configFile: ConfigFile, workingSubDir: String, overrides: OverridesDeferred, noServer: Boolean = false,
-    deps: ExportDeps = defaultExportDeps(),
+    deps: ExportDeps = defaultExportDeps(), parentOverrides: OverridesDeferred? = null,
+    manualOverrides: Collection<ManualOverride>? = null,
 ): List<RuleResult> = coroutineScope {
 
     val results = this@produceRuleResults.fold(listOf<Pair<ExportRule, RuleContext>>()) { acc, rule ->
@@ -295,10 +307,10 @@ suspend fun List<ExportRule>.produceRuleResults(
             // Projects
             if (project.export == false) return@mapNotNull null
             rule to RuleContext.ExportingProject(project, lockFile, configFile, workingSubDir, noServer, deps)
-        } + overrides.awaitAll().map { (overridePath, overrideType) ->
+        } + (parentOverrides?.awaitAll().orEmpty() + overrides.awaitAll()).map { source ->
             // Overrides
-            rule to RuleContext.ExportingOverride(overridePath, overrideType, lockFile, configFile, workingSubDir, noServer, deps)
-        } + readManualOverrides(configFile).map { projectOverride ->
+            rule to RuleContext.ExportingOverride(source, lockFile, configFile, workingSubDir, noServer, deps)
+        } + (manualOverrides ?: readManualOverrides(configFile)).map { projectOverride ->
             // Manual overrides
             rule to RuleContext.ExportingManualOverride(projectOverride, lockFile, configFile, workingSubDir, noServer, deps)
         }

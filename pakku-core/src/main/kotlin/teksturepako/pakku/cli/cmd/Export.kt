@@ -23,6 +23,9 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.data.parentConfigFilePath
 import teksturepako.pakku.api.data.parentLockFilePath
 import teksturepako.pakku.api.data.sha256
+import teksturepako.pakku.api.overrides.getOverridesAsyncFrom
+import teksturepako.pakku.api.overrides.readManualOverrides
+import teksturepako.pakku.api.overrides.readManualOverridesFrom
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
@@ -68,6 +71,8 @@ class Export : CliktCommand()
             terminal.pSuccess("[Migration] Upgraded lockfile to version 2. Added 'export_server_side_projects_to_client=true' for backward compatibility.")
         }
 
+        var parentOverrides: teksturepako.pakku.api.overrides.OverridesDeferred? = null
+        var forkManualOverrides: Collection<teksturepako.pakku.api.overrides.ManualOverride>? = null
         val exportLockFile = if (migratedConfig.parent != null)
         {
             val parentLockPath = parentLockFilePath()
@@ -102,6 +107,29 @@ class Export : CliktCommand()
                 echo()
                 return@runBlocking
             }
+
+            val parentConfig = parentConfigPath?.let { path ->
+                ConfigFile.readToResultFrom(path).getOrElse {
+                    terminal.pError(it)
+                    echo()
+                    return@runBlocking
+                }
+            }
+            if (parentConfig != null)
+            {
+                parentLockFile.inheritConfig(parentConfig)
+                val localPaths = migratedConfig.paths.toMap()
+                migratedConfig.paths.clear()
+                migratedConfig.paths.putAll(parentConfig.paths)
+                migratedConfig.paths.putAll(localPaths)
+                parentOverrides = getOverridesAsyncFrom(parentLockPath.parent, parentConfig)
+            }
+
+            val parentManual = readManualOverridesFrom(parentLockPath.parent, parentConfig)
+            val localManual = readManualOverrides(migratedConfig)
+            forkManualOverrides = (parentManual + localManual)
+                .associateBy { it.type to it.relativeOutputPath.normalize() }
+                .values
 
             parentLockFile.mergedWithLocal(migratedLockFile, migratedConfig)
         }
@@ -140,7 +168,8 @@ class Export : CliktCommand()
 
                 terminal.pSuccess("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
             },
-            exportLockFile, migratedConfig, platforms, noServer
+            exportLockFile, migratedConfig, platforms, noServer,
+            parentOverrides = parentOverrides, manualOverrides = forkManualOverrides
         ).joinAll()
 
         progressBar.clear()

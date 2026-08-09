@@ -25,14 +25,14 @@ import teksturepako.pakku.cli.ui.pDanger
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pMsg
 import teksturepako.pakku.cli.ui.pSuccess
-import teksturepako.pakku.integration.git.gitFetchCheckout
 import teksturepako.pakku.integration.git.gitClone
 import teksturepako.pakku.integration.git.gitHeadCommit
+import teksturepako.pakku.integration.git.gitHeadTags
 import teksturepako.pakku.integration.git.gitIsClean
 import teksturepako.pakku.integration.git.gitRefType
 import teksturepako.pakku.integration.git.gitRemoteUrl
 import teksturepako.pakku.integration.git.gitSetRemoteUrl
-import teksturepako.pakku.integration.git.gitUpdate
+import teksturepako.pakku.integration.git.gitSyncRef
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.createFile
@@ -44,6 +44,8 @@ import kotlin.io.path.notExists
 import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.io.path.moveTo
+import java.util.UUID
 
 class Fork : CliktCommand()
 {
@@ -68,8 +70,9 @@ private class ForkInit : CliktCommand(name = "init")
     private val refTypeOpt: String? by option("--ref-type").choice("branch", "tag", "commit").help("Type of ref to track")
     private val remoteOpt: String by option("--remote").help("Remote name").default("origin")
 
+    @OptIn(ExperimentalPathApi::class)
     override fun run(): Unit = runBlocking {
-        val config = ConfigFile.readOrNull() ?: ConfigFile()
+        val config = readConfigSafely() ?: return@runBlocking
         if (config.parent != null)
         {
             terminal.pDanger("Parent already configured: ${config.parent?.id}")
@@ -120,19 +123,33 @@ private class ForkInit : CliktCommand(name = "init")
         }
 
         val cloneUrl = fromPathOpt ?: sourceUrl
+        val cloneDir = parentDir.resolveSibling("${parentDir.fileName}.init-${UUID.randomUUID()}")
         terminal.pMsg("Cloning parent repository '$sourceUrl'")
-        gitClone(cloneUrl, parentDir, refNameOpt) { _, _ -> }?.let {
+        val requestedRefType = refTypeOpt?.uppercase()?.let { ConfigFile.RefType.valueOf(it) }
+            ?: refNameOpt.takeIf { it.matches(Regex("[0-9a-fA-F]{7,40}")) }?.let { ConfigFile.RefType.COMMIT }
+        gitClone(cloneUrl, cloneDir, if (requestedRefType == ConfigFile.RefType.COMMIT) null else refNameOpt) { _, _ -> }?.let {
+            if (cloneDir.exists()) cloneDir.deleteRecursively()
             terminal.pError(it)
             return@runBlocking
         }
-        if (fromPathOpt != null) gitSetRemoteUrl(parentDir, remoteOpt, sourceUrl)
+        if (fromPathOpt != null) gitSetRemoteUrl(cloneDir, "origin", sourceUrl)
+        if (requestedRefType == ConfigFile.RefType.COMMIT)
+        {
+            gitSyncRef(cloneDir, remoteOpt, refNameOpt, ConfigFile.RefType.COMMIT) { _, _ -> }?.let {
+                cloneDir.deleteRecursively()
+                terminal.pError(it)
+                return@runBlocking
+            }
+        }
 
-        val commit = runCatching { gitHeadCommit(parentDir) }.getOrElse {
+        val commit = runCatching { gitHeadCommit(cloneDir) }.getOrElse {
+            cloneDir.deleteRecursively()
             terminal.pDanger("Could not determine HEAD commit of parent repository")
             return@runBlocking
         }
         if (!commit.matches(Regex("[0-9a-fA-F]{40}")))
         {
+            cloneDir.deleteRecursively()
             terminal.pDanger("Invalid HEAD commit of parent repository: $commit")
             return@runBlocking
         }
@@ -140,11 +157,16 @@ private class ForkInit : CliktCommand(name = "init")
             id = sourceUrl,
             version = commit.take(8),
             ref = refNameOpt,
-            refType = refTypeOpt?.uppercase()?.let { ConfigFile.RefType.valueOf(it) } ?: gitRefType(parentDir, refNameOpt),
-            remoteName = remoteOpt
+            refType = requestedRefType ?: gitRefType(cloneDir, refNameOpt),
+            remoteName = "origin"
         )
+        cloneDir.moveTo(parentDir)
         updateParentHashes(config)
-        config.write()
+        config.write()?.let {
+            parentDir.deleteRecursively()
+            terminal.pError(it)
+            return@runBlocking
+        }
         addParentToGitignore()
 
         terminal.pSuccess("Fork initialized")
@@ -157,8 +179,9 @@ private class ForkSync : CliktCommand(name = "sync")
 {
     override fun help(context: Context) = "Sync the immutable parent checkout"
 
+    @OptIn(ExperimentalPathApi::class)
     override fun run(): Unit = runBlocking {
-        val config = ConfigFile.readOrNull() ?: ConfigFile()
+        val config = readConfigSafely() ?: return@runBlocking
         val parent = config.parent ?: run {
             terminal.pDanger("No parent configured. Run 'pakku fork init' first.")
             return@runBlocking
@@ -167,19 +190,23 @@ private class ForkSync : CliktCommand(name = "sync")
         if (Dirs.parentDir.notExists())
         {
             terminal.pMsg("Parent repository not found. Cloning...")
-            gitClone(parent.id, Dirs.parentDir, parent.ref) { _, _ -> }?.let {
+            val cloneDir = Dirs.parentDir.resolveSibling("${Dirs.parentDir.fileName}.sync-${UUID.randomUUID()}")
+            gitClone(parent.id, cloneDir, if (parent.refType == ConfigFile.RefType.COMMIT) null else parent.ref) { _, _ -> }?.let {
+                if (cloneDir.exists()) cloneDir.deleteRecursively()
                 terminal.pError(it)
                 return@runBlocking
             }
+            gitSyncRef(cloneDir, parent.remoteName, parent.ref, parent.refType) { _, _ -> }?.let {
+                cloneDir.deleteRecursively()
+                terminal.pError(it)
+                return@runBlocking
+            }
+            cloneDir.moveTo(Dirs.parentDir)
         }
         else
         {
             terminal.pMsg("Fetching parent updates")
-            val error = when (parent.refType)
-            {
-                ConfigFile.RefType.BRANCH -> gitUpdate(Dirs.parentDir, parent.ref) { _, _ -> }
-                ConfigFile.RefType.TAG, ConfigFile.RefType.COMMIT -> gitFetchCheckout(Dirs.parentDir, parent.ref) { _, _ -> }
-            }
+            val error = gitSyncRef(Dirs.parentDir, parent.remoteName, parent.ref, parent.refType) { _, _ -> }
             error?.let {
                 terminal.pError(it)
                 return@runBlocking
@@ -197,7 +224,7 @@ private class ForkSync : CliktCommand(name = "sync")
         }
         config.parent?.version = commit.take(8)
         updateParentHashes(config)
-        config.write()
+        config.write()?.let { terminal.pError(it); return@runBlocking }
 
         terminal.pSuccess("Parent sync complete")
         terminal.pMsg("Commit: ${commit.take(8)}")
@@ -210,7 +237,7 @@ private class ForkShow : CliktCommand(name = "show")
 
     override fun run()
     {
-        val config = ConfigFile.readOrNull() ?: ConfigFile()
+        val config = readConfigSafely() ?: return
         val parent = config.parent ?: run {
             terminal.pMsg("No fork configured.")
             return
@@ -220,6 +247,8 @@ private class ForkShow : CliktCommand(name = "show")
         terminal.pMsg("Ref: ${parent.ref} (${parent.refType.name.lowercase()})")
         terminal.pMsg("Remote: ${parent.remoteName}")
         terminal.pMsg("Last synced commit: ${parent.version ?: "never synced"}")
+        runCatching { gitHeadTags(Dirs.parentDir) }.getOrDefault(emptyList()).takeIf { it.isNotEmpty() }
+            ?.let { terminal.pMsg("Upstream tag${if (it.size == 1) "" else "s"}: ${it.joinToString()}") }
         config.parentLockHash?.let { terminal.pMsg("Parent lock hash: $it") }
         if (config.excludes.isNotEmpty()) terminal.pMsg("Excluded projects: ${config.excludes.joinToString()}")
     }
@@ -231,7 +260,7 @@ private class ForkUnset : CliktCommand(name = "unset")
 
     @OptIn(ExperimentalPathApi::class)
     override fun run(): Unit = runBlocking {
-        val config = ConfigFile.readOrNull() ?: ConfigFile()
+        val config = readConfigSafely() ?: return@runBlocking
         if (config.parent == null)
         {
             terminal.pMsg("No fork configured.")
@@ -239,12 +268,12 @@ private class ForkUnset : CliktCommand(name = "unset")
         }
         if (!terminal.ynPrompt("Do you really want to remove the fork parent?")) return@runBlocking
 
-        if (Dirs.parentDir.exists()) Dirs.parentDir.deleteRecursively()
         config.parent = null
         config.parentLockHash = null
         config.parentConfigHash = null
         config.excludes.clear()
-        config.write()
+        config.write()?.let { terminal.pError(it); return@runBlocking }
+        if (Dirs.parentDir.exists()) Dirs.parentDir.deleteRecursively()
         terminal.pDanger("Fork configuration removed")
     }
 }
@@ -255,7 +284,7 @@ private class ForkPromote : CliktCommand(name = "promote")
     private val projectsArgs: List<String> by argument("project").multiple(required = true)
 
     override fun run(): Unit = runBlocking {
-        val config = ConfigFile.readOrNull() ?: ConfigFile()
+        val config = readConfigSafely() ?: return@runBlocking
         if (config.parent == null)
         {
             terminal.pDanger("No parent configured. Run 'pakku fork init' first.")
@@ -265,8 +294,14 @@ private class ForkPromote : CliktCommand(name = "promote")
             terminal.pDanger("Parent lock file not found. Run 'pakku fork sync' first.")
             return@runBlocking
         }
-        val parentLock = LockFile.readOrNewFrom(parentLockPath).getOrElse { LockFile() }
-        val localLock = LockFile.readOrNew().getOrElse { LockFile() }
+        val parentLock = LockFile.readOrNewFrom(parentLockPath).getOrElse {
+            terminal.pError(it)
+            return@runBlocking
+        }
+        val localLock = LockFile.readOrNew().getOrElse {
+            terminal.pError(it)
+            return@runBlocking
+        }
         val missing = mutableListOf<String>()
 
         projectsArgs.forEach { input ->
@@ -280,7 +315,7 @@ private class ForkPromote : CliktCommand(name = "promote")
             return@runBlocking
         }
 
-        localLock.write()
+        localLock.write()?.let { terminal.pError(it); return@runBlocking }
         terminal.pSuccess("Promoted ${projectsArgs.size} project(s) to the local lock file")
     }
 }
@@ -291,9 +326,10 @@ private class ForkExclude : CliktCommand(name = "exclude")
     private val projectsArgs: List<String> by argument("project").multiple(required = true)
 
     override fun run(): Unit = runBlocking {
-        val config = ConfigFile.readOrNull() ?: ConfigFile()
+        val config = readConfigSafely() ?: return@runBlocking
+        if (config.parent == null) { terminal.pDanger("No parent configured."); return@runBlocking }
         config.excludes.addAll(projectsArgs)
-        config.write()
+        config.write()?.let { terminal.pError(it); return@runBlocking }
         terminal.pSuccess("Excluded ${projectsArgs.size} parent project(s)")
     }
 }
@@ -304,9 +340,10 @@ private class ForkInclude : CliktCommand(name = "include")
     private val projectsArgs: List<String> by argument("project").multiple(required = true)
 
     override fun run(): Unit = runBlocking {
-        val config = ConfigFile.readOrNull() ?: ConfigFile()
+        val config = readConfigSafely() ?: return@runBlocking
+        if (config.parent == null) { terminal.pDanger("No parent configured."); return@runBlocking }
         config.excludes.removeAll(projectsArgs.toSet())
-        config.write()
+        config.write()?.let { terminal.pError(it); return@runBlocking }
         terminal.pSuccess("Re-included ${projectsArgs.size} parent project(s)")
     }
 }
@@ -315,6 +352,14 @@ private fun updateParentHashes(config: ConfigFile)
 {
     config.parentLockHash = parentLockFilePath()?.let { sha256(it) }
     config.parentConfigHash = parentConfigFilePath()?.let { sha256(it) }
+}
+
+private fun CliktCommand.readConfigSafely(): ConfigFile?
+{
+    return ConfigFile.readOrNew().getOrElse {
+        terminal.pError(it)
+        null
+    }
 }
 
 private fun addParentToGitignore()
