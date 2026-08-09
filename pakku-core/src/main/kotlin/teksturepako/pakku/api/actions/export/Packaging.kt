@@ -11,7 +11,7 @@ sealed class Packaging
     data object EmptyAction : Packaging()
     data class Action(val action: suspend () -> ActionError?) : Packaging()
     data class FileAction(
-        val path: Path? = null,
+        val path: Path,
         val action: suspend () -> Pair<Path, ActionError?>,
     ) : Packaging()
 }

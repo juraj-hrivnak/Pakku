@@ -175,7 +175,6 @@ suspend fun List<RuleResult>.runEffects(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
     val previousFileActions = mutableMapOf<Path, Deferred<Path?>>()
-    var previousUnscopedFileAction: Deferred<Path?>? = null
     this@runEffects.mapNotNull { ruleResult ->
         when (val packagingAction = ruleResult.packaging)
         {
@@ -223,18 +222,11 @@ suspend fun List<RuleResult>.runEffects(
             {
                 if (ruleResult.ruleContext !is Finished)
                 {
-                    val outputPath = packagingAction.path?.toAbsolutePath()?.normalize()
-                    val predecessors = if (outputPath == null)
-                    {
-                        previousFileActions.values + listOfNotNull(previousUnscopedFileAction)
-                    }
-                    else
-                    {
-                        listOfNotNull(previousFileActions[outputPath], previousUnscopedFileAction)
-                    }
+                    val outputPath = packagingAction.path.toAbsolutePath().normalize()
+                    val predecessor = previousFileActions[outputPath]
                     val action = measureTimedValue {
                         async(Dispatchers.IO) {
-                            predecessors.awaitAll()
+                            predecessor?.await()
                             packagingAction.action().let { (file, error) ->
                                 if (error != null) onError(error)
                                 file
@@ -246,8 +238,7 @@ suspend fun List<RuleResult>.runEffects(
                         debug { println("$ruleResult in ${action.duration}") }
                     }
 
-                    if (outputPath == null) previousUnscopedFileAction = action.value
-                    else previousFileActions[outputPath] = action.value
+                    previousFileActions[outputPath] = action.value
                     action.value
                 }
                 else null
