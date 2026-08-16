@@ -156,6 +156,9 @@ data class LockFile(
 
     fun isProjectAdded(project: Project): Boolean = this.projects.any { it isAlmostTheSameAs project }
 
+    fun addOrUpdate(project: Project): Boolean? =
+        if (isProjectAdded(project)) update(project) else add(project)
+
     fun update(project: Project): Boolean?
     {
         var updated: Boolean?

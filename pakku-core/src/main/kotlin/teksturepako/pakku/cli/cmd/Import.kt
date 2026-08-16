@@ -10,16 +10,16 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import com.github.michaelbull.result.get
 import com.github.michaelbull.result.getOrElse
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.errors.AlreadyAdded
 import teksturepako.pakku.api.actions.import.importModpackModel
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.withForkParent
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
+import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.cli.resolveDependencies
 import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
@@ -42,6 +42,11 @@ class Import : CliktCommand()
         }
 
         val lockFile = LockFile.readToResult().get() ?: modpackModel.toLockFile()
+        val effectiveLockFile = lockFile.withForkParent().getOrElse {
+            terminal.pError(it)
+            echo()
+            return@runBlocking
+        }
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.pError(it)
@@ -61,8 +66,8 @@ class Import : CliktCommand()
             return@runBlocking
         }
 
-        importedProjects.map { projectIn ->
-            launch {
+        for (projectIn in importedProjects)
+        {
                 projectIn.createAdditionRequest(
                     onError = { error ->
                         if (error !is AlreadyAdded)
@@ -75,7 +80,7 @@ class Import : CliktCommand()
                             }
                         }
                     },
-                    onSuccess = { project, _, replacing, reqHandlers ->
+                    onSuccess = { project, isRecommended, replacing, reqHandlers ->
                         val projMsg = project.getFullMsg()
                         val promptMessage = if (replacing == null)
                         {
@@ -88,20 +93,25 @@ class Import : CliktCommand()
                                     "$replacingMsg replaced with $projMsg"
                         }
 
-                        if (replacing == null) lockFile.add(project) else lockFile.update(project)
+                        if (replacing != null && !terminal.ynPrompt(promptMessage.first, isRecommended))
+                            return@createAdditionRequest
+
+                        lockFile.addOrUpdate(project)
+                        if (effectiveLockFile !== lockFile) effectiveLockFile.addOrUpdate(project)
                         lockFile.linkProjectToDependents(project)
 
                         if (depsFlag)
                         {
-                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                            project.resolveDependencies(
+                                terminal, reqHandlers, lockFile, projectProvider, platforms, effectiveLockFile = effectiveLockFile
+                            )
                         }
 
                         terminal.pSuccess("${project.getFullMsg()} ${promptMessage.second}")
                     },
-                    lockFile, platforms
+                    effectiveLockFile, platforms
                 )
-            }
-        }.joinAll()
+        }
 
         lockFile.write()?.onError { error ->
             terminal.pError(error)
