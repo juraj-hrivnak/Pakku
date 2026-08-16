@@ -1,5 +1,6 @@
 package teksturepako.pakku.api.data
 
+import com.github.michaelbull.result.get
 import kotlinx.coroutines.runBlocking
 import org.eclipse.jgit.api.Git
 import strikt.api.expectThat
@@ -12,6 +13,7 @@ import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.integration.git.gitHeadTags
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
+import teksturepako.pakku.io.writeToFile
 import kotlin.test.Test
 
 class ForkTest : PakkuTest()
@@ -37,6 +39,19 @@ class ForkTest : PakkuTest()
 
         expectThat(source.root).isEqualTo(parent)
         expectThat(source.path).isEqualTo("config/base.cfg")
+    }
+
+    @Test
+    fun `effective fork lock includes parent projects without changing local lock`(): Unit = runBlocking {
+        Dirs.parentDir.createDirectories()
+        val parentProject = project("parent-id", "parent-slug")
+        val parent = LockFile().apply { add(parentProject) }
+        writeToFile(parent, Dirs.parentDir.resolve(LockFile.FILE_NAME).toString(), overrideText = true)
+        ConfigFile(parent = ConfigFile.ParentConfig(id = "test")).write()
+        val local = LockFile()
+
+        expectThat(local.withForkParent().get()!!.getAllProjects()).containsExactly(parentProject)
+        expectThat(local.getAllProjects()).containsExactly()
     }
 
     @Test
