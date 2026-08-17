@@ -64,26 +64,19 @@ suspend fun deleteOldFiles(
             }
     }
 
-    val fileHashes = async { projectFiles
-        .map { projectFile ->
-            async x@ {
+    val fileHashes = async {
+        projectFiles
+            .mapAsyncNotNull(concurrency = FILE_IO_CONCURRENCY) x@{ projectFile ->
                 val parentProject = projectFile.getParentProject(lockFile) ?: return@x null
 
                 val path = projectFile.getPath(parentProject, configFile) ?: return@x null
 
-                readPathBytesToResult(path)
-                    .get()?.let { path to it }
+                path.readAndCreateSha1FromBytes()?.let { path.absolute() to it }
             }
-        }
-        .awaitAll()
-        .filterNotNull()
-        .associate { (path, bytes) ->
-            path.absolute() to createHash("sha1", bytes)
-        }
+            .toMap()
         .plus(
             manualOverrides.associate { projectOverride ->
-                val projectOverrideHash = readPathBytesOrNull(projectOverride.path)
-                    ?.let { createHash("sha1", it) }
+                val projectOverrideHash = projectOverride.path.readAndCreateSha1FromBytes()
 
                 projectOverride.fullOutputPath.absolute() to projectOverrideHash
             }

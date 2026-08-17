@@ -3,6 +3,7 @@ package teksturepako.pakku.io
 import org.junit.Test
 import org.junit.Assume.assumeNoException
 import strikt.api.expectThat
+import strikt.assertions.isEqualTo
 import strikt.assertions.isFalse
 import strikt.assertions.isTrue
 import teksturepako.pakku.PakkuTest
@@ -70,6 +71,15 @@ class SecurityTest : PakkuTest()
         expectThat("mods/evil.jar".isSafeFileName()).isFalse()
         expectThat("evil.jar".isSafeFileName()).isTrue()
         expectThat("Greenery-1.12.2-7.0.jar".isSafeFileName()).isTrue()
+    }
+
+    @Test
+    fun `streamed hash matches byte array hash`()
+    {
+        val bytes = ByteArray(32_000) { it.toByte() }
+
+        expectThat(createHash("sha1", bytes.inputStream()))
+            .isEqualTo(createHash("sha1", bytes))
     }
 
     @Test

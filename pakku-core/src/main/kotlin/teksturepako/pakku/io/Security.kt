@@ -5,6 +5,7 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.errors.ActionError
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -15,7 +16,29 @@ import kotlin.io.path.pathString
 @OptIn(ExperimentalStdlibApi::class)
 fun createHash(type: String, input: ByteArray): String
 {
-    val hashType = when (type.uppercase())
+    return MessageDigest
+        .getInstance(type.toHashAlgorithm())
+        .digest(input)
+        .toHexString()
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+fun createHash(type: String, input: InputStream): String
+{
+    val digest = MessageDigest.getInstance(type.toHashAlgorithm())
+    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+
+    while (true)
+    {
+        val read = input.read(buffer)
+        if (read == -1) break
+        digest.update(buffer, 0, read)
+    }
+
+    return digest.digest().toHexString()
+}
+
+private fun String.toHashAlgorithm(): String = when (uppercase())
 {
     "MD_2", "MD-2", "MD2"          -> "MD2"
     "MD_5", "MD-5", "MD5"          -> "MD5"
@@ -23,13 +46,7 @@ fun createHash(type: String, input: ByteArray): String
     "SHA_256", "SHA-256", "SHA256" -> "SHA-256"
     "SHA_384", "SHA-384", "SHA384" -> "SHA-384"
     "SHA_512", "SHA-512", "SHA512" -> "SHA-512"
-    else                           -> throw NoSuchAlgorithmException(type)
-    }
-
-    return MessageDigest
-        .getInstance(hashType)
-        .digest(input)
-        .toHexString()
+    else                           -> throw NoSuchAlgorithmException(this)
 }
 
 class IllegalPath(path: String) : ActionError()
