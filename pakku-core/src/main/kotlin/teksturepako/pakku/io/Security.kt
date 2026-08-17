@@ -5,6 +5,8 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.errors.ActionError
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -14,14 +16,14 @@ import kotlin.io.path.pathString
 fun createHash(type: String, input: ByteArray): String
 {
     val hashType = when (type.uppercase())
-    {
-        "MD_2", "MD-2", "MD2"          -> "MD2"
-        "MD_5", "MD-5", "MD5"          -> "MD5"
-        "SHA_1", "SHA-1", "SHA1"       -> "SHA-1"
-        "SHA_256", "SHA-256", "SHA256" -> "SHA-256"
-        "SHA_384", "SHA-384", "SHA384" -> "SHA-384"
-        "SHA_512", "SHA-512", "SHA512" -> "SHA-512"
-        else                           -> throw NoSuchAlgorithmException(type)
+{
+    "MD_2", "MD-2", "MD2"          -> "MD2"
+    "MD_5", "MD-5", "MD5"          -> "MD5"
+    "SHA_1", "SHA-1", "SHA1"       -> "SHA-1"
+    "SHA_256", "SHA-256", "SHA256" -> "SHA-256"
+    "SHA_384", "SHA-384", "SHA384" -> "SHA-384"
+    "SHA_512", "SHA-512", "SHA512" -> "SHA-512"
+    else                           -> throw NoSuchAlgorithmException(type)
     }
 
     return MessageDigest
@@ -85,13 +87,34 @@ fun Path.isWithinBounds(baseDir: Path): Boolean
 {
     return try
     {
-        val normalizedThis = this.normalize().toAbsolutePath()
-        val normalizedBase = baseDir.normalize().toAbsolutePath()
+        val resolvedThis = this.resolveAgainstRealAncestor()
+        val resolvedBase = baseDir.resolveAgainstRealAncestor()
 
-        normalizedThis.startsWith(normalizedBase)
+        resolvedThis.startsWith(resolvedBase)
     }
     catch (_: Exception)
     {
         false
     }
+}
+
+/** Resolves symlinks in the existing part of a path while retaining any not-yet-created suffix. */
+private fun Path.resolveAgainstRealAncestor(): Path
+{
+    var existingPath = normalize().toAbsolutePath()
+    val missingComponents = mutableListOf<Path>()
+
+    while (!Files.exists(existingPath, LinkOption.NOFOLLOW_LINKS))
+    {
+        missingComponents.add(existingPath.fileName ?: throw IllegalArgumentException("Path has no existing ancestor"))
+        existingPath = existingPath.parent ?: throw IllegalArgumentException("Path has no existing ancestor")
+    }
+
+    var resolved = existingPath.toRealPath()
+    for (component in missingComponents.asReversed())
+    {
+        resolved = resolved.resolve(component)
+    }
+
+    return resolved.normalize()
 }
