@@ -156,6 +156,9 @@ data class LockFile(
 
     fun isProjectAdded(project: Project): Boolean = this.projects.any { it isAlmostTheSameAs project }
 
+    fun addOrUpdate(project: Project): Boolean? =
+        if (isProjectAdded(project)) update(project) else add(project)
+
     fun update(project: Project): Boolean?
     {
         var updated: Boolean?
@@ -272,6 +275,25 @@ data class LockFile(
         this.projects = this.projects.inheritPropertiesFrom(configFile)
     }
 
+    /** Merge a parent lock file with the local fork layer. */
+    fun mergedWithLocal(localLockFile: LockFile, localConfigFile: ConfigFile): LockFile
+    {
+        val keptParentProjects = this.projects
+            .filterNot { parentProject -> localLockFile.projects.any { parentProject isAlmostTheSameAs it } }
+            .filterNot { parentProject ->
+                parentProject.slug.values.any { it in localConfigFile.excludes }
+                        || parentProject.name.values.any { it in localConfigFile.excludes }
+                        || parentProject.pakkuId?.let { it in localConfigFile.excludes } == true
+            }
+            .map { it.inheritPropertiesFrom(localConfigFile) }
+
+        val projects = (keptParentProjects + localLockFile.projects)
+            .sortedBy { it.name.values.firstOrNull() }
+            .toMutableList()
+
+        return this.copy(projects = projects)
+    }
+
     // -- FILE I/O --
 
     companion object
@@ -287,15 +309,20 @@ data class LockFile(
             decodeOrNew<LockFile>(LockFile(), "$workingPath/$FILE_NAME")
                 .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
 
+        /** Reads a lock file without applying local config inheritance. */
+        fun readOrNewFrom(path: Path): Result<LockFile, ActionError> =
+            decodeOrNew<LockFile>(LockFile(), path.toString())
+
         /** Reads [LockFile] and parses it to a [Result]. */
         suspend fun readToResult(): Result<LockFile, ActionError> =
             decodeToResult<LockFile>(Path("$workingPath/$FILE_NAME"))
                 .onSuccess { it.inheritConfig(ConfigFile.readOrNull()) }
 
         /** Reads [LockFile] from a specified [path] and parses it to a [Result]. */
-        suspend fun readToResultFrom(path: Path): Result<LockFile, ActionError> =
+        suspend fun readToResultFrom(path: Path, inheritConfig: Boolean = true): Result<LockFile, ActionError> =
             decodeToResult<LockFile>(path)
                 .onSuccess { lockFile ->
+                    if (!inheritConfig) return@onSuccess
                     val configFile = path.parent
                         ?.resolve(ConfigFile.FILE_NAME)
                         ?.let { ConfigFile.readToResultFrom(it).get() }

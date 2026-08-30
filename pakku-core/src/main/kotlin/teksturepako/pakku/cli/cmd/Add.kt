@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import teksturepako.pakku.api.actions.createAdditionRequest
 import teksturepako.pakku.api.actions.errors.NotFoundOn
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.withForkParent
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Platform
@@ -65,6 +66,11 @@ class Add : CliktCommand()
         flags["noDepsFlag"] = noDepsFlag
 
         val lockFile = LockFile.readToResult().getOrElse {
+            terminal.pError(it)
+            echo()
+            return@runBlocking
+        }
+        val effectiveLockFile = lockFile.withForkParent().getOrElse {
             terminal.pError(it)
             echo()
             return@runBlocking
@@ -128,18 +134,21 @@ class Add : CliktCommand()
 
                     if (terminal.ynPrompt(promptMessage.first, isRecommended))
                     {
-                        if (replacing == null) lockFile.add(project) else lockFile.update(project)
+                        lockFile.addOrUpdate(project)
+                        if (effectiveLockFile !== lockFile) effectiveLockFile.addOrUpdate(project)
                         lockFile.linkProjectToDependents(project)
 
                         if (!noDepsFlag)
                         {
-                            project.resolveDependencies(terminal, reqHandlers, lockFile, projectProvider, platforms)
+                            project.resolveDependencies(
+                                terminal, reqHandlers, lockFile, projectProvider, platforms, effectiveLockFile = effectiveLockFile
+                            )
                         }
 
                         terminal.pSuccess(promptMessage.second)
                     }
                 },
-                lockFile, platforms, strict
+                effectiveLockFile, platforms, strict
             )
         }
 

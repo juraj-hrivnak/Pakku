@@ -8,4 +8,5 @@ object Dirs
     val cacheDir get() = Path(workingPath, "build", ".cache")
     val shelfDir get() = Path(workingPath, PAKKU_DIR, "shelf")
     val remoteDir get() = Path(workingPath, PAKKU_DIR, "remote")
+    val parentDir get() = Path(workingPath, PAKKU_DIR, "parent")
 }

@@ -38,12 +38,12 @@ suspend fun syncRemoteDirectory(
 
     val overrides = getOverridesAsyncFrom(Dirs.remoteDir, configFile).awaitAll()
 
-    val error = overrides.map { (overridePath, overrideType) ->
+    val error = overrides.map { source ->
         async(Dispatchers.IO) {
-            if (allowedTypes != null && overrideType !in allowedTypes) return@async null
+            if (allowedTypes != null && source.type !in allowedTypes) return@async null
 
-            val inputPath = Path(Dirs.remoteDir.pathString, overridePath)
-            val outputPath = Path(workingPath, overridePath)
+            val inputPath = source.root.resolve(source.path)
+            val outputPath = Path(workingPath, source.path)
 
             inputPath.copyRecursivelyTo(outputPath, onSync, cleanUp = forceCleanUp)
         }

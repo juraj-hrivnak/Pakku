@@ -20,9 +20,16 @@ import teksturepako.pakku.api.actions.errors.ErrorSeverity
 import teksturepako.pakku.api.actions.export.exportDefaultProfiles
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.parentConfigFilePath
+import teksturepako.pakku.api.data.parentLockFilePath
+import teksturepako.pakku.api.data.sha256
+import teksturepako.pakku.api.overrides.getOverridesAsyncFrom
+import teksturepako.pakku.api.overrides.readManualOverrides
+import teksturepako.pakku.api.overrides.readManualOverridesFrom
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.cli.arg.promptForCurseForgeApiKey
+import teksturepako.pakku.cli.ui.pDanger
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pSuccess
 import teksturepako.pakku.cli.ui.shortForm
@@ -64,7 +71,71 @@ class Export : CliktCommand()
             terminal.pSuccess("[Migration] Upgraded lockfile to version 2. Added 'export_server_side_projects_to_client=true' for backward compatibility.")
         }
 
-        val platforms: List<Platform> = migratedLockFile.getPlatforms().getOrElse {
+        var parentOverrides: teksturepako.pakku.api.overrides.OverridesDeferred? = null
+        var forkManualOverrides: Collection<teksturepako.pakku.api.overrides.ManualOverride>? = null
+        val exportLockFile = if (migratedConfig.parent != null)
+        {
+            val parentLockPath = parentLockFilePath()
+            if (parentLockPath == null)
+            {
+                terminal.pDanger("Fork configured but parent lock file was not found. Run 'pakku fork sync'.")
+                echo()
+                return@runBlocking
+            }
+
+            migratedConfig.parentLockHash?.let { expectedHash ->
+                if (sha256(parentLockPath) != expectedHash)
+                {
+                    terminal.pDanger("Parent lock hash mismatch. Run 'pakku fork sync' before exporting.")
+                    echo()
+                    return@runBlocking
+                }
+            }
+
+            val parentConfigPath = parentConfigFilePath()
+            migratedConfig.parentConfigHash?.let { expectedHash ->
+                if (parentConfigPath == null || sha256(parentConfigPath) != expectedHash)
+                {
+                    terminal.pDanger("Parent config hash mismatch. Run 'pakku fork sync' before exporting.")
+                    echo()
+                    return@runBlocking
+                }
+            }
+
+            val parentLockFile = LockFile.readToResultFrom(parentLockPath, inheritConfig = false).getOrElse {
+                terminal.pError(it)
+                echo()
+                return@runBlocking
+            }
+
+            val parentConfig = parentConfigPath?.let { path ->
+                ConfigFile.readToResultFrom(path).getOrElse {
+                    terminal.pError(it)
+                    echo()
+                    return@runBlocking
+                }
+            }
+            if (parentConfig != null)
+            {
+                parentLockFile.inheritConfig(parentConfig)
+                val localPaths = migratedConfig.paths.toMap()
+                migratedConfig.paths.clear()
+                migratedConfig.paths.putAll(parentConfig.paths)
+                migratedConfig.paths.putAll(localPaths)
+                parentOverrides = getOverridesAsyncFrom(parentLockPath.parent, parentConfig)
+            }
+
+            val parentManual = readManualOverridesFrom(parentLockPath.parent, parentConfig)
+            val localManual = readManualOverrides(migratedConfig)
+            forkManualOverrides = (parentManual + localManual)
+                .associateBy { it.type to it.relativeOutputPath.normalize() }
+                .values
+
+            parentLockFile.mergedWithLocal(migratedLockFile, migratedConfig)
+        }
+        else migratedLockFile
+
+        val platforms: List<Platform> = exportLockFile.getPlatforms().getOrElse {
             terminal.pError(it)
             echo()
             return@runBlocking
@@ -97,7 +168,8 @@ class Export : CliktCommand()
 
                 terminal.pSuccess("[${profile.name} profile] exported to '$file' ($fileSize) in ${duration.shortForm()}")
             },
-            migratedLockFile, migratedConfig, platforms, noServer
+            exportLockFile, migratedConfig, platforms, noServer,
+            parentOverrides = parentOverrides, manualOverrides = forkManualOverrides
         ).joinAll()
 
         progressBar.clear()

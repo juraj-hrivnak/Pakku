@@ -11,8 +11,10 @@ import teksturepako.pakku.api.platforms.Platform
 import teksturepako.pakku.api.platforms.Provider
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.cli.ui.getFlavoredSlug
+import teksturepako.pakku.cli.ui.getFullMsg
 import teksturepako.pakku.cli.ui.pError
 import teksturepako.pakku.cli.ui.pInfo
+import teksturepako.pakku.cli.arg.ynPrompt
 import teksturepako.pakku.debug
 import teksturepako.pakku.toPrettyString
 import com.github.michaelbull.result.fold as resultFold
@@ -23,6 +25,7 @@ suspend fun Project.resolveDependencies(
     lockFile: LockFile,
     projectProvider: Provider,
     platforms: List<Platform>,
+    effectiveLockFile: LockFile = lockFile,
     onDependencyReq: suspend (
         project: Project, provider: Provider, lockfile: LockFile
     ) -> List<Result<Project, ActionError>> = { project, provider, _ ->
@@ -39,7 +42,8 @@ suspend fun Project.resolveDependencies(
     {
         result.resultFold(
             success = {
-                if (lockFile.isProjectAdded(it))
+                val existingProject = effectiveLockFile.getProject(it)
+                if (existingProject?.files == it.files)
                 {
                     // Link project to dependency if the dependency is already added
                     lockFile.getProject(it)?.pakkuId?.let { pakkuId ->
@@ -52,18 +56,27 @@ suspend fun Project.resolveDependencies(
                     debug { terminal.info(result.toPrettyString()) }
                     it.createAdditionRequest(
                         onError = reqHandlers.onError,
-                        onSuccess = { dependency, _, _, depReqHandlers ->
+                        onSuccess = { dependency, isRecommended, replacing, depReqHandlers ->
+                            if (replacing != null && !terminal.ynPrompt(
+                                    "Do you want to replace ${replacing.getFullMsg()} with ${dependency.getFullMsg()}?",
+                                    isRecommended
+                                )) return@createAdditionRequest
+
                             // Add dependency
-                            lockFile.add(dependency)
+                            lockFile.addOrUpdate(dependency)
+                            if (effectiveLockFile !== lockFile) effectiveLockFile.addOrUpdate(dependency)
 
                             // Link dependency to parent project
                             lockFile.addPakkuLink(dependency.pakkuId!!, this@resolveDependencies)
 
                             // Resolve dependencies for dependency
-                            dependency.resolveDependencies(terminal, depReqHandlers, lockFile, projectProvider, platforms)
+                            dependency.resolveDependencies(
+                                terminal, depReqHandlers, lockFile, projectProvider, platforms,
+                                effectiveLockFile = effectiveLockFile
+                            )
                             terminal.pInfo("${dependency.getFlavoredSlug()} added")
                         },
-                        lockFile, platforms
+                        effectiveLockFile, platforms
                     )
                 }
             },

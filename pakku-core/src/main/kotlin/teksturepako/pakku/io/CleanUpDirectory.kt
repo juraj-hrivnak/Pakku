@@ -6,8 +6,8 @@ import teksturepako.pakku.api.actions.errors.ActionError
 import java.nio.file.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
-import kotlin.io.path.readBytes
 
 suspend fun cleanUpDirectory(
     inputDirectory: Path,
@@ -20,12 +20,12 @@ suspend fun cleanUpDirectory(
     // Map every path not in a directory to absolute path and its hash
     val fileHashes: Map<Path, String> = cachedPaths.filterNot { it.isDirectory() }
         .mapNotNull { file ->
-            file.tryToResult { it.readBytes() }
+            file.tryToResult { inputStream().use { createHash("sha1", it) } }
                 .onFailure { error -> onError(error) }
                 .get()
-                ?.let { file to it }
+                ?.let { file.absolute() to it }
         }
-        .associate { it.first.absolute() to createHash("sha1", it.second) }
+        .toMap()
 
     // Map every path in a directory to absolute path and its hash
     val dirContentHashes: Map<Path, String> = cachedPaths.filter { it.isDirectory() }

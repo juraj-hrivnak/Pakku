@@ -125,7 +125,7 @@ object CurseForge : Platform(
             }
 
         val project = json.decodeFromString<SearchProjectResponse>(responseString).data.firstOrNull()?.toProject()
-            ?.getOrElse { return Err(it) } ?: return Err(ProjNotFound())
+            ?.getOrElse { return Err(it) } ?: return Err(ProjNotFound(slug))
 
         return Ok(project)
     }

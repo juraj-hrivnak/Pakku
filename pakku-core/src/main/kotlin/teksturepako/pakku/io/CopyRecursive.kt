@@ -123,7 +123,7 @@ private suspend fun Path.collectFileInfo(baseDir: Path): Result<List<FileInfo>, 
         val files = walk()
             .filter { !it.isSymbolicLink() && it.isRegularFile() }
             .toList()
-            .mapAsync { path ->
+            .mapAsync(concurrency = FILE_IO_CONCURRENCY) { path ->
                 val relativePath = this@collectFileInfo.relativize(path)
 
                 if (relativePath.hasUnsafePathComponents()) throw SecurityException(relativePath.toString())
