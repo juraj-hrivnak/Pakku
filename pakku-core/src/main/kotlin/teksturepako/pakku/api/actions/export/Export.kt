@@ -174,7 +174,7 @@ suspend fun ExportProfile.export(
 suspend fun List<RuleResult>.runEffects(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
-    var previousFileAction: Deferred<Path?>? = null
+    val previousFileActions = mutableMapOf<Path, Deferred<Path?>>()
     this@runEffects.mapNotNull { ruleResult ->
         when (val packagingAction = ruleResult.packaging)
         {
@@ -222,7 +222,8 @@ suspend fun List<RuleResult>.runEffects(
             {
                 if (ruleResult.ruleContext !is Finished)
                 {
-                    val predecessor = previousFileAction
+                    val outputPath = packagingAction.path.toAbsolutePath().normalize()
+                    val predecessor = previousFileActions[outputPath]
                     val action = measureTimedValue {
                         async(Dispatchers.IO) {
                             predecessor?.await()
@@ -237,7 +238,7 @@ suspend fun List<RuleResult>.runEffects(
                         debug { println("$ruleResult in ${action.duration}") }
                     }
 
-                    previousFileAction = action.value
+                    previousFileActions[outputPath] = action.value
                     action.value
                 }
                 else null

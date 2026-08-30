@@ -21,6 +21,7 @@ import teksturepako.pakku.api.actions.createRemovalRequest
 import teksturepako.pakku.api.actions.sync.syncProjects
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
+import teksturepako.pakku.api.data.withForkParent
 import teksturepako.pakku.api.overrides.readManualOverrides
 import teksturepako.pakku.api.platforms.CurseForge
 import teksturepako.pakku.api.platforms.Platform
@@ -57,6 +58,12 @@ class Sync : CliktCommand()
             }
         }
         else null
+
+        val effectiveLockFile = lockFile.withForkParent().getOrElse {
+            terminal.pError(it)
+            echo()
+            return@runBlocking
+        }
 
         val platforms: List<Platform> = lockFile.getPlatforms().getOrElse {
             terminal.pError(it)
@@ -119,13 +126,14 @@ class Sync : CliktCommand()
 
                         if (terminal.ynPrompt(promptMessage.first, isRecommended))
                         {
-                            if (replacing == null) lockFile.add(project) else lockFile.update(project)
+                            lockFile.addOrUpdate(project)
+                            if (effectiveLockFile !== lockFile) effectiveLockFile.addOrUpdate(project)
                             lockFile.linkProjectToDependents(project)
 
                             terminal.pSuccess(promptMessage.second)
                         }
                     },
-                    lockFile, platforms
+                    effectiveLockFile, platforms
                 )
             }
 

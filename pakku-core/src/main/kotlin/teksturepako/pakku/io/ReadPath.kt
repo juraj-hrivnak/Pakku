@@ -13,6 +13,7 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
 
@@ -72,8 +73,9 @@ suspend fun readPathBytesToResult(path: Path): Result<ByteArray, ActionError> = 
     }
 }
 
-suspend fun Path.readAndCreateSha1FromBytes() = this.tryToResult { readBytes() }.get()
-    ?.let { createHash("sha1", it) }
+suspend fun Path.readAndCreateSha1FromBytes() = this.tryToResult {
+    inputStream().use { createHash("sha1", it) }
+}.get()
 
 @Suppress("unused")
 suspend inline fun <reified T> decodeToResult(inputPath: Path, format: StringFormat = json): Result<T, ActionError>

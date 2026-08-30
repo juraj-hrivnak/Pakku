@@ -55,7 +55,7 @@ sealed class RuleContext(
         val outputPath = getPath(path, *subpath)
         val exportRoot = getPath()
 
-        return ruleResult("createJsonFile '$outputPath'", Packaging.FileAction {
+        return ruleResult("createJsonFile '$outputPath'", Packaging.FileAction(outputPath) {
             if (!outputPath.isWithinBounds(exportRoot))
             {
                 return@FileAction outputPath to IllegalPath(outputPath.pathString)
@@ -77,7 +77,7 @@ sealed class RuleContext(
     {
         val outputPath = getPath(path, *subpath)
 
-        return ruleResult("createFile '$outputPath'", Packaging.FileAction {
+        return ruleResult("createFile '$outputPath'", Packaging.FileAction(outputPath) {
             if (!outputPath.isWithinBounds(getPath()))
             {
                 return@FileAction outputPath to IllegalPath(outputPath.pathString)
@@ -109,13 +109,13 @@ sealed class RuleContext(
     {
         val outputPath = getPath(path, *subpath)
 
-        return ruleResult("createFile '$outputPath'", Packaging.FileAction {
+        return ruleResult("createFile '$outputPath'", Packaging.FileAction(outputPath) {
             if (!outputPath.isWithinBounds(getPath()))
             {
                 return@FileAction outputPath to IllegalPath(outputPath.pathString)
             }
 
-            if (outputPath.exists()) return@FileAction outputPath to AlreadyExists(outputPath.pathString)
+            if (outputPath.exists()) return@FileAction outputPath to null
 
             val bytes = bytesCallback.invoke()?.get() ?: return@FileAction outputPath to DownloadFailed(outputPath)
 
@@ -193,7 +193,7 @@ sealed class RuleContext(
 
             val message = "export $type '$inputPath' to '$outputPath'"
 
-            return ruleResult(message, Packaging.FileAction {
+            return ruleResult(message, Packaging.FileAction(outputPath) {
                 outputPath to inputPath.copyRecursivelyTo(outputPath, cleanUp = false)
                     .let { error ->
                         if (error !is AlreadyExists) error else null
@@ -225,7 +225,7 @@ sealed class RuleContext(
 
             val message = "export ${manualOverride.type} '${manualOverride.path}' to '$outputPath'"
 
-            return ruleResult(message, Packaging.FileAction {
+            return ruleResult(message, Packaging.FileAction(outputPath) {
                 outputPath.tryToResult { createParentDirectories() }
                     .onFailure { error ->
                         if (error !is AlreadyExists) return@FileAction outputPath to error

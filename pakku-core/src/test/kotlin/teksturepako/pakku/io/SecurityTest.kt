@@ -1,11 +1,16 @@
 package teksturepako.pakku.io
 
 import org.junit.Test
+import org.junit.Assume.assumeNoException
 import strikt.api.expectThat
+import strikt.assertions.isEqualTo
 import strikt.assertions.isFalse
 import strikt.assertions.isTrue
 import teksturepako.pakku.PakkuTest
+import teksturepako.pakku.api.data.workingPath
+import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
 
 class SecurityTest : PakkuTest()
 {
@@ -66,5 +71,50 @@ class SecurityTest : PakkuTest()
         expectThat("mods/evil.jar".isSafeFileName()).isFalse()
         expectThat("evil.jar".isSafeFileName()).isTrue()
         expectThat("Greenery-1.12.2-7.0.jar".isSafeFileName()).isTrue()
+    }
+
+    @Test
+    fun `streamed hash matches byte array hash`()
+    {
+        val bytes = ByteArray(32_000) { it.toByte() }
+
+        expectThat(createHash("sha1", bytes.inputStream()))
+            .isEqualTo(createHash("sha1", bytes))
+    }
+
+    @Test
+    fun `symlinked descendant outside base is out of bounds`()
+    {
+        val base = Path(workingPath).toAbsolutePath().normalize()
+        val outside = base.parent
+        val link = base.resolve("outside-link")
+
+        createSymbolicLinkOrSkip(link, outside)
+
+        expectThat(link.resolve("escaped.txt").isWithinBounds(base)).isFalse()
+    }
+
+    @Test
+    fun `symlinked descendant inside base remains in bounds`()
+    {
+        val base = Path(workingPath).toAbsolutePath().normalize()
+        val target = base.resolve("target").createDirectories()
+        val link = base.resolve("inside-link")
+
+        createSymbolicLinkOrSkip(link, target)
+
+        expectThat(link.resolve("file.txt").isWithinBounds(base)).isTrue()
+    }
+
+    private fun createSymbolicLinkOrSkip(link: java.nio.file.Path, target: java.nio.file.Path)
+    {
+        try
+        {
+            Files.createSymbolicLink(link, target)
+        }
+        catch (e: Exception)
+        {
+            assumeNoException("Symbolic links are not available on this platform", e)
+        }
     }
 }

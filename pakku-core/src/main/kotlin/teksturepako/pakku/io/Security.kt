@@ -5,6 +5,9 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import teksturepako.pakku.api.actions.errors.ActionError
 import java.io.File
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -13,21 +16,37 @@ import kotlin.io.path.pathString
 @OptIn(ExperimentalStdlibApi::class)
 fun createHash(type: String, input: ByteArray): String
 {
-    val hashType = when (type.uppercase())
-    {
-        "MD_2", "MD-2", "MD2"          -> "MD2"
-        "MD_5", "MD-5", "MD5"          -> "MD5"
-        "SHA_1", "SHA-1", "SHA1"       -> "SHA-1"
-        "SHA_256", "SHA-256", "SHA256" -> "SHA-256"
-        "SHA_384", "SHA-384", "SHA384" -> "SHA-384"
-        "SHA_512", "SHA-512", "SHA512" -> "SHA-512"
-        else                           -> throw NoSuchAlgorithmException(type)
-    }
-
     return MessageDigest
-        .getInstance(hashType)
+        .getInstance(type.toHashAlgorithm())
         .digest(input)
         .toHexString()
+}
+
+@OptIn(ExperimentalStdlibApi::class)
+fun createHash(type: String, input: InputStream): String
+{
+    val digest = MessageDigest.getInstance(type.toHashAlgorithm())
+    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+
+    while (true)
+    {
+        val read = input.read(buffer)
+        if (read == -1) break
+        digest.update(buffer, 0, read)
+    }
+
+    return digest.digest().toHexString()
+}
+
+private fun String.toHashAlgorithm(): String = when (uppercase())
+{
+    "MD_2", "MD-2", "MD2"          -> "MD2"
+    "MD_5", "MD-5", "MD5"          -> "MD5"
+    "SHA_1", "SHA-1", "SHA1"       -> "SHA-1"
+    "SHA_256", "SHA-256", "SHA256" -> "SHA-256"
+    "SHA_384", "SHA-384", "SHA384" -> "SHA-384"
+    "SHA_512", "SHA-512", "SHA512" -> "SHA-512"
+    else                           -> throw NoSuchAlgorithmException(this)
 }
 
 class IllegalPath(path: String) : ActionError()
@@ -85,13 +104,34 @@ fun Path.isWithinBounds(baseDir: Path): Boolean
 {
     return try
     {
-        val normalizedThis = this.normalize().toAbsolutePath()
-        val normalizedBase = baseDir.normalize().toAbsolutePath()
+        val resolvedThis = this.resolveAgainstRealAncestor()
+        val resolvedBase = baseDir.resolveAgainstRealAncestor()
 
-        normalizedThis.startsWith(normalizedBase)
+        resolvedThis.startsWith(resolvedBase)
     }
     catch (_: Exception)
     {
         false
     }
+}
+
+/** Resolves symlinks in the existing part of a path while retaining any not-yet-created suffix. */
+private fun Path.resolveAgainstRealAncestor(): Path
+{
+    var existingPath = normalize().toAbsolutePath()
+    val missingComponents = mutableListOf<Path>()
+
+    while (!Files.exists(existingPath, LinkOption.NOFOLLOW_LINKS))
+    {
+        missingComponents.add(existingPath.fileName ?: throw IllegalArgumentException("Path has no existing ancestor"))
+        existingPath = existingPath.parent ?: throw IllegalArgumentException("Path has no existing ancestor")
+    }
+
+    var resolved = existingPath.toRealPath()
+    for (component in missingComponents.asReversed())
+    {
+        resolved = resolved.resolve(component)
+    }
+
+    return resolved.normalize()
 }

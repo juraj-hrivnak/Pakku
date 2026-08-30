@@ -11,7 +11,7 @@ import teksturepako.pakku.api.data.workingPath
 import java.nio.file.Path
 
 suspend fun getOverridesAsync(configFile: ConfigFile): OverridesDeferred =
-    getOverridesAsyncFrom(Path.of(workingPath), configFile)
+    getOverridesAsyncFrom(kotlin.io.path.Path(workingPath), configFile)
 
 suspend fun getOverridesAsyncFrom(path: Path, configFile: ConfigFile): OverridesDeferred = coroutineScope {
     val overrides: Deferred<List<Result<String, ActionError>>> = async {
