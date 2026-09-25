@@ -15,7 +15,7 @@ jgit = "5.13.4.202507202350-r"
 jna = "5.19.1"
 flexver = "1.1.1"
 mockk = "1.13.12"
-strikt = "0.34.0"
+strikt = "0.35.1"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib" }
