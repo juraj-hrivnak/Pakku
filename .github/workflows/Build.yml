@@ -77,7 +77,7 @@ jobs:
           { grep --color=auto -Pzo "(?<=## $latest_tag)((?!\n## )[\s\S])*" ./CHANGELOG.md || true; } | sed '$ s/.$//' > ./NEW_CHANGELOG.md
 
       - name: Upload Changelog
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: changelog
           path: ${{ github.workspace }}/NEW_CHANGELOG.md
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload the build report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-report
           path: '**/build/reports'
@@ -133,7 +133,7 @@ jobs:
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
 
       - name: Upload JVM Jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jvm-jar
           path: pakku-cli/build/libs/pakku.jar
@@ -162,7 +162,7 @@ jobs:
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
 
       - name: Upload JVM ZIP Distribution
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jvm-dist-zip
           path: pakku-cli/build/distributions/*.zip
@@ -191,7 +191,7 @@ jobs:
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
 
       - name: Upload JVM Tar Distribution
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jvm-dist-tar
           path: pakku-cli/build/distributions/
