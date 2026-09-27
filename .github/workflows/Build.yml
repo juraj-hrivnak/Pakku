@@ -228,7 +228,7 @@ jobs:
           path: dist
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           body_path: ./NEW_CHANGELOG.md
           prerelease: false
