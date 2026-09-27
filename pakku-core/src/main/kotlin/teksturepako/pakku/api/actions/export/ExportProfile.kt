@@ -29,7 +29,21 @@ open class ExportProfile(
     val requiresPlatform: Platform? = null
 )
 
-
+/**
+ * Creates an [export profile][ExportProfile] with customized settings and export rules.
+ *
+ * ```
+ * val profile = exportProfile(name = "MyProfile") {
+ *     rule { /* Add export rules */ }
+ *     optionalRule { /* Add optional export rules */ } orElse { /* ... */ }
+ * }
+ * ```
+ *
+ * @param name The unique name for the export profile.
+ * @param fileExtension The file extension for the exported profile (defaults to "zip").
+ * @param requiresPlatform Optional platform constraint for the export profile.
+ * @param builder A lambda function to add export rules.
+ */
 fun exportProfile(
     name: String,
     fileExtension: String = "zip",
