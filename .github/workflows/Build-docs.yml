@@ -35,7 +35,7 @@ jobs:
           docker-version: ${{ env.DOCKER_VERSION }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docs
           path: |
@@ -65,7 +65,7 @@ jobs:
         run: ./gradlew :pakku-core:dokkaHtml
 
       - name: Upload API docs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-docs
           path: |
@@ -89,7 +89,7 @@ jobs:
           .github/create-dist-forms.sh
 
       - name: Upload Distribution Forms
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-forms
           path: |
