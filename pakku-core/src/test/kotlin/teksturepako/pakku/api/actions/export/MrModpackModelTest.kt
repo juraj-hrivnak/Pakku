@@ -4,11 +4,7 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.get
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
-import strikt.api.expectThat
-import strikt.assertions.contains
-import strikt.assertions.isEqualTo
-import strikt.assertions.isNotNull
+import kotlinx.coroutines.test.runTest
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.actions.export.profiles.modrinthProfile
 import teksturepako.pakku.api.actions.export.rules.toMrFile
@@ -92,13 +88,10 @@ class MrModpackModelTest : PakkuTest()
     }
 
     @Test
-    fun `test mr modpack model in cache`()
-    {
+    fun `test mr modpack model in cache`() = runTest {
         val manifestPath = Path(Dirs.cacheDir.pathString, Modrinth.serialName, MrModpackModel.MANIFEST)
 
-        val modpackModel = runBlocking {
-            readPathTextOrNull(manifestPath).toMrModpackModel()
-        }
+        val modpackModel = readPathTextOrNull(manifestPath).toMrModpackModel()
 
         assertNotNull(modpackModel)
 
@@ -106,40 +99,24 @@ class MrModpackModelTest : PakkuTest()
     }
 
     @Test
-    fun `test mr modpack model in zip`()
-    {
+    fun `test mr modpack model in zip`() = runTest {
         val zipPath = testPath("build", Modrinth.serialName, "$modpackName.${MrModpackModel.EXTENSION}")
 
-        val modpackModel = runBlocking {
-            readPathTextFromZip(zipPath, MrModpackModel.MANIFEST).toMrModpackModel()
-        }
+        val modpackModel = readPathTextFromZip(zipPath, MrModpackModel.MANIFEST).toMrModpackModel()
 
         assertNotNull(modpackModel)
 
         testModpackModel(modpackModel)
     }
 
-    private fun testModpackModel(modpackModel: MrModpackModel)
+    private suspend fun testModpackModel(modpackModel: MrModpackModel)
     {
-        val greeneryMrFile = runBlocking {
-            greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(configFile, greeneryProject)
-        }
+        val greeneryMrFile = greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(configFile, greeneryProject)
 
         assertNotNull(greeneryMrFile)
-
-        expectThat(greeneryMrFile)
-            .isNotNull()
-
-        expectThat(modpackModel.files)
-            .contains(greeneryMrFile)
-
-        expectThat(modpackModel.name)
-            .isEqualTo(modpackName)
-
-        expectThat(modpackModel.dependencies["minecraft"])
-            .isEqualTo(mcVersion)
-
-        expectThat(modpackModel.dependencies["forge"])
-            .isEqualTo(forgeVersion)
+        assert(greeneryMrFile in modpackModel.files)
+        assert(modpackModel.name == modpackName)
+        assert(modpackModel.dependencies["minecraft"] == mcVersion)
+        assert(modpackModel.dependencies["forge"] == forgeVersion)
     }
 }

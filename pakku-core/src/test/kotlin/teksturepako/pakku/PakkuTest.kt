@@ -1,7 +1,7 @@
 package teksturepako.pakku
 
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import teksturepako.pakku.api.data.generatePakkuId
 import teksturepako.pakku.api.data.workingPath
 import teksturepako.pakku.api.pakku
@@ -57,7 +57,7 @@ open class PakkuTest(
         runCatching { Path("./build/test/$testName").createParentDirectories() }
         runCatching { Path("./build/test/$testName").createDirectory() }
 
-        runBlocking { this@PakkuTest.`set-up`() }
+        runTest { this@PakkuTest.`set-up`() }
     }
 
     @AfterTest

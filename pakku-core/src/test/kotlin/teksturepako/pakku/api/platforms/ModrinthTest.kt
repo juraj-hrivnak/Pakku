@@ -6,8 +6,6 @@ import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.platforms.Modrinth.compareByLoaders
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
 
 class ModrinthTest : PakkuTest()
 {
@@ -31,7 +29,7 @@ class ModrinthTest : PakkuTest()
         val loaders = listOf("loadera", "loaderb", "loaderc")
         val sortedVersions = versions.toList().sortedWith(compareBy(compareByLoaders(loaders)))
 
-        assertContentEquals(listOf(versions[1], versions[3], versions[0], versions[2]), sortedVersions)
+        assert(sortedVersions == listOf(versions[1], versions[3], versions[0], versions[2]))
     }
 
     @Test
@@ -48,7 +46,7 @@ class ModrinthTest : PakkuTest()
         val loaders = listOf("loader1", "loader2")
         val sortedVersions = versions.toList().sortedWith(compareBy(compareByLoaders(loaders)))
 
-        assertContentEquals(versions, sortedVersions)
+        assert(sortedVersions == versions)
     }
 
     @Test
@@ -65,6 +63,6 @@ class ModrinthTest : PakkuTest()
         val loaders = listOf("loader1", "loader2")
         val sortedVersions = versions.toList().sortedWith(compareBy(compareByLoaders(loaders)))
 
-        assertEquals(versions[0], sortedVersions[1])
+        assert(sortedVersions[1] == versions[0])
     }
 }

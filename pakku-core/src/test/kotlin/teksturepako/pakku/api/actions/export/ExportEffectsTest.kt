@@ -4,8 +4,7 @@ import com.github.michaelbull.result.Ok
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.test.runTest
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
@@ -14,7 +13,6 @@ import teksturepako.pakku.api.projects.ProjectType
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.writeBytes
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -22,7 +20,7 @@ import kotlin.test.fail
 class ExportEffectsTest : PakkuTest(debug = false)
 {
     @Test
-    fun `cache hits succeed without resolving content`() = runBlocking {
+    fun `cache hits succeed without resolving content`() = runTest {
         val context = context("cache-hit")
         val outputPath = context.getPath("mods", "cached.jar")
         outputPath.createParentDirectories()
@@ -39,49 +37,47 @@ class ExportEffectsTest : PakkuTest(debug = false)
         )).runEffects { fail(it.rawMessage) }.awaitAll()
 
         assertFalse(resolved)
-        assertEquals(listOf(outputPath), paths)
-        assertEquals(byteArrayOf(1).toList(), outputPath.toFile().readBytes().toList())
+        assert(paths == listOf(outputPath))
+        assert(outputPath.toFile().readBytes().toList() == byteArrayOf(1).toList())
     }
 
     @Test
-    fun `file actions only wait for the same output path`() = runBlocking {
-        withTimeout(5_000) {
-            val context = context("ordering")
-            val sharedPath = context.getPath("shared")
-            val independentPath = context.getPath("independent")
-            val firstStarted = CompletableDeferred<Unit>()
-            val releaseFirst = CompletableDeferred<Unit>()
-            val firstFinished = CompletableDeferred<Unit>()
-            val secondStarted = CompletableDeferred<Unit>()
-            val independentStarted = CompletableDeferred<Unit>()
+    fun `file actions only wait for the same output path`() = runTest {
+        val context = context("ordering")
+        val sharedPath = context.getPath("shared")
+        val independentPath = context.getPath("independent")
+        val firstStarted = CompletableDeferred<Unit>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        val firstFinished = CompletableDeferred<Unit>()
+        val secondStarted = CompletableDeferred<Unit>()
+        val independentStarted = CompletableDeferred<Unit>()
 
-            val results = listOf(
-                context.ruleResult("first", Packaging.FileAction(sharedPath) {
-                    firstStarted.complete(Unit)
-                    releaseFirst.await()
-                    firstFinished.complete(Unit)
-                    sharedPath to null
-                }),
-                context.ruleResult("second", Packaging.FileAction(sharedPath) {
-                    assertTrue(firstFinished.isCompleted)
-                    secondStarted.complete(Unit)
-                    sharedPath to null
-                }),
-                context.ruleResult("independent", Packaging.FileAction(independentPath) {
-                    independentStarted.complete(Unit)
-                    independentPath to null
-                }),
-            )
+        val results = listOf(
+            context.ruleResult("first", Packaging.FileAction(sharedPath) {
+                firstStarted.complete(Unit)
+                releaseFirst.await()
+                firstFinished.complete(Unit)
+                sharedPath to null
+            }),
+            context.ruleResult("second", Packaging.FileAction(sharedPath) {
+                assertTrue(firstFinished.isCompleted)
+                secondStarted.complete(Unit)
+                sharedPath to null
+            }),
+            context.ruleResult("independent", Packaging.FileAction(independentPath) {
+                independentStarted.complete(Unit)
+                independentPath to null
+            }),
+        )
 
-            val export = async { results.runEffects { fail(it.rawMessage) }.awaitAll() }
-            firstStarted.await()
-            independentStarted.await()
-            assertFalse(secondStarted.isCompleted)
+        val export = async { results.runEffects { fail(it.rawMessage) }.awaitAll() }
+        firstStarted.await()
+        independentStarted.await()
+        assertFalse(secondStarted.isCompleted)
 
-            releaseFirst.complete(Unit)
-            export.await()
-            assertTrue(secondStarted.isCompleted)
-        }
+        releaseFirst.complete(Unit)
+        export.await()
+        assertTrue(secondStarted.isCompleted)
     }
 
     private fun context(subdir: String) = RuleContext.MissingProject(

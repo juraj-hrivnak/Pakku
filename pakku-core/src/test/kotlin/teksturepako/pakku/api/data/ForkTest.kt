@@ -1,11 +1,8 @@
 package teksturepako.pakku.api.data
 
 import com.github.michaelbull.result.get
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.eclipse.jgit.api.Git
-import strikt.api.expectThat
-import strikt.assertions.containsExactly
-import strikt.assertions.isEqualTo
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.overrides.getOverridesAsyncFrom
 import teksturepako.pakku.api.projects.Project
@@ -25,24 +22,23 @@ class ForkTest : PakkuTest()
         val localProject = project("shared-id", "local-slug")
         val local = LockFile().apply { add(localProject) }
 
-        expectThat(parent.mergedWithLocal(local, ConfigFile()).getAllProjects())
-            .containsExactly(localProject)
+        assert(parent.mergedWithLocal(local, ConfigFile()).getAllProjects() == listOf(localProject))
     }
 
     @Test
-    fun `parent override paths retain the parent checkout as their root`(): Unit = runBlocking {
+    fun `parent override paths retain the parent checkout as their root`() = runTest {
         val parent = testPath("parent").also { it.createDirectories() }
         parent.resolve("config").also { it.createDirectories() }.resolve("base.cfg").writeText("base")
         val config = ConfigFile().apply { addOverride("config") }
 
         val source = getOverridesAsyncFrom(parent, config).awaitAll().single()
 
-        expectThat(source.root).isEqualTo(parent)
-        expectThat(source.path).isEqualTo("config/base.cfg")
+        assert(source.root == parent)
+        assert(source.path == "config/base.cfg")
     }
 
     @Test
-    fun `effective fork lock includes parent projects without changing local lock`(): Unit = runBlocking {
+    fun `effective fork lock includes parent projects without changing local lock`() = runTest {
         Dirs.parentDir.createDirectories()
         val parentProject = project("parent-id", "parent-slug")
         val parent = LockFile().apply { add(parentProject) }
@@ -50,8 +46,8 @@ class ForkTest : PakkuTest()
         ConfigFile(parent = ConfigFile.ParentConfig(id = "test")).write()
         val local = LockFile()
 
-        expectThat(local.withForkParent().get()!!.getAllProjects()).containsExactly(parentProject)
-        expectThat(local.getAllProjects()).containsExactly()
+        assert(local.withForkParent().get()!!.getAllProjects() == listOf(parentProject))
+        assert(local.getAllProjects() == emptyList<Project>())
     }
 
     @Test
@@ -65,7 +61,7 @@ class ForkTest : PakkuTest()
             git.tag().setName("v1.0.0").setMessage("release").call()
         }
 
-        expectThat(gitHeadTags(repository)).containsExactly("v1.0.0")
+        assert(gitHeadTags(repository) == listOf("v1.0.0"))
     }
 
     private fun project(id: String, slug: String) = Project(

@@ -4,10 +4,7 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.get
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import strikt.api.expectThat
-import strikt.assertions.*
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.actions.export.profiles.curseForgeProfile
 import teksturepako.pakku.api.actions.export.profiles.modrinthProfile
@@ -221,16 +218,13 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(modpackModel)
 
         // SERVER mod should NOT be in files
-        expectThat(modpackModel.files)
-            .none { get { projectID }.isEqualTo(serverModCfId) }
+        assert(modpackModel.files.none { it.projectID == serverModCfId })
 
         // CLIENT mod should be in files
-        expectThat(modpackModel.files)
-            .any { get { projectID }.isEqualTo(clientModCfId) }
+        assert(modpackModel.files.any { it.projectID == clientModCfId })
 
         // BOTH mod should be in files
-        expectThat(modpackModel.files)
-            .any { get { projectID }.isEqualTo(bothModCfId) }
+        assert(modpackModel.files.any { it.projectID == bothModCfId })
     }
 
     @Test fun `CurseForge export includes SERVER mods when config is true`() = runTest {
@@ -265,12 +259,10 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(modpackModel)
 
         // SERVER mod SHOULD be in files (backward compatibility)
-        expectThat(modpackModel.files)
-            .any { get { projectID }.isEqualTo(serverModCfId) }
+        assert(modpackModel.files.any { it.projectID == serverModCfId })
 
         // CLIENT mod should be in files
-        expectThat(modpackModel.files)
-            .any { get { projectID }.isEqualTo(clientModCfId) }
+        assert(modpackModel.files.any { it.projectID == clientModCfId })
     }
 
     @Test fun `CurseForge export includes CLIENT mods regardless of config`() = runTest {
@@ -305,8 +297,7 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(modpackModel)
 
         // CLIENT mod should always be in files
-        expectThat(modpackModel.files)
-            .any { get { projectID }.isEqualTo(clientModCfId) }
+        assert(modpackModel.files.any { it.projectID == clientModCfId })
     }
 
     // -- USER STORY 2: Modrinth Export Tests --
@@ -348,8 +339,8 @@ class ExportRulesTest : PakkuTest()
 
         // Verify env fields for SERVER mod with backward compatibility
         // When export_server_side_projects_to_client=true, SERVER mods are treated as BOTH for compatibility
-        expectThat(serverFile.env?.client).isEqualTo("required")
-        expectThat(serverFile.env?.server).isEqualTo("required")
+        assert(serverFile.env?.client == "required")
+        assert(serverFile.env?.server == "required")
     }
 
     @Test fun `Modrinth export sets env fields correctly for CLIENT mod`() = runTest {
@@ -387,8 +378,8 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(clientFile)
 
         // Verify env fields for CLIENT mod
-        expectThat(clientFile.env?.client).isEqualTo("required")
-        expectThat(clientFile.env?.server).isEqualTo("unsupported")
+        assert(clientFile.env?.client == "required")
+        assert(clientFile.env?.server == "unsupported")
     }
 
     @Test
@@ -428,8 +419,8 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(bothFile)
 
         // Verify env fields for BOTH mod
-        expectThat(bothFile.env?.client).isEqualTo("required")
-        expectThat(bothFile.env?.server).isEqualTo("required")
+        assert(bothFile.env?.client == "required")
+        assert(bothFile.env?.server == "required")
     }
 
     @Test fun `Modrinth export includes SERVER mods with correct env when config is false`() = runTest {
@@ -468,12 +459,11 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(serverFile)
         
         // Verify env fields correctly express SERVER-only constraint
-        expectThat(serverFile.env?.client).isEqualTo("unsupported")
-        expectThat(serverFile.env?.server).isEqualTo("required")
+        assert(serverFile.env?.client == "unsupported")
+        assert(serverFile.env?.server == "required")
 
         // CLIENT mod should be in files
-        expectThat(modpackModel.files)
-            .any { get { path }.contains("jei") }
+        assert(modpackModel.files.any { "jei" in it.path })
     }
 
     // -- USER STORY 3: Backward Compatibility Tests --
@@ -528,8 +518,7 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(modpackModel)
 
         // Untagged mod should be included (treated as OVERRIDE)
-        expectThat(modpackModel.files)
-            .any { get { projectID }.isEqualTo(999999) }
+        assert(modpackModel.files.any { it.projectID == 999999 })
     }
 
     @Test fun `Modrinth export sets BOTH env for untagged mods`() = runTest {
@@ -588,7 +577,7 @@ class ExportRulesTest : PakkuTest()
         assertNotNull(untaggedFile)
 
         // Verify env fields for untagged mod (should be BOTH)
-        expectThat(untaggedFile.env?.client).isEqualTo("required")
-        expectThat(untaggedFile.env?.server).isEqualTo("required")
+        assert(untaggedFile.env?.client == "required")
+        assert(untaggedFile.env?.server == "required")
     }
 }

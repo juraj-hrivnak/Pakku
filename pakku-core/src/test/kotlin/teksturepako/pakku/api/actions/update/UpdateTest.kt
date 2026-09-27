@@ -3,8 +3,6 @@ package teksturepako.pakku.api.actions.update
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.datetime.Instant
-import strikt.api.expectThat
-import strikt.assertions.isEqualTo
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.projects.Project
@@ -52,8 +50,7 @@ class UpdateTest : PakkuTest(debug = false)
             mcVersions = listOf("1.21.4", "1.21.1"),
         )
 
-        expectThat(updated.getLatestFile(listOf(Modrinth))!!.mcVersions)
-            .isEqualTo(mutableListOf("1.21.4"))
+        assert(updated.getLatestFile(listOf(Modrinth))!!.mcVersions == mutableListOf("1.21.4"))
     }
 
     @Test
@@ -76,7 +73,6 @@ class UpdateTest : PakkuTest(debug = false)
             mcVersions = listOf("1.21.1"),
         )
 
-        expectThat(updated.getLatestFile(listOf(Modrinth))!!.mcVersions)
-            .isEqualTo(mutableListOf("1.21.1"))
+        assert(updated.getLatestFile(listOf(Modrinth))!!.mcVersions == mutableListOf("1.21.1"))
     }
 }

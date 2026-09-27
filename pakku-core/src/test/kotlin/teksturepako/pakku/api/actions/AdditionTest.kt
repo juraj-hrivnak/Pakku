@@ -2,11 +2,7 @@ package teksturepako.pakku.api.actions
 
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.michaelbull.result.Ok
-import kotlinx.coroutines.runBlocking
-import strikt.api.expectThat
-import strikt.assertions.isEqualTo
-import strikt.assertions.isFalse
-import strikt.assertions.isTrue
+import kotlinx.coroutines.test.runTest
 import teksturepako.pakku.api.actions.errors.AlreadyAdded
 import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.platforms.Modrinth
@@ -16,11 +12,13 @@ import teksturepako.pakku.api.projects.ProjectType
 import teksturepako.pakku.cli.arg.overrideYes
 import teksturepako.pakku.cli.resolveDependencies
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AdditionTest
 {
     @Test
-    fun `parent project with the same variant is not added again`(): Unit = runBlocking {
+    fun `parent project with the same variant is not added again`() = runTest {
         val parentProject = project("parent.jar")
         val effectiveLock = LockFile().apply { add(parentProject) }
         var alreadyAdded = false
@@ -33,12 +31,12 @@ class AdditionTest
             platforms = listOf(Modrinth),
         )
 
-        expectThat(alreadyAdded).isTrue()
-        expectThat(accepted).isFalse()
+        assertTrue(alreadyAdded)
+        assertFalse(accepted)
     }
 
     @Test
-    fun `different parent variant enters replacement flow`(): Unit = runBlocking {
+    fun `different parent variant enters replacement flow`() = runTest {
         val parentProject = project("parent.jar")
         val effectiveLock = LockFile().apply { add(parentProject) }
         var replacement: Project? = null
@@ -50,11 +48,11 @@ class AdditionTest
             platforms = listOf(Modrinth),
         )
 
-        expectThat(replacement).isEqualTo(parentProject)
+        assert(replacement == parentProject)
     }
 
     @Test
-    fun `different parent dependency variant can replace parent`(): Unit = runBlocking {
+    fun `different parent dependency variant can replace parent`() = runTest {
         val root = project("root", "root.jar")
         val parentDependency = project("dependency", "parent.jar")
         val requestedDependency = project("dependency", "fork.jar")
@@ -79,7 +77,7 @@ class AdditionTest
             overrideYes = false
         }
 
-        expectThat(local.getProject(requestedDependency)?.files).isEqualTo(requestedDependency.files)
+        assert(local.getProject(requestedDependency)?.files == requestedDependency.files)
     }
 
     private fun project(fileName: String) = project("example-mod", fileName)

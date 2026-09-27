@@ -1,16 +1,14 @@
 package teksturepako.pakku.io
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import strikt.api.expectThat
-import strikt.assertions.isLessThanOrEqualTo
+import kotlinx.coroutines.test.runTest
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 
 class AsyncExtensionsTest
 {
     @Test
-    fun `mapAsync respects its concurrency limit`(): Unit = runBlocking {
+    fun `mapAsync respects its concurrency limit`() = runTest {
         val active = AtomicInteger()
         val maximumActive = AtomicInteger()
 
@@ -21,6 +19,6 @@ class AsyncExtensionsTest
             active.decrementAndGet()
         }
 
-        expectThat(maximumActive.get()).isLessThanOrEqualTo(2)
+        assert(maximumActive.get() <= 2)
     }
 }

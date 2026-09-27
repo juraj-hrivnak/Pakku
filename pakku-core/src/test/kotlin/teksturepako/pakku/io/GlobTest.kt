@@ -1,10 +1,6 @@
 package teksturepako.pakku.io
 
-import kotlinx.coroutines.runBlocking
-import strikt.api.expectThat
-import strikt.assertions.contains
-import strikt.assertions.containsExactly
-import strikt.assertions.doesNotContain
+import kotlinx.coroutines.test.runTest
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.workingPath
 import kotlin.io.path.Path
@@ -14,27 +10,27 @@ import kotlin.test.Test
 class GlobTest : PakkuTest(teardown = true)
 {
     @Test
-    fun `test glob of single file`(): Unit = runBlocking {
+    fun `test glob of single file`() = runTest {
         val file = "test_file.txt"
         createTestFile(file)
 
         val expandedGlob = listOf(file).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlob).contains(file)
+        assert(file in expandedGlob)
     }
 
     @Test
-    fun `test negating glob of single file`(): Unit = runBlocking {
+    fun `test negating glob of single file`() = runTest {
         val file = "test_file.txt"
         createTestFile(file)
 
         val expandedGlob = listOf("!$file").expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlob).doesNotContain(file)
+        assert(file !in expandedGlob)
     }
 
     @Test
-    fun `test all dir content glob with one file negated`(): Unit = runBlocking {
+    fun `test all dir content glob with one file negated`() = runTest {
         val dir = "test_dir"
         createTestDir(dir)
 
@@ -49,15 +45,12 @@ class GlobTest : PakkuTest(teardown = true)
             "!$dir/$excludedFile"
         ).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlob)
-            .contains(Path(dir, includedFile).pathString)
-
-        expectThat(expandedGlob)
-            .doesNotContain(Path(dir, excludedFile).pathString)
+        assert(Path(dir, includedFile).pathString in expandedGlob)
+        assert(Path(dir, excludedFile).pathString !in expandedGlob)
     }
 
     @Test
-    fun `test nested sub dirs with content`(): Unit = runBlocking {
+    fun `test nested sub dirs with content`() = runTest {
         val dir = "test_dir"
         createTestDir(dir)
 
@@ -80,21 +73,14 @@ class GlobTest : PakkuTest(teardown = true)
             "!$dir/$subDir/**"
         ).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlob)
-            .doesNotContain(Path(dir, subDir).pathString)
-
-        expectThat(expandedGlob)
-            .contains(Path(dir, includedFile).pathString)
-
-        expectThat(expandedGlob)
-            .doesNotContain(Path(dir, excludedFile).pathString)
-
-        expectThat(expandedGlob)
-            .doesNotContain(Path(dir, subDir, excludedFileInSubDir).pathString)
+        assert(Path(dir, subDir).pathString !in expandedGlob)
+        assert(Path(dir, includedFile).pathString in expandedGlob)
+        assert(Path(dir, excludedFile).pathString !in expandedGlob)
+        assert(Path(dir, subDir, excludedFileInSubDir).pathString !in expandedGlob)
     }
 
     @Test
-    fun `test simple sub dir negating`(): Unit = runBlocking {
+    fun `test simple sub dir negating`() = runTest {
         val dir = "test_dir"
         createTestDir(dir)
 
@@ -110,15 +96,12 @@ class GlobTest : PakkuTest(teardown = true)
             "!$dir/$subDir",
         ).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlob)
-            .contains(Path(dir, includedFile).pathString)
-
-        expectThat(expandedGlob)
-            .doesNotContain(Path(dir, subDir, "excluded.txt").pathString)
+        assert(Path(dir, includedFile).pathString in expandedGlob)
+        assert(Path(dir, subDir, "excluded.txt").pathString !in expandedGlob)
     }
 
     @Test
-    fun `test sub dir negating with content`(): Unit = runBlocking {
+    fun `test sub dir negating with content`() = runTest {
         val dir = "test_dir"
         createTestDir(dir)
 
@@ -138,18 +121,13 @@ class GlobTest : PakkuTest(teardown = true)
             "$dir/$subDir/$file",
         ).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlob)
-            .contains(Path(dir, file).pathString)
-
-        expectThat(expandedGlob)
-            .contains(Path(dir, subDir, file).pathString)
-
-        expectThat(expandedGlob)
-            .doesNotContain(Path(dir, subDir, file2).pathString)
+        assert(Path(dir, file).pathString in expandedGlob)
+        assert(Path(dir, subDir, file).pathString in expandedGlob)
+        assert(Path(dir, subDir, file2).pathString !in expandedGlob)
     }
 
     @Test
-    fun `test triple subdirectories negating pattern`(): Unit = runBlocking {
+    fun `test triple subdirectories negating pattern`() = runTest {
 
         // -- USING: '**' --
 
@@ -173,11 +151,8 @@ class GlobTest : PakkuTest(teardown = true)
             "!$firstDir/$secondDir/$file",
         ).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlob)
-            .contains(Path(firstDir, secondDir, thirdDir, file2).pathString)
-
-        expectThat(expandedGlob)
-            .doesNotContain(Path(firstDir, secondDir, file).pathString)
+        assert(Path(firstDir, secondDir, thirdDir, file2).pathString in expandedGlob)
+        assert(Path(firstDir, secondDir, file).pathString !in expandedGlob)
 
         // -- USING: '*' --
         // Matches the subdirectory, which expands to its files (not the directory path itself).
@@ -187,8 +162,7 @@ class GlobTest : PakkuTest(teardown = true)
             "!$firstDir/$secondDir/$file",
         ).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlobsSingleWildcard)
-            .containsExactly(Path(firstDir, secondDir, thirdDir, file2).pathString)
+        assert(expandedGlobsSingleWildcard == listOf(Path(firstDir, secondDir, thirdDir, file2).pathString))
 
         // -- USING NO WILDCARDS --
         // A bare directory pattern expands to all files under that directory.
@@ -198,7 +172,6 @@ class GlobTest : PakkuTest(teardown = true)
             "!$firstDir/$secondDir/$file",
         ).expandWithGlob(Path(workingPath))
 
-        expectThat(expandedGlobWithoutWildcards)
-            .containsExactly(Path(firstDir, secondDir, thirdDir, file2).pathString)
+        assert(expandedGlobWithoutWildcards == listOf(Path(firstDir, secondDir, thirdDir, file2).pathString))
     }
 }

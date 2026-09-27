@@ -1,16 +1,14 @@
 package teksturepako.pakku.io
 
-import org.junit.Test
 import org.junit.Assume.assumeNoException
-import strikt.api.expectThat
-import strikt.assertions.isEqualTo
-import strikt.assertions.isFalse
-import strikt.assertions.isTrue
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.workingPath
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class SecurityTest : PakkuTest()
 {
@@ -26,16 +24,12 @@ class SecurityTest : PakkuTest()
     {
         for (path in invalidPaths)
         {
-            expectThat(filterPath(path))
-                .get { isErr }
-                .isTrue()
+            assertTrue(filterPath(path).isErr)
         }
 
         for (path in validPaths)
         {
-            expectThat(filterPath(path))
-                .get { isOk }
-                .isTrue()
+            assertTrue(filterPath(path).isOk)
         }
     }
 
@@ -44,7 +38,7 @@ class SecurityTest : PakkuTest()
     {
         val absoluteUnderWorkingPath = testPath("mods", "example.jar").toAbsolutePath()
 
-        expectThat(absoluteUnderWorkingPath.hasUnsafePathComponents()).isFalse()
+        assertFalse(absoluteUnderWorkingPath.hasUnsafePathComponents())
     }
 
     @Test
@@ -52,25 +46,25 @@ class SecurityTest : PakkuTest()
     {
         val withParent = testPath("mods").resolve("..").resolve("outside.txt")
 
-        expectThat(withParent.hasUnsafePathComponents()).isTrue()
+        assertTrue(withParent.hasUnsafePathComponents())
     }
 
     @Test
     fun `relative entry paths still reject absolute roots via filterPath`()
     {
-        expectThat(filterPath("/etc/passwd").isErr).isTrue()
-        expectThat(filterPath("mods/example.jar").isOk).isTrue()
-        expectThat(Path("mods/example.jar").hasUnsafePathComponents()).isFalse()
-        expectThat(Path("../escape").hasUnsafePathComponents()).isTrue()
+        assertTrue(filterPath("/etc/passwd").isErr)
+        assertTrue(filterPath("mods/example.jar").isOk)
+        assertFalse(Path("mods/example.jar").hasUnsafePathComponents())
+        assertTrue(Path("../escape").hasUnsafePathComponents())
     }
 
     @Test
     fun `isSafeFileName rejects traversal and separators`()
     {
-        expectThat("../../etc/passwd".isSafeFileName()).isFalse()
-        expectThat("mods/evil.jar".isSafeFileName()).isFalse()
-        expectThat("evil.jar".isSafeFileName()).isTrue()
-        expectThat("Greenery-1.12.2-7.0.jar".isSafeFileName()).isTrue()
+        assertFalse("../../etc/passwd".isSafeFileName())
+        assertFalse("mods/evil.jar".isSafeFileName())
+        assertTrue("evil.jar".isSafeFileName())
+        assertTrue("Greenery-1.12.2-7.0.jar".isSafeFileName())
     }
 
     @Test
@@ -78,8 +72,7 @@ class SecurityTest : PakkuTest()
     {
         val bytes = ByteArray(32_000) { it.toByte() }
 
-        expectThat(createHash("sha1", bytes.inputStream()))
-            .isEqualTo(createHash("sha1", bytes))
+        assert(createHash("sha1", bytes.inputStream()) == createHash("sha1", bytes))
     }
 
     @Test
@@ -91,7 +84,7 @@ class SecurityTest : PakkuTest()
 
         createSymbolicLinkOrSkip(link, outside)
 
-        expectThat(link.resolve("escaped.txt").isWithinBounds(base)).isFalse()
+        assertFalse(link.resolve("escaped.txt").isWithinBounds(base))
     }
 
     @Test
@@ -103,7 +96,7 @@ class SecurityTest : PakkuTest()
 
         createSymbolicLinkOrSkip(link, target)
 
-        expectThat(link.resolve("file.txt").isWithinBounds(base)).isTrue()
+        assertTrue(link.resolve("file.txt").isWithinBounds(base))
     }
 
     private fun createSymbolicLinkOrSkip(link: java.nio.file.Path, target: java.nio.file.Path)

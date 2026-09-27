@@ -33,10 +33,8 @@ powerAssert {
         "kotlin.assert",
         "kotlin.test.assertTrue",
         "kotlin.test.assertFalse",
-        "kotlin.test.assertEquals",
-        "kotlin.test.assertNotEquals",
-        "kotlin.test.assertNull",
         "kotlin.test.assertNotNull",
+        "kotlin.test.assertIs",
     )
 }
 
@@ -66,7 +64,6 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
-    testImplementation(libs.strikt)
 }
 
 // -- VERSION --
