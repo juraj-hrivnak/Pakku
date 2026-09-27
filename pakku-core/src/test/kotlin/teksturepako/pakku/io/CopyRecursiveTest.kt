@@ -1,17 +1,14 @@
 package teksturepako.pakku.io
 
-import kotlinx.coroutines.runBlocking
-import strikt.api.expectThat
-import strikt.assertions.contains
-import strikt.assertions.isA
-import strikt.assertions.isEqualTo
-import strikt.assertions.isNotNull
+import kotlinx.coroutines.test.runTest
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.expectStructure
 import teksturepako.pakku.testStructure
 import teksturepako.pakku.toPrettyString
 import kotlin.io.path.writeText
 import kotlin.test.Test
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.fail
 
 class CopyRecursiveTest : PakkuTest()
@@ -21,7 +18,7 @@ class CopyRecursiveTest : PakkuTest()
     // -- SINGLE FILE COPY TESTS --
 
     @Test
-    fun `copy single file`(): Unit = runBlocking {
+    fun `copy single file`() = runTest {
         val struct = testStructure {
             file("source.txt", testFileContent)
         }
@@ -38,7 +35,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `copy single file from absolute path`(): Unit = runBlocking {
+    fun `copy single file from absolute path`() = runTest {
         val struct = testStructure {
             file("source.txt", testFileContent)
         }
@@ -58,7 +55,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `invalid file`(): Unit = runBlocking {
+    fun `invalid file`() = runTest {
         val struct = testStructure {
             file("../source.txt", testFileContent)
         }
@@ -73,7 +70,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `file with the same hash`(): Unit = runBlocking {
+    fun `file with the same hash`() = runTest {
         val struct = testStructure {
             file("test_file.txt", testFileContent)
         }
@@ -96,7 +93,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `copy single file with different hash should overwrite`(): Unit = runBlocking {
+    fun `copy single file with different hash should overwrite`() = runTest {
         val struct = testStructure {
             file("source.txt", testFileContent)
             file("dest.txt", "Different content")
@@ -114,7 +111,7 @@ class CopyRecursiveTest : PakkuTest()
     // -- DIRECTORY COPY TESTS --
 
     @Test
-    fun `copy empty directory`(): Unit = runBlocking {
+    fun `copy empty directory`() = runTest {
         val struct = testStructure {
             dir("source_empty")
         }
@@ -129,7 +126,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `copy directory with single file`(): Unit = runBlocking {
+    fun `copy directory with single file`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("test_file.txt", testFileContent)
@@ -148,7 +145,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `copy directory with multiple files`(): Unit = runBlocking {
+    fun `copy directory with multiple files`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("file1.txt", "Content 1")
@@ -171,7 +168,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `copy directory with nested subdirectories`(): Unit = runBlocking {
+    fun `copy directory with nested subdirectories`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("root_file.txt", "Root")
@@ -204,7 +201,7 @@ class CopyRecursiveTest : PakkuTest()
     // -- CLEANUP TESTS --
 
     @Test
-    fun `cleanup removes files not in source`(): Unit = runBlocking {
+    fun `cleanup removes files not in source`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("keep_file.txt", "Keep this")
@@ -228,7 +225,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `cleanup disabled preserves extra files`(): Unit = runBlocking {
+    fun `cleanup disabled preserves extra files`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("source_file.txt", "Source")
@@ -251,7 +248,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `cleanup removes empty directories`(): Unit = runBlocking {
+    fun `cleanup removes empty directories`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("file.txt", "Content")
@@ -279,7 +276,7 @@ class CopyRecursiveTest : PakkuTest()
     // -- HASH OPTIMIZATION TESTS --
 
     @Test
-    fun `identical files are not recopied`(): Unit = runBlocking {
+    fun `identical files are not recopied`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("file1.txt", "Same content")
@@ -309,15 +306,15 @@ class CopyRecursiveTest : PakkuTest()
     // -- ERROR HANDLING TESTS --
 
     @Test
-    fun `copy invalid path returns error`(): Unit = runBlocking {
+    fun `copy invalid path returns error`() = runTest {
         val error = testPath("non_existent_file.txt").copyRecursivelyTo(testPath("destination.txt"))
-        expectThat(error).isNotNull().isA<InvalidPathError>()
+        assertIs<InvalidPathError>(assertNotNull(error))
     }
 
     // -- FILE ACTION TESTS --
 
     @Test
-    fun `FileCopied action contains correct information`(): Unit = runBlocking {
+    fun `FileCopied action contains correct information`() = runTest {
         val struct = testStructure {
             file("test_file.txt", testFileContent)
         }
@@ -329,16 +326,15 @@ class CopyRecursiveTest : PakkuTest()
                 testPath("copied_test_file.txt"), onAction = { capturedAction = it })?.onError { fail() }
         }
 
-        expectThat(capturedAction).isNotNull().isA<FileAction.FileCopied>().and {
-            get { this.source }.isEqualTo(struct.file("test_file.txt"))
-            get { this.destination }.isEqualTo(testPath("copied_test_file.txt"))
-            get { this.hash }.isNotNull()
-            get { this.description }.contains("copied file")
-        }
+        val copied = assertIs<FileAction.FileCopied>(assertNotNull(capturedAction))
+        assert(copied.source == struct.file("test_file.txt"))
+        assert(copied.destination == testPath("copied_test_file.txt"))
+        assertNotNull(copied.hash)
+        assert("copied file" in copied.description)
     }
 
     @Test
-    fun `FileDeleted action during cleanup`(): Unit = runBlocking {
+    fun `FileDeleted action during cleanup`() = runTest {
         val struct = testStructure {
             dir("source") {
                 file("keep. txt", "Keep")
@@ -356,16 +352,13 @@ class CopyRecursiveTest : PakkuTest()
             )?.onError { fail() }
         }
 
-        val deletedAction = actions.filterIsInstance<FileAction.FileDeleted>().firstOrNull()
-
-        expectThat(deletedAction).isNotNull().and {
-            get { this.hash }.isNotNull()
-            get { this.description }.contains("deleted file")
-        }
+        val deletedAction = assertNotNull(actions.filterIsInstance<FileAction.FileDeleted>().firstOrNull())
+        assertNotNull(deletedAction.hash)
+        assert("deleted file" in deletedAction.description)
     }
 
     @Test
-    fun `DirectoryDeleted action during cleanup`(): Unit = runBlocking {
+    fun `DirectoryDeleted action during cleanup`() = runTest {
         val struct = testStructure {
             dir("source")
             dir("dest") {
@@ -381,17 +374,14 @@ class CopyRecursiveTest : PakkuTest()
             )?.onError { fail() }
         }
 
-        val dirDeletedAction = actions.filterIsInstance<FileAction.DirectoryDeleted>().firstOrNull()
-
-        expectThat(dirDeletedAction).isNotNull().and {
-            get { this.description }.contains("deleted empty directory")
-        }
+        val dirDeletedAction = assertNotNull(actions.filterIsInstance<FileAction.DirectoryDeleted>().firstOrNull())
+        assert("deleted empty directory" in dirDeletedAction.description)
     }
 
     // -- EDGE CASES --
 
     @Test
-    fun `copy with special characters in filename`(): Unit = runBlocking {
+    fun `copy with special characters in filename`() = runTest {
         val specialFileName = "test file with spaces & special-chars_123.txt"
 
         val struct = testStructure {
@@ -412,7 +402,7 @@ class CopyRecursiveTest : PakkuTest()
     }
 
     @Test
-    fun `copy preserves file content exactly`(): Unit = runBlocking {
+    fun `copy preserves file content exactly`() = runTest {
         val binaryContent = ByteArray(256) { it.toByte() }
 
         val struct = testStructure {

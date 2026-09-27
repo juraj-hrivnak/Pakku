@@ -64,7 +64,7 @@ When creating a test please extend the `PakkuTest` class.
 It will ensure every test is run separately in the `build/test/` directory
 and automatically handle the working path of Pakku and teardown of any created files while running the tests.
 
-For assertions, we use the [Strikt](https://strikt.io/) library because it is easy to use, read and debug.
+For assertions, we use Kotlin's `assert` with the [Power-assert](https://kotlinlang.org/docs/power-assert.html) plugin for better output; use `assertTrue`/`assertFalse` for booleans.
 
 Example of a test:
 
@@ -85,10 +85,10 @@ class ExampleTest : PakkuTest()
 
     // Use backticks for test function names.
     @Test
-    fun `test if file exists`(): Unit = runBlocking {
+    fun `test if file exists`() = runTest {
         val file = testFile(testFileName) // Reference test files using `fun testFile(vararg path: String): Path`
 
-        expectThat(file).get { exists() }.isTrue() // Test whether the file exists.
+        assertTrue(file.exists())
     }
 }
 ```

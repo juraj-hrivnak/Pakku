@@ -1,35 +1,18 @@
 package teksturepako.pakku
 
-import strikt.api.Assertion
 import java.nio.file.Path
 import kotlin.io.path.*
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-fun Assertion.Builder<Path>.exists() = assert("exists") {
-    if (it.exists()) pass(actual = "exists") else fail(actual = "does not exist")
-}
+fun assertPathExists(path: Path) = assertTrue(path.exists(), "expected path to exist: $path")
 
-fun Assertion.Builder<Path>.doesNotExist() = assert("does not exist") {
-    if (!it.exists()) pass(actual = "does not exist") else fail(actual = "exists")
-}
+fun assertPathDoesNotExist(path: Path) = assertFalse(path.exists(), "expected path to not exist: $path")
 
-fun Assertion.Builder<Path>.isDirectory() = assert("is directory") {
-    if (it.isDirectory()) pass(actual = "is directory") else fail(actual = "is file")
-}
+fun assertIsDirectory(path: Path) = assertTrue(path.isDirectory(), "expected path to be a directory: $path")
 
-fun Assertion.Builder<Path>.isFile() = assert("is file") {
-    if (it.isRegularFile()) pass(actual = "is file") else fail(actual = "is directory")
-}
+fun assertIsFile(path: Path) = assertTrue(path.isRegularFile(), "expected path to be a file: $path")
 
-fun Assertion.Builder<Path>.hasContent(expected: String) = assert("has content %s", expected) {
-    when (val actual = it.readText())
-    {
-        expected -> pass()
-        else     -> fail(actual)
-    }
-}
+fun assertHasContent(path: Path, expected: String) = assert(path.readText() == expected)
 
-fun Assertion.Builder<Path>.hasBytes(expected: ByteArray) = assert("has bytes") {
-    val actual = it.readBytes()
-    if (actual.contentEquals(expected)) pass()
-    else fail("Expected ${expected.size} bytes, got ${actual.size} bytes")
-}
+fun assertHasBytes(path: Path, expected: ByteArray) = assert(path.readBytes().contentEquals(expected))

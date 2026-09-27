@@ -4,11 +4,7 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.get
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import strikt.api.expectThat
-import strikt.assertions.contains
-import strikt.assertions.isEqualTo
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.actions.export.profiles.curseForgeProfile
 import teksturepako.pakku.api.actions.import.toCfModpackModel
@@ -96,13 +92,10 @@ class CfModpackModelTest : PakkuTest()
     }
 
     @Test
-    fun `test cf modpack model in zip`()
-    {
+    fun `test cf modpack model in zip`() = runTest {
         val zipPath = testPath("build", CurseForge.serialName, "$modpackName.${CfModpackModel.EXTENSION}")
 
-        val modpackModel = runBlocking {
-            readPathTextFromZip(zipPath, CfModpackModel.MANIFEST).toCfModpackModel()
-        }
+        val modpackModel = readPathTextFromZip(zipPath, CfModpackModel.MANIFEST).toCfModpackModel()
 
         assertNotNull(modpackModel)
 
@@ -111,16 +104,9 @@ class CfModpackModelTest : PakkuTest()
 
     private fun testModpackModel(modpackModel: CfModpackModel)
     {
-        expectThat(modpackModel.files)
-            .contains(CfModpackModel.CfModData(greeneryCfId, greeneryCfFileId))
-
-        expectThat(modpackName)
-            .isEqualTo(modpackModel.name)
-
-        expectThat(mcVersion)
-            .isEqualTo(modpackModel.minecraft.version)
-
-        expectThat("forge-$forgeVersion")
-            .isEqualTo(modpackModel.minecraft.modLoaders.firstOrNull()?.id)
+        assert(CfModpackModel.CfModData(greeneryCfId, greeneryCfFileId) in modpackModel.files)
+        assert(modpackModel.name == modpackName)
+        assert(modpackModel.minecraft.version == mcVersion)
+        assert(modpackModel.minecraft.modLoaders.firstOrNull()?.id == "forge-$forgeVersion")
     }
 }

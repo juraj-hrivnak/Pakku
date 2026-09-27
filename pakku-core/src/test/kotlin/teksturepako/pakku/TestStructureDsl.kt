@@ -1,6 +1,5 @@
 package teksturepako.pakku
 
-import strikt.api.expectThat
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
@@ -102,8 +101,8 @@ class StructureExpectation(
     fun dir(name: String, block: StructureExpectation.() -> Unit = {})
     {
         verifyPath(name) { path ->
-            expectThat(path).exists()
-            expectThat(path).isDirectory()
+            assertPathExists(path)
+            assertIsDirectory(path)
         }
         StructureExpectation(test, resolvePath(name)).apply(block)
     }
@@ -111,33 +110,33 @@ class StructureExpectation(
     fun file(name: String)
     {
         verifyPath(name) { path ->
-            expectThat(path).exists()
-            expectThat(path).isFile()
+            assertPathExists(path)
+            assertIsFile(path)
         }
     }
 
     fun file(name: String, content: String?)
     {
         verifyPath(name) { path ->
-            expectThat(path).exists()
-            expectThat(path).isFile()
-            content?.let { expectThat(path).hasContent(it) }
+            assertPathExists(path)
+            assertIsFile(path)
+            content?.let { assertHasContent(path, it) }
         }
     }
 
     fun file(name: String, content: ByteArray?)
     {
         verifyPath(name) { path ->
-            expectThat(path).exists()
-            expectThat(path).isFile()
-            content?.let { expectThat(path).hasBytes(it) }
+            assertPathExists(path)
+            assertIsFile(path)
+            content?.let { assertHasBytes(path, it) }
         }
     }
 
     fun doesNotExist(name: String)
     {
         verifyPath(name) { path ->
-            expectThat(path).doesNotExist()
+            assertPathDoesNotExist(path)
         }
     }
 }

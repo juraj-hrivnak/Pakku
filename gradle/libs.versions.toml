@@ -15,7 +15,6 @@ jgit = "5.13.4.202507202350-r"
 jna = "5.19.1"
 flexver = "1.1.1"
 mockk = "1.14.11"
-strikt = "0.34.0"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib" }
@@ -49,7 +48,6 @@ jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 flexver = { module = "com.unascribed:flexver-java", version.ref = "flexver" }
 
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-strikt = { module = "io.strikt:strikt-core", version.ref = "strikt" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -1,7 +1,5 @@
 package teksturepako.pakku.api.actions.export
 
-import strikt.api.expectThat
-import strikt.assertions.isEqualTo
 import teksturepako.pakku.PakkuTest
 import teksturepako.pakku.api.data.ConfigFile
 import teksturepako.pakku.api.data.LockFile
@@ -23,7 +21,7 @@ class ExportProfileDslTest : PakkuTest()
                 .orElse { notNullRule() }   // skip
         }.build(exportRuleScope(LockFile(), ConfigFile()))
 
-        expectThat(exportProfile.rules.size).describedAs { "exportProfile.rules.size ($this)" }.isEqualTo(2)
+        assert(exportProfile.rules.size == 2)
     }
 
     @Test
@@ -37,7 +35,7 @@ class ExportProfileDslTest : PakkuTest()
                 .orElse { nullRule() }   // skip
         }.build(exportRuleScope(LockFile(), ConfigFile()))
 
-        expectThat(exportProfile.rules.size).describedAs { "exportProfile.rules.size ($this)" }.isEqualTo(1)
+        assert(exportProfile.rules.size == 1)
     }
 
     @Test
@@ -53,6 +51,6 @@ class ExportProfileDslTest : PakkuTest()
                 .orElse { notNullRule() }   // skip
         }.build(exportRuleScope(LockFile(), ConfigFile()))
 
-        expectThat(exportProfile.rules.size).describedAs { "exportProfile.rules.size ($this)" }.isEqualTo(2)
+        assert(exportProfile.rules.size == 2)
     }
 }

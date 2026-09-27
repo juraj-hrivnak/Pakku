@@ -2,7 +2,6 @@ package teksturepako.pakku.api.projects
 
 import teksturepako.pakku.PakkuTest
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class ProjectTest : PakkuTest()
 {
@@ -34,8 +33,8 @@ class ProjectTest : PakkuTest()
             files = mutableSetOf()
         )
 
-        assertTrue(project1 hasAliasOf project3)
-        assertTrue(project2 hasAliasOf project1)
-        assertTrue(project3 hasAliasOf project2)
+        assert(project1 hasAliasOf project3)
+        assert(project2 hasAliasOf project1)
+        assert(project3 hasAliasOf project2)
     }
 }
