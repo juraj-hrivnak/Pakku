@@ -3,6 +3,9 @@
 
 ## Unreleased
 
+- Fixed unknown JVM argument error on Java 8 when launching Pakku through the distribution scripts.
+  - Distribution scripts now launch via `java -jar` (custom start-script templates) and grant native access through the jar manifest (`Enable-Native-Access`), so they work on Java 8+ without `--enable-native-access` in `DEFAULT_JVM_OPTS`. This also applies to launching Pakku via `java -jar` without the distribution scripts on Java 25.
+
 ## v1.5.0
 
 - Fixed flaky tests blocking nixpkgs update.
