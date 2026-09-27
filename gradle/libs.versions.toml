@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.4.20"
-ktor = "3.1.0"
+ktor = "3.6.0"
 dokka = "1.9.20"
 coroutines = "1.11.0"
 serialization = "1.7.3"
