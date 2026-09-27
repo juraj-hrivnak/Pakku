@@ -106,7 +106,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: docs
 
@@ -114,13 +114,13 @@ jobs:
         run: unzip -O UTF-8 -qq ${{ env.ARTIFACT }} -d dir
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: api-docs
           path: dir/api
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist-forms
           path: dir/install
