@@ -69,21 +69,21 @@ suspend fun updateMultipleProjectsWithFiles(
         .toMutableSet()
 }
 
+fun List<ProjectFile>.filterByAccLoaders(accProject: Project, platformName: String): List<ProjectFile>
+{
+    val accLoaders = accProject.files
+        .filter { it.type == platformName }
+        .maxByOrNull { it.datePublished }
+        ?.loaders
+        ?: listOf()
+
+    return if (accLoaders.isEmpty()) this else this.filter { file -> accLoaders.any { it in file.loaders } }
+}
+
 fun combineProjects(
     accProject: Project, newProject: Project, platformName: String, numberOfFiles: Int, mcVersions: List<String> = listOf(),
 ): Project
 {
-    fun List<ProjectFile>.filterByAccLoaders(accProject: Project, platformName: String): List<ProjectFile>
-    {
-        val accLoaders = accProject.files
-            .filter { it.type == platformName }
-            .maxByOrNull { it.datePublished }
-            ?.loaders
-            ?: listOf()
-        
-        return if (accLoaders.isEmpty()) this else this.filter { file -> accLoaders.any { it in file.loaders } }
-    }
-
     val newFiles = newProject.files
         .filter { it.type == platformName }
         .filterByAccLoaders(accProject, platformName) // keep the current loader

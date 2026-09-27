@@ -117,7 +117,6 @@ private suspend fun Path.copyDirectoryTo(
     null
 }.getOrElse { CopyError(it.message ?: "Unknown error during directory copy") }
 
-@OptIn(ExperimentalPathApi::class)
 private suspend fun Path.collectFileInfo(baseDir: Path): Result<List<FileInfo>, ActionError> = coroutineScope {
     return@coroutineScope try {
         val files = walk()
@@ -190,7 +189,6 @@ private suspend fun processFilesByHash(
     null
 }.getOrElse { CopyError(it.message ?: "Error processing files") }
 
-@OptIn(ExperimentalPathApi::class)
 private suspend fun cleanupByHash(
     destinationFiles: List<FileInfo>,
     sourceFiles: List<FileInfo>,

@@ -1,7 +1,7 @@
 package teksturepako.pakku.api.actions.sync
 
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -35,9 +35,9 @@ suspend fun Set<ManualOverride>.sync(
 
             manualOverride.path.tryToResult {
                 copyTo(manualOverride.fullOutputPath)
-            }.onSuccess {
+            }.onOk {
                 onSuccess(manualOverride)
-            }.onFailure {
+            }.onErr {
                 onError(it)
             }
         }

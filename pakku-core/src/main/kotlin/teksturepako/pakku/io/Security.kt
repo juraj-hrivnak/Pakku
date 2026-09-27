@@ -13,7 +13,6 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import kotlin.io.path.pathString
 
-@OptIn(ExperimentalStdlibApi::class)
 fun createHash(type: String, input: ByteArray): String
 {
     return MessageDigest
@@ -22,7 +21,6 @@ fun createHash(type: String, input: ByteArray): String
         .toHexString()
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 fun createHash(type: String, input: InputStream): String
 {
     val digest = MessageDigest.getInstance(type.toHashAlgorithm())

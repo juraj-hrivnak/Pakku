@@ -1,7 +1,7 @@
 package teksturepako.pakku.api.actions.export
 
 import com.github.michaelbull.result.get
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
 import com.github.michaelbull.result.runCatching
 import kotlinx.coroutines.*
 import teksturepako.pakku.api.actions.errors.*
@@ -99,11 +99,10 @@ suspend fun ExportProfile.export(
             else -> configFile.getName()
         } + ".${this.fileExtension}"
 
-        val outputZipFile = runCatching { Path(workingPath, "build", this.name, modpackFileName) }
-            .onFailure { e: Throwable ->
+        val outputZipFile = runCatching { Path(workingPath, "build", name, modpackFileName) }
+            .onErr { e: Throwable ->
                 onError(this, CouldNotExport(this, modpackFileName, e.message))
-            }
-            .get()
+            }.get()
             ?: return@measureTimedValue null
 
         // Create parent directory
@@ -142,9 +141,8 @@ suspend fun ExportProfile.export(
             }
         )
 
-        outputZipFile
-            .tryToResult { it.createParentDirectories() }
-            .onFailure { error ->
+        outputZipFile.tryToResult { it.createParentDirectories() }
+            .onErr { error ->
                 if (error !is AlreadyExists)
                 {
                     onError(this, CouldNotExport(this, modpackFileName, error.rawMessage))
@@ -251,9 +249,9 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
     onError: suspend (error: ActionError) -> Unit
 ): List<Deferred<Path?>> = coroutineScope {
     this@runEffectsOnFinished.mapNotNull { ruleResult ->
-        when
+        when (ruleResult.ruleContext)
         {
-            ruleResult.ruleContext is Finished && ruleResult.packaging is Action    ->
+            is Finished if ruleResult.packaging is Action     ->
             {
                 val action = measureTimedValue {
                     async {
@@ -269,7 +267,8 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
 
                 null
             }
-            ruleResult.ruleContext is Finished && ruleResult.packaging is FileAction ->
+
+            is Finished if ruleResult.packaging is FileAction ->
             {
                 val action = measureTimedValue {
                     async(Dispatchers.IO) {
@@ -286,7 +285,8 @@ suspend fun List<RuleResult>.runEffectsOnFinished(
 
                 action.value
             }
-            else -> null
+
+            else                                              -> null
         }
     }
 }

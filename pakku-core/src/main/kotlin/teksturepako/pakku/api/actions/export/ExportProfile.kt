@@ -21,6 +21,7 @@ annotation class ExportSystemDsl
  *
  * For the more idiomatic way of creating export profile see [exportProfile].
  */
+@ExportSystemDsl
 open class ExportProfile(
     val name: String,
     val fileExtension: String = "zip",
@@ -28,22 +29,7 @@ open class ExportProfile(
     val requiresPlatform: Platform? = null
 )
 
-/**
- * Creates an [export profile][ExportProfile] with customized settings and export rules.
- *
- * ```
- * val profile = exportProfile(name = "MyProfile") {
- *     rule { /* Add export rules */ }
- *     optionalRule { /* Add optional export rules */ } orElse { /* ... */ }
- * }
- * ```
- *
- * @param name The unique name for the export profile.
- * @param fileExtension The file extension for the exported profile (defaults to "zip").
- * @param requiresPlatform Optional platform constraint for the export profile.
- * @param builder A lambda function to add export rules.
- */
-@ExportSystemDsl
+
 fun exportProfile(
     name: String,
     fileExtension: String = "zip",
@@ -51,6 +37,7 @@ fun exportProfile(
     builder: ExportProfileBuilder.() -> Unit
 ): ExportProfileBuilder = ExportProfileBuilder(name, fileExtension, requiresPlatform, builder)
 
+@ExportSystemDsl
 class ExportProfileBuilder(
     val name: String,
     val fileExtension: String = "zip",
@@ -81,7 +68,6 @@ class ExportProfileBuilder(
     // -- AFTER BUILD --
 
     /** Adds an export rule to the profile. */
-    @ExportSystemDsl
     fun rule(exportRule: (ExportRuleScope) -> ExportRule): ExportRule
     {
         val rule = exportRule(this)
@@ -91,7 +77,6 @@ class ExportProfileBuilder(
     }
 
     /** Adds an optional export rule to the profile. */
-    @ExportSystemDsl
     fun optionalRule(exportRule: (ExportRuleScope) -> ExportRule?): ExportRule?
     {
         val rule = exportRule(this)
@@ -105,7 +90,6 @@ class ExportProfileBuilder(
     }
 
     /** Provides a fallback mechanism when an optional rule is null. */
-    @ExportSystemDsl
     infix fun ExportRule?.orElse(exportRule: (ExportRuleScope) -> ExportRule?): ExportRule?
     {
         if (this == null)
@@ -123,6 +107,7 @@ class ExportProfileBuilder(
     }
 }
 
+@ExportSystemDsl
 interface ExportRuleScope
 {
     /** The lock file associated with the exporting scope. */

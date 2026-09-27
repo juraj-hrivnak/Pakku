@@ -1,8 +1,8 @@
 package teksturepako.pakku.api.actions.fetch
 
 import com.github.michaelbull.result.get
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
@@ -129,9 +129,9 @@ suspend fun deleteOldFiles(
                     Dirs.shelfDir.createDirectories()
                     val newFile = Path(Dirs.shelfDir.pathString, it.fileName.pathString)
                     moveTo(newFile)
-                }.onSuccess {
+                }.onOk {
                     onSuccess(path, DeletionActionType.SHELF)
-                }.onFailure { error ->
+                }.onErr { error ->
                     if (error !is DirectoryNotEmpty) onError(error)
                 }
             }
@@ -139,9 +139,9 @@ suspend fun deleteOldFiles(
             {
                 path.tryToResult {
                     deleteIfExists()
-                }.onSuccess {
+                }.onOk {
                     onSuccess(path, DeletionActionType.DELETE)
-                }.onFailure { error ->
+                }.onErr { error ->
                     if (error !is DirectoryNotEmpty) onError(error)
                 }
             }

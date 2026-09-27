@@ -1,6 +1,8 @@
 package teksturepako.pakku.api.actions.fetch
 
 import com.github.michaelbull.result.*
+import com.github.michaelbull.result.onErr
+import com.github.michaelbull.result.onOk
 import kotlinx.atomicfu.AtomicLong
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
@@ -50,7 +52,7 @@ suspend fun List<ProjectFile>.fetch(
         val totalBytes: AtomicLong = atomic(0L)
         val completedBytes: AtomicLong = atomic(0L)
         
-        val fetchChannel = produce {
+        val fetchChannel = this@coroutineScope.produce {
             for (projectFile in projectFiles)
             {
                 launch {
@@ -113,22 +115,23 @@ suspend fun List<ProjectFile>.fetch(
         val fails = mutableListOf<Deferred<ProjectFile>>()
 
         fetchChannel.consumeEach { result ->
-            result.onSuccess { (path, projectFile, bytes) ->
-                jobs += launch(Dispatchers.IO) {
-                    runCatching {
-                        path.createParentDirectories()
-                        path.writeBytes(bytes)
-                    }.onSuccess {
-                        onSuccess(path, projectFile)
-                    }.onFailure {
-                        onError(CouldNotSave(path, it.stackTraceToString()))
+            result
+                .onOk { (path, projectFile, bytes) ->
+                    jobs += launch(Dispatchers.IO) {
+                        runCatching {
+                            path.createParentDirectories()
+                            path.writeBytes(bytes)
+                        }.onSuccess {
+                            onSuccess(path, projectFile)
+                        }.onFailure {
+                            onError(CouldNotSave(path, it.stackTraceToString()))
+                        }
+                    }
+                }.onErr { projectFile ->
+                    fails += this@coroutineScope.async {
+                        projectFile
                     }
                 }
-            }.onFailure { projectFile ->
-                fails += async {
-                    projectFile
-                }
-            }
         }
 
         jobs.joinAll()

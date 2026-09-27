@@ -17,7 +17,6 @@ value class Glob private constructor(private val value: Pair<PathMatcher, Boolea
     constructor(pathMatcher: PathMatcher, isNegated: Boolean) : this(pathMatcher to isNegated)
 }
 
-@OptIn(ExperimentalPathApi::class)
 suspend fun Path.walk(
     globPatterns: List<String>,
 ): Sequence<Pair<Path, Boolean>> = withContext(Dispatchers.IO)

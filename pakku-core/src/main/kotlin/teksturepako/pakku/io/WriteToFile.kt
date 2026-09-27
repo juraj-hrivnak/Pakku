@@ -1,7 +1,7 @@
 package teksturepako.pakku.io
 
 import com.github.michaelbull.result.getError
-import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onErr
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.encodeToString
 import teksturepako.pakku.api.actions.errors.ActionError
@@ -23,7 +23,7 @@ suspend inline fun <reified T> writeToFile(
 
         runCatching { parent.createParentDirectories() }
         writeText(format.encodeToString(value))
-    }.onFailure {
+    }.onErr {
         // Restore backup if there was an error
         backup?.let { bytes ->
             file.deleteIfExists()
