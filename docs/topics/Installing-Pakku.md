@@ -15,7 +15,8 @@ If not, you _can_ install it from [here](https://www.java.com/en/download/).
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/pakku-minecraft.svg)](https://repology.org/project/pakku-minecraft/versions)
 
-<procedure title="Install Pakku using Scoop for Windows" id="install-scoop">
+## Install Pakku using Scoop for Windows
+{id="install-scoop"}
 
 1. Check whether you have Scoop installed on your computer.
    If not, check the installation instructions from [here](https://scoop.sh/).
@@ -30,9 +31,8 @@ If not, you _can_ install it from [here](https://www.java.com/en/download/).
    ```
    {prompt="$"}
 
-</procedure>
-
-<procedure title="Install Pakku using Brew for macOS (or Linux)" id="install-brew">
+## Install Pakku using Brew for macOS (or Linux)
+{id="install-brew"}
 
 1. Check whether you have Brew installed on your computer.
    If not, check the installation instructions from [here](https://brew.sh/#install).
@@ -47,9 +47,8 @@ If not, you _can_ install it from [here](https://www.java.com/en/download/).
    ```
    {prompt="$"}
 
-</procedure>
-
-<procedure title="Install Pakku using Nix" id="install-nix">
+## Install Pakku using Nix
+{id="install-nix"}
 
 <a href="https://repology.org/project/pakku-minecraft/versions">
     <img src="https://repology.org/badge/vertical-allrepos/pakku-minecraft.svg" alt="Packaging status" align="right"/>
@@ -92,9 +91,8 @@ Pakku is available from [nixpkgs](https://github.com/NixOS/nixpkgs) as `pakku`.
    ```
    {prompt="$"}
 
-</procedure>
-
-<procedure title="Install Pakku manually" id="install-manually">
+## Install Pakku manually
+{id="install-manually"}
 
 1. Download the `pakku.jar` from [GitHub releases]
    and place it into your modpack folder.
@@ -108,6 +106,4 @@ Pakku is available from [nixpkgs](https://github.com/NixOS/nixpkgs) as `pakku`.
    > To get to your modpack folder, use the [`cd` command](https://en.wikipedia.org/wiki/Cd_(command)).
    {style="note"}
 
-</procedure>
-   
 [GitHub releases]: https://github.com/juraj-hrivnak/Pakku/releases/latest

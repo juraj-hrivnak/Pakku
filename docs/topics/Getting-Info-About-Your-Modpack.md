@@ -79,7 +79,7 @@ The output contains the following info:
     <td>Project name</td>
     <td>
     <format color="Red">Red color</format> indicates that it has no files.
-    <format style="bold">⚠ A waring sign</format> before the project name
+    ⚠ A waring sign before the project name
     indicates that the project is not redistributable.
     Use the <code>--name-max-length</code> option
     to set the max length of project names. (Default 20)
