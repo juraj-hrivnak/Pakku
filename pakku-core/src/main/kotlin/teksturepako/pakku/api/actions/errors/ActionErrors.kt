@@ -144,6 +144,17 @@ data class CouldNotExport(val profile: ExportProfile, val modpackFileName: Strin
     override val severity = ErrorSeverity.FATAL
 }
 
+data class CouldNotComputeHashes(val projectFile: ProjectFile) : ActionError()
+{
+    override val rawMessage = message(
+        "Could not compute 'sha512' and 'sha1' hashes for '${projectFile.fileName}'.",
+        "The hashes are missing from the lock file and the file could not be downloaded.",
+        "Check the file's download URL, or add 'sha512' and 'sha1' to its lock file entry.",
+        newlines = true,
+    )
+    override val severity = ErrorSeverity.FATAL
+}
+
 // -- ADDITION --
 
 data class AlreadyAdded(val project: Project) : ActionError()

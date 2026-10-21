@@ -1,11 +1,15 @@
 package teksturepako.pakku.api.actions.export
 
+import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.get
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import teksturepako.pakku.PakkuTest
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.HashMismatch
+import teksturepako.pakku.api.actions.errors.NoHashes
 import teksturepako.pakku.api.actions.export.profiles.curseForgeProfile
 import teksturepako.pakku.api.actions.export.profiles.modrinthProfile
 import teksturepako.pakku.api.actions.import.toCfModpackModel
@@ -16,16 +20,21 @@ import teksturepako.pakku.api.data.LockFile
 import teksturepako.pakku.api.models.cf.CfModpackModel
 import teksturepako.pakku.api.models.mr.MrModpackModel
 import teksturepako.pakku.api.platforms.CurseForge
+import teksturepako.pakku.api.platforms.GitHub
 import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.api.projects.ProjectSide
 import teksturepako.pakku.api.projects.ProjectType
+import teksturepako.pakku.io.createHash
 import teksturepako.pakku.io.readPathTextOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
+import kotlin.io.path.writeBytes
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 // TODO: Clean up this test
 /**
@@ -579,5 +588,326 @@ class ExportRulesTest : PakkuTest()
         // Verify env fields for untagged mod (should be BOTH)
         assert(untaggedFile.env?.client == "required")
         assert(untaggedFile.env?.server == "required")
+    }
+
+    // -- GitHub Export Tests (issue #157) --
+
+    private val githubPayload = byteArrayOf(0xCA.toByte(), 0xFE.toByte(), 0xBA.toByte(), 0xBE.toByte(), 0x00.toByte(), 0x01.toByte(), 0x02.toByte(), 0x03.toByte())
+
+    private val githubMod = Project(
+        type = ProjectType.MOD,
+        side = ProjectSide.BOTH,
+        id = mutableMapOf(GitHub.serialName to "Metallurgists-of-Create/Create-TFMG-CE"),
+        name = mutableMapOf(GitHub.serialName to "Create TFMG CE"),
+        slug = mutableMapOf(GitHub.serialName to "Create-TFMG-CE"),
+        files = mutableSetOf(
+            ProjectFile(
+                type = GitHub.serialName,
+                fileName = "create-tfmg-ce-1.0.0.jar",
+                mcVersions = mutableListOf(mcVersion),
+                loaders = mutableListOf("fabric"),
+                url = "https://github.com/Metallurgists-of-Create/Create-TFMG-CE/releases/download/v1.0.0/create-tfmg-ce-1.0.0.jar",
+                hashes = mutableMapOf(
+                    "sha256" to createHash("sha256", githubPayload)
+                ),
+                size = githubPayload.size.toInt()
+            )
+        )
+    )
+
+    @Test
+    fun `GitHub download fallback - manifest contains entry with computed hashes`() = runTest {
+        val testDeps = ExportDeps { Ok(githubPayload) }
+
+        val lockFile = LockFile(
+            target = Modrinth.serialName,
+            mcVersions = mutableListOf(mcVersion),
+            loaders = mutableMapOf("fabric" to fabricVersion),
+            projects = mutableListOf(githubMod)
+        )
+
+        val configFile = ConfigFile(name = modpackName)
+        configFile.write()
+
+        val platforms = lockFile.getPlatforms().get()
+        assertNotNull(platforms)
+
+        export(
+            profiles = listOf(modrinthProfile()),
+            onError = { _, _ -> },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms,
+            deps = testDeps,
+        )
+
+        val manifestPath = Path(Dirs.cacheDir.pathString, Modrinth.serialName, MrModpackModel.MANIFEST)
+        val modpackModel = readPathTextOrNull(manifestPath).toMrModpackModel()
+        assertNotNull(modpackModel)
+
+        val githubFile = modpackModel.files.find { it.path.contains("create-tfmg-ce") }
+        assertNotNull(githubFile)
+        assertEquals(createHash("sha512", githubPayload), githubFile.hashes.sha512)
+        assertEquals(createHash("sha1", githubPayload), githubFile.hashes.sha1)
+        assert(githubFile.downloads.any { it.contains("github.com") })
+    }
+
+    @Test
+    fun `GitHub export hermeticity - dev environment is ignored`() = runTest {
+        val differentPayload = byteArrayOf(0xDE.toByte(), 0xAD.toByte(), 0xBE.toByte(), 0xEF.toByte())
+        val testDeps = ExportDeps { Ok(githubPayload) }
+
+        val lockFile = LockFile(
+            target = Modrinth.serialName,
+            mcVersions = mutableListOf(mcVersion),
+            loaders = mutableMapOf("fabric" to fabricVersion),
+            projects = mutableListOf(githubMod)
+        )
+
+        val configFile = ConfigFile(name = modpackName)
+        configFile.write()
+
+        // Create a dev-env file with different content — it should be ignored
+        createTestFile("mods", "create-tfmg-ce-1.0.0.jar")
+        val devEnvPath = testPath("mods", "create-tfmg-ce-1.0.0.jar")
+        devEnvPath.writeBytes(differentPayload)
+
+        val platforms = lockFile.getPlatforms().get()
+        assertNotNull(platforms)
+
+        export(
+            profiles = listOf(modrinthProfile()),
+            onError = { _, _ -> },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms,
+            deps = testDeps,
+        )
+
+        val manifestPath = Path(Dirs.cacheDir.pathString, Modrinth.serialName, MrModpackModel.MANIFEST)
+        val modpackModel = readPathTextOrNull(manifestPath).toMrModpackModel()
+        assertNotNull(modpackModel)
+
+        val githubFile = modpackModel.files.find { it.path.contains("create-tfmg-ce") }
+        assertNotNull(githubFile)
+        // Hashes should match the downloaded payload, NOT the dev-env file
+        assertEquals(createHash("sha512", githubPayload), githubFile.hashes.sha512)
+        assertEquals(createHash("sha1", githubPayload), githubFile.hashes.sha1)
+    }
+
+    @Test
+    fun `Lock-file hashes short-circuit - no download occurs`() = runTest {
+        val downloadCalled = kotlinx.atomicfu.atomic(false)
+        val lockFileHashesMod = Project(
+            type = ProjectType.MOD,
+            side = ProjectSide.BOTH,
+            id = mutableMapOf(GitHub.serialName to "owner/repo"),
+            name = mutableMapOf(GitHub.serialName to "LockHashesMod"),
+            slug = mutableMapOf(GitHub.serialName to "lock-hashes-mod"),
+            files = mutableSetOf(
+                ProjectFile(
+                    type = GitHub.serialName,
+                    fileName = "lock-hashes-mod.jar",
+                    mcVersions = mutableListOf(mcVersion),
+                    loaders = mutableListOf("fabric"),
+                    url = "https://github.com/owner/repo/releases/download/v1/lock-hashes-mod.jar",
+                    hashes = mutableMapOf(
+                        "sha512" to "abc123fromlockfile",
+                        "sha1" to "def456fromlockfile"
+                    ),
+                    size = 1024
+                )
+            )
+        )
+
+        val testDeps = ExportDeps {
+            downloadCalled.value = true
+            Ok(githubPayload)
+        }
+
+        val lockFile = LockFile(
+            target = Modrinth.serialName,
+            mcVersions = mutableListOf(mcVersion),
+            loaders = mutableMapOf("fabric" to fabricVersion),
+            projects = mutableListOf(lockFileHashesMod)
+        )
+
+        val configFile = ConfigFile(name = modpackName)
+        configFile.write()
+
+        val platforms = lockFile.getPlatforms().get()
+        assertNotNull(platforms)
+
+        export(
+            profiles = listOf(modrinthProfile()),
+            onError = { _, _ -> },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms,
+            deps = testDeps,
+        )
+
+        val manifestPath = Path(Dirs.cacheDir.pathString, Modrinth.serialName, MrModpackModel.MANIFEST)
+        val modpackModel = readPathTextOrNull(manifestPath).toMrModpackModel()
+        assertNotNull(modpackModel)
+
+        val modFile = modpackModel.files.find { it.path.contains("lock-hashes-mod") }
+        assertNotNull(modFile)
+        assertEquals("abc123fromlockfile", modFile.hashes.sha512)
+        assertEquals("def456fromlockfile", modFile.hashes.sha1)
+
+        // No download should occur when both hashes are in the lock file
+        assert(!downloadCalled.value)
+    }
+
+    @Test
+    fun `Download failure is visible - error reported to onError`() = runTest {
+        val downloadError: ActionError = HashMismatch(null, "expected", "actual")
+        val testDeps = ExportDeps { Err(downloadError) }
+
+        var receivedError: ActionError? = null
+
+        val lockFile = LockFile(
+            target = Modrinth.serialName,
+            mcVersions = mutableListOf(mcVersion),
+            loaders = mutableMapOf("fabric" to fabricVersion),
+            projects = mutableListOf(githubMod)
+        )
+
+        val configFile = ConfigFile(name = modpackName)
+        configFile.write()
+
+        val platforms = lockFile.getPlatforms().get()
+        assertNotNull(platforms)
+
+        export(
+            profiles = listOf(modrinthProfile()),
+            onError = { _, error -> receivedError = error },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms,
+            deps = testDeps,
+        )
+
+        // Error should be reported
+        assertNotNull(receivedError)
+        assertEquals(downloadError, receivedError)
+
+        // The entry should be absent from the manifest
+        val manifestPath = Path(Dirs.cacheDir.pathString, Modrinth.serialName, MrModpackModel.MANIFEST)
+        val modpackModel = readPathTextOrNull(manifestPath).toMrModpackModel()
+        assertNotNull(modpackModel)
+        assertNull(modpackModel.files.find { it.path.contains("create-tfmg-ce") })
+    }
+
+    @Test
+    fun `Integrity mismatch - HashMismatch reported`() = runTest {
+        // Create a GitHub project where the lock file sha256 does NOT match the downloaded bytes
+        val wrongSha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+        val integrityMismatchMod = Project(
+            type = ProjectType.MOD,
+            side = ProjectSide.BOTH,
+            id = mutableMapOf(GitHub.serialName to "owner/integrity-test"),
+            name = mutableMapOf(GitHub.serialName to "IntegrityTest"),
+            slug = mutableMapOf(GitHub.serialName to "integrity-test"),
+            files = mutableSetOf(
+                ProjectFile(
+                    type = GitHub.serialName,
+                    fileName = "integrity-test.jar",
+                    mcVersions = mutableListOf(mcVersion),
+                    loaders = mutableListOf("fabric"),
+                    url = "https://github.com/owner/integrity-test/releases/download/v1/integrity-test.jar",
+                    hashes = mutableMapOf("sha256" to wrongSha256),
+                    size = githubPayload.size.toInt()
+                )
+            )
+        )
+
+        val testDeps = ExportDeps { Ok(githubPayload) }
+
+        var receivedError: ActionError? = null
+
+        val lockFile = LockFile(
+            target = Modrinth.serialName,
+            mcVersions = mutableListOf(mcVersion),
+            loaders = mutableMapOf("fabric" to fabricVersion),
+            projects = mutableListOf(integrityMismatchMod)
+        )
+
+        val configFile = ConfigFile(name = modpackName)
+        configFile.write()
+
+        val platforms = lockFile.getPlatforms().get()
+        assertNotNull(platforms)
+
+        export(
+            profiles = listOf(modrinthProfile()),
+            onError = { _, error -> receivedError = error },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms,
+            deps = testDeps,
+        )
+
+        // HashMismatch should be reported
+        assertNotNull(receivedError)
+        assert(receivedError is HashMismatch)
+    }
+
+    @Test
+    fun `NoHashes parity with fetch - entry added and warning reported`() = runTest {
+        // Create a GitHub project with NO hashes at all (hashes = null)
+        val noHashesMod = Project(
+            type = ProjectType.MOD,
+            side = ProjectSide.BOTH,
+            id = mutableMapOf(GitHub.serialName to "owner/no-hashes"),
+            name = mutableMapOf(GitHub.serialName to "NoHashesMod"),
+            slug = mutableMapOf(GitHub.serialName to "no-hashes-mod"),
+            files = mutableSetOf(
+                ProjectFile(
+                    type = GitHub.serialName,
+                    fileName = "no-hashes-mod.jar",
+                    mcVersions = mutableListOf(mcVersion),
+                    loaders = mutableListOf("fabric"),
+                    url = "https://github.com/owner/no-hashes/releases/download/v1/no-hashes-mod.jar",
+                    hashes = null, // No hashes at all
+                    size = githubPayload.size.toInt()
+                )
+            )
+        )
+
+        val testDeps = ExportDeps { Ok(githubPayload) }
+
+        var receivedError: ActionError? = null
+
+        val lockFile = LockFile(
+            target = Modrinth.serialName,
+            mcVersions = mutableListOf(mcVersion),
+            loaders = mutableMapOf("fabric" to fabricVersion),
+            projects = mutableListOf(noHashesMod)
+        )
+
+        val configFile = ConfigFile(name = modpackName)
+        configFile.write()
+
+        val platforms = lockFile.getPlatforms().get()
+        assertNotNull(platforms)
+
+        export(
+            profiles = listOf(modrinthProfile()),
+            onError = { _, error -> receivedError = error },
+            onSuccess = { _, _, _ -> },
+            lockFile, configFile, platforms,
+            deps = testDeps,
+        )
+
+        // NoHashes warning should be reported (fetch parity)
+        assertNotNull(receivedError)
+        assert(receivedError is NoHashes)
+
+        // The entry should STILL be added to the manifest (warn-and-continue)
+        val manifestPath = Path(Dirs.cacheDir.pathString, Modrinth.serialName, MrModpackModel.MANIFEST)
+        val modpackModel = readPathTextOrNull(manifestPath).toMrModpackModel()
+        assertNotNull(modpackModel)
+        val modFile = modpackModel.files.find { it.path.contains("no-hashes-mod") }
+        assertNotNull(modFile)
+        // Hashes should be computed from the downloaded bytes
+        assertEquals(createHash("sha512", githubPayload), modFile.hashes.sha512)
+        assertEquals(createHash("sha1", githubPayload), modFile.hashes.sha1)
     }
 }

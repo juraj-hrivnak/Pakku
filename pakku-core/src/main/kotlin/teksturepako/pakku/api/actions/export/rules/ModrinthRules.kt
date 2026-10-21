@@ -1,7 +1,15 @@
 package teksturepako.pakku.api.actions.export.rules
 
+import com.github.michaelbull.result.*
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
+import teksturepako.pakku.api.actions.errors.ActionError
+import teksturepako.pakku.api.actions.errors.CouldNotComputeHashes
+import teksturepako.pakku.api.actions.errors.HashMismatch
+import teksturepako.pakku.api.actions.errors.NoHashes
+import teksturepako.pakku.api.actions.errors.NoUrl
 import teksturepako.pakku.api.actions.export.ExportRule
+import teksturepako.pakku.io.IllegalPath
+import kotlin.io.path.Path
 import teksturepako.pakku.api.actions.export.ExportRuleScope
 import teksturepako.pakku.api.actions.export.Packaging
 import teksturepako.pakku.api.actions.export.RuleContext.*
@@ -17,8 +25,6 @@ import teksturepako.pakku.api.platforms.Modrinth
 import teksturepako.pakku.api.projects.Project
 import teksturepako.pakku.api.projects.ProjectFile
 import teksturepako.pakku.io.createHash
-import teksturepako.pakku.io.readPathBytesOrNull
-
 fun ExportRuleScope.mrModpackRule(): ExportRule
 {
     val modpackModel = lockFile.getFirstMcVersion()?.run {
@@ -83,10 +89,36 @@ fun mrMissingProjectsRule() = ExportRule {
 
 fun ExportingProject.addToMrModpackModel(projectFile: ProjectFile, modpackModel: MrModpackModel) =
     ruleResult("addToMrModpackModel ${project.type} ${project.slug}", Packaging.Action {
-        projectFile.toMrFile(configFile, this.project)?.let { mrFile ->
-            modpackModel.files.add(mrFile)
+        val sha512 = projectFile.hashes?.get("sha512")
+        val sha1 = projectFile.hashes?.get("sha1")
+
+        var warning: ActionError? = null
+        val bytes: ByteArray? = if (sha512 != null && sha1 != null) null
+        else
+        {
+            val remote = deps.resolveContent(projectFile)
+                ?: return@Action CouldNotComputeHashes(projectFile)
+
+            val downloaded = remote.fold(
+                success = { it },
+                failure = { return@Action it }, // surface DownloadFailed
+            )
+
+        when (val integrity = projectFile.checkIntegrity(downloaded, Path(projectFile.fileName)))
+            {
+                is HashMismatch -> return@Action integrity
+                is NoHashes -> warning = integrity
+                else -> { }
+            }
+
+            downloaded
         }
-        null // Return no error
+
+        // Build the manifest entry from lock hashes and/or the downloaded bytes
+        projectFile.toMrFile(configFile, this.project, bytes).fold(
+            success = { modpackModel.files.add(it); warning },
+            failure = { it }, // report to runEffects → onError → CLI
+        )
     })
 
 fun getMrLoaderName(loader: String) = when (loader)
@@ -114,18 +146,23 @@ fun createMrModpackModel(
     )
 }
 
-suspend fun ProjectFile.toMrFile(configFile: ConfigFile, parentProject: Project): MrFile?
+fun ProjectFile.toMrFile(
+    configFile: ConfigFile,
+    parentProject: Project,
+    bytes: ByteArray? = null,
+): Result<MrFile, ActionError>
 {
-    if (this.type !in listOf(Modrinth.serialName, GitHub.serialName)) return null
+    if (this.type !in listOf(Modrinth.serialName, GitHub.serialName))
+        return Err(IllegalPath(this.fileName))
 
     /**
      * MUST NOT contain un-encoded spaces or any other illegal characters according to RFC 3986.
      * [Source...](https://support.modrinth.com/en/articles/8802351-modrinth-modpack-format-mrpack#h_e2af55e39e)
      */
-    val url = UrlEncoderUtil.encode(this.url ?: return null, allow = "/:")
+    val url = UrlEncoderUtil.encode(this.url ?: return Err(NoUrl(this)), allow = "/:")
 
-    val relativePathString = this.getRelativePathString(parentProject, configFile) ?: return null
-    val path = this.getPath(parentProject, configFile) ?: return null
+    val relativePathString = this.getRelativePathString(parentProject, configFile)
+        ?: return Err(IllegalPath(this.fileName))
 
     val env = when (OverrideType.fromProject(parentProject))
     {
@@ -143,20 +180,20 @@ suspend fun ProjectFile.toMrFile(configFile: ConfigFile, parentProject: Project)
         )
     }
 
-    return MrFile(
+    val sha512 = this.hashes?.get("sha512")
+    val sha1 = this.hashes?.get("sha1")
+
+    if ((sha512 == null || sha1 == null) && bytes == null)
+        return Err(CouldNotComputeHashes(this))
+
+    return Ok(MrFile(
         path = relativePathString,
         hashes = MrFile.Hashes(
-            sha512 = this.hashes?.get("sha512")
-                ?: readPathBytesOrNull(path)?.let { bytes ->
-                    createHash("sha512", bytes)
-                } ?: return null,
-            sha1 = this.hashes?.get("sha1")
-                ?: readPathBytesOrNull(path)?.let { bytes ->
-                    createHash("sha1", bytes)
-                } ?: return null,
+            sha512 = sha512 ?: createHash("sha512", bytes!!),
+            sha1 = sha1 ?: createHash("sha1", bytes!!),
         ),
         env = env,
         downloads = setOf(url),
         fileSize = this.size
-    )
+    ))
 }

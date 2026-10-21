@@ -33,7 +33,7 @@ sealed class RuleContext(
     open val lockFile: LockFile,
     open val configFile: ConfigFile,
     open val noServer: Boolean = false,
-    protected open val deps: ExportDeps = defaultExportDeps(),
+    open val deps: ExportDeps = defaultExportDeps(),
 )
 {
     fun getPath(path: String, vararg subpath: String) =

@@ -109,9 +109,9 @@ class MrModpackModelTest : PakkuTest()
         testModpackModel(modpackModel)
     }
 
-    private suspend fun testModpackModel(modpackModel: MrModpackModel)
+    private fun testModpackModel(modpackModel: MrModpackModel)
     {
-        val greeneryMrFile = greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(configFile, greeneryProject)
+        val greeneryMrFile = greeneryProject.getLatestFile(listOf(Modrinth))?.toMrFile(configFile, greeneryProject)?.get()
 
         assertNotNull(greeneryMrFile)
         assert(greeneryMrFile in modpackModel.files)
