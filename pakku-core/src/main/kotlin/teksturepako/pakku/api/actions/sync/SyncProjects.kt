@@ -46,8 +46,8 @@ suspend fun syncProjects(
                     currentProject.slug.any { (platform, slug) -> detectedProject.slug[platform] == slug }
                 }
                 ?.let { currentProject ->
-                    // Only consider updated if files are different
-                    currentProject.files != detectedProject.files
+                    // Consider updated if files or side are different
+                    currentProject.files != detectedProject.files || currentProject.side != detectedProject.side
                 }
                 ?: false // Fallback to false if no project is found
         }

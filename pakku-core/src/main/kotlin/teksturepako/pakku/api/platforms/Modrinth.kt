@@ -15,6 +15,7 @@ import teksturepako.pakku.api.models.mr.MrProjectModel
 import teksturepako.pakku.api.models.mr.MrVersionModel
 import teksturepako.pakku.api.projects.*
 import teksturepako.pakku.debugIfEmpty
+import kotlin.text.contains
 
 object Modrinth : Platform(
     name = "Modrinth",
@@ -49,6 +50,42 @@ object Modrinth : Platform(
         return Ok(project)
     }
 
+    private val CLIENT_ENVS = setOf(
+        "client_only", "client_and_server", "server_only_client_optional",
+        "client_only_server_optional", "client_or_server_prefers_both",
+        "client_or_server", "singleplayer_only"
+    )
+
+    private val SERVER_ENVS = setOf(
+        "server_only", "dedicated_server_only", "client_and_server",
+        "server_only_client_optional", "client_only_server_optional",
+        "client_or_server_prefers_both", "client_or_server"
+    )
+
+    fun getProjectSide(environment: List<String>, clientSide: String, serverSide: String): ProjectSide? {
+        val clientSupported = environment.any { it in CLIENT_ENVS }
+        val serverSupported = environment.any { it in SERVER_ENVS }
+
+        if (environment.isNotEmpty() && environment.any { it != "unknown" }) {
+            return when {
+                clientSupported && serverSupported -> ProjectSide.BOTH
+                clientSupported                    -> ProjectSide.CLIENT
+                serverSupported                    -> ProjectSide.SERVER
+                else                               -> null
+            }
+        }
+
+        val client = clientSide == "required" || clientSide == "optional"
+        val server = serverSide == "required" || serverSide == "optional"
+
+        return when {
+            client && server -> ProjectSide.BOTH
+            client           -> ProjectSide.CLIENT
+            server           -> ProjectSide.SERVER
+            else             -> null
+        }
+    }
+
     private fun MrProjectModel.toProject(): Result<Project, ActionError>
     {
         return Ok(Project(
@@ -63,13 +100,7 @@ object Modrinth : Platform(
 
                 else           -> return Err(ProjectTypeNotSupported(slug, projectType))
             },
-            side = when
-            {
-                serverSide == "required" && clientSide == "required" -> ProjectSide.BOTH
-                serverSide != "required" && clientSide == "required" -> ProjectSide.CLIENT
-                serverSide == "required" && clientSide != "required" -> ProjectSide.SERVER
-                else -> ProjectSide.BOTH
-            },
+            side = getProjectSide(environment, clientSide, serverSide),
             id = mutableMapOf(serialName to id),
             redistributable = license.id != "ARR",
             files = mutableSetOf(),

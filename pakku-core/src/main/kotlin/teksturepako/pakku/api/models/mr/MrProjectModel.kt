@@ -8,8 +8,9 @@ import kotlinx.serialization.Serializable
  * @property title The title or name of the project
  * @property description A short description of the project
  * @property categories Array of strings representing a list of categories that the project belongs to
- * @property clientSide Enum representing client side support of the project: "required", "optional", "unsupported"
- * @property serverSide Enum representing server side support of the project: "required", "optional", "unsupported"
+ * @property clientSide Enum representing client side support of the project: "required", "optional", "unsupported" (deprecated, use environment instead)
+ * @property serverSide Enum representing server side support of the project: "required", "optional", "unsupported" (deprecated, use environment instead)
+ * @property environment List of environment support declarations, e.g. "client_only", "client_and_server", "server_only_client_optional"
  * @property body A long form description of the project
  * @property status Enum representing the status of the project: "approved", "archived", "rejected", "draft",
  * "unlisted", "processing", "withheld", "scheduled", "private", "unknown"
@@ -48,6 +49,7 @@ data class MrProjectModel(
     val categories: List<String> = listOf(),
     @SerialName("client_side") val clientSide: String,
     @SerialName("server_side") val serverSide: String,
+    val environment: List<String> = listOf(),
     val body: String,
     val status: String,
     @SerialName("requested_status") val requestedStatus: String? = null,

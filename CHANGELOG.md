@@ -3,6 +3,7 @@
 
 ## Unreleased
 
+- Fixed Modrinth side detection so mods listed as `"optional"` on a side are no longer wrongly excluded (#155, #131). Pakku now prefers the new `environment` field from Modrinth API v2 when available, and correctly treats the legacy `"optional"` value as supported. Running `pakku sync` will offer to correct stale side values in existing lockfile.
 - Fixed GitHub projects being silently omitted from `modrinth.index.json` when exporting without running `pakku fetch` first (#157). Pakku now downloads the project file to compute the required `sha512`/`sha1` hashes when they are missing, instead of reading it from the development environment. `pakku export` no longer depends on `pakku fetch`, and reports an error instead of silently skipping projects that cannot be exported.
 - Fixed unknown JVM argument error on Java 8 when launching Pakku through the distribution scripts.
   - Distribution scripts now launch via `java -jar` (custom start-script templates) and grant native access through the jar manifest (`Enable-Native-Access`), so they work on Java 8+ without `--enable-native-access` in `DEFAULT_JVM_OPTS`. This also applies to launching Pakku via `java -jar` without the distribution scripts on Java 25.
