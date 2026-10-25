@@ -62,6 +62,33 @@ object Modrinth : Platform(
         "client_or_server_prefers_both", "client_or_server"
     )
 
+    /**
+     * Resolves the Pakku [ProjectType] from a Modrinth project's `project_type` and `loaders` fields.
+     *
+     * Modrinth reports `project_type` as `"mod"` for projects published under the mod project type,
+     * even when the project only ships a datapack. Trusting `project_type` alone resolved those to
+     * [ProjectType.MOD], so they were fetched and exported into `mods/` instead of `datapacks/`.
+     *
+     * A datapack is inferred only when every loader it reports is a datapack loader, either
+     * `"datapack"` or `"minecraft"` — Modrinth lists `"minecraft"` for datapacks that target the
+     * base game. Worldgen projects such as Terralith, Incendium and Tectonic list `datapack`
+     * alongside `fabric`, `forge`, `neoforge` and `quilt` because they publish mod versions too;
+     * those keep their `project_type` so the mod file is the one fetched.
+     *
+     * @param projectType Modrinth's `project_type`: `"mod"`, `"modpack"`, `"resourcepack"`, `"shader"` or `"datapack"`.
+     * @param loaders Modrinth's `loaders` for the project.
+     * @return The matching [ProjectType], or `null` when the project type is unsupported.
+     */
+    fun getProjectType(projectType: String, loaders: List<String>): ProjectType? = when
+    {
+        DATAPACK_LOADER in loaders.map { it.lowercase() } && loaders.all { it.lowercase() in DATAPACK_LOADERS } -> ProjectType.DATA_PACK
+        projectType == "mod"          -> ProjectType.MOD
+        projectType == "resourcepack" -> ProjectType.RESOURCE_PACK
+        projectType == "datapack"     -> ProjectType.DATA_PACK
+        projectType == "shader"       -> ProjectType.SHADER
+        else                          -> null
+    }
+
     fun getProjectSide(environment: List<String>, clientSide: String, serverSide: String): ProjectSide? {
         val clientSupported = environment.any { it in CLIENT_ENVS }
         val serverSupported = environment.any { it in SERVER_ENVS }
@@ -91,15 +118,8 @@ object Modrinth : Platform(
         return Ok(Project(
             name = mutableMapOf(serialName to title),
             slug = mutableMapOf(serialName to slug),
-            type = when (projectType)
-            {
-                "mod"          -> ProjectType.MOD
-                "resourcepack" -> ProjectType.RESOURCE_PACK
-                "datapack"     -> ProjectType.DATA_PACK
-                "shader"       -> ProjectType.SHADER
-
-                else           -> return Err(ProjectTypeNotSupported(slug, projectType))
-            },
+            type = getProjectType(projectType, loaders)
+                ?: return Err(ProjectTypeNotSupported(slug, projectType)),
             side = getProjectSide(environment, clientSide, serverSide),
             id = mutableMapOf(serialName to id),
             redistributable = license.id != "ARR",
@@ -170,6 +190,7 @@ object Modrinth : Platform(
     }
 
     private const val DATAPACK_LOADER = "datapack"
+    private val DATAPACK_LOADERS = setOf(DATAPACK_LOADER, "minecraft")
 
     override suspend fun requestProjectFiles(
         mcVersions: List<String>, loaders: List<String>, projectId: String, fileId: String?, projectType: ProjectType?

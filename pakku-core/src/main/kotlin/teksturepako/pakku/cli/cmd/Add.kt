@@ -46,7 +46,7 @@ class Add : CliktCommand()
     private val projectTypeOpt: ProjectType? by option(
         "-t",
         "--type",
-        help = "Project type of projects to add",
+        help = "Project type of projects to add (inferred from the platform when omitted)",
         metavar = "project type"
     ).enum<ProjectType>()
 

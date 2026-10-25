@@ -109,6 +109,16 @@ fun combineProjects(
         .distinctBy { it.type }
         .toMutableSet()
 
-    return (accProject + newProject).get()?.copy(files = updatedFiles)
+    // A locked project's type can go stale when its platform reclassifies it, e.g. a
+    // datapack that was locked as a mod. `Project.plus` refuses to merge projects whose
+    // types differ, which would silently keep the stale project and its wrong type, so
+    // adopt the freshly fetched type before merging. `plus` still takes the pakku
+    // metadata (id, links, update strategy, export) from the accumulator.
+    val mergedProject = if (accProject.type != newProject.type)
+        (accProject.copy(type = newProject.type) + newProject).get()
+    else
+        (accProject + newProject).get()
+
+    return mergedProject?.copy(files = updatedFiles)
         ?.takeIf { it.hasFiles() } ?: accProject
 }

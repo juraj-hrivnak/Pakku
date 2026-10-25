@@ -37,7 +37,7 @@ Add projects
 : Ignore resolving dependencies
 
 `-t`, `--type`
-: Project type of projects to add
+: Project type of projects to add (inferred from the platform when omitted)
 
 </snippet>
 

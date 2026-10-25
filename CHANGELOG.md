@@ -3,6 +3,8 @@
 
 ## Unreleased
 
+- Fixed Modrinth datapacks being fetched and exported into `mods/` instead of `datapacks/` (#194). Modrinth reports `project_type` as `"mod"` for projects published under the mod project type, even when the project is a datapack; datapacks are identified by the `datapack` loader instead. Pakku now treats a project as a datapack when every loader it reports is `datapack`, so `pakku add -t datapack` is no longer required for these projects. Projects that also publish mod-loader versions keep their mod type. Passing `-t` explicitly still overrides the detected type.
+- `pakku update` now corrects a project's type when its platform reports a different one than the lockfile. Previously the update was silently discarded when the types differed, leaving the stale type and the wrong export folder in place, so modpacks affected by the above only need to run `pakku update`.
 - Fixed Modrinth side detection so mods listed as `"optional"` on a side are no longer wrongly excluded (#155, #131). Pakku now prefers the new `environment` field from Modrinth API v2 when available, and correctly treats the legacy `"optional"` value as supported. Running `pakku sync` will offer to correct stale side values in existing lockfile.
 - Fixed GitHub projects being silently omitted from `modrinth.index.json` when exporting without running `pakku fetch` first (#157). Pakku now downloads the project file to compute the required `sha512`/`sha1` hashes when they are missing, instead of reading it from the development environment. `pakku export` no longer depends on `pakku fetch`, and reports an error instead of silently skipping projects that cannot be exported.
 - Fixed unknown JVM argument error on Java 8 when launching Pakku through the distribution scripts.
