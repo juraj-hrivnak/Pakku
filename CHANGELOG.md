@@ -3,10 +3,67 @@
 
 ## Unreleased
 
+## v1.6.0
+
+### Highlights
+
+- Implemented the **`pakku fork` command**, for forking modpacks from Git repositories, by @NotAShelf in [#136](https://github.com/juraj-hrivnak/Pakku/pull/136) and [#147](https://github.com/juraj-hrivnak/Pakku/pull/147).
+    - A fork keeps the parent modpack in `.pakku/parent`. (Read-only and ignored by Git.) Your local `pakku.json` and `pakku-lock.json` remain the fork layer, where you add projects, override project properties, or exclude parent projects.
+    - Available subcommands:
+        - `pakku fork init`: Initialize a fork. The parent can be a Git URL (`--git-url`), the current repository's remote (`--from-current`) or an existing local clone (`--from-path`). The parent is tracked on a branch, tag or commit (`--ref-name`, defaults to `main`).
+        - `pakku fork sync`: Sync the parent checkout to the configured ref and record its commit and SHA-256 hashes of its config and lock files.
+        - `pakku fork promote <projects...>`: Copy parent projects into the local lock file, making them locally managed.
+        - `pakku fork exclude <projects...>` / `pakku fork include <projects...>`: Exclude or re-include parent projects in exports.
+        - `pakku fork show` / `pakku fork unset`: Show or remove the fork configuration.
+    - On export, Pakku starts with the parent lock file and applies the local fork layer on top of it:
+        - Local projects with the same slug replace parent projects.
+        - Local project config entries can override parent project properties.
+        - Projects listed in `excludes` are omitted from the exported pack.
+        - Additional local projects are appended to the merged lock file.
+    - Pakku warns before exporting when the parent lock file changed since the last `pakku fork sync`.
+- Improved export performance and robustness, by @NotAShelf in [#151](https://github.com/juraj-hrivnak/Pakku/pull/151).
+    - File actions targeting the same output path are now executed sequentially, while actions for different paths run in parallel.
+    - Cached files are reused instead of being downloaded and hashed again.
+    - File hashing now streams files with bounded reads.
+- Fixed missing CurseForge projects aborting the import of Modrinth modpacks. They are now skipped with a warning, by @Zoriot in [#148](https://github.com/juraj-hrivnak/Pakku/pull/148).
+- Changed `pakku remote update` to not clean up old files and configs. (This is the usual way of updating in most launchers.) See [#137](https://github.com/juraj-hrivnak/Pakku/pull/137).
+- Hardened path validation and download integrity checks.
+    - Paths outside the modpack root are now rejected when fetching and exporting.
+    - Non-HTTPS download URLs are now refused when the file's integrity cannot be verified with hashes.
+    - Symbolic links are now skipped when creating ZIP files.
 - Fixed Modrinth side detection so mods listed as `"optional"` on a side are no longer wrongly excluded (#155, #131). Pakku now prefers the new `environment` field from Modrinth API v2 when available, and correctly treats the legacy `"optional"` value as supported. Running `pakku sync` will offer to correct stale side values in existing lockfile.
 - Fixed GitHub projects being silently omitted from `modrinth.index.json` when exporting without running `pakku fetch` first (#157). Pakku now downloads the project file to compute the required `sha512`/`sha1` hashes when they are missing, instead of reading it from the development environment. `pakku export` no longer depends on `pakku fetch`, and reports an error instead of silently skipping projects that cannot be exported.
 - Fixed unknown JVM argument error on Java 8 when launching Pakku through the distribution scripts.
-  - Distribution scripts now launch via `java -jar` (custom start-script templates) and grant native access through the jar manifest (`Enable-Native-Access`), so they work on Java 8+ without `--enable-native-access` in `DEFAULT_JVM_OPTS`. This also applies to launching Pakku via `java -jar` without the distribution scripts on Java 25.
+    - Distribution scripts now launch via `java -jar` (custom start-script templates) and grant native access through the jar manifest (`Enable-Native-Access`), so they work on Java 8+ without `--enable-native-access` in `DEFAULT_JVM_OPTS`. This also applies to launching Pakku via `java -jar` without the distribution scripts on Java 25.
+
+### Other
+
+- Fixed `LockFile#readToResultFrom` inheriting config from the working directory instead of the lock file's directory.
+- Fixed logic operator in `ManualOverride#fromPath`.
+- Fixed `export` property merging logic for `other` project. (The `export` property of the other project was previously ignored when merging.)
+- Updated dependencies: Kotlin to `2.4.20`, ktor to `3.6.0`, kotlinx.serialization to `1.8.0`, Clikt to `5.1.0`, Mordant to `3.1.0`, coroutines to `1.11.0` and JGit.
+
+### Docs
+
+- Added the _Forking a Modpack_ docs page, elaborating on the `pakku fork` features and workflow.
+- Updated the _Getting Info About Your Modpack_, _Installing Pakku_, _Managing Projects_ and _Pakku Terminology_ docs pages.
+- Updated copyright year in docs.
+
+### API
+
+- Dropped Kotlin Multiplatform and split the project into two JVM modules: `pakku-core` (library) and `pakku-cli` (fat JAR and distributions). See [#144](https://github.com/juraj-hrivnak/Pakku/pull/144).
+    - Core dependencies are now exposed as `api`, so they can be consumed by Pakku Desktop.
+- Breaking change: `readOrNew` now returns a `Result` and returns an error when the config or lock file is corrupted, instead of silently replacing it with a new empty file.
+
+### Tests
+
+- Migrated from Strikt to PowerAssert only.
+- Added `ModrinthSideTest` covering the fixed side detection.
+
+### Technical Notes
+
+- Added `dependabot.yml` and a CodeQL workflow.
+- Implemented release tag verification and added concurrency rules to CI.
 
 ## v1.5.0
 
