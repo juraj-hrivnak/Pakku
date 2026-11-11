@@ -14,7 +14,7 @@ slf4j = "2.0.20"
 jgit = "5.13.5.202508271544-r"
 jna = "5.19.1"
 flexver = "1.1.1"
-mockk = "1.14.11"
+mockk = "1.14.12"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib" }
